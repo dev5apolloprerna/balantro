@@ -323,7 +323,9 @@
         $('#custom_tax_rows').empty();
         // $('#sum_amount, #sum_cgst, #sum_sgst, #sum_igst, #sum_grand_total, #foot_amount, #foot_total').text('0.00');
         // $('#edit_amount, #edit_cgst, #edit_sgst, #edit_igst, #edit_total_amount, #noitem_amount, #noitem_gst_rate').val(0);
-        $('#sum_amount, #sum_cgst, #sum_sgst, #sum_igst, #sum_roundoff, #sum_grand_total, #foot_amount, #foot_total').text('0.00');
+        //$('#sum_amount, #sum_cgst, #sum_sgst, #sum_igst, #sum_roundoff, #sum_grand_total, #foot_amount, #foot_total').text('0.00');
+        $('#sum_amount, #sum_cgst, #sum_sgst, #sum_igst, #sum_grand_total, #foot_amount, #foot_total').text('0.00');
+        $('#sum_roundoff').val('0.00');
         $('#edit_amount, #edit_cgst, #edit_sgst, #edit_igst, #edit_roundoff, #edit_total_amount, #noitem_amount, #noitem_gst_rate').val(0);
         $('#standard_items_section').show();
         $('#no_item_section').hide();
@@ -482,19 +484,46 @@
         return Math.round((Math.round(total) - total) * 100) / 100;
     }
 
+    function getSummaryBaseTotal() {
+        return (parseFloat($('#edit_amount').val()) || 0)
+            + (parseFloat($('#edit_cgst').val()) || 0)
+            + (parseFloat($('#edit_sgst').val()) || 0)
+            + (parseFloat($('#edit_igst').val()) || 0);
+    }
+
+    function applyRoundOffSummary(total, roundOff) {
+        total = parseFloat(total) || 0;
+        // let roundOff = roundOffAmount === null || roundOffAmount === undefined
+        //     ? calculateRoundOffAmountForSummary(total)
+        //     : (parseFloat(roundOffAmount) || 0);
+        roundOff = parseFloat(roundOff) || 0;
+        let roundedTotal = total + roundOff;
+
+        //$('#sum_roundoff').text(roundOff.toFixed(2));
+        if ($('#sum_roundoff').is('input')) {
+            $('#sum_roundoff').val(roundOff.toFixed(2));
+        } else {
+            $('#sum_roundoff').text(roundOff.toFixed(2));
+        }
+        $('#edit_roundoff').val(roundOff.toFixed(2));
+        $('#sum_grand_total').text(roundedTotal.toFixed(2));
+        $('#edit_total_amount').val(roundedTotal.toFixed(2));
+
+        return roundedTotal;
+    }
+
     function setRoundOffSummary(total, roundOffAmount = null) {
         total = parseFloat(total) || 0;
         let roundOff = roundOffAmount === null || roundOffAmount === undefined
             ? calculateRoundOffAmountForSummary(total)
             : (parseFloat(roundOffAmount) || 0);
-        let roundedTotal = total + roundOff;
 
-        $('#sum_roundoff').text(roundOff.toFixed(2));
-        $('#edit_roundoff').val(roundOff.toFixed(2));
-        $('#sum_grand_total').text(roundedTotal.toFixed(2));
-
-        return roundedTotal;
+        return applyRoundOffSummary(total, roundOff);
     }
+
+    $(document).on('input change', '#sum_roundoff', function() {
+        applyRoundOffSummary(getSummaryBaseTotal(), $(this).val());
+    });
 
     function findItemGstMapping(itemId = '') {
         if (!itemId) return null;
@@ -1374,6 +1403,7 @@
                 sgst: $('#edit_sgst').val(),
                 igst: $('#edit_igst').val(),
                 total_amount: $('#edit_total_amount').val(),
+                roundoff: $('#edit_roundoff').val(),
 
                 Remarks: $('#edit_remarks').val(),
 

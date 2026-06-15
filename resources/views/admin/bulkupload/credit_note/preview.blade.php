@@ -362,7 +362,10 @@
 
                 {{-- Custom mode summary (rendered by JS) --}}
                 <div id="custom_tax_rows" style="display:none;"></div>
-
+                <div class="tax-row">
+                    <span class="tax-label">Round Off</span>
+                    <input type="number" step="0.01" id="sum_roundoff" class="receipt-input tax-value" style="width:90px;text-align:right;" value="0.00">
+                </div>
                 <div class="tax-row grand-total-row">
                     <span class="tax-label">GRAND TOTAL</span>
                     <span class="tax-value" id="sum_grand_total">0.00</span>
@@ -375,6 +378,7 @@
         <input type="hidden" id="edit_sgst">
         <input type="hidden" id="edit_cgst">
         <input type="hidden" id="edit_igst">
+        <input type="hidden" id="edit_roundoff">
         <input type="hidden" id="edit_total_amount">
 
         <div class="receipt-footer">
@@ -463,6 +467,7 @@
                 <div class="box"><span>SGST</span><strong id="v_sgst"></strong></div>
                 <div class="box"><span>CGST</span><strong id="v_cgst"></strong></div>
                 <div class="box"><span>IGST</span><strong id="v_igst"></strong></div>
+                <div class="box"><span>Round Off</span><strong id="v_roundoff"></strong></div>
                 <div class="box highlight"><span>Total</span><strong id="v_total"></strong></div>
             </div>
             <div class="mt-4">
@@ -595,7 +600,8 @@
     .view-grid label { font-size:11px; color:#94a3b8; }
     .view-grid p { font-size:13px; font-weight:500; margin:2px 0 0; color:#e2e8f0; }
     .status-badge { display:inline-block; padding:3px 8px; border-radius:6px; font-size:11px; background:#f59e0b; color:white; }
-    .view-totals { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+    /* .view-totals { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; } */
+    .view-totals { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; }
     .view-totals .box { background:#020617; padding:10px; border-radius:8px; text-align:center; }
     .view-totals span { font-size:11px; color:#94a3b8; }
     .view-totals strong { display:block; font-size:14px; margin-top:3px; }
@@ -1053,7 +1059,8 @@ function loadIntoModal(res, editable) {
 
     // Set initial summary from DB values
     setHiddenFields(res.taxable_amount||0, res.cgst||0, res.sgst||0, res.igst||0, res.total_amount||0);
-    updateSummaryUI(res.taxable_amount||0, res.cgst||0, res.sgst||0, res.igst||0, res.total_amount||0);
+    // updateSummaryUI(res.taxable_amount||0, res.cgst||0, res.sgst||0, res.igst||0, res.total_amount||0);
+    updateSummaryUI(res.taxable_amount||0, res.cgst||0, res.sgst||0, res.igst||0, res.total_amount||0, res.roundoff || 0);
 
     // Items
     let tbody = $('#editItemsBody').empty();
@@ -1487,6 +1494,7 @@ $('#updateRow').click(function () {
             sgst:             $('#edit_sgst').val(),
             igst:             $('#edit_igst').val(),
             total_amount:     $('#edit_total_amount').val(),
+            roundoff:         $('#edit_roundoff').val(),
             Remarks:          $('#edit_remarks').val(),
             gst_mode:         mode,
             igst_ledger:      $('#igst_ledger').val(),
@@ -1544,12 +1552,53 @@ function fmt(v) {
     return parseFloat(v||0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
 
-function updateSummaryUI(amt, cgst, sgst, igst, grand) {
+function getSummaryBaseTotal() {
+            return (parseFloat($('#edit_amount').val()) || 0)
+                + (parseFloat($('#edit_cgst').val()) || 0)
+                + (parseFloat($('#edit_sgst').val()) || 0)
+                + (parseFloat($('#edit_igst').val()) || 0);
+        }
+
+function calculateRoundOffAmountForSummary(total) {
+            total = parseFloat(total) || 0;
+            return Math.round((Math.round(total) - total) * 100) / 100;
+        }
+
+function applyRoundOffSummary(total, roundOff) {
+            total = parseFloat(total) || 0;
+            roundOff = parseFloat(roundOff) || 0;
+            let roundedTotal = total + roundOff;
+
+    $('#sum_roundoff').val(roundOff.toFixed(2));
+    $('#edit_roundoff').val(roundOff.toFixed(2));
+    $('#sum_grand_total').text(roundedTotal.toFixed(2));
+    $('#edit_total_amount').val(roundedTotal.toFixed(2));
+
+            return roundedTotal;
+        }
+
+function setRoundOffSummary(total, roundOffAmount = null) {
+            total = parseFloat(total) || 0;
+            if (roundOffAmount !== null && roundOffAmount !== undefined) {
+                let roundOff = parseFloat(roundOffAmount) || 0;
+                return applyRoundOffSummary(total - roundOff, roundOff);
+            }
+
+            let roundOff = calculateRoundOffAmountForSummary(total);
+            return applyRoundOffSummary(total, roundOff);
+        }
+
+$(document).on('input change', '#sum_roundoff', function() {
+            applyRoundOffSummary(getSummaryBaseTotal(), $(this).val());
+        });
+
+function updateSummaryUI(amt, cgst, sgst, igst, grand, roundoff = null) {
     $('#sum_amount').text(fmt(amt));
     $('#sum_cgst').text(fmt(cgst));
     $('#sum_sgst').text(fmt(sgst));
     $('#sum_igst').text(fmt(igst));
-    $('#sum_grand_total').text(fmt(grand));
+    //$('#sum_grand_total').text(fmt(grand));
+    setRoundOffSummary(grand, roundoff);
 }
 
 function setHiddenFields(amt, cgst, sgst, igst, grand) {
@@ -1557,7 +1606,8 @@ function setHiddenFields(amt, cgst, sgst, igst, grand) {
     $('#edit_cgst').val(parseFloat(cgst).toFixed(2));
     $('#edit_sgst').val(parseFloat(sgst).toFixed(2));
     $('#edit_igst').val(parseFloat(igst).toFixed(2));
-    $('#edit_total_amount').val(parseFloat(grand).toFixed(2));
+    // $('#edit_total_amount').val(parseFloat(grand).toFixed(2));
+    $('#edit_total_amount').val(parseFloat($('#sum_grand_total').text().replace(/,/g, '') || grand).toFixed(2));
 }
 
 function updateSubtotalFooter() {

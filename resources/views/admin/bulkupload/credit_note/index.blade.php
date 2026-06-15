@@ -679,6 +679,11 @@
                             {{-- rendered by recalcTotals() --}}
                         </div>
 
+                        <div class="tax-row">
+                            <span class="tax-label">Round Off</span>
+                            <input type="number" step="0.01" id="sum_roundoff" class="receipt-input tax-value" style="width:90px;text-align:right;" value="0.00">
+                        </div>
+
                         <div class="tax-row grand-total-row">
                             <span class="tax-label">GRAND TOTAL</span>
                             <span class="tax-value" id="sum_grand_total">0.00</span>
@@ -691,6 +696,7 @@
                 <input type="hidden" id="edit_sgst">
                 <input type="hidden" id="edit_cgst">
                 <input type="hidden" id="edit_igst">
+                <input type="hidden" id="edit_roundoff">
                 <input type="hidden" id="edit_total_amount">
             </div>
             {{-- RECEIPT FOOTER --}}
@@ -1951,6 +1957,8 @@
             $('#manual_cgst').val() || $('#sum_cgst').html('0.00');
             $('#manual_sgst').val() || $('#sum_sgst').html('0.00');
             $('#manual_igst').val() || $('#sum_igst').html('0.00');
+            $('#sum_roundoff').val('0.00');
+            $('#edit_roundoff').val(0);
             $('#sum_grand_total').html('0.00');
 
             // Clear items
@@ -2127,6 +2135,7 @@
                 sgst: $('#edit_sgst').val(),
                 igst: $('#edit_igst').val(),
                 total: $('#edit_total_amount').val(),
+                roundoff: $('#edit_roundoff').val(),
                 city: $('#edit_city').val(),
                 pincode: $('#edit_pincode').val(),
                 address: $('#edit_address').val(),
@@ -2332,6 +2341,47 @@
         $(document).on('input change', '.noitem-ledger, .noitem-gst, .noitem-amount', function() {
             recalcTotals();
         });
+        
+        function getSummaryBaseTotal() {
+            return (parseFloat($('#edit_amount').val()) || 0)
+                + (parseFloat($('#edit_cgst').val()) || 0)
+                + (parseFloat($('#edit_sgst').val()) || 0)
+                + (parseFloat($('#edit_igst').val()) || 0);
+        }
+
+        function calculateRoundOffAmountForSummary(total) {
+            total = parseFloat(total) || 0;
+            return Math.round((Math.round(total) - total) * 100) / 100;
+        }
+
+        function applyRoundOffSummary(total, roundOff) {
+            total = parseFloat(total) || 0;
+            roundOff = parseFloat(roundOff) || 0;
+            let roundedTotal = total + roundOff;
+
+            $('#sum_roundoff').val(roundOff.toFixed(2));
+            $('#edit_roundoff').val(roundOff.toFixed(2));
+            $('#sum_grand_total').text(roundedTotal.toFixed(2));
+            $('#edit_total_amount').val(roundedTotal.toFixed(2));
+
+            return roundedTotal;
+        }
+
+        function setRoundOffSummary(total, roundOffAmount = null) {
+            total = parseFloat(total) || 0;
+            if (roundOffAmount !== null && roundOffAmount !== undefined) {
+                let roundOff = parseFloat(roundOffAmount) || 0;
+                return applyRoundOffSummary(total - roundOff, roundOff);
+            }
+
+            let roundOff = calculateRoundOffAmountForSummary(total);
+            return applyRoundOffSummary(total, roundOff);
+        }
+
+        $(document).on('input change', '#sum_roundoff', function() {
+            applyRoundOffSummary(getSummaryBaseTotal(), $(this).val());
+        });
+
         function recalcTotals() {
 
             let mode = $('#gst_calc_mode').val();
@@ -2438,6 +2488,7 @@
                 // $('#edit_sgst').val(sgst);
                 // $('#edit_igst').val(igst);
                 // $('#edit_total_amount').val(total);
+                // setRoundOffSummary(total);
 
                 // // footer
                 // $('#foot_amount').text(amount.toFixed(2));
@@ -2541,14 +2592,16 @@
             let grandTotal = taxable + cgst + sgst + igst;
 
             $('#sum_amount').text(taxable.toFixed(2));
-            $('#sum_grand_total').text(grandTotal.toFixed(2));
+            // $('#sum_grand_total').text(grandTotal.toFixed(2));
+            setRoundOffSummary(grandTotal);
 
             // hidden
             $('#edit_amount').val(taxable.toFixed(2));
             $('#edit_cgst').val(cgst.toFixed(2));
             $('#edit_sgst').val(sgst.toFixed(2));
             $('#edit_igst').val(igst.toFixed(2));
-            $('#edit_total_amount').val(grandTotal.toFixed(2));
+            // $('#edit_total_amount').val(grandTotal.toFixed(2));
+            setRoundOffSummary(grandTotal);
 
             // footer
             $('#foot_amount').text(taxable.toFixed(2));
@@ -2892,12 +2945,14 @@
 
             let grandTotal = taxable + cgst + sgst + igst;
             $('#sum_amount').text(taxable.toFixed(2));
-            $('#sum_grand_total').text(grandTotal.toFixed(2));
+            // $('#sum_grand_total').text(grandTotal.toFixed(2));
+            setRoundOffSummary(grandTotal);
             $('#edit_amount').val(taxable.toFixed(2));
             $('#edit_cgst').val(cgst.toFixed(2));
             $('#edit_sgst').val(sgst.toFixed(2));
             $('#edit_igst').val(igst.toFixed(2));
-            $('#edit_total_amount').val(grandTotal.toFixed(2));
+            // $('#edit_total_amount').val(grandTotal.toFixed(2));
+            setRoundOffSummary(grandTotal);
             $('#foot_amount').text(taxable.toFixed(2));
             $('#foot_total').text(grandTotal.toFixed(2));
         }
