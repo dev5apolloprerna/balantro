@@ -1327,12 +1327,17 @@
                 $('#sum_sgst').text(parseFloat(res.sgst || 0).toFixed(2));
                 $('#sum_igst').text(parseFloat(res.igst || 0).toFixed(2));
                 // $('#sum_grand_total').text(parseFloat(res.total_amount || 0).toFixed(2));
-                setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                // setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                const storedSummaryBaseTotal = (parseFloat(res.amount || 0) || 0)
+                    + (parseFloat(res.cgst || 0) || 0)
+                    + (parseFloat(res.sgst || 0) || 0)
+                    + (parseFloat(res.igst || 0) || 0);
+                setRoundOffSummary(storedSummaryBaseTotal);
 
                 $('#edit_cgst').val(res.cgst);
                 $('#edit_sgst').val(res.sgst);
                 $('#edit_igst').val(res.igst);
-                $('#edit_total_amount').val(res.total_amount);
+                // $('#edit_total_amount').val(res.total_amount);
                 // Items
                 let tbody = $('#editItemsBody').empty();
                 $('#noitem_sales_ledger').val(res.sales_ledger).trigger('change.select2');
@@ -1382,7 +1387,12 @@
                     $('#sum_sgst').text(parseFloat(res.sgst || 0).toFixed(2));
                     $('#sum_igst').text(parseFloat(res.igst || 0).toFixed(2));
                     // $('#sum_grand_total').text(parseFloat(res.total_amount || 0).toFixed(2));
-                    setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                    // setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                     const storedSummaryBaseTotal = (parseFloat(res.amount || 0) || 0)
+                        + (parseFloat(res.cgst || 0) || 0)
+                        + (parseFloat(res.sgst || 0) || 0)
+                        + (parseFloat(res.igst || 0) || 0);
+                    setRoundOffSummary(storedSummaryBaseTotal);
                     $('#noItemBody input, #noItemBody select').prop('disabled', true);
                     $('#noItemBody .receipt-del-btn').hide();
                 }
@@ -1550,6 +1560,7 @@
                     // res.items.forEach(item => tbody.append(buildItemRow(item)));
                     res.items.forEach(item => {
                         let row = buildItemRow(item);
+                         recalcItemRow(row);
                         tbody.append(row);
                     });
                 } else {
