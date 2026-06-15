@@ -1490,12 +1490,17 @@ class SalesUploadController extends Controller
             // =========================================================
             // FINAL TOTAL UPDATE
             // =========================================================
+            $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
+            $roundOffLedger = $roundOffSetting['ledger'];
             $updateData = [
                 'amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
                 'cgst'         => $sumCgst,
                 'igst'         => $sumIgst,
                 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                'roundoff_id'  => $roundOffLedger?->iLedgerId,
+                'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
+                'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                 'status'       => 'saved',
             ];
 
@@ -1861,12 +1866,17 @@ class SalesUploadController extends Controller
             // =====================================================
             // ✅ FINAL TOTAL UPDATE
             // =====================================================
+            $roundOffSetting = $this->getRoundOffSetting($iPartyId);
+            $roundOffLedger = $roundOffSetting['ledger'];
             $transaction->update([
                 'amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
                 'cgst'         => $sumCgst,
                 'igst'         => $sumIgst,
                 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                'roundoff_id'  => $roundOffLedger?->iLedgerId,
+                'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
+                'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
             ]);
 
             DB::commit();
