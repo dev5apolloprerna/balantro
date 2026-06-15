@@ -1742,6 +1742,15 @@ class ClientsController extends Controller
             ->orderBy('strCustomerName')
             ->get();
 
+        $mappedItemIds = DB::table('StockItemMaster')
+            ->where('iPartyId', $iPartyId)
+            ->where(function($q){
+                $q->whereNotNull('CGSTLedgerId')
+                ->orWhereNotNull('SGSTLedgerId')
+                ->orWhereNotNull('IGSTLedgerId');
+            })
+            ->pluck('iStockIdtemId');
+
         $mappedLedgers = DB::table('LedgerMaster as LM')
             ->leftJoin('LedgerMaster as CGST','LM.CGSTLedgerId','=','CGST.iLedgerId')
             ->leftJoin('LedgerMaster as SGST','LM.SGSTLedgerId','=','SGST.iLedgerId')
@@ -1838,6 +1847,7 @@ class ClientsController extends Controller
             // ->whereNull('CGSTLedgerId')
             // ->whereNull('SGSTLedgerId')
             // ->whereNull('IGSTLedgerId')
+            ->whereNotIn('iStockIdtemId', $mappedItemIds)
             ->get();
 
         $roundOffLedgers = DB::table('LedgerMaster')

@@ -1,6 +1,6 @@
-@extends('layouts.super_admin')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <style>
 .select2-container--default .select2-selection--single{
     height:42px !important;
@@ -100,9 +100,9 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <div class="container mx-auto">
 
-    <!-- <form action="{{ route('clients.GstSettingupdate') }}" method="POST">
-        @csrf -->
-        <input type="hidden" name="guid" value="{{ $user->guid }}">
+    <!-- <form action="<?php echo e(route('clients.GstSettingupdate')); ?>" method="POST">
+        <?php echo csrf_field(); ?> -->
+        <input type="hidden" name="guid" value="<?php echo e($user->guid); ?>">
         <div class="rounded-2xl p-2 shadow-sm border border-cyan-400/10 bg-white/5 backdrop-blur-xl">
              <div class="flex justify-between items-center mb-3">
                 <div>
@@ -112,7 +112,8 @@
                 </div>
                 <div>
                     <span class="text-xs font-semibold text-green-600 whitespace-nowrap" style="font-size: 1.0rem;font-variant-caps: small-caps;">
-                        {{ $user->name ?? ''}}
+                        <?php echo e($user->name ?? ''); ?>
+
                     </span>
                 </div>
                 <div class="flex flex-wrap items-center justify-end gap-2">
@@ -120,18 +121,19 @@
                         <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Roundoff</span>
                         <select id="roundoff_side"
                             class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
-                            <option value="normal" {{ ($user->profile?->roundoff_side ?? 'normal') === 'normal' ? 'selected' : '' }}>Normal</option>
-                            <option value="upper_side" {{ ($user->profile?->roundoff_side ?? '') === 'upper_side' ? 'selected' : '' }}>Upper Side</option>
-                            <option value="lower_side" {{ ($user->profile?->roundoff_side ?? '') === 'lower_side' ? 'selected' : '' }}>Lower Side</option>
+                            <option value="normal" <?php echo e(($user->profile?->roundoff_side ?? 'normal') === 'normal' ? 'selected' : ''); ?>>Normal</option>
+                            <option value="upper_side" <?php echo e(($user->profile?->roundoff_side ?? '') === 'upper_side' ? 'selected' : ''); ?>>Upper Side</option>
+                            <option value="lower_side" <?php echo e(($user->profile?->roundoff_side ?? '') === 'lower_side' ? 'selected' : ''); ?>>Lower Side</option>
                         </select>
                         <select id="roundoff_ledger_id"
                             class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                             <option value="">Select Roundoff</option>
-                            @foreach($roundOffLedgers as $ledger)
-                                <option value="{{ $ledger->iLedgerId }}" {{ (string)($user->profile?->roundoff_ledger_id ?? '') === (string)$ledger->iLedgerId ? 'selected' : '' }}>
-                                    {{ $ledger->strCustomerName }}
+                            <?php $__currentLoopData = $roundOffLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($ledger->iLedgerId); ?>" <?php echo e((string)($user->profile?->roundoff_ledger_id ?? '') === (string)$ledger->iLedgerId ? 'selected' : ''); ?>>
+                                    <?php echo e($ledger->strCustomerName); ?>
+
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                         <button type="button" id="saveRoundoffSetting"
                             class="rounded bg-slate-700 px-2 py-1 text-xs font-semibold text-white hover:bg-slate-800">
@@ -149,7 +151,7 @@
                         + Item GST Mapping
                     </button>
 
-                    <!-- <a href="{{ url()->previous() }}" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                    <!-- <a href="<?php echo e(url()->previous()); ?>" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                         hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
                         <i class="fa-solid fa-arrow-left"></i>                    
                     </a> -->
@@ -172,24 +174,28 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($mappedLedgers as $ledger)
+                        <?php $__empty_1 = true; $__currentLoopData = $mappedLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr class="border-b border-slate-700">
                             <td class="p-1">
-                                {{ $ledger->strCustomerName }}
+                                <?php echo e($ledger->strCustomerName); ?>
+
                             </td>
                             <td class="p-1">
-                                {{ $ledger->CGSTLedgerName }}
+                                <?php echo e($ledger->CGSTLedgerName); ?>
+
                             </td>
                             <td class="p-1">
-                                {{ $ledger->SGSTLedgerName }}
+                                <?php echo e($ledger->SGSTLedgerName); ?>
+
                             </td>
                             <td class="p-1">
-                                {{ $ledger->IGSTLedgerName }}
+                                <?php echo e($ledger->IGSTLedgerName); ?>
+
                             </td>
                             <td class="p-1">
-                                <button data-ledger="{{ $ledger->iLedgerId }}" data-cgst="{{ $ledger->CGSTLedgerId }}" data-sgst="{{ $ledger->SGSTLedgerId }}" data-igst="{{ $ledger->IGSTLedgerId }}"
+                                <button data-ledger="<?php echo e($ledger->iLedgerId); ?>" data-cgst="<?php echo e($ledger->CGSTLedgerId); ?>" data-sgst="<?php echo e($ledger->SGSTLedgerId); ?>" data-igst="<?php echo e($ledger->IGSTLedgerId); ?>"
                                     class="editMapping rounded-full bg-blue-100 p-1.5 sm:p-2 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-800"
-                                    data-id="{{ $ledger->iLedgerId }}" title="Edit Mapping">
+                                    data-id="<?php echo e($ledger->iLedgerId); ?>" title="Edit Mapping">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
                                     viewBox="0 0 24 24">
                                     <g fill="none" stroke="currentColor" stroke-linecap="round"
@@ -203,7 +209,7 @@
                                 </button>
                                 <button
                                     class="deleteMapping rounded-full bg-rose-100 p-1.5 sm:p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
-                                    data-id="{{ $ledger->iLedgerId }}" title="Delete Mapping">
+                                    data-id="<?php echo e($ledger->iLedgerId); ?>" title="Delete Mapping">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="1em"
                                         height="1em" viewBox="0 0 24 24">
                                         <path fill="currentColor"
@@ -212,14 +218,14 @@
                                 </button>
                             </td>
                         </tr>
-                        @empty
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="5"
                                 class="text-center p-8 text-gray-400">
                                 No GST Mapping Found
                             </td>
                         </tr>
-                        @endforelse
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -247,23 +253,23 @@
             </thead>
 
             <tbody>
-                @forelse($mappedItems as $item)
+                <?php $__empty_1 = true; $__currentLoopData = $mappedItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
 
                 <tr class="border-b border-slate-700">
-                    <td class="p-1">{{ $item->strItemName }}</td>
-                    <td class="p-1">{{ $item->CGSTLedgerName }}</td>
-                    <td class="p-1">{{ $item->SGSTLedgerName }}</td>
-                    <td class="p-1">{{ $item->IGSTLedgerName }}</td>
+                    <td class="p-1"><?php echo e($item->strItemName); ?></td>
+                    <td class="p-1"><?php echo e($item->CGSTLedgerName); ?></td>
+                    <td class="p-1"><?php echo e($item->SGSTLedgerName); ?></td>
+                    <td class="p-1"><?php echo e($item->IGSTLedgerName); ?></td>
 
                     <td class="p-1">
 
                         <button
                             class="editItemMapping rounded-full bg-blue-100 p-1.5 sm:p-2 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-800" title="Edit"
-                            data-item="{{ $item->iStockIdtemId }}"
-                            data-itemname="{{ $item->strItemName }}"
-                            data-cgst="{{ $item->CGSTLedgerId }}"
-                            data-sgst="{{ $item->SGSTLedgerId }}"
-                            data-igst="{{ $item->IGSTLedgerId }}">
+                            data-item="<?php echo e($item->iStockIdtemId); ?>"
+                            data-itemname="<?php echo e($item->strItemName); ?>"
+                            data-cgst="<?php echo e($item->CGSTLedgerId); ?>"
+                            data-sgst="<?php echo e($item->SGSTLedgerId); ?>"
+                            data-igst="<?php echo e($item->IGSTLedgerId); ?>">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
                                 viewBox="0 0 24 24">
                                 <g fill="none" stroke="currentColor" stroke-linecap="round"
@@ -278,7 +284,7 @@
 
                         <button
                             class="deleteItemMapping rounded-full bg-rose-100 p-1.5 sm:p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800" title="Delete"
-                            data-id="{{ $item->iStockIdtemId }}">
+                            data-id="<?php echo e($item->iStockIdtemId); ?>">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em"
                                         height="1em" viewBox="0 0 24 24">
                                         <path fill="currentColor"
@@ -290,7 +296,7 @@
 
                 </tr>
 
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
 
                 <tr>
                     <td colspan="5" class="text-center p-4">
@@ -298,7 +304,7 @@
                     </td>
                 </tr>
 
-                @endforelse
+                <?php endif; ?>
             </tbody>
 
         </table>
@@ -320,8 +326,8 @@
             </button>
         </div>
         <form id="mappingForm">
-            @csrf
-            <input type="hidden" name="guid" value="{{ $user->guid }}">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="guid" value="<?php echo e($user->guid); ?>">
             <!-- Body -->
             <div class="gst-modal-body p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -337,11 +343,12 @@
                                 text-slate-800 dark:text-white px-3 py-2">
                             <!-- <option value="">Select Ledger</option> -->
 
-                            @foreach($availableLedgers as $ledger)
-                            <option value="{{ $ledger->iLedgerId }}" data-available="true">
-                                {{ $ledger->strCustomerName }}
+                            <?php $__currentLoopData = $availableLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>" data-available="true">
+                                <?php echo e($ledger->strCustomerName); ?>
+
                             </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                     <!-- CGST -->
@@ -356,11 +363,12 @@
                                 text-slate-800 dark:text-white px-3 py-2">
                             <option value="">Select CGST</option>
 
-                            @foreach($cgstLedgers as $ledger)
-                            <option value="{{ $ledger->iLedgerId }}">
-                                {{ $ledger->strCustomerName }}
+                            <?php $__currentLoopData = $cgstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
                             </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                     <!-- SGST -->
@@ -375,11 +383,12 @@
                                 text-slate-800 dark:text-white px-3 py-2">
                             <option value="">Select SGST</option>
 
-                            @foreach($sgstLedgers as $ledger)
-                            <option value="{{ $ledger->iLedgerId }}">
-                                {{ $ledger->strCustomerName }}
+                            <?php $__currentLoopData = $sgstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
                             </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                     <!-- IGST -->
@@ -394,11 +403,12 @@
                                 text-slate-800 dark:text-white px-3 py-2">
                             <option value="">Select IGST</option>
 
-                            @foreach($igstLedgers as $ledger)
-                            <option value="{{ $ledger->iLedgerId }}">
-                                {{ $ledger->strCustomerName }}
+                            <?php $__currentLoopData = $igstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
                             </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                 </div>
@@ -441,11 +451,12 @@
                                 bg-white dark:bg-slate-800
                                 text-slate-800 dark:text-white px-3 py-2">
                         <!-- <option value="">Select Item</option> -->
-                        @foreach($availableItems as $item)
-                            <option value="{{ $item->iStockIdtemId }}" data-available="true">
-                                {{ $item->strItemName }}
+                        <?php $__currentLoopData = $availableItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($item->iStockIdtemId); ?>" data-available="true">
+                                <?php echo e($item->strItemName); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div>
@@ -454,11 +465,12 @@
                                 bg-white dark:bg-slate-800
                                 text-slate-800 dark:text-white px-3 py-2">
                         <option value="">Select</option>
-                        @foreach($cgstLedgers as $ledger)
-                            <option value="{{ $ledger->iLedgerId }}">
-                                {{ $ledger->strCustomerName }}
+                        <?php $__currentLoopData = $cgstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div>
@@ -467,11 +479,12 @@
                                 bg-white dark:bg-slate-800
                                 text-slate-800 dark:text-white px-3 py-2">
                         <option value="">Select</option>
-                        @foreach($sgstLedgers as $ledger)
-                            <option value="{{ $ledger->iLedgerId }}">
-                                {{ $ledger->strCustomerName }}
+                        <?php $__currentLoopData = $sgstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div>
@@ -480,11 +493,12 @@
                                 bg-white dark:bg-slate-800
                                 text-slate-800 dark:text-white px-3 py-2">
                         <option value="">Select</option>
-                        @foreach($igstLedgers as $ledger)
-                            <option value="{{ $ledger->iLedgerId }}">
-                                {{ $ledger->strCustomerName }}
+                        <?php $__currentLoopData = $igstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
             </div>
@@ -500,8 +514,8 @@
     </div>
 </div>
 
-@endsection
-@push('scripts')
+<?php $__env->stopSection(); ?>
+<?php $__env->startPush('scripts'); ?>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $('#is_item_wise').change(function(){
@@ -539,11 +553,11 @@ $('#item_id').select2({
 
 $('#saveRoundoffSetting').click(function () {
     $.ajax({
-        url: "{{ route('clients.updateRoundoffSetting') }}",
+        url: "<?php echo e(route('clients.updateRoundoffSetting')); ?>",
         type: "POST",
         data: {
-            _token: "{{ csrf_token() }}",
-            guid: "{{ $user->guid }}",
+            _token: "<?php echo e(csrf_token()); ?>",
+            guid: "<?php echo e($user->guid); ?>",
             roundoff_side: $('#roundoff_side').val(),
             roundoff_ledger_id: $('#roundoff_ledger_id').val()
         },
@@ -623,11 +637,11 @@ $(document).ready(function () {
 $('#saveMapping').click(function () {
 
     $.ajax({
-        url: "{{ route('clients.saveGstMapping') }}",
+        url: "<?php echo e(route('clients.saveGstMapping')); ?>",
         type: "POST",
         data: {
-            _token: "{{ csrf_token() }}",
-            guid: "{{ $user->guid }}",
+            _token: "<?php echo e(csrf_token()); ?>",
+            guid: "<?php echo e($user->guid); ?>",
             ledger_ids: $('#ledger_id').val(),
             cgst_id: $('#cgst_id').val(),
             sgst_id: $('#sgst_id').val(),
@@ -649,10 +663,10 @@ $(document).on('click','.deleteMapping',function(){
     }
     let ledgerId = $(this).data('id');
     $.ajax({
-        url: "{{ route('clients.deleteGstMapping', ':id') }}".replace(':id', ledgerId),
+        url: "<?php echo e(route('clients.deleteGstMapping', ':id')); ?>".replace(':id', ledgerId),
         type: 'DELETE',
         data: {
-            _token: '{{ csrf_token() }}'
+            _token: '<?php echo e(csrf_token()); ?>'
         },
         success: function(res){
             if(res.success){
@@ -692,11 +706,11 @@ $(document).ready(function () {
 $('#saveItemMapping').click(function(){
 
     $.ajax({
-        url: "{{ route('clients.saveItemGstMapping') }}",
+        url: "<?php echo e(route('clients.saveItemGstMapping')); ?>",
         type: "POST",
         data: {
-            _token: "{{ csrf_token() }}",
-            guid: "{{ $user->guid }}",
+            _token: "<?php echo e(csrf_token()); ?>",
+            guid: "<?php echo e($user->guid); ?>",
             item_ids: $('#item_id').val(),
             cgst_id: $('#item_cgst_id').val(),
             sgst_id: $('#item_sgst_id').val(),
@@ -732,11 +746,11 @@ $(document).on('click','.deleteItemMapping',function(){
     }
     let itemId = $(this).data('id');
     $.ajax({
-        url: "{{ route('clients.deleteItemGstMapping', ':id') }}"
+        url: "<?php echo e(route('clients.deleteItemGstMapping', ':id')); ?>"
                 .replace(':id', itemId),
         type: 'DELETE',
         data: {
-            _token: '{{ csrf_token() }}'
+            _token: '<?php echo e(csrf_token()); ?>'
         },
         success: function(res){
             if(res.success){
@@ -750,4 +764,6 @@ $(document).on('click','.deleteItemMapping',function(){
     });
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/clients/settings/gst/index.blade.php ENDPATH**/ ?>

@@ -158,7 +158,7 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
 
         // List page
         Route::get('/debit-notes', [\App\Http\Controllers\DebitNoteController::class, 'index'])->name('dn.index');
-        Route::get('/debit-notes/upload',   [\App\Http\Controllers\DebitNoteController::class, 'uploadForm'])->name('dn.upload.form');
+        // Route::get('/debit-notes/upload',   [\App\Http\Controllers\DebitNoteController::class, 'uploadForm'])->name('dn.upload.form');
         Route::post('/debit-notes/upload',  [\App\Http\Controllers\DebitNoteController::class, 'upload'])->name('dn.upload');
         Route::get('/debit-notes/{id}',     [\App\Http\Controllers\DebitNoteController::class, 'show'])->name('dn.show');
         Route::get('/debit-preview/{id}',     [\App\Http\Controllers\DebitNoteController::class, 'preview'])->name('dn.preview');
