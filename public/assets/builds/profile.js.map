@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../javascript/profile.js"],
+  "sourcesContent": ["document.addEventListener(\"DOMContentLoaded\", function () {\n  const imageInput = document.getElementById(\"imageUpload\");\n  // Only proceed if the element exists\n  if (imageInput) {\n    const preview = document.getElementById(\"imagePreview\");\n    const placeholder = document.getElementById(\"placeholder\");\n    imageInput.addEventListener(\"change\", function (event) {\n      const file = event.target.files[0];\n      if (file && file.type.match(\"image.*\")) {\n        const reader = new FileReader();\n        reader.onload = function (e) {\n          preview.src = e.target.result;\n          preview.classList.remove(\"hidden\");\n          if (placeholder) placeholder.classList.add(\"hidden\");\n        };\n        reader.readAsDataURL(file);\n      }\n    });\n  }\n});"],
+  "mappings": ";AAAA,SAAS,iBAAiB,oBAAoB,WAAY;AACxD,QAAM,aAAa,SAAS,eAAe,aAAa;AAExD,MAAI,YAAY;AACd,UAAM,UAAU,SAAS,eAAe,cAAc;AACtD,UAAM,cAAc,SAAS,eAAe,aAAa;AACzD,eAAW,iBAAiB,UAAU,SAAU,OAAO;AACrD,YAAM,OAAO,MAAM,OAAO,MAAM,CAAC;AACjC,UAAI,QAAQ,KAAK,KAAK,MAAM,SAAS,GAAG;AACtC,cAAM,SAAS,IAAI,WAAW;AAC9B,eAAO,SAAS,SAAU,GAAG;AAC3B,kBAAQ,MAAM,EAAE,OAAO;AACvB,kBAAQ,UAAU,OAAO,QAAQ;AACjC,cAAI,YAAa,aAAY,UAAU,IAAI,QAAQ;AAAA,QACrD;AACA,eAAO,cAAc,IAAI;AAAA,MAC3B;AAAA,IACF,CAAC;AAAA,EACH;AACF,CAAC;",
+  "names": []
+}

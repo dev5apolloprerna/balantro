@@ -1,0 +1,1 @@
+<span class="inline-flex items-center px-2 md:px-4 py-1.5 text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">…</span>

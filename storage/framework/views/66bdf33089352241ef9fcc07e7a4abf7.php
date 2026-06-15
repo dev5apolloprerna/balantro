@@ -1,0 +1,1385 @@
+<?php $__env->startSection('title', 'Balance Sheet'); ?>
+
+<?php $__env->startSection('content'); ?>
+<?php
+/* ============================================
+   SIMPLE & SAFE BALANCE SHEET LOGIC
+   ============================================ */
+
+$payload = $data ?? ($resp['data'] ?? []);
+$rows = collect($payload['rows'] ?? []);
+
+$drRows = $rows->where('Side', 'DR');
+$crRows = $rows->where('Side', 'CR');
+
+/* Totals */
+$totalAssets = 0;
+$totalCr     = 0;
+$liabs       = 0;
+$equity      = 0;
+
+/* Helpers */
+$displayAmountDr = fn($v) => abs((float)$v);
+$displayAmount = fn($v) => (float)$v;
+//$inr = fn($v) => number_format(abs((float)$v), 2, '.', ',');
+$inr = fn($v) => number_format((float)$v, 2, '.', ',');
+/* Asset breakdown (design dependency) */
+$currentAssetsWithoutStock = 0;
+$fixedAssets               = 0;
+$investments               = 0;
+$otherAssets               = 0;
+
+/* Liability breakdown (design dependency) */
+$currentLiabilities  = 0;
+$longTermLiabilities = 0;
+$otherLiabilities    = 0;
+
+/* ============================================
+   CALCULATE ASSETS (DR)
+   ============================================ */
+
+foreach ($drRows as $r) {
+    //$totalAssets += abs((float)$r->decMainAmount);
+    $amount = (float) ($r->decMainAmount ?? 0);
+    if ($amount > 0) {
+        $totalAssets += -1 * $r->decMainAmount;
+    } else {
+        $totalAssets += $displayAmountDr($r->decMainAmount ?? 0);
+    }
+}
+
+$fixedAssets = 0;
+$investments = 0;
+
+foreach ($drRows as $r) {
+    //$amt = abs((float)$r->decMainAmount);
+    if (str_contains($r->strGroupName, 'Fixed Assets')) {
+        $fixedAssets +=  -1 * (float)$r->decMainAmount;
+    }
+
+    if (str_contains($r->strGroupName, 'Investment')) {
+        $investments +=  -1 * (float)$r->decMainAmount;
+    }
+}
+
+/* ============================================
+   CALCULATE LIABILITIES & EQUITY (CR)
+   ============================================ */
+$currentLiabilities  = 0;
+$longTermLiabilities = 0;
+$otherLiabilities    = 0;
+$capitalAccount = 0;
+foreach ($crRows as $r) {
+    $amt = (float)$r->decMainAmount;
+    
+    $totalCr += $amt;
+
+    if (in_array($r->strGroupName, ['Capital Account', 'Profit & Loss A/c'])) {
+        $equity += $amt;
+    } else {
+        $liabs += $amt;
+    }
+
+    if (str_contains($r->strGroupName, 'Current Liabilities')) {
+        $currentLiabilities += $amt;
+    }
+    elseif (str_contains($r->strGroupName, 'Loans')) {
+        $longTermLiabilities += $amt;
+    } elseif (str_contains($r->strGroupName, 'Capital Account')) {
+        $capitalAccount += $amt;
+    }elseif (str_contains($r->strGroupName, 'Profit & Loss A/c')) {
+        $capitalAccount += $amt;
+    } else {
+        $otherLiabilities += $amt;
+    }
+}
+/* ============================================
+   BALANCE CHECK
+   ============================================ */
+$balanceDiff = round($totalAssets - $totalCr, 2);
+
+/* ============================================
+   OPTIONAL (keep existing vars used in design)
+   ============================================ */
+$assets = $totalAssets;
+?>
+<?php
+/* ============================================
+   DEFAULT VALUES (REQUIRED FOR EXISTING DESIGN)
+   ============================================ */
+
+/* Closing stock */
+$closingStockAmount  = $payload['totals']['closing_stock'] ?? 0;
+$closingStockDisplay = abs((float)$closingStockAmount);
+
+
+?>
+
+<?php
+/* ============================================
+   CALCULATE CURRENT ASSETS (GROUP LEVEL)
+   ============================================ */
+
+$currentAssetsWithoutStock = 0;
+$iPrimaryGroupIdcurrentAsset = 0;
+foreach ($drRows as $r) {
+    if (str_contains($r->strGroupName, 'Current Assets')) {
+        $currentAssetsWithoutStock += abs((float)$r->decMainAmount);
+        $iPrimaryGroupIdcurrentAsset = $r->iPrimaryGroupId;
+    }
+}
+?>
+
+<?php
+
+$otherAssets = max(
+    0,
+    $assets
+    - $currentAssetsWithoutStock
+    - $fixedAssets
+    - $investments
+    - $closingStockDisplay
+);
+
+?>
+<?php
+    $differenceAmount = abs($balanceDiff);
+
+    $showDiffOnAssetSide = $totalAssets < $totalCr;
+    $showDiffOnLiabilitySide = $totalCr < $totalAssets;
+?>
+    <div class="container py-3">
+        <div class="flex items-center justify-between">
+            <?php
+                $queryParams = array_merge(request()->query(), [
+                    'from' => request('from', $from ?? ''),
+                    'to' => request('to', $to ?? ''),
+                    'range' => request('range', $rangeSel ?? ''),
+                ]);
+                $periodText = function () use ($from, $to, $rangeSel) {
+                    $f = date('d-m-Y', strtotime($from ?? request('from')));
+                    $t = date('d-m-Y', strtotime($to ?? request('to')));
+                    if ($f || $t) {
+                        return trim(($f ?: '—') . ' to ' . ($t ?: '—'));
+                    }
+                    // Add more cases as needed
+                    return '';
+                };
+            ?>
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Balance Sheet</h1>
+                <?php
+                    $asOnText = '';
+
+                    /* if ($rangeSel === 'current_year') {
+                        $asOnText = 'Balance Sheet as on ' . date('d-m-Y');
+                    } elseif ($rangeSel === 'last_year') {
+                        $asOnText = 'Balance Sheet as on ' . date('d-m-Y', strtotime($to));
+                    } elseif ($rangeSel === 'custom') { */
+                        $asOnText = 'Balance Sheet as on ' . date('d-m-Y', strtotime($to));
+                    // }
+                ?>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        • <?php echo e($asOnText); ?>
+
+                </p>
+            </div>
+            <div>
+                <div class="export-buttons mb-3">
+                    
+                    <a href="<?php echo e(route('reports.balance-sheet.export-pdf', $queryParams)); ?>" title="Export into PDF"
+                        class="group btn inline-block relative text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                                transition duration-1000 ease-in-out
+                                transition-property: all;
+                                hover:border-[#a78bfa]
+                                hover:shadow-[0_0_15px_#a78bfa]
+                                hover:scale-105
+                                hover:-translate-y-1"
+                        style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">
+                        <i class="fas fa-file-pdf text-black dark:text-white"></i>
+                    </a>
+                    &nbsp;
+                    <a href="<?php echo e(route('reports.balance-sheet.export-excel', $queryParams)); ?>"
+                        title="Export into Excel"
+                        class="group btn inline-block relative text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                                transition duration-1000 ease-in-out
+                                transition-property: all;
+                                hover:border-[#34d399]
+                                hover:shadow-[0_0_15px_#34d399]
+                                hover:scale-105
+                                hover:-translate-y-1"
+                        style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">
+                            
+                            <i class="fas fa-file-excel text-black dark:text-white"></i>
+                        </a>
+                </div>
+            </div>
+        </div>
+        <form method="POST" action="<?php echo e(route('reports.balance_sheet')); ?>" id="filterForm"
+            class="mt-2 rounded-lg p-2 flex flex-wrap items-end gap-3">
+            <?php echo csrf_field(); ?>
+            <?php
+            
+            ?>
+            <div class="relative"
+                x-data="{
+                    open: false,
+                    selected: '<?php echo e($rangeSel ?? 'current_year'); ?>',
+                    options: <?php echo \Illuminate\Support\Js::from(collect($financialYears ?? [])->mapWithKeys(fn ($year) => [(string) $year->iYearId => $year->strYear])->put('custom', 'Custom Date')->all())->toHtml() ?>,
+
+                    init() {
+                        this.$watch('selected', value => {
+                            handleRangeChange(value);
+                        });
+                    }
+                }">
+
+                <label class="block text-xs text-gray-600 dark:text-gray-300 mb-1">Date Range</label>
+
+                <!-- Hidden input -->
+                <!-- <input type="hidden" name="range" :value="selected"> -->
+                 <input type="hidden" id="rangeInput" name="range" x-model="selected">
+
+                <!-- Button -->
+                <button type="button" @click="open = !open"
+                    class="w-full text-left
+                    bg-gradient-to-br from-white/60 to-white/30
+                    dark:from-white/10 dark:to-transparent
+                    backdrop-blur-xl
+                    border border-gray-300/80 dark:border-cyan-400/20
+                    text-gray-900 dark:text-white
+                    rounded-xl px-3 py-2 pr-10 text-sm
+                    focus:outline-none
+                    focus:ring-2 focus:ring-[#22d3ee]
+                    transition-all duration-300">
+
+                    <span x-text="options[selected] ?? 'Select Range'"></span>
+                </button>
+
+                <!-- Arrow -->
+                <div class="mt-2 pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+
+                <!-- Dropdown -->
+                <ul x-show="open" @click.outside="open = false"
+                    x-transition
+                    class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
+
+                    bg-white/10 dark:bg-white/5
+                    backdrop-blur-2xl
+
+                    border border-white/20
+                    ring-1 ring-white/10
+
+                    shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
+                    style="backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+
+                    <!-- Current Year -->
+                    <li>
+                        <?php $__empty_1 = true; $__currentLoopData = $financialYears ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <li>
+                            <button type="button"
+                                @click="
+                                    selected='<?php echo e($financialYear->iYearId); ?>';
+                                    document.getElementById('rangeInput').value='<?php echo e($financialYear->iYearId); ?>';
+                                    open=false;
+                                    handleRangeChange('<?php echo e($financialYear->iYearId); ?>');"
+                                class="w-full text-left px-4 py-2 text-sm
+                            transition-all duration-200
+                            text-gray-800 dark:text-white
+                            hover:bg-black/10 dark:hover:bg-white/10
+                            hover:text-[#22d3ee]"
+                                :class="selected == '<?php echo e($financialYear->iYearId); ?>'
+                                ? 'bg-[#22d3ee]/20 text-[#22d3ee]'
+                                : ''">
+                                <?php echo e($financialYear->strYear); ?>
+
+                            </button>
+                        </li>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                        <li>
+                            <span class="block px-4 py-2 text-sm text-gray-500 dark:text-gray-300">No financial years found</span>
+                        </li>
+                    <?php endif; ?>
+                    </li>
+
+                    <!-- Last Year -->
+                    <!-- Custom -->
+                    <li>
+                        <button type="button"
+                            @click="selected = 'custom'; open = false"
+                            class="w-full text-left px-4 py-2 text-sm
+                                transition-all duration-200
+                                text-gray-800 dark:text-white
+                                hover:bg-black/10 dark:hover:bg-white/10
+                                hover:text-[#22d3ee]"
+                            :class="selected === 'custom'
+                                ? 'bg-[#22d3ee]/20 text-[#22d3ee]'
+                                : ''">
+
+                            Custom Date
+                        </button>
+                    </li>
+
+                </ul>
+            </div>
+            <div id="customFromWrap" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>" style="display: none;">
+                <label class="block text-xs text-gray-600 dark:text-gray-300 mb-1">From Date</label>
+                <input type="date" name="from_custom" id="from_custom" value="<?php echo e(request('from')); ?>" min="1900-01-01" max="2099-12-31"
+                    class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
+            </div>
+            <div id="customToWrap" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>">
+                <label class="block text-xs text-gray-600 dark:text-gray-300 mb-1">As on Date</label>
+                <input type="date" name="to_custom" id="to_custom" value="<?php echo e(request('to')); ?>" min="1900-01-01" max="2099-12-31"
+                    class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
+            </div>
+
+            <input type="hidden" name="from" id="from" value="<?php echo e(request('from')); ?>">
+            <input type="hidden" name="to" id="to" value="<?php echo e(request('to')); ?>">
+
+            <div class="flex gap-2 <?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>" id="searchBtn">
+                <button type="submit"
+                    class="rounded-md border border-gray-700 text-black dark:text-white  px-4 py-2 text-sm transition duration-1000 ease-in-out
+                                transition-property: all;
+                                hover:border-[#22d3ee]
+                                hover:shadow-[0_0_15px_#22d3ee]
+                                hover:scale-105
+                                hover:-translate-y-1"
+                                style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);"
+                                >Search</button>
+                <a href="<?php echo e(route('reports.balance_sheet')); ?>"
+                    class="rounded-md border border-gray-700 text-black dark:text-white px-4 py-2 text-sm transition duration-1000 ease-in-out
+                                transition-property: all;
+                                hover:border-[#a78bfa]
+                                hover:shadow-[0_0_15px_#a78bfa]
+                                hover:scale-105
+                                hover:-translate-y-1"
+                                style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">Reset</a>
+            </div>
+        </form>
+
+        <?php if($resp['success'] ?? false): ?>
+            
+           
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <div class="space-y-6">
+                    <!-- <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Balance Sheet Report</h2>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Period: <?php echo e($from); ?> to
+                                <?php echo e($to); ?></p>
+                            <?php if($closingStockAmount > 0): ?>
+                                <p class="text-sm text-green-600 dark:text-green-400">
+                                    <i class="fas fa-box mr-1"></i>Closing Stock as of <?php echo e($to); ?>: ₹<?php echo e($inr($closingStockAmount)); ?>
+
+                                </p>
+                            <?php endif; ?>
+                        </div>
+                    </div> -->
+                    
+                    <div
+                        class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden  shadow-sm">
+                        <div class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-b border-gray-200 dark:border-gray-700">
+                            <h2 class="text-lg font-semibold text-black-700 dark:text-gray-200">Assets</h2>
+                        </div>
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                            
+                            <?php $TotalDr = 0; ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $drRows->where('strGroupName', 'Fixed Assets'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amount = (float) ($r->decMainAmount ?? 0); ?>
+                                <?php if($amount > 0 ): ?>
+                                    <?php $amt = -1 * $r->decMainAmount; ?>
+                                <?php else: ?> 
+                                    <?php $amt = $displayAmountDr($r->decMainAmount ?? 0); ?>
+                                <?php endif; ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                            <?php echo e($inr($amt)); ?>
+
+                                            <?php $TotalDr+= $amt; ?>
+                                        </span>
+                                    </div>
+                                </a>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+
+                            
+                            <?php $__empty_1 = true; $__currentLoopData = $drRows->where('strGroupName', 'Investments'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amount = (float) ($r->decMainAmount ?? 0); ?>
+                                <?php if($amount > 0 ): ?>
+                                    <?php $amt = -1 * $r->decMainAmount; ?>
+                                <?php else: ?> 
+                                    <?php $amt = $displayAmountDr($r->decMainAmount ?? 0); ?>
+                                <?php endif; ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                            <?php echo e($inr($amt)); ?>
+
+                                            <?php $TotalDr+= $amt; ?>
+                                        </span>
+                                    </div>
+                                </a>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+
+                            
+                            <?php if($currentAssetsWithoutStock > 0): ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $iPrimaryGroupIdcurrentAsset, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black">Current Assets</span>
+                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                            <?php echo e($inr($currentAssetsWithoutStock)); ?>
+
+                                            <?php $TotalDr+= $currentAssetsWithoutStock; ?>
+                                        </span>
+                                    </div>
+                                </a>
+                            <?php endif; ?>
+
+                            
+                            <?php if($closingStockAmount > 0): ?>
+                                <div class="block bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border-l-4 border-green-500">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black flex items-center">
+                                            <i class="fas fa-boxes text-green-600 dark:text-green-400 mr-2 text-sm"></i>
+                                            <span class="font-medium">Closing Stock</span>
+                                        </span>
+                                        <span class="font-bold text-green-700 dark:text-green-300 text-lg">
+                                            <?php echo e($inr($closingStockAmount)); ?>
+
+                                            <?php $TotalDr+= $closingStockAmount; ?>
+                                        </span>
+                                    </div>
+                                    <?php if($to): ?>
+                                        <div class="px-4 pb-2">
+                                            <span class="text-xs text-green-600 dark:text-green-400">
+                                                As of <?php echo e($to); ?>
+
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+
+                            
+                            
+                            <?php $__currentLoopData = $drRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php if(!in_array($r->strGroupName, ['Fixed Assets', 'Investments', 'Current Assets'])): ?>
+                                    <?php $amount = (float) ($r->decMainAmount ?? 0); ?>
+                                    <?php if($amount > 0 ): ?>
+                                        <?php $amt = -1 * $r->decMainAmount; ?>
+                                    <?php else: ?> 
+                                        <?php $amt = $displayAmountDr($r->decMainAmount ?? 0); ?>
+                                    <?php endif; ?>
+                                    <?php if(abs($amt) > 0): ?>
+                                        <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                            class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                            <div class="flex items-center justify-between px-4 py-3">
+                                                <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                                <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                                    <?php echo e($inr($amt)); ?>
+
+                                                    <?php $TotalDr+= $amt; ?>
+                                                </span>
+                                            </div>
+                                        </a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            <?php if($showDiffOnAssetSide): ?>
+                                <?php if(abs($differenceAmount) > 0): ?>
+                                <div class="flex items-center justify-between px-4 py-3">
+                                    <span class="text-gray-900 dark:text-white group-hover:text-black">
+                                        Difference in Balance Sheet
+                                    </span>
+
+                                    <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                        <?php echo e($inr($differenceAmount)); ?>
+
+                                    </span>
+                                </div>
+                                <?php endif; ?>
+                                <?php
+                                    $TotalDr += $differenceAmount;
+                                ?>
+                            <?php endif; ?>
+                            <?php if($drRows->isEmpty() && $closingStockAmount == 0): ?>
+                                <div class="px-4 py-3 text-black-500 dark:text-gray-400 text-center">No asset rows.</div>
+                            <?php endif; ?>
+                            
+                        </div>
+                        <div
+                            class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-t border-gray-200 dark:border-gray-700 flex justify-between">
+                            <span class="font-semibold text-black-700 dark:text-gray-300">Total Assets</span>
+                            <span class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($TotalDr)); ?></span>
+                        </div>
+                    </div>
+
+                    
+                    <div
+                        class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden  shadow-sm">
+                        <div class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-b border-gray-200 dark:border-gray-700">
+                            <h2 class="text-lg font-semibold text-black-700 dark:text-gray-200">Liabilities &amp; Equity
+                            </h2>
+                        </div>
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <?php $TotalCr = 0; ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows->where('strGroupName', 'Capital Account'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                <?php if(abs($amt) > 0): ?>
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                        class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                        <div class="flex items-center justify-between px-4 py-3">
+                                            <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                            <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                                <?php echo e($inr($amt)); ?>
+
+                                                <?php $TotalCr+= $amt; ?>
+                                            </span>
+                                        </div>
+                                    </a>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows->where('strGroupName', 'Loans (Liability)'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                <?php if(abs($amt) > 0): ?>
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                        class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                        <div class="flex items-center justify-between px-4 py-3">
+                                            <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                            <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                                <?php echo e($inr($amt)); ?>
+
+                                                <?php $TotalCr+= $amt; ?>
+                                            </span>
+                                        </div>
+                                    </a>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows->where('strGroupName', 'Current Liabilities'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                <?php if(abs($amt) > 0): ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                            <?php echo e($inr($amt)); ?>
+
+                                            <?php $TotalCr+= $amt; ?>
+                                        </span>
+                                    </div>
+                                </a>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows->where('strGroupName', 'Suspense A/c'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                <?php if(abs($amt) > 0): ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                            <?php echo e($inr($amt)); ?>
+
+                                            <?php $TotalCr+= $amt; ?>
+                                        </span>
+                                    </div>
+                                </a>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php if(!in_array($r->strGroupName, ['Capital Account','Loans (Liability)','Current Liabilities','Suspense A/c'])): ?>
+                                    <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                    <?php if(abs($amt) > 0): ?>
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                        class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                        <div class="flex items-center justify-between px-4 py-3">
+                                            <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                            <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                                <?php echo e($inr($amt)); ?>
+
+                                                <?php $TotalCr+= $amt; ?>
+                                            </span>
+                                        </div>
+                                    </a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                <div class="px-4 py-3 text-black-500 dark:text-gray-400 text-center">No liability/equity
+                                    rows.</div>
+                            <?php endif; ?>
+                            <?php if($showDiffOnLiabilitySide): ?>
+                                <?php if(abs($differenceAmount) > 0): ?>    
+                                <div class="flex items-center justify-between px-4 py-3">
+                                    <span class="text-gray-900 dark:text-white group-hover:text-black">
+                                        Difference in Balance Sheet
+                                    </span>
+
+                                    <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                        <?php echo e($inr($differenceAmount)); ?>
+
+                                    </span>
+                                </div>
+                                <?php endif; ?>
+
+                                <?php
+                                    $TotalCr += $differenceAmount;
+                                ?>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div
+                            class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-t border-gray-200 dark:border-gray-700 space-y-2">
+                            <!-- <div class="flex items-center justify-between">
+                                <span class="font-semibold text-gray-700 dark:text-gray-300">Liabilities</span>
+                                <span class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($liabs)); ?></span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-gray-700 dark:text-gray-300">Equity</span>
+                                <span class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($equity)); ?></span>
+                            </div> -->
+                            <div
+                                class="flex items-center justify-between ">
+                                <span class="font-semibold text-black-700 dark:text-gray-300">Total Liabilities & Equity </span>
+                                <!-- <span
+                                    class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($liabs + $equity)); ?></span> -->
+                                    <span
+                                    class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($TotalCr)); ?></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="space-y-6">
+                    <h2 class="text-[#22d3ee] font-semibold dark:text-[#22d3ee] mb-3">Balance Sheet Analysis</h2>
+                    
+                    <div class="space-y-6">
+                        
+                        <!-- <div class=" rounded-xl shadow p-4">
+                            <h3 class="font-semibold mb-3 text-center">Assets vs Liabilities + Equity</h3>
+                            <div class="h-64">
+                                <canvas id="balanceSheetChartOld"></canvas>
+                            </div>
+                            <div class="mt-3 text-center text-sm text-gray-600 dark:text-gray-400">
+                                <div class="flex flex-col space-y-1">
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#34d399] rounded-full mr-1"></span>
+                                        Assets: ₹<?php echo e(number_format($assets, 2)); ?>
+
+                                    </span>
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#22d3ee] rounded-full mr-1"></span>
+                                        Liabilities: ₹<?php echo e(number_format($liabs, 2)); ?>
+
+                                    </span>
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#a78bfa] rounded-full mr-1"></span>
+                                        Equity: ₹<?php echo e(number_format($equity, 2)); ?>
+
+                                    </span>
+                                </div>
+                            </div>
+                        </div> -->
+
+                        <div class="flex items-center gap-10">
+                            <div class="w-[300px] h-[300px]">
+                                <canvas id="balanceSheetChart"></canvas>
+                            </div>
+
+                            <div id="bsLegend" class="flex-1"></div>
+                        </div>
+
+                        
+                        <!-- <div class=" rounded-xl shadow p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold text-center">Breakdown Analysis</h3>
+                                <select id="breakdownType"
+                                    class="rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 text-sm">
+                                    <option value="assets">Assets Breakdown</option>
+                                    <option value="liabilities">Liabilities Breakdown</option>
+                                </select>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="breakdownChart"></canvas>
+                            </div>
+                            <div class="mt-3 text-center text-sm text-gray-600 dark:text-gray-400">
+                                <div id="assetsLegend" class="flex flex-col space-y-1">
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#a78bfa] rounded-full mr-1"></span>
+                                        Current Assets: ₹<?php echo e(number_format($currentAssetsWithoutStock, 2)); ?>
+
+                                    </span>
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#34d399] rounded-full mr-1"></span>
+                                        Closing Stock: ₹<?php echo e(number_format($closingStockDisplay, 2)); ?>
+
+                                    </span>
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#fbbf24] rounded-full mr-1"></span>
+                                        Fixed Assets: ₹<?php echo e(number_format($fixedAssets, 2)); ?>
+
+                                    </span>
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#f472b6] rounded-full mr-1"></span>
+                                        Investments: ₹<?php echo e(number_format($investments, 2)); ?>
+
+                                    </span>
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#60a5fa] rounded-full mr-1"></span>
+                                        Other Assets: ₹<?php echo e(number_format($otherAssets, 2)); ?>
+
+                                    </span>
+                                </div>
+                                <div id="liabilitiesLegend" class="hidden flex-col space-y-1">
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#a78bfa] rounded-full mr-1"></span>
+                                        Current Liabilities: ₹<?php echo e(number_format($currentLiabilities, 2)); ?>
+
+                                    </span>
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#f472b6] rounded-full mr-1"></span>
+                                        Long-term Liabilities: ₹<?php echo e(number_format($longTermLiabilities, 2)); ?>
+
+                                    </span>
+                                    <span class="flex items-center justify-center">
+                                        <span class="inline-block w-3 h-3 bg-[#fbbf24] rounded-full mr-1"></span>
+                                        Other Liabilities: ₹<?php echo e(number_format($otherLiabilities, 2)); ?>
+
+                                    </span>
+                                </div>
+                            </div>
+                        </div> -->
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-[#22d3ee] font-semibold dark:text-[#22d3ee] mb-3">Breakdown Analysis</h3>
+
+                            <!-- <select id="breakdownType" class="glass-input bg-[rgba(10,20,35,0.6)] backdrop-blur-md border border-cyan-500/20 text-white rounded-lg px-3 py-2">
+                                <option value="assets">Assets Breakdown</option>
+                                <option value="liabilities">Liabilities Breakdown</option>
+                            </select> -->
+                            <div class="relative"
+                                    x-data="{
+                                        open: false,
+                                        selected: 'assets',
+                                        options: {
+                                            'assets': 'Assets Breakdown',
+                                            'liabilities': 'Liabilities Breakdown'
+                                        },
+
+                                        init() {
+                                            this.$watch('selected', value => {
+                                                updateBreakdown(value);
+                                            });
+                                        }
+                                    }">
+
+                                    <!-- Hidden input (optional if needed in form) -->
+                                    <input type="hidden" id="breakdownType" :value="selected">
+
+                                    <!-- Button -->
+                                    <button type="button" @click="open = !open"
+                                        class="w-full text-left
+                                        bg-gradient-to-br from-white/60 to-white/30
+                                        dark:from-white/10 dark:to-transparent
+                                        backdrop-blur-xl
+                                        border border-gray-300/80 dark:border-cyan-400/20
+                                        text-gray-900 dark:text-white
+                                        rounded-xl px-3 py-2 pr-10 text-sm
+                                        focus:outline-none
+                                        focus:ring-2 focus:ring-[#22d3ee]
+                                        transition-all duration-300">
+
+                                        <span x-text="options[selected] ?? 'Select Range'"></span>
+                                    </button>
+
+                                    <!-- Arrow -->
+                                    <div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300">
+                                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                                    </div>
+
+                                    <!-- Dropdown -->
+                                    <ul x-show="open" @click.outside="open = false"
+                                        x-transition
+                                        class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
+                                        bg-white/10 dark:bg-white/5
+                                        backdrop-blur-2xl
+                                        border border-white/20
+                                        ring-1 ring-white/10
+                                        shadow-[0_8px_40px_rgba(0,0,0,0.4)]">
+
+                                        <!-- Assets -->
+                                        <li>
+                                            <button type="button"
+                                                @click="selected = 'assets'; open = false"
+                                                class="w-full text-left px-4 py-2 text-sm
+                                                    text-gray-800 dark:text-white
+                                                    hover:bg-black/10 dark:hover:bg-white/10
+                                                    hover:text-[#22d3ee]"
+                                                :class="selected === 'assets'
+                                                    ? 'bg-[#22d3ee]/20 text-[#22d3ee]'
+                                                    : ''">
+                                                Assets Breakdown
+                                            </button>
+                                        </li>
+
+                                        <!-- Liabilities -->
+                                        <li>
+                                            <button type="button"
+                                                @click="selected = 'liabilities'; open = false"
+                                                class="w-full text-left px-4 py-2 text-sm
+                                                    text-gray-800 dark:text-white
+                                                    hover:bg-black/10 dark:hover:bg-white/10
+                                                    hover:text-[#22d3ee]"
+                                                :class="selected === 'liabilities'
+                                                    ? 'bg-[#22d3ee]/20 text-[#22d3ee]'
+                                                    : ''">
+                                                Liabilities Breakdown
+                                            </button>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                        </div>
+
+                        <div class="flex items-center gap-10">
+                            <div class="w-[300px] h-[300px]">
+                                <canvas id="breakdownChart"></canvas>
+                            </div>
+
+                            <div id="breakdownLegend" class="flex-1"></div>
+                        </div>
+                    </div>
+
+                    
+                    <?php if($closingStockAmount > 0): ?>
+                        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="font-semibold text-green-800 dark:text-green-300 flex items-center">
+                                        <i class="fas fa-boxes mr-2"></i>
+                                        Closing Stock Summary
+                                    </h3>
+                                    <p class="text-sm text-green-600 dark:text-green-400 mt-1">
+                                        As of <?php echo e($to); ?>
+
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-green-700 dark:text-green-300">
+                                        ₹<?php echo e($inr($closingStockAmount)); ?>
+
+                                    </div>
+                                    <div class="text-sm text-green-600 dark:text-green-400">
+                                        <?php echo e(number_format(($closingStockAmount / $assets) * 100, 1)); ?>% of Total Assets
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+           
+        <?php else: ?>
+            <div class="mt-4 rounded-md bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-800 dark:text-red-300">
+                <?php echo e($resp['message'] ?? 'Failed to load'); ?>
+
+            </div>
+        <?php endif; ?>
+    </div>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        window.financialYearOptions = <?php echo json_encode(collect($financialYears ?? [])->mapWithKeys(fn ($year) => [(string) $year->iYearId => $year->strYear])->all(), 15, 512) ?>;
+
+        // Initialize Pie Charts
+        let breakdownChart; 
+        const currentAssetsWithoutStock = <?php echo e($currentAssetsWithoutStock ?? 0); ?>;
+        const closingStock = <?php echo e($closingStockDisplay ?? 0); ?>;
+        const fixedAssets = <?php echo e($fixedAssets ?? 0); ?>;
+        const investments = <?php echo e($investments ?? 0); ?>;
+        const otherAssets = <?php echo e($otherAssets ?? 0); ?>;
+
+        const currentLiabilities = <?php echo e($currentLiabilities ?? 0); ?>;
+        const longTermLiabilities = <?php echo e($longTermLiabilities ?? 0); ?>;
+        const otherLiabilities = <?php echo e($otherLiabilities ?? 0); ?>;
+        const capitalAccount = <?php echo e($capitalAccount ?? 0); ?>;
+        document.addEventListener('DOMContentLoaded', function() {
+            
+
+            // Chart instances
+            let balanceSheetChart;
+
+            // Breakdown Chart
+            const breakdownCtx = document.getElementById('breakdownChart').getContext('2d');
+            const breakdowncolors = ['#a78bfa', '#34d399', '#fbbf24', '#f472b6', '#60a5fa'];
+            // Initial breakdown chart (Assets Breakdown by default)
+            breakdownChart = new Chart(breakdownCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Current Assets', 'Closing Stock', 'Fixed Assets', 'Investments', 'Other Assets'],
+                    // datasets: [{
+                    //     data: [currentAssetsWithoutStock, closingStock, fixedAssets, investments, otherAssets],
+                    //     backgroundColor: ['#a78bfa', '#34d399', '#fbbf24', '#f472b6', '#60a5fa'],
+                    //     borderColor: 'rgba(0,0,0,0.15)',
+                    //     borderWidth: 1.5,
+                    // }]
+                    datasets: [{
+                        data: [currentAssetsWithoutStock, closingStock, fixedAssets, investments, otherAssets],
+                        backgroundColor: (ctx) => {
+                            const chart = ctx.chart;
+                            const { ctx: c, chartArea } = chart;
+                            if (!chartArea) return;
+
+                            return breakdowncolors.map(color => {
+                                const gradient = c.createLinearGradient(
+                                    0,
+                                    chartArea.top,
+                                    0,
+                                    chartArea.bottom
+                                );
+
+                                gradient.addColorStop(0, color + 'FF');
+                                gradient.addColorStop(0.4, color + 'AA');
+                                gradient.addColorStop(0.7, color + '55');
+                                gradient.addColorStop(1, color + '10');
+
+                                return gradient;
+                            });
+                        },
+                        borderColor: breakdowncolors, //'rgba(0,0,0,0.15)',
+                        borderWidth: 1.5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            usePointStyle: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = currentAssetsWithoutStock + closingStock + fixedAssets + investments + otherAssets;
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) :
+                                        '0.0';
+                                    return `${context.label}: ₹${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                },
+                cutout: '70%',
+                radius: '90%',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: {
+                            borderWidth: 3,
+                            tension: 0.45
+                        },
+                        point: {
+                            radius: 0,
+                            hoverRadius: 6
+                        }
+                    },
+                    cutout: '65%',
+                    radius: '85%',
+                    layout: {
+                        padding: 10
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            renderLegend(
+                'breakdownLegend',
+                breakdownChart.data.labels,
+                breakdownChart.data.datasets[0].data,
+                breakdownChart.data.datasets[0].backgroundColor
+            );
+            
+        });
+
+        function updateBreakdown(type) {
+            if (!breakdownChart) return;
+
+            let colors, labels, data;
+
+            if (type === 'assets') {
+                labels = ['Current Assets', 'Closing Stock', 'Fixed Assets', 'Investments', 'Other Assets'];
+                data = [currentAssetsWithoutStock, closingStock, fixedAssets, investments, otherAssets];
+                colors = ['#a78bfa', '#34d399', '#fbbf24', '#f472b6', '#60a5fa'];
+            } else {
+                labels = ['Current Liabilities', 'Long-term Liabilities', 'Capital Account', 'Other Liabilities'];
+                data = [currentLiabilities, longTermLiabilities, capitalAccount, otherLiabilities];
+                colors = ['#a78bfa', '#34d399', '#fbbf24','#f472b6',];
+            }
+
+            // breakdownChart.data.labels = labels;
+            // breakdownChart.data.datasets[0].data = data;
+            const filtered = labels.map((label, i) => ({
+                label,
+                value: data[i],
+                color: colors[i]
+            })).filter(item => Number(item.value) > 0);
+
+            breakdownChart.data.labels = filtered.map(x => x.label);
+            breakdownChart.data.datasets[0].data = filtered.map(x => x.value);
+
+            colors = filtered.map(x => x.color);
+
+            // 🔥 APPLY SAME GRADIENT EFFECT
+            breakdownChart.data.datasets[0].backgroundColor = (ctx) => {
+                const chart = ctx.chart;
+                const { ctx: c, chartArea } = chart;
+
+                if (!chartArea) return;
+
+                return colors.map(color => {
+                    const gradient = c.createLinearGradient(
+                        0,
+                        chartArea.top,
+                        0,
+                        chartArea.bottom
+                    );
+
+                    gradient.addColorStop(0, color + 'FF');
+                    gradient.addColorStop(0.4, color + 'AA');
+                    gradient.addColorStop(0.7, color + '55');
+                    gradient.addColorStop(1, color + '10');
+
+                    return gradient;
+                });
+            };
+
+            renderLegend(
+                'breakdownLegend',
+                labels,
+                data,
+                colors // legend still uses solid colors
+            );
+
+            breakdownChart.update();
+        }
+
+        let assets = Math.abs(Number(<?php echo e($assets ?? 0); ?>));
+        // Liabilities
+        let liabilities = Number(<?php echo e($liabs); ?>);
+        // Equity (Capital)
+        let equity = Number(<?php echo e($equity); ?>);
+        // Total for center
+        let totalAssets = assets;
+        console.log('Balance Sheet Data:', {
+            assets,
+            liabilities,
+            equity
+        });
+        const colors = ['#22d3ee', '#fbbf24', '#a78bfa'];
+        // ===== BALANCE SHEET PIE =====
+        new Chart(document.getElementById('balanceSheetChart'), {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    'Assets',
+                    'Liabilities',
+                    'Equity'
+                ],
+                datasets: [{
+                    data: [
+                        assets,
+                        liabilities,
+                        equity
+                    ],
+                    // backgroundColor: [
+                    //     '#22d3ee', // assets (cyan)
+                    //     '#fbbf24', // liabilities (yellow)
+                    //     '#a78bfa' // equity (violet)
+                    // ]
+                    backgroundColor: (ctx) => {
+                    const chart = ctx.chart;
+                    const {
+                        ctx: c,
+                        chartArea
+                    } = chart;
+                    if (!chartArea) return;
+
+                    
+
+                    return colors.map(color => {
+                        const gradient = c.createLinearGradient(0, chartArea.top, 0,
+                            chartArea.bottom);
+
+                        gradient.addColorStop(0, color + 'FF');
+                        gradient.addColorStop(0.4, color + 'AA');
+                        gradient.addColorStop(0.7, color + '55');
+                        gradient.addColorStop(1, color + '10');
+
+                        return gradient;
+                    });
+                },
+                borderColor: colors, //'rgba(0,0,0,0.15)',
+                    borderWidth: 1.5,
+                }]
+            },
+            
+            cutout: '70%',
+            radius: '90%',
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                elements: {
+                    line: {
+                        borderWidth: 3,
+                        tension: 0.45
+                    },
+                    point: {
+                        radius: 0,
+                        hoverRadius: 6
+                    }
+                },
+                cutout: '65%',
+                radius: '85%',
+                layout: {
+                    padding: 10
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+
+        // let bsColors = ['#22d3ee', '#fbbf24', '#a78bfa'];
+        let bsRaw = [
+            { label: 'Assets', value: assets, color: '#22d3ee' },
+            { label: 'Liabilities', value: liabilities, color: '#fbbf24' },
+            { label: 'Equity', value: equity, color: '#a78bfa' }
+        ];
+
+        // ✅ REMOVE 0 VALUES
+        bsRaw = bsRaw.filter(x => Number(x.value) > 0);
+
+        let bsLabels = bsRaw.map(x => x.label);
+        let bsValues = bsRaw.map(x => x.value);
+        let bsColors = bsRaw.map(x => x.color);
+
+        renderLegend('bsLegend', bsLabels, bsValues, bsColors);
+        function renderLegend(containerId, labels, values, colors) {
+
+            let html = '';
+
+            labels.forEach((label, i) => {
+
+                let value = Math.round(Number(values[i] || 0));
+                if (value <= 0) return;
+                html += `
+            <div class="flex flex-col gap-1">
+
+                <!-- LEFT -->
+                <div class="flex items-center gap-2 min-w-0">
+                    <span style="
+                        width:10px;
+                        height:10px;
+                        border-radius:50%;
+                        background:${colors[i]};
+                        display:inline-block;
+                    "></span>
+
+                    <span class="truncate text-black-700 dark:text-gray-300">
+                        ${label}
+                    </span>
+                </div>
+
+                <!-- RIGHT -->
+                <div class="pl-5 font-medium text-black dark:text-white">
+                    ₹ ${value.toLocaleString('en-IN')}
+                </div>
+
+            </div>
+            `;
+            });
+
+            document.getElementById(containerId).innerHTML = html;
+        }
+
+
+        function handleRangeChange(value) {
+
+            const hidFrom = document.getElementById('from');
+            const hidTo = document.getElementById('to');
+
+            const cfWrap = document.getElementById('customFromWrap');
+            const ctWrap = document.getElementById('customToWrap');
+
+            //const btnWrap = document.querySelector('.ml-auto');
+            
+            const pad = n => String(n).padStart(2, '0');
+            const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+            function fyStartYearFor(date) {
+                return date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
+            }
+
+            function fyRange(startYr) {
+                return {
+                    from: new Date(startYr, 3, 1),
+                    to: new Date(startYr + 1, 2, 31)
+                };
+            }
+
+            function financialYearRange(kind) {
+                const match = /^(\d{4})-(\d{4})$/.exec(window.financialYearOptions?.[kind] || '');
+
+                if (!match) return null;
+
+                return {
+                    from: new Date(Number(match[1]), 3, 1),
+                    to: new Date(Number(match[2]), 2, 31)
+                };
+            }
+
+            function computeRange(kind) {
+                const selectedFinancialYear = financialYearRange(kind);
+                if (selectedFinancialYear) return selectedFinancialYear;
+
+                const now = new Date();
+                const fyStartYr = fyStartYearFor(now);
+
+                if (kind === 'current_year') return fyRange(fyStartYr);
+                if (kind === 'last_year') return fyRange(fyStartYr - 1);
+
+                return null;
+            }
+
+            const isCustom = value === 'custom';
+
+            // toggle UI
+            cfWrap.classList.toggle('hidden', !isCustom);
+            ctWrap.classList.toggle('hidden', !isCustom);
+            const btnWrap = document.getElementById('searchBtn');
+
+            
+            // btnWrap.style.display = isCustom ? 'flex' : 'none';
+
+            btnWrap.classList.toggle('hidden', !isCustom);
+            if (!isCustom) {
+                const r = computeRange(value);
+
+                if (r) {
+                    hidFrom.value = fmt(r.from);
+                    hidTo.value = fmt(r.to);
+                }
+
+                // auto submit
+                //document.querySelector('form').submit();
+                document.getElementById('filterForm').submit();
+            } else {
+                hidFrom.value = '';
+                hidTo.value = '';
+            }
+        }
+
+        // document.getElementById('filterForm').addEventListener('submit', function(e) {
+
+        //     const selected = document.querySelector('input[name="range"]').value;
+
+        //     if (selected === 'custom') {
+
+        //         const toC = document.getElementById('to_custom');
+
+        //         if (!toC.value) {
+        //             e.preventDefault();
+        //             alert('Select date');
+        //             return;
+        //         }
+
+        //         // ✅ Balance Sheet logic
+        //         document.getElementById('from').value = '';   // NOT needed
+        //         document.getElementById('to').value = toC.value;
+        //     }
+        // });
+
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+
+            const selected = document.querySelector('input[name="range"]').value;
+
+            if (selected === 'custom') {
+
+                const toC = document.getElementById('to_custom');
+
+                if (!toC.value) {
+                    e.preventDefault();
+                    alert('Select As on Date');
+                    return;
+                }
+
+                // Convert TO date
+                const toDate = new Date(toC.value);
+
+                // Financial year start logic
+                let fyStartYear;
+
+                // April = 3
+                if (toDate.getMonth() >= 3) {
+                    fyStartYear = toDate.getFullYear();
+                } else {
+                    fyStartYear = toDate.getFullYear() - 1;
+                }
+
+                // FY start date
+                const fromDate = `${fyStartYear}-04-01`;
+
+                // Pass hidden fields
+                document.getElementById('from').value = fromDate;
+                document.getElementById('to').value   = toC.value;
+            }
+        });
+
+        function isValidDate(dateString) {
+
+            const parts = dateString.split('/');
+
+            if (parts.length !== 3) return false;
+
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+
+            // JS month starts from 0
+            const date = new Date(year, month - 1, day);
+
+            return (
+                date.getFullYear() === year &&
+                date.getMonth() === month - 1 &&
+                date.getDate() === day
+            );
+        }
+    </script>
+
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views\reports\balance_sheet.blade.php ENDPATH**/ ?>

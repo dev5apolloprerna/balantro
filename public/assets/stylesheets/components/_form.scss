@@ -1,0 +1,134 @@
+/*============================================= Form Css Start =============================================*/
+.form-check-input {
+  @apply h-[15px] w-[15px] border border-neutral-300 rounded-lg dark:bg-black dark:border-neutral-300;
+}
+
+.form-control {
+  @apply border-neutral-300 dark:border-neutral-500 rounded-xl bg-slate-100 dark:bg-transparent px-5 py-2.5 mt-[-5px] w-full text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-white;
+
+  &::placeholder {
+    @apply text-neutral-400 dark:text-neutral-400;
+  }
+
+  &:focus {
+    @apply outline-none ring-[1.5px] ring-blue-500 border-blue-500;
+  }
+
+  &[readonly] {
+    @apply bg-neutral-100 border-neutral-300 dark:bg-neutral-800 dark:border-neutral-600;
+  }
+}
+
+.form-label {
+  @apply text-sm text-neutral-600 inline-block mb-2 dark:text-neutral-200;
+}
+
+.form-select {
+  @apply border-neutral-300 dark:border-neutral-500 rounded-xl bg-slate-100 dark:bg-transparent px-5 py-2.5 mt-[-5px] w-full text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-white;
+
+  option{
+    @apply bg-neutral-100 dark:bg-neutral-800;
+  }
+  
+  &.form-select-sm {
+    @apply ps-3 pe-5 py-1.5 text-sm;
+  }
+}
+
+.icon-field {
+  @apply relative;
+
+  .icon {
+    @apply absolute top-3 start-0 w-10 flex justify-center items-center text-[20px];
+  }
+
+  .form-control {
+    @apply ps-10;
+
+    &.form-control-lg {
+      ~.icon {
+        @apply top-[18px];
+      }
+    }
+
+    &.form-control-sm {
+      ~.icon {
+        @apply top-[10px];
+      }
+    }
+  }
+}
+
+.btn-primary {
+  @apply rounded-xl;
+}
+
+@layer utilities {
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    @apply text-black;
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: black !important;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
+  .dark input:-webkit-autofill,
+  .dark textarea:-webkit-autofill,
+  .dark select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #1f2937 inset !important;
+    -webkit-text-fill-color: white !important;
+  }
+}
+
+.form-error {
+  @apply text-sm mt-1 ps-2 text-red-600;
+
+  .dark & {
+    color: theme('colors.red.400') !important;
+  }
+}
+
+.notice-message {
+  @apply bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6 flex items-start justify-between;
+
+  strong {
+    @apply font-bold text-green-800;
+  }
+
+  span {
+    @apply block sm:inline text-green-700;
+
+    .dark & {
+      color: black !important;
+    }
+  }
+
+  .dark & {
+    @apply bg-green-100 border-green-400 text-black;
+
+    strong {
+      color: black !important;
+    }
+  }
+}
+
+.listing-search input {
+  background-color: white !important;
+}
+
+.listing-search input:where(.dark,.dark *) {
+  background-color: var(--color-neutral-800)!important;
+}
+
+.custom-select-arrow {
+  @apply appearance-none border py-2.5 px-4 pr-10 rounded leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500;
+
+  background-image: url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 10 6'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 1 4 4 4-4'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 0.7rem;
+}

@@ -1,0 +1,7 @@
+@unless ($paginator->currentPage() == $paginator->lastPage())
+    <a href="{{ $url }}" 
+       @if($remote) data-remote="true" @endif
+       class="inline-flex items-center px-3 md:px-4 py-1.5 text-xs md:text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition">
+        {!! __('views.pagination.last') !!}
+    </a>
+@endunless

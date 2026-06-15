@@ -1,0 +1,6 @@
+<?php if($resources->total() > $resources->perPage()): ?>
+  <div class="px-4 py-4 border-t border-neutral-200 dark:border-neutral-700 flex flex-col sm:flex-row sm:justify-end items-center gap-3">
+    <?php echo e($resources->links('vendor.pagination.tailwind')); ?>
+
+  </div>
+<?php endif; ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views\admin\shared\pagination.blade.php ENDPATH**/ ?>

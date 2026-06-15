@@ -1,0 +1,1 @@
+<?php /**PATH D:\xampp\htdocs\balantro\resources\views\__clients\_documents\document.blade.php ENDPATH**/ ?>
