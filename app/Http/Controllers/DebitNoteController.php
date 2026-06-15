@@ -1566,6 +1566,9 @@ class DebitNoteController extends Controller
             'cgst'            => $transaction->cgst,
             'igst'            => $transaction->igst,
             'total_amount'    => $transaction->total_amount,
+            'roundoff'        => $transaction->roundoff ?? 0,
+            'roundoff_id'     => $transaction->roundoff_id,
+            'roundoff_ledger_name' => $transaction->roundoff_ledger_name,
             'status'          => $transaction->status,
 
             // ✅ GST

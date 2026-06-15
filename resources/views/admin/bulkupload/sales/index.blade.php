@@ -723,6 +723,11 @@
                             {{-- rendered by recalcTotals() --}}
                         </div>
 
+                        <div class="tax-row">
+                            <span class="tax-label">Round Off</span>
+                            <span class="tax-value" id="sum_roundoff">0.00</span>
+                        </div>
+
                         <div class="tax-row grand-total-row">
                             <span class="tax-label">GRAND TOTAL</span>
                             <span class="tax-value" id="sum_grand_total">0.00</span>
@@ -735,6 +740,7 @@
                 <input type="hidden" id="edit_sgst">
                 <input type="hidden" id="edit_cgst">
                 <input type="hidden" id="edit_igst">
+                <input type="hidden" id="edit_roundoff">
                 <input type="hidden" id="edit_total_amount">
             </div>
             {{-- RECEIPT FOOTER --}}
@@ -2027,6 +2033,25 @@
             return mapping ? mapping[`${type}_id`] : null;
         }
 
+        function calculateRoundOffAmountForSummary(total) {
+            total = parseFloat(total) || 0;
+            return Math.round((Math.round(total) - total) * 100) / 100;
+        }
+
+        function setRoundOffSummary(total, roundOffAmount = null) {
+            total = parseFloat(total) || 0;
+            let roundOff = roundOffAmount === null || roundOffAmount === undefined
+                ? calculateRoundOffAmountForSummary(total)
+                : (parseFloat(roundOffAmount) || 0);
+            let roundedTotal = total + roundOff;
+
+            $('#sum_roundoff').text(roundOff.toFixed(2));
+            $('#edit_roundoff').val(roundOff.toFixed(2));
+            $('#sum_grand_total').text(roundedTotal.toFixed(2));
+
+            return roundedTotal;
+        }
+
         function findItemGstMapping(itemName = '') {
             let normalizedItem = String(itemName || '').trim().toLowerCase();
             if (!normalizedItem) return null;
@@ -2197,6 +2222,8 @@
             $('#manual_cgst').val() || $('#sum_cgst').html('0.00');
             $('#manual_sgst').val() || $('#sum_sgst').html('0.00');
             $('#manual_igst').val() || $('#sum_igst').html('0.00');
+            $('#sum_roundoff').html('0.00');
+            $('#edit_roundoff').val(0);
             $('#sum_grand_total').html('0.00');
 
             // Clear items
@@ -2725,7 +2752,8 @@
             // UI UPDATE
             // =========================
             $('#sum_amount').text(taxable.toFixed(2));
-            $('#sum_grand_total').text(grandTotal.toFixed(2));
+            //$('#sum_grand_total').text(grandTotal.toFixed(2));
+            setRoundOffSummary(grandTotal);
 
             $('#manual_igst').val(totalIGST.toFixed(2));
             $('#manual_cgst').val(totalCGST.toFixed(2));
@@ -3157,7 +3185,8 @@
                 totalSGST +
                 totalIGST;
 
-            $('#sum_grand_total').html(grandTotal.toFixed(2));
+           // $('#sum_grand_total').html(grandTotal.toFixed(2));
+           setRoundOffSummary(grandTotal);
             $('#edit_total_amount').val(grandTotal.toFixed(2));
         }
 

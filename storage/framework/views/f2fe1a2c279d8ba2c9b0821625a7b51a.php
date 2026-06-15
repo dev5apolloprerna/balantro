@@ -147,6 +147,10 @@
                     <span>IGST</span>
                     <strong id="v_igst"></strong>
                 </div>
+                <div class="box">
+                    <span>Round Off</span>
+                    <strong id="v_roundoff"></strong>
+                </div>
                 <div class="box highlight">
                     <span>Total</span>
                     <strong id="v_total"></strong>

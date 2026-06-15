@@ -264,6 +264,11 @@
                     
                 </div>
 
+                <div class="tax-row">
+                    <span class="tax-label">Round Off</span>
+                    <span class="tax-value" id="sum_roundoff">0.00</span>
+                </div>
+
                 <div class="tax-row grand-total-row">
                     <span class="tax-label">GRAND TOTAL</span>
                     <span class="tax-value" id="sum_grand_total">0.00</span>
@@ -276,6 +281,7 @@
         <input type="hidden" id="edit_sgst">
         <input type="hidden" id="edit_cgst">
         <input type="hidden" id="edit_igst">
+        <input type="hidden" id="edit_roundoff">
         <input type="hidden" id="edit_total_amount">
 
         

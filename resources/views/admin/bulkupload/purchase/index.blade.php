@@ -764,6 +764,11 @@
                             {{-- rendered by recalcTotals() --}}
                         </div>
 
+                        <div class="tax-row">
+                            <span class="tax-label">Round Off</span>
+                            <span class="tax-value" id="sum_roundoff">0.00</span>
+                        </div>
+
                         <div class="tax-row grand-total-row">
                             <span class="tax-label">GRAND TOTAL</span>
                             <span class="tax-value" id="sum_grand_total">0.00</span>
@@ -776,6 +781,7 @@
                 <input type="hidden" id="edit_sgst">
                 <input type="hidden" id="edit_cgst">
                 <input type="hidden" id="edit_igst">
+                <input type="hidden" id="edit_roundoff">
                 <input type="hidden" id="edit_total_amount">
             </div>
             {{-- RECEIPT FOOTER --}}
@@ -2746,7 +2752,8 @@
             let grandTotal = taxable + cgst + sgst + igst;
 
             $('#sum_amount').text(taxable.toFixed(2));
-            $('#sum_grand_total').text(grandTotal.toFixed(2));
+            // $('#sum_grand_total').text(grandTotal.toFixed(2));
+            setRoundOffSummary(grandTotal);
 
             $('#edit_amount').val(taxable.toFixed(2));
             $('#edit_cgst').val(cgst.toFixed(2));
@@ -2837,6 +2844,25 @@
                 cgst_id: item.CGSTLedgerId ? String(item.CGSTLedgerId) : null,
                 sgst_id: item.SGSTLedgerId ? String(item.SGSTLedgerId) : null
             };
+        }
+
+        function calculateRoundOffAmountForSummary(total) {
+            total = parseFloat(total) || 0;
+            return Math.round((Math.round(total) - total) * 100) / 100;
+        }
+
+        function setRoundOffSummary(total, roundOffAmount = null) {
+            total = parseFloat(total) || 0;
+            let roundOff = roundOffAmount === null || roundOffAmount === undefined
+                ? calculateRoundOffAmountForSummary(total)
+                : (parseFloat(roundOffAmount) || 0);
+            let roundedTotal = total + roundOff;
+
+            $('#sum_roundoff').text(roundOff.toFixed(2));
+            $('#edit_roundoff').val(roundOff.toFixed(2));
+            $('#sum_grand_total').text(roundedTotal.toFixed(2));
+
+            return roundedTotal;
         }
 
         function findItemGstMapping(itemName = '') {
