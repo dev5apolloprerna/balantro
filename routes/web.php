@@ -20,6 +20,8 @@ use App\Http\Controllers\{
 use App\Http\Controllers\GstSettingController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\BlogController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 /*
 |--------------------------------------------------------------------------
@@ -396,3 +398,13 @@ Route::get('/insights', [FrontendController::class, 'insights'])->name('insights
 // Route::get('/insight-detail', [FrontendController::class, 'insightDetail'])->name('insight.detail');
 Route::get('/insight-detail/{slugname}', [FrontendController::class, 'insightDetail'])
     ->name('insight.detail');
+
+
+Route::post('/logout-idle', function () {
+    Auth::logout();
+    Session::invalidate();
+    Session::regenerateToken();
+    return response()->json([
+        'success' => true
+    ]);
+})->name('logout.idle');

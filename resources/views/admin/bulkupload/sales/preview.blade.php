@@ -306,6 +306,26 @@
         });
     });
 
+     function resetSalesModalState() {
+        $('#editItemsBody').empty();
+        $('#noItemBody').empty();
+        $('#customSlotsBody').empty();
+        $('#custom_tax_rows').empty();
+        $('#sum_amount, #sum_cgst, #sum_sgst, #sum_igst, #sum_grand_total, #foot_amount, #foot_total').text('0.00');
+        $('#edit_amount, #edit_cgst, #edit_sgst, #edit_igst, #edit_total_amount, #noitem_amount, #noitem_gst_rate').val(0);
+        $('#standard_items_section').show();
+        $('#no_item_section').hide();
+        $('#custom_slots_section').hide();
+        $('#standard_tax_rows').show();
+        $('#custom_tax_rows').hide();
+        $('#addItemRow').show();
+        $('#addNoItemRow').hide();
+        $('#invoice_sales_ledger_wrap').show();
+        $('#igst_toggle_wrap').show();
+        $('#gst_calc_mode').prop('disabled', false).val('standard');
+        $('input[name="entry_mode"][value="item"]').prop('checked', true);
+    }
+
     function openLedgerModal() {
         document.getElementById('ledgerModal').classList.add('show');
     }
@@ -733,6 +753,8 @@
     $(document).on('click', '.viewRow', function() {
         let id = $(this).data('id');
 
+        resetSalesModalState();
+
         // Open same edit modal
         openEditModal();
 
@@ -821,8 +843,10 @@
                     });
                     recalcTotals();
                 } else {
-
+                    $('#editItemsBody').empty();
                     setEntryMode('noitem');
+                    $('#standard_items_section').hide();
+                    $('#no_item_section').show();
                     $('#noItemBody').empty();
 
                     if (res.custom_gst && res.custom_gst.length) {
@@ -917,6 +941,7 @@
     $(document).on('click', '.editRow', function() {
         let btn = $(this),
             id = btn.data('id');
+        resetSalesModalState();
 
         $('#updateRow').show();
         $('#addItemRow').show();
@@ -990,7 +1015,10 @@
                     });
                     recalcTotals();
                 } else {
+                    $('#editItemsBody').empty();
                     setEntryMode('noitem');
+                    $('#standard_items_section').hide();
+                    $('#no_item_section').show();
                     $('#noItemBody').empty();
 
                     if (res.custom_gst && res.custom_gst.length) {

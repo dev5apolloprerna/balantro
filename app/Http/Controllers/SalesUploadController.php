@@ -1010,7 +1010,18 @@ class SalesUploadController extends Controller
     // ── SHOW (used by both View and Edit modals via AJAX) ─────────────────────────
     public function show($id)
     {
-        $transaction = SalesTransaction::with(['items','customGst'])->findOrFail($id);
+        // $transaction = SalesTransaction::with(['items','customGst'])->findOrFail($id);
+        $iPartyId = session('iPartyId');
+        $transaction = SalesTransaction::with([
+            'items' => function ($query) use ($iPartyId) {
+                if ($iPartyId) {
+                    $query->where('iPartyId', $iPartyId);
+                }
+            },
+            'customGst',
+        ])
+            ->when($iPartyId, fn ($query) => $query->where('iPartyId', $iPartyId))
+            ->findOrFail($id);
         $gstMapping = $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger);
         return response()->json([
             'id'              => $transaction->id,
@@ -1036,6 +1047,7 @@ class SalesUploadController extends Controller
             'sgst_id' => $transaction->sgst_id ?: ($gstMapping['sgst_id'] ?? null),
             'gst_mode'  => $transaction->gst_mode,
             'gst_rate'  => $transaction->gst_rate ?: $this->calculateGstRate($transaction),
+            'isWithItem' => (int) $transaction->isWithItem,
 
             'address' => $transaction->address,
             'pincode' => $transaction->pincode,

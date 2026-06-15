@@ -364,6 +364,71 @@
     setTimeout(spawnFaller, rand(1500, 3000));
 })();
 </script>
+<script>
+// Disable Right Click
+// document.addEventListener('contextmenu', function(e) {
+//     e.preventDefault();
+// });
+
+// // Disable F12 and DevTools shortcuts
+// document.addEventListener('keydown', function(e) {
+
+//     // F12
+//     if (e.keyCode === 123) {
+//         e.preventDefault();
+//         return false;
+//     }
+
+//     // Ctrl+Shift+I
+//     if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+//         e.preventDefault();
+//         return false;
+//     }
+
+//     // Ctrl+Shift+J
+//     if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+//         e.preventDefault();
+//         return false;
+//     }
+
+//     // Ctrl+Shift+C
+//     if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+//         e.preventDefault();
+//         return false;
+//     }
+
+//     // Ctrl+U
+//     if (e.ctrlKey && e.keyCode === 85) {
+//         e.preventDefault();
+//         return false;
+//     }
+
+//     // Ctrl+S
+//     if (e.ctrlKey && e.keyCode === 83) {
+//         e.preventDefault();
+//         return false;
+//     }
+// });
+</script>
+<script>
+    let idleTime = 0;
+    setInterval(function () {
+        idleTime++;
+        if (idleTime >= 1) { // 1 minute
+            $.post("{{ route('logout.idle') }}", {
+                _token: "{{ csrf_token() }}"
+            }, function () {
+                window.location.href = "{{ route('login') }}";
+            });
+        }
+    }, 60000); // 60,000 ms = 1 minute
+    $(document).on(
+        'mousemove keypress click scroll touchstart',
+        function () {
+            idleTime = 0;
+        }
+    );
+</script>
 </body>
 
 </html>
