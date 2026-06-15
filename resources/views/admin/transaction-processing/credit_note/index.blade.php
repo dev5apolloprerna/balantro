@@ -153,17 +153,17 @@
                                         {{ $upload->synced ?? '-' }}
                                     </td>
                                     <td class="px-4 py-3">
-                                        @if($upload->status == 'Completed')
+                                        @if($upload->status == 'Completed' || $upload->status == 'completed')
                                         <a href="{{ route('transaction_processing.preview_processing_credit_note',$upload->id) }}"
                                             class="text-green-500 font-semibold hover:underline">
                                             Completed
                                         </a>
-                                        @elseif($upload->status == 'Processing')
+                                        @elseif($upload->status == 'Processing' || $upload->status == 'processing')
                                         <a href="{{ route('transaction_processing.preview_processing_credit_note',$upload->id) }}"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Processing
                                         </a>
-                                        @elseif($upload->status == 'Pending')
+                                        @elseif($upload->status == 'Pending' || $upload->status == 'pending')
                                         <a href="{{ route('transaction_processing.preview_processing_purchase',$upload->id) }}"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Processing

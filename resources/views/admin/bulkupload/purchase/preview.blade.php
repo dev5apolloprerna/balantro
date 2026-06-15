@@ -2312,7 +2312,7 @@ window.addEventListener('load', function () {
             let sOpts = buildLedgerOptions(sGstLedgers, existingSlot?.sgst_ledger || mappedGstLedgerId('sgst', null, data.ledgerId || '', data.ledgerName || '', data.itemMapping || null));
 
             slotHtml += `<tr style="color: black;" class="${isZero ? 'zero-row' : ''}" data-rate="${displayRate}" data-slot-key="${data.slotKey || rate}" data-purchase-ledger-id="${data.ledgerId || ''}" data-item-name="${escapeHtml(data.itemName || '')}">
-                <td><span class="rate-badge"><span class="slot-rate"></span>${displayRate}%</span><br><small style="font-size:9px;color:#6b7280;">Taxable: ${fmt(data.amt)}</small></td>
+                <td><span class="rate-badge"><span class="slot-rate"></span>${displayRate}%</span></td>
                 <td><strong class="slot-taxable">${fmt(data.amt)}</strong><input type="hidden" class="slot_purchase_ledger_id" value="${data.ledgerId || ''}"><input type="hidden" class="slot_item_name" value="${escapeHtml(data.itemName || '')}"></td>
                 <td><select class="slot-igst-ledger" data-rate="${displayRate}">${iOpts}</select></td>
                 <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${parseFloat(igstAmt).toFixed(2)}" step="any"></td>

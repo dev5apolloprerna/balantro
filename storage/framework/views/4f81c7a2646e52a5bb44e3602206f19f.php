@@ -1,1 +1,0 @@
-<?php echo $__env->yieldContent('content'); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views\layouts\mailer.text.blade.php ENDPATH**/ ?>

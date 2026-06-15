@@ -1,1 +1,0 @@
-<?php /**PATH D:\xampp\htdocs\balantro\resources\views\messages\_message_block_for_client.blade.php ENDPATH**/ ?>
