@@ -1751,12 +1751,17 @@ class CreditNoteController extends Controller
             // ===============================
             // FINAL TOTAL
             // ===============================
+            $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
+            $roundOffLedger = $roundOffSetting['ledger'];
             $transaction->update([
                 'taxable_amount' => $sumAmount,
                 'cgst' => $sumCgst,
                 'sgst' => $sumSgst,
                 'igst' => $sumIgst,
                 'total_amount' => $sumAmount + $sumCgst + $sumSgst + $sumIgst,
+                'roundoff_id' => $roundOffLedger?->iLedgerId,
+                'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
+                'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                 'status' => 'saved'
             ]);
 
@@ -2260,12 +2265,17 @@ class CreditNoteController extends Controller
             // =====================================================
             // ✅ FINAL TOTAL UPDATE
             // =====================================================
+            $roundOffSetting = $this->getRoundOffSetting($iPartyId);
+            $roundOffLedger = $roundOffSetting['ledger'];
             $transaction->update([
                 'taxable_amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
                 'cgst'         => $sumCgst,
                 'igst'         => $sumIgst,
                 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                'roundoff_id' => $roundOffLedger?->iLedgerId,
+                'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
+                'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
             ]);
             DB::commit();
             return response()->json([

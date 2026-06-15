@@ -1447,6 +1447,8 @@ class PurchaseUploadController extends Controller
             // =========================================================
             // FINAL TOTAL UPDATE
             // =========================================================
+            $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
+            $roundOffLedger = $roundOffSetting['ledger'];
             $transaction->update([
                 'amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
@@ -1454,6 +1456,9 @@ class PurchaseUploadController extends Controller
                 'igst'         => $sumIgst,
                 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
                 'status'       => 'saved',
+                'roundoff_id'  => $roundOffLedger?->iLedgerId,
+                'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
+                'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),                
             ]);
 
             if ($transaction) {
@@ -1756,12 +1761,17 @@ class PurchaseUploadController extends Controller
             // =====================================================
             // ✅ FINAL TOTAL UPDATE
             // =====================================================
+            $roundOffSetting = $this->getRoundOffSetting($iPartyId);
+            $roundOffLedger = $roundOffSetting['ledger'];
             $transaction->update([
                 'amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
                 'cgst'         => $sumCgst,
                 'igst'         => $sumIgst,
                 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                'roundoff_id'  => $roundOffLedger?->iLedgerId,
+                'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
+                'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
             ]);
 
             DB::commit();

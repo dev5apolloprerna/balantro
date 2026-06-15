@@ -414,7 +414,7 @@
     let idleTime = 0;
     setInterval(function () {
         idleTime++;
-        if (idleTime >= 1) { // 1 minute
+        if (idleTime >= 60) { // 60 minute
             $.post("{{ route('logout.idle') }}", {
                 _token: "{{ csrf_token() }}"
             }, function () {
