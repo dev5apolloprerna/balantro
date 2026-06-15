@@ -268,7 +268,8 @@
 
                 <div class="tax-row">
                     <span class="tax-label">Round Off</span>
-                    <span class="tax-value" id="sum_roundoff">0.00</span>
+                    <!-- <span class="tax-value" id="sum_roundoff">0.00</span> -->
+                    <input type="number" step="0.01" id="sum_roundoff" class="receipt-input tax-value" style="width:90px;text-align:right;" value="0.00">
                 </div>
 
                 <div class="tax-row grand-total-row">

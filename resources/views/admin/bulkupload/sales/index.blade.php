@@ -725,7 +725,8 @@
 
                         <div class="tax-row">
                             <span class="tax-label">Round Off</span>
-                            <span class="tax-value" id="sum_roundoff">0.00</span>
+                            <!-- <span class="tax-value" id="sum_roundoff">0.00</span> -->
+                            <input type="number" step="0.01" id="sum_roundoff" class="receipt-input tax-value" style="width:90px;text-align:right;" value="0.00">
                         </div>
 
                         <div class="tax-row grand-total-row">
@@ -2038,19 +2039,45 @@
             return Math.round((Math.round(total) - total) * 100) / 100;
         }
 
+        function getSummaryBaseTotal() {
+            return (parseFloat($('#edit_amount').val()) || 0)
+                + (parseFloat($('#edit_cgst').val()) || 0)
+                + (parseFloat($('#edit_sgst').val()) || 0)
+                + (parseFloat($('#edit_igst').val()) || 0);
+        }
+
+        function applyRoundOffSummary(total, roundOff) {
+            total = parseFloat(total) || 0;
+            // let roundOff = roundOffAmount === null || roundOffAmount === undefined
+            //     ? calculateRoundOffAmountForSummary(total)
+            //     : (parseFloat(roundOffAmount) || 0);
+            roundOff = parseFloat(roundOff) || 0;
+            let roundedTotal = total + roundOff;
+
+            //$('#sum_roundoff').text(roundOff.toFixed(2));
+            if ($('#sum_roundoff').is('input')) {
+                $('#sum_roundoff').val(roundOff.toFixed(2));
+            } else {
+                $('#sum_roundoff').text(roundOff.toFixed(2));
+            }
+            $('#edit_roundoff').val(roundOff.toFixed(2));
+            $('#sum_grand_total').text(roundedTotal.toFixed(2));
+            $('#edit_total_amount').val(roundedTotal.toFixed(2));
+            return roundedTotal;
+        }
+
         function setRoundOffSummary(total, roundOffAmount = null) {
             total = parseFloat(total) || 0;
             let roundOff = roundOffAmount === null || roundOffAmount === undefined
                 ? calculateRoundOffAmountForSummary(total)
                 : (parseFloat(roundOffAmount) || 0);
-            let roundedTotal = total + roundOff;
 
-            $('#sum_roundoff').text(roundOff.toFixed(2));
-            $('#edit_roundoff').val(roundOff.toFixed(2));
-            $('#sum_grand_total').text(roundedTotal.toFixed(2));
-
-            return roundedTotal;
+            return applyRoundOffSummary(total, roundOff);
         }
+
+        $(document).on('input change', '#sum_roundoff', function() {
+            applyRoundOffSummary(getSummaryBaseTotal(), $(this).val());
+        });
 
         function findItemGstMapping(itemName = '') {
             let normalizedItem = String(itemName || '').trim().toLowerCase();
@@ -2222,7 +2249,7 @@
             $('#manual_cgst').val() || $('#sum_cgst').html('0.00');
             $('#manual_sgst').val() || $('#sum_sgst').html('0.00');
             $('#manual_igst').val() || $('#sum_igst').html('0.00');
-            $('#sum_roundoff').html('0.00');
+            $('#sum_roundoff').val('0.00');
             $('#edit_roundoff').val(0);
             $('#sum_grand_total').html('0.00');
 
@@ -2442,6 +2469,7 @@
                 sgst: $('#edit_sgst').val(),
                 igst: $('#edit_igst').val(),
                 total: $('#edit_total_amount').val(),
+                roundoff: $('#edit_roundoff').val(),
                 city: $('#edit_city').val(),
                 pincode: $('#edit_pincode').val(),
                 address: $('#edit_address').val(),

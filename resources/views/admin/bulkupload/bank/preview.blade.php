@@ -48,6 +48,11 @@
                     + Create Ledger
                 </button>
                 <button type="button"
+                    id="bulkSuspenseBtn"
+                    class="bg-yellow-500 text-white px-4 py-1 rounded text-sm">
+                    Suspense Submit
+                </button>
+                <button type="button"
                     id="saveBtn"
                     class="bg-blue-600 text-white px-4 py-1 rounded text-sm">
                     Save
@@ -1759,7 +1764,24 @@
 
         $('#suspense_id').val(id);
         $('#suspense_remark').val('');
+        // $('#suspenseModal').removeClass('hidden').addClass('flex');
+        $('#suspenseModal').data('bulk', false);
+        $('#suspenseModal').removeClass('hidden').addClass('flex');
+    });
 
+    $('#bulkSuspenseBtn').click(function() {
+        let selected = $('#bankForm input[name="selected[]"]:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (!selected.length) {
+            alert('Please select at least one row');
+            return;
+        }
+
+        $('#suspense_id').val(selected.join(','));
+        $('#suspense_remark').val('');
+        $('#suspenseModal').data('bulk', true);
         $('#suspenseModal').removeClass('hidden').addClass('flex');
     });
     function closeSuspenseModal() {
@@ -1776,17 +1798,35 @@
             return;
         }
 
+        let isBulk = $('#suspenseModal').data('bulk') === true;
+        let data = {
+            _token: "{{ csrf_token() }}",
+            remark: remark
+        };
+
+        if (isBulk) {
+            data.selected = id.split(',').filter(Boolean);
+        } else {
+            data.id = id;
+        }
+
         $.ajax({
             url: "{{ route('bank.markSuspense') }}",
             type: "POST",
-            data: {
-                _token: "{{ csrf_token() }}",
-                id: id,
-                remark: remark
-            },
+            // data: {
+            //     _token: "{{ csrf_token() }}",
+            //     id: id,
+            //     remark: remark
+            // },
+            data: data,
             success: function(res) {
-                alert('Marked as Suspense');
+                // alert('Marked as Suspense');
+                alert(res.message || 'Marked as Suspense');
                 location.reload();
+            },
+            error: function(xhr) {
+                console.log(xhr.responseText);
+                alert('Error marking suspense');
             }
         });
     });

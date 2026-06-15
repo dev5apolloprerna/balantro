@@ -280,20 +280,75 @@ class BankUploadController extends Controller
 
     public function markSuspense(Request $request)
     {
-        $row = BankTransaction::find($request->id);
-        if (!$row) {
+        // $row = BankTransaction::find($request->id);
+        // if (!$row) {
+        $ids = $request->has('selected') ? (array) $request->selected : [$request->id];
+        $ids = array_values(array_filter($ids));
+
+        if (empty($ids)) {
+             return response()->json([
+                'status' => false,
+                'message' => 'No rows selected'
+            ]);
+        }
+
+        $rows = BankTransaction::whereIn('id', $ids)->get();
+
+        if ($rows->isEmpty()) {
             return response()->json([
                 'status' => false,
                 'message' => 'Not found'
             ]);
         }
-        $row->update([
-            'is_suspense' => 1,
-            //'status' => 'suspense', // optional
-            'suspense_reason' => $request->remark
-        ]);
+        // $row->update([
+        //     'is_suspense' => 1,
+        //     //'status' => 'suspense', // optional
+        //     'suspense_reason' => $request->remark
+        // ]);
+        $uploadIds = $rows->pluck('upload_id')->filter()->unique();
+
+        foreach ($rows as $row) {
+            $row->update([
+                'is_suspense' => 1,
+                'status' => 'suspense',
+                'suspense_reason' => $request->remark
+            ]);
+        }
+
+        foreach ($uploadIds as $uploadId) {
+            $this->refreshUploadSummary($uploadId);
+        }
         return response()->json([
-            'status' => true
+            'status' => true,
+            'message' => $rows->count() . ' row(s) marked as Suspense'
+        ]);
+    }
+
+    private function refreshUploadSummary($uploadId)
+    {
+        $saved = BankTransaction::where('upload_id', $uploadId)
+            ->where('status', 'saved')
+            ->count();
+
+        $pending = BankTransaction::where('upload_id', $uploadId)
+            ->where('status', 'pending')
+            ->count();
+
+        $synced = BankTransaction::where('upload_id', $uploadId)
+            ->where('status', 'synced')
+            ->count();
+
+        $total = BankTransaction::where('upload_id', $uploadId)
+            ->count();
+
+        $status = ($pending == 0) ? 'Completed' : 'Pending';
+
+        BulkBankUpload::where('id', $uploadId)->update([
+            'total' => $total,
+            'saved' => $saved,
+            'pending' => $pending,
+            'synced' => $synced,
+            'status' => $status
         ]);
     }
 
