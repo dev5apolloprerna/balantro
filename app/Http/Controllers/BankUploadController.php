@@ -69,7 +69,8 @@ class BankUploadController extends Controller
         $headerRowIndex = null;
 
         foreach ($sheet as $i => $row) {
-            $text = strtolower(implode(' ', $row));
+            // $text = strtolower(implode(' ', $row));
+            $text = strtolower(implode(' ', array_map(fn($value) => trim((string) $value), $row)));
 
             if (
                 strpos($text, 'date') !== false &&
@@ -85,9 +86,18 @@ class BankUploadController extends Controller
         // if ($headerRowIndex === null) {
         //     dd($sheet);
         // }
+        if ($headerRowIndex === null) {
+            $upload->update(['status' => 'Failed']);
 
-        $header = array_map(fn($v) => strtolower(trim($v)), $sheet[$headerRowIndex]);
+            return back()->with('error', 'Could not find the bank statement header row. Please upload a file with Date and Particulars/Narration/Description columns.');
+        }
 
+        $header = array_map(function ($value) {
+            $value = preg_replace('/\s+/', ' ', str_replace("\xc2\xa0", ' ', (string) $value));
+
+        // $header = array_map(fn($v) => strtolower(trim($v)), $sheet[$headerRowIndex]);
+            return strtolower(trim($value));
+        }, $sheet[$headerRowIndex]);
         $find = function ($keys) use ($header) {
             foreach ($header as $i => $col) {
                 foreach ($keys as $k) {
@@ -106,13 +116,26 @@ class BankUploadController extends Controller
         $creditIndex    = $find(['credit', 'deposit']);
         $amountIndex    = $find(['amount']);
 
+        if ($txnDateIndex === null || $narrationIndex === null || ($debitIndex === null && $creditIndex === null && $amountIndex === null)) {
+            $upload->update(['status' => 'Failed']);
+
+            return back()->with('error', 'Invalid bank statement format. Required columns: Date, Particulars/Narration/Description, and Debit/Credit or Amount.');
+        }
+
         // 🔧 DATE PARSER
         $parseDate = function ($val) {
             try {
+                if ($val === null || trim((string) $val) === '') {
+                    return null;
+                }
+
                 if (is_numeric($val)) {
                     return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($val)->format('Y-m-d');
                 }
-                return date('Y-m-d', strtotime($val));
+                // return date('Y-m-d', strtotime($val));
+                $timestamp = strtotime((string) $val);
+
+                return $timestamp ? date('Y-m-d', $timestamp) : null;
             } catch (\Exception $e) {
                 return null;
             }
@@ -155,7 +178,18 @@ class BankUploadController extends Controller
             $narration = '';
 
             if ($narrationIndex !== null) {
-                $narrationParts = array_slice($row, $narrationIndex, 5); // take next 5 cols
+                // $narrationParts = array_slice($row, $narrationIndex, 5); // take next 5 cols
+                $stopIndexes = array_filter([
+                    $refIndex,
+                    $debitIndex,
+                    $creditIndex,
+                    $amountIndex,
+                    $balanceIndex,
+                ], fn($index) => $index !== null && $index > $narrationIndex);
+                $narrationLength = $stopIndexes
+                    ? min($stopIndexes) - $narrationIndex
+                    : 1;
+                $narrationParts = array_slice($row, $narrationIndex, max(1, $narrationLength));
                 $narration = implode(' ', array_filter($narrationParts));
                 $narration = preg_replace('/\s+/', ' ', trim($narration));
             }
@@ -193,6 +227,10 @@ class BankUploadController extends Controller
                 $debit  = $clean($row[$debitIndex] ?? 0);
                 $credit = $clean($row[$creditIndex] ?? 0);
                 $amount = $debit > 0 ? $debit : $credit;
+            }
+
+            if ($amount == 0) {
+                continue;
             }
 
             // ✅ PRIORITY 3: Amount column

@@ -1540,7 +1540,13 @@
 
                 // Respect stored GST mode at edit time
                 // $('#edit_is_igst').prop('checked', Number(res.is_igst) === 1);
-                setIsIgstChecked(Number(res.is_igst) === 1);
+                // setIsIgstChecked(Number(res.is_igst) === 1);
+                 // Infer IGST from the stored tax amounts so edit mode matches the view summary.
+                // Some imported rows have the checkbox flag out of sync while CGST/SGST are stored.
+                const storedIgst = parseFloat(res.igst || 0) || 0;
+                const storedCgst = parseFloat(res.cgst || 0) || 0;
+                const storedSgst = parseFloat(res.sgst || 0) || 0;
+                setIsIgstChecked(storedIgst > 0 && (storedCgst + storedSgst) === 0);
                 toggleGSTLedger();
                 
                 $('#gst_calc_mode').val(res.gst_mode || 'standard').trigger('change');

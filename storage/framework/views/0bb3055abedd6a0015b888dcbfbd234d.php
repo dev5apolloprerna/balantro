@@ -85,8 +85,8 @@
                         class="block text-sm font-semibold mb-1"><?php echo e(__('Is Stock Mangement?')); ?></label>
                     <select id="cf-isStockManagement" class="w-full px-1 py-1 border rounded-lg bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white dark:border-neutral-700">
                         <option value=""><?php echo e(__('Select...')); ?></option>
-                        <option value="1">Yes</option>
-                        <option value="0">No</option>
+                        <option value="1">No</option>
+                        <option value="0">Yes</option>
                         
                     </select>
                 </div>
