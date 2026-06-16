@@ -9,6 +9,7 @@ use App\Models\SalesTransaction;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Ledger;
 use Illuminate\Support\Facades\DB;
+use App\Support\VoucherValidation;
 use App\Models\Client;
 use Illuminate\Support\Facades\Session;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
@@ -27,6 +28,68 @@ use Illuminate\Support\Carbon;
 
 class TransactionProcessingController extends Controller
 {
+    use VoucherValidation;
+    private function salesVoucherExists($partyId, ?string $vchType, ?string $vchNo, ?string $year, ?int $ignoreId = null): bool
+    {
+        if (blank($vchType) || blank($vchNo) || blank($year)) {
+            return false;
+        }
+
+        $transactionExists = SalesTransaction::where('iPartyId', $partyId)
+            ->whereRaw('LOWER(TRIM(vchType)) = ?', [strtolower(trim($vchType))])
+            ->whereRaw('LOWER(TRIM(invoice_no)) = ?', [strtolower(trim($vchNo))])
+            ->whereRaw('LOWER(TRIM(strYear)) = ?', [strtolower(trim($year))])
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->exists();
+
+        if ($transactionExists) {
+            return true;
+        }
+
+        $yearId = DB::table('YearMaster')
+            ->where('iPartyId', $partyId)
+            ->where('strYear', $year)
+            ->value('iYearId');
+
+        return DB::table('VchHistory')
+            ->where('iPartyId', $partyId)
+            ->whereRaw('LOWER(TRIM(vchType)) = ?', [strtolower(trim($vchType))])
+            ->whereRaw('LOWER(TRIM(vchNo)) = ?', [strtolower(trim($vchNo))])
+            ->when($yearId, fn ($query) => $query->where('iYearId', $yearId))
+            ->exists();
+    }
+
+    private function creditNoteVoucherExists($partyId, ?string $vchType, ?string $vchNo, ?string $year, ?int $ignoreId = null): bool
+    {
+        if (blank($vchType) || blank($vchNo) || blank($year)) {
+            return false;
+        }
+
+        $transactionExists = CreditNoteTransaction::where('iPartyId', $partyId)
+            ->where('is_delete', 0)
+            ->whereRaw('LOWER(TRIM(vch_type)) = ?', [strtolower(trim($vchType))])
+            ->whereRaw('LOWER(TRIM(note_no)) = ?', [strtolower(trim($vchNo))])
+            ->whereRaw('LOWER(TRIM(strYear)) = ?', [strtolower(trim($year))])
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->exists();
+
+        if ($transactionExists) {
+            return true;
+        }
+
+        $yearId = DB::table('YearMaster')
+            ->where('iPartyId', $partyId)
+            ->where('strYear', $year)
+            ->value('iYearId');
+
+        return DB::table('VchHistory')
+            ->where('iPartyId', $partyId)
+            ->whereRaw('LOWER(TRIM(vchType)) = ?', [strtolower(trim($vchType))])
+            ->whereRaw('LOWER(TRIM(vchNo)) = ?', [strtolower(trim($vchNo))])
+            ->when($yearId, fn ($query) => $query->where('iYearId', $yearId))
+            ->exists();
+    }
+
     private function ensureFinancialYearInSession($years)
     {
         if (!$years || !count($years)) {
@@ -359,6 +422,13 @@ class TransactionProcessingController extends Controller
         foreach ($request->selected as $key => $id) {
             $row = PurchaseTransaction::find($id);
             if (!$row) continue;
+            $voucherType = $request->voucher_type[$id] ?? $row->vchType;
+            $number = $request->invoice_no[$id] ?? $row->invoice_no;
+            $party = $request->party_name[$id] ?: ($request->party_ledger[$id] ?? $request->ledger[$id] ?? $row->party_name);
+            $date = $request->date[$id] ?? $row->date;
+            if ($this->voucherCombinationExists('purchase_transactions', ['iPartyId'=>$iPartyId,'voucher_column'=>'vchType','voucher_value'=>$voucherType,'number_column'=>'invoice_no','number_value'=>$number,'party_column'=>'party_name','party_value'=>$party,'date_column'=>'date','date_value'=>$date,'year_column'=>'strYear','year_value'=>session('year')], $row->id) || $this->vchHistoryCombinationExists(['iPartyId'=>$iPartyId,'voucher_value'=>$voucherType,'number_value'=>$number,'party_value'=>$party,'history_date_value'=>$this->historyDate($date),'year_value'=>session('year')])) {
+                return response()->json(['status' => false, 'message' => 'Duplicate voucher combination is not allowed.']);
+            }
             $uploadId = $row->upload_id;
             $row->update([
                 'invoice_no' => $request->invoice_no[$id],
@@ -407,6 +477,14 @@ class TransactionProcessingController extends Controller
             if (!$row) continue;
 
             $uploadId = $row->upload_id;
+            $voucherType = $request->voucher_type[$id] ?? $row->vchType;
+            $voucherNo = $request->invoice_no[$id] ?? $row->invoice_no;
+            if ($this->salesVoucherExists($row->iPartyId, $voucherType, $voucherNo, $row->strYear ?? session('year'), $row->id)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'
+                ], 422);
+            }
             $row->update([
                 'invoice_no' => $request->invoice_no[$id],
                 'date' => $request->date[$id],
@@ -574,6 +652,14 @@ class TransactionProcessingController extends Controller
             if (!$row) continue;
 
             $uploadId = $row->upload_id;
+            $voucherType = $request->voucher_type[$id] ?? $row->vch_type;
+            $voucherNo = $request->invoice_no[$id] ?? $row->note_no;
+            if ($this->creditNoteVoucherExists($row->iPartyId, $voucherType, $voucherNo, $row->strYear ?? session('year'), $row->id)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'
+                ], 422);
+            }
             $row->update([
                 'note_no' => $request->invoice_no[$id] ?? $row->note_no,
                 'note_date' => $request->date[$id] ?? $row->note_date,
@@ -585,7 +671,7 @@ class TransactionProcessingController extends Controller
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
                 'sales_ledger' => $request->ledger[$id]  ?? $row->sales_ledger,
                 'status' => 'submitted',
-                'vchType' => $request->voucher_type[$id] ?? $row->vch_type
+                'vch_type' => $request->voucher_type[$id] ?? $row->vch_type
             ]);
         }
 
@@ -701,6 +787,11 @@ class TransactionProcessingController extends Controller
         foreach ($request->selected as $key => $id) {
             $row = DebitNoteTransaction::find($id);
             if (!$row) continue;
+            $voucherType = $request->voucher_type[$id] ?? $row->vch_type;
+            $number = $request->invoice_no[$id] ?? $row->note_no;
+            $party = $request->party_name[$id] ?? $request->party_ledger[$id] ?? $request->ledger[$id] ?? $row->party_name;
+            $date = $request->date[$id] ?? $row->note_date;
+            if ($this->voucherCombinationExists('debit_note_transactions', ['iPartyId'=>$iPartyId,'voucher_column'=>'vch_type','voucher_value'=>$voucherType,'number_column'=>'note_no','number_value'=>$number,'party_column'=>'party_name','party_value'=>$party,'date_column'=>'note_date','date_value'=>$date,'year_column'=>'strYear','year_value'=>session('year')], $row->id) || $this->vchHistoryCombinationExists(['iPartyId'=>$iPartyId,'voucher_value'=>$voucherType,'number_value'=>$number,'party_value'=>$party,'history_date_value'=>$this->historyDate($date),'year_value'=>session('year')])) { return response()->json(['status'=>false,'message'=>'Duplicate voucher combination is not allowed.']); }
             $uploadId = $row->upload_id;
             $row->update([
                 'note_no' => $request->invoice_no[$id] ?? $row->note_no,

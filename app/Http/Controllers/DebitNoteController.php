@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Support\VoucherValidation;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Client;
@@ -20,6 +21,7 @@ use App\Models\DebitNoteCustomGst;
 
 class DebitNoteController extends Controller
 {
+    use VoucherValidation;
     public function index(Request $request)
     {
         $iPartyId = session('iPartyId');
@@ -656,7 +658,31 @@ class DebitNoteController extends Controller
                         }
                     }
 
-                    $rates = array_unique(array_filter($rates));
+                    $rates = array_unique($rates);
+                    $hasValidGstSlab = $this->allGstRatesAreApplicable($rates);
+                    $isDuplicateVoucher = $this->voucherCombinationExists('debit_note_transactions', [
+                        'iPartyId' => $iPartyId,
+                        'voucher_column' => 'vch_type',
+                        'voucher_value' => 'Debit Note',
+                        'number_column' => 'note_no',
+                        'number_value' => $first['note_no'],
+                        'party_column' => 'party_name',
+                        'party_value' => $first['party_name'],
+                        'date_column' => 'note_date',
+                        'date_value' => $first['date'],
+                        'year_column' => 'strYear',
+                        'year_value' => session('year'),
+                    ]) || $this->vchHistoryCombinationExists([
+                        'iPartyId' => $iPartyId,
+                        'voucher_value' => 'Debit Note',
+                        'number_value' => $first['note_no'],
+                        'party_value' => $first['party_name'],
+                        'history_date_value' => $this->historyDate($first['date']),
+                        'year_value' => session('year'),
+                    ]);
+                    if (!$hasValidGstSlab || $isDuplicateVoucher) {
+                        $status = 'Pending';
+                    }
 
                     $gstMode =
                         count($rates) > 1
@@ -908,7 +934,28 @@ class DebitNoteController extends Controller
                     $mapping = $this->getGstMapping($iPartyId, $first['purchase_ledger']);
                     
                     // Status is always 'saved' for accounting invoices
-                    $status = 'saved';
+                    $hasValidGstSlab = $this->allGstRatesAreApplicable(array_column($gstSlots, 'gst_rate'));
+                    $isDuplicateVoucher = $this->voucherCombinationExists('debit_note_transactions', [
+                        'iPartyId' => $iPartyId,
+                        'voucher_column' => 'vch_type',
+                        'voucher_value' => 'Debit Note',
+                        'number_column' => 'note_no',
+                        'number_value' => $first['note_no'],
+                        'party_column' => 'party_name',
+                        'party_value' => $first['party_name'],
+                        'date_column' => 'note_date',
+                        'date_value' => $first['date'],
+                        'year_column' => 'strYear',
+                        'year_value' => session('year'),
+                    ]) || $this->vchHistoryCombinationExists([
+                        'iPartyId' => $iPartyId,
+                        'voucher_value' => 'Debit Note',
+                        'number_value' => $first['note_no'],
+                        'party_value' => $first['party_name'],
+                        'history_date_value' => $this->historyDate($first['date']),
+                        'year_value' => session('year'),
+                    ]);
+                    $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
 
@@ -1253,6 +1300,32 @@ class DebitNoteController extends Controller
 
             $transaction = DebitNoteTransaction::findOrFail($data['id']);
 
+            $newVoucherType = $request->vchType ?? $transaction->vch_type;
+            $newNoteNo = $request->invoice_no ?? $transaction->note_no;
+            $newPartyName = $request->party_name ?? $transaction->party_name;
+            $newDate = $request->date ?? $transaction->note_date;
+            if ($this->voucherCombinationExists('debit_note_transactions', [
+                'iPartyId' => $transaction->iPartyId,
+                'voucher_column' => 'vch_type',
+                'voucher_value' => $newVoucherType,
+                'number_column' => 'note_no',
+                'number_value' => $newNoteNo,
+                'party_column' => 'party_name',
+                'party_value' => $newPartyName,
+                'date_column' => 'note_date',
+                'date_value' => $newDate,
+                'year_column' => 'strYear',
+                'year_value' => session('year'),
+            ], $transaction->id) || $this->vchHistoryCombinationExists([
+                'iPartyId' => $transaction->iPartyId,
+                'voucher_value' => $newVoucherType,
+                'number_value' => $newNoteNo,
+                'party_value' => $newPartyName,
+                'history_date_value' => $this->historyDate($newDate),
+                'year_value' => session('year'),
+            ])) {
+                throw new \Exception('Duplicate voucher combination is not allowed.');
+            }
             // ===============================
             // PURCHASE LEDGER
             // ===============================
@@ -1477,7 +1550,12 @@ class DebitNoteController extends Controller
                 'roundoff_id' => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status' => 'saved'
+                'status' => $this->allGstRatesAreApplicable(array_merge(
+                    collect($data['items'] ?? [])->pluck('gst_rate')->all(),
+                    collect($request->noitem_rows ?? [])->pluck('gst')->all(),
+                    collect($request->custom_slots ?? [])->pluck('rate')->all(),
+                    [$request->gst_rate ?? 0]
+                )) ? 'saved' : 'Pending'
             ]);
 
             // ===============================
@@ -1687,6 +1765,32 @@ class DebitNoteController extends Controller
                 ? Ledger::getLedgerByName($iPartyId, $ledgerName)
                 : null;
 
+            $voucherType = $request->vch_type[$id] ?? $row->vch_type;
+            $noteNo = $request->note_no[$id] ?? $row->note_no;
+            $partyName = $request->party_name[$id] ?: ($request->purchase_ledger_name[$id] ?? $row->party_name);
+            $date = $request->note_date[$id] ?? $row->note_date;
+            if ($this->voucherCombinationExists('debit_note_transactions', [
+                'iPartyId' => $iPartyId,
+                'voucher_column' => 'vch_type',
+                'voucher_value' => $voucherType,
+                'number_column' => 'note_no',
+                'number_value' => $noteNo,
+                'party_column' => 'party_name',
+                'party_value' => $partyName,
+                'date_column' => 'note_date',
+                'date_value' => $date,
+                'year_column' => 'strYear',
+                'year_value' => session('year'),
+            ], $row->id) || $this->vchHistoryCombinationExists([
+                'iPartyId' => $iPartyId,
+                'voucher_value' => $voucherType,
+                'number_value' => $noteNo,
+                'party_value' => $partyName,
+                'history_date_value' => $this->historyDate($date),
+                'year_value' => session('year'),
+            ])) {
+                return response()->json(['status' => false, 'message' => 'Duplicate voucher combination is not allowed.']);
+            }
             // ===============================
             // UPDATE ROW
             // ===============================
@@ -1871,6 +1975,7 @@ class DebitNoteController extends Controller
                 $purcashe_ledger_id->name ?? $purchase_ledger,
                 $this->firstItemNameFromRequest($request)
             );
+            if ($this->voucherCombinationExists('debit_note_transactions', ['iPartyId'=>$iPartyId,'voucher_column'=>'vch_type','voucher_value'=>$request->voucher_type ?? 'Debit Note','number_column'=>'note_no','number_value'=>$request->invoice,'party_column'=>'party_name','party_value'=>$request->party,'date_column'=>'note_date','date_value'=>$request->date,'year_column'=>'strYear','year_value'=>session('year')]) || $this->vchHistoryCombinationExists(['iPartyId'=>$iPartyId,'voucher_value'=>$request->voucher_type ?? 'Debit Note','number_value'=>$request->invoice,'party_value'=>$request->party,'history_date_value'=>$this->historyDate($request->date),'year_value'=>session('year')])) { return response()->json(['status'=>false,'message'=>'Duplicate voucher combination is not allowed.']); }
             // ✅ CREATE TRANSACTION
             $transaction = DebitNoteTransaction::create([
                 'iPartyId'     => $iPartyId,

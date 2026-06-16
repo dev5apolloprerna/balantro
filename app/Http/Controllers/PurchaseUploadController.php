@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Ledger;
 use Illuminate\Support\Facades\DB;
+use App\Support\VoucherValidation;
 use App\Models\Client;
 use Illuminate\Support\Facades\Session;
 use App\Models\PurchaseTransactionItem;
@@ -18,6 +19,7 @@ use App\Models\PurchaseCustomGst;
 
 class PurchaseUploadController extends Controller
 {
+    use VoucherValidation;
     // LIST PAGE
     public function index()
     {
@@ -517,7 +519,31 @@ class PurchaseUploadController extends Controller
                         }
                     }
 
-                    $rates = array_unique(array_filter($rates));
+                    $rates = array_unique($rates);
+                    $hasValidGstSlab = $this->allGstRatesAreApplicable($rates);
+                    $isDuplicateVoucher = $this->voucherCombinationExists('purchase_transactions', [
+                        'iPartyId' => $iPartyId,
+                        'voucher_column' => 'vchType',
+                        'voucher_value' => 'Purchase',
+                        'number_column' => 'invoice_no',
+                        'number_value' => $first['invoice_no'] ?? $invoiceNo,
+                        'party_column' => 'party_name',
+                        'party_value' => $first['party_name'],
+                        'date_column' => 'date',
+                        'date_value' => $first['date'],
+                        'year_column' => 'strYear',
+                        'year_value' => session('year'),
+                    ]) || $this->vchHistoryCombinationExists([
+                        'iPartyId' => $iPartyId,
+                        'voucher_value' => 'Purchase',
+                        'number_value' => $first['invoice_no'] ?? $invoiceNo,
+                        'party_value' => $first['party_name'],
+                        'history_date_value' => $this->historyDate($first['date']),
+                        'year_value' => session('year'),
+                    ]);
+                    if (!$hasValidGstSlab || $isDuplicateVoucher) {
+                        $status = 'pending';
+                    }
 
                     $gstMode =
                         count($rates) > 1
@@ -792,7 +818,28 @@ class PurchaseUploadController extends Controller
                     $mapping = $this->getGstMapping($iPartyId, $first['purchase_ledger']);
                     
                     // Status is always 'saved' for accounting invoices since they will use custom GST
-                    $status = 'saved';
+                    $hasValidGstSlab = $this->allGstRatesAreApplicable(array_column($gstSlots, 'gst_rate'));
+                    $isDuplicateVoucher = $this->voucherCombinationExists('purchase_transactions', [
+                        'iPartyId' => $iPartyId,
+                        'voucher_column' => 'vchType',
+                        'voucher_value' => 'Purchase',
+                        'number_column' => 'invoice_no',
+                        'number_value' => $first['invoice_no'],
+                        'party_column' => 'party_name',
+                        'party_value' => $first['party_name'],
+                        'date_column' => 'date',
+                        'date_value' => $this->parseDate($first['date']),
+                        'year_column' => 'strYear',
+                        'year_value' => session('year'),
+                    ]) || $this->vchHistoryCombinationExists([
+                        'iPartyId' => $iPartyId,
+                        'voucher_value' => 'Purchase',
+                        'number_value' => $first['invoice_no'],
+                        'party_value' => $first['party_name'],
+                        'history_date_value' => $this->historyDate($first['date']),
+                        'year_value' => session('year'),
+                    ]);
+                    $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
 
@@ -933,6 +980,32 @@ class PurchaseUploadController extends Controller
         foreach ($request->selected as $key => $id) {
             $row = PurchaseTransaction::find($id);
             if (!$row) continue;
+            $voucherType = $request->voucher_type[$id] ?? $row->vchType;
+            $invoiceNo = $request->invoice_no[$id] ?? $row->invoice_no;
+            $partyName = $request->party_name[$id] ?: ($request->party_ledger[$id] ?? $request->ledger[$id] ?? $row->party_name);
+            $date = $request->date[$id] ?? $row->date;
+            if ($this->voucherCombinationExists('purchase_transactions', [
+                'iPartyId' => $iPartyId,
+                'voucher_column' => 'vchType',
+                'voucher_value' => $voucherType,
+                'number_column' => 'invoice_no',
+                'number_value' => $invoiceNo,
+                'party_column' => 'party_name',
+                'party_value' => $partyName,
+                'date_column' => 'date',
+                'date_value' => $date,
+                'year_column' => 'strYear',
+                'year_value' => session('year'),
+            ], $row->id) || $this->vchHistoryCombinationExists([
+                'iPartyId' => $iPartyId,
+                'voucher_value' => $voucherType,
+                'number_value' => $invoiceNo,
+                'party_value' => $partyName,
+                'history_date_value' => $this->historyDate($date),
+                'year_value' => session('year'),
+            ])) {
+                return response()->json(['status' => false, 'message' => 'Duplicate voucher combination is not allowed.']);
+            }
             $uploadId = $row->upload_id;
             $row->update([
                 'invoice_no' => $request->invoice_no[$id],
@@ -1273,7 +1346,32 @@ class PurchaseUploadController extends Controller
         DB::transaction(function () use ($data, $request) {
 
             $transaction = PurchaseTransaction::findOrFail($data['id']);
-
+            $newVoucherType = $request['vchType'] ?? $transaction->vchType;
+            $newInvoiceNo = $request['invoice_no'] ?? $transaction->invoice_no;
+            $newPartyName = $request['party_name'] ?? $transaction->party_name;
+            $newDate = $request['date'] ?? $transaction->date;
+            if ($this->voucherCombinationExists('purchase_transactions', [
+                'iPartyId' => $transaction->iPartyId,
+                'voucher_column' => 'vchType',
+                'voucher_value' => $newVoucherType,
+                'number_column' => 'invoice_no',
+                'number_value' => $newInvoiceNo,
+                'party_column' => 'party_name',
+                'party_value' => $newPartyName,
+                'date_column' => 'date',
+                'date_value' => $newDate,
+                'year_column' => 'strYear',
+                'year_value' => session('year'),
+            ], $transaction->id) || $this->vchHistoryCombinationExists([
+                'iPartyId' => $transaction->iPartyId,
+                'voucher_value' => $newVoucherType,
+                'number_value' => $newInvoiceNo,
+                'party_value' => $newPartyName,
+                'history_date_value' => $this->historyDate($newDate),
+                'year_value' => session('year'),
+            ])) {
+                throw new \Exception('Duplicate voucher combination is not allowed.');
+            }
             // ===============================
             // HEADER UPDATE
             // ===============================
@@ -1471,7 +1569,12 @@ class PurchaseUploadController extends Controller
                 'igst'         => $sumIgst,
                 // 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
                 'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status'       => 'saved',
+                'status'       => $this->allGstRatesAreApplicable(array_merge(
+                    collect($data['items'] ?? [])->pluck('gst_rate')->all(),
+                    collect($request->noitem_rows ?? [])->pluck('gst')->all(),
+                    collect($request->custom_slots ?? [])->pluck('rate')->all(),
+                    [$request->gst_rate ?? 0]
+                )) ? 'saved' : 'pending',
                 'roundoff_id'  => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),                
@@ -1604,6 +1707,7 @@ class PurchaseUploadController extends Controller
             $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
             $purcashe_ledger_id = Ledger::getLedgerByName($iPartyId, $purchase_ledger);
             $gstMapping = $this->getGstMapping($iPartyId, $purcashe_ledger_id->name ?? $purchase_ledger);
+            if ($this->voucherCombinationExists('purchase_transactions', ['iPartyId'=>$iPartyId,'voucher_column'=>'vchType','voucher_value'=>$request->voucher_type ?? 'Purchase','number_column'=>'invoice_no','number_value'=>$request->invoice,'party_column'=>'party_name','party_value'=>$request->party,'date_column'=>'date','date_value'=>$request->date,'year_column'=>'strYear','year_value'=>session('year')]) || $this->vchHistoryCombinationExists(['iPartyId'=>$iPartyId,'voucher_value'=>$request->voucher_type ?? 'Purchase','number_value'=>$request->invoice,'party_value'=>$request->party,'history_date_value'=>$this->historyDate($request->date),'year_value'=>session('year')])) { return response()->json(['status'=>false,'message'=>'Duplicate voucher combination is not allowed.']); }
             // ✅ CREATE TRANSACTION
             $transaction = PurchaseTransaction::create([
                 'iPartyId'     => $iPartyId,

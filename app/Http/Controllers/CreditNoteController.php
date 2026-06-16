@@ -1031,6 +1031,11 @@ class CreditNoteController extends Controller
                             $is_igst = 0;
                         }
                     }
+
+                    $noteNo = explode('|', $groupKey)[0];
+                    if (!$this->hasOnlyValidGstSlabs($rates) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
+                        $status = 'pending';
+                    }
                     
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
@@ -1231,6 +1236,10 @@ class CreditNoteController extends Controller
                     $mapping = $this->getGstMapping($iPartyId, $first['sales_ledger']);
                     
                     $status = $this->hasRequiredGstLedgers($gstSlots, $isIgst) ? 'saved' : 'pending';
+                    $noteNo = $first['note_no'];
+                    if (!$this->hasOnlyValidGstSlabs(array_column($gstSlots, 'gst_rate')) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
+                        $status = 'pending';
+                    }
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
 
@@ -1458,7 +1467,14 @@ class CreditNoteController extends Controller
             if (!$row) continue;
 
             $uploadId = $row->upload_id;
-
+            $voucherType = $request->voucher_type[$id] ?? $row->vch_type;
+            $voucherNo = $request->note_no[$id] ?? $row->note_no;
+            if ($this->creditNoteVoucherExists($row->iPartyId, $voucherType, $voucherNo, $row->strYear ?? session('year'), $row->id)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'
+                ], 422);
+            }
             $row->update([
                 'note_no'         => $request->note_no[$id] ?? $row->note_no,
                 'note_date'       => $request->note_date[$id] ?? $row->note_date,
@@ -1560,9 +1576,15 @@ class CreditNoteController extends Controller
                 'message' => 'Invoice date must be within selected financial year'
             ]);
         }
-        DB::transaction(function () use ($data, $request) {
+        try {
+            DB::transaction(function () use ($data, $request) {
 
             $transaction = CreditNoteTransaction::findOrFail($data['id']);
+            $voucherType = $request->vch_type ?? $transaction->vch_type;
+            $voucherNo = $request->note_no ?? $transaction->note_no;
+            if ($this->creditNoteVoucherExists($transaction->iPartyId, $voucherType, $voucherNo, session('year'), $transaction->id)) {
+                throw new \InvalidArgumentException('Duplicate voucher found for the selected VnchType, VnchNo, and Year.');
+            }
 
             // ===============================
             // SALES LEDGER
@@ -1775,7 +1797,7 @@ class CreditNoteController extends Controller
                 'roundoff_id' => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status' => 'saved'
+                'status' => $this->hasOnlyValidGstSlabs($this->extractCreditNoteRequestGstRates($request, $sumAmount, $sumCgst, $sumSgst, $sumIgst)) ? 'saved' : 'pending'
             ]);
 
             // ===============================
@@ -1803,13 +1825,21 @@ class CreditNoteController extends Controller
                 'pending'   => $pending,
                 'status'    => $status
             ]);
-        });
+          });
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
+
 
         return response()->json([
             'status' => true,
             'message' => 'Credit Note Updated Successfully'
         ]);
     }
+    
 
     public function show($id)
     {
@@ -1960,6 +1990,78 @@ class CreditNoteController extends Controller
         ]);
     }
 
+    private function creditNoteVoucherExists($partyId, ?string $vchType, ?string $vchNo, ?string $year, ?int $ignoreId = null): bool
+    {
+        if (blank($vchType) || blank($vchNo) || blank($year)) {
+            return false;
+        }
+
+        $transactionExists = CreditNoteTransaction::where('iPartyId', $partyId)
+            ->where('is_delete', 0)
+            ->whereRaw('LOWER(TRIM(vch_type)) = ?', [strtolower(trim($vchType))])
+            ->whereRaw('LOWER(TRIM(note_no)) = ?', [strtolower(trim($vchNo))])
+            ->whereRaw('LOWER(TRIM(strYear)) = ?', [strtolower(trim($year))])
+            ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->exists();
+
+        if ($transactionExists) {
+            return true;
+        }
+
+        $yearId = DB::table('YearMaster')
+            ->where('iPartyId', $partyId)
+            ->where('strYear', $year)
+            ->value('iYearId');
+
+        return DB::table('VchHistory')
+            ->where('iPartyId', $partyId)
+            ->whereRaw('LOWER(TRIM(vchType)) = ?', [strtolower(trim($vchType))])
+            ->whereRaw('LOWER(TRIM(vchNo)) = ?', [strtolower(trim($vchNo))])
+            ->when($yearId, fn ($query) => $query->where('iYearId', $yearId))
+            ->exists();
+    }
+
+    private function isGstRateWithinDefinedSlabs($rate): bool
+    {
+        $rate = round((float) $rate, 2);
+        if ($rate <= 0) {
+            return true;
+        }
+
+        return in_array($rate, [0.0,0.1, 0.25, 1, 1.5, 3, 5, 6, 7.5, 12, 18, 28], true);
+    }
+
+    private function hasOnlyValidGstSlabs(array $rates): bool
+    {
+        foreach ($rates as $rate) {
+            if (!$this->isGstRateWithinDefinedSlabs($rate)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function extractCreditNoteRequestGstRates(Request $request, float $sumAmount = 0, float $sumCgst = 0, float $sumSgst = 0, float $sumIgst = 0): array
+    {
+        $rates = [];
+        foreach ((array) $request->input('items', []) as $item) {
+            $rates[] = $item['gst_rate'] ?? null;
+        }
+        foreach ((array) $request->input('custom_slots', []) as $slot) {
+            $rates[] = $slot['rate'] ?? null;
+        }
+        foreach ((array) $request->input('noitem_rows', []) as $row) {
+            $rates[] = $row['gst'] ?? null;
+        }
+        $rates[] = $request->input('gst_rate');
+        if ($sumAmount > 0) {
+            $rates[] = (($sumCgst + $sumSgst + $sumIgst) * 100) / $sumAmount;
+        }
+
+        return array_filter($rates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0);
+    }
+
     private function getCellValue($cell)
     {
         try {
@@ -2069,6 +2171,13 @@ class CreditNoteController extends Controller
                 'status' => false,
                 'message' => 'Invoice date must be within selected financial year'
             ]);
+        }
+
+        if ($this->creditNoteVoucherExists($iPartyId, $request->voucher_type ?? 'Credit Note', $request->invoice, session('year'))) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'
+            ], 422);
         }
 
         DB::beginTransaction();
