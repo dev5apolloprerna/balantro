@@ -21,6 +21,33 @@
         $fromVal = old('from', request('from', $range['from'] ?? $currStart->format('Y-m-d')));
         $toVal = old('to', request('to', $range['to'] ?? $currEnd->format('Y-m-d')));
 
+        $financialYears = collect($financialYears ?? []);
+        $financialYearOptions = $financialYears
+            ->map(function ($year) {
+                $label = trim((string) ($year->strYear ?? ''));
+
+                if (! preg_match('/^(\d{4})-(\d{4})$/', $label, $matches)) {
+                    return null;
+                }
+
+                return [
+                    'id' => (int) ($year->iYearId ?? 0),
+                    'value' => $label,
+                    'label' => $label,
+                    'from' => $matches[1] . '-04-01',
+                    'to' => $matches[2] . '-03-31',
+                ];
+            })
+            ->filter()
+            ->values();
+
+        $currentFinancialYearLabel = $currStart->format('Y') . '-' . $currEnd->format('Y');
+        $selectedFinancialYear = old('range', request('range', $fyRangeSel ?? $currentFinancialYearLabel));
+
+        if (! $financialYearOptions->pluck('value')->contains($selectedFinancialYear)) {
+            $selectedFinancialYear = $financialYearOptions->first()['value'] ?? $currentFinancialYearLabel;
+        }
+
         // Define color mapping for groups
         $colorMap = [
             'blue' => 'bg-blue-500',
@@ -281,10 +308,10 @@
             </div>
             <!-- Right : FY + Back -->
             <div class="flex items-center gap-3 shrink-0">
-                <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                <!-- <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     <?php echo e($labelFY ?? ''); ?>
 
-                </span>
+                </span> -->
                 <a href="<?php echo e(url()->previous()); ?>" title="Go Back"
                    class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                     hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
@@ -328,11 +355,8 @@
                         x-data="{
                             open: false,
                             
-                            selected: '<?php echo e($fyRangeSel  ?? 'current_year'); ?>',
-                            options: {
-                                'current_year': 'Current Year',
-                                'last_year': 'Last Year'
-                            },
+                            selected: <?php echo \Illuminate\Support\Js::from($selectedFinancialYear)->toHtml() ?>,
+                            options: <?php echo \Illuminate\Support\Js::from($financialYearOptions->pluck('label', 'value'))->toHtml() ?>,
 
                             init() {
                                 this.$watch('selected', value => {
@@ -345,7 +369,7 @@
                         <div class="relative w-44">
                             <!-- Hidden input -->
                             <input type="hidden" name="range" :value="selected">
-
+                            <input type="hidden" name="yearId" :value="selected">
                             <!-- Button -->
                             <button type="button" @click="open = !open"
                                 class="w-full text-left
@@ -358,7 +382,8 @@
                                 focus:outline-none
                                 focus:ring-2 focus:ring-[#22d3ee]">
 
-                                <span x-text="options[selected]"></span>
+                                <!-- <span x-text="options[selected]"></span> -->
+                                 <span x-text="options[selected] || 'Select Year'"></span>
                             </button>
 
                             <!-- Arrow -->
@@ -372,21 +397,20 @@
                                 class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
                                 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
-                                <li>
-                                    <button type="button"
-                                        @click="selected='current_year'; open=false"
-                                        class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
-                                        Current Year
-                                    </button>
-                                </li>
+                                <?php $__empty_1 = true; $__currentLoopData = $financialYearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <li>
+                                        <button type="button"
+                                            @click="selected=<?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>; open=false"
+                                            class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
+                                            <?php echo e($financialYear['label']); ?>
 
-                                <li>
-                                    <button type="button"
-                                        @click="selected='last_year'; open=false"
-                                        class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
-                                        Last Year
-                                    </button>
-                                </li>
+                                        </button>
+                                    </li>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                                    <li class="px-4 py-2 text-left text-gray-500 dark:text-gray-400">
+                                        No financial years found
+                                    </li>
+                                <?php endif; ?>
 
                                 
 
@@ -3108,26 +3132,31 @@ function renderChartFor(type, metric, compare = 'none') {
 
         function handleRangeChange(value) {
 
-            let from = '';
-            let to = '';
+            // let from = '';
+            // let to = '';
 
-            if (value === 'current_year') {
-                from = "<?php echo e($currStart->format('Y-m-d')); ?>";
-                to   = "<?php echo e($currEnd->format('Y-m-d')); ?>";
-            }
+            // if (value === 'current_year') {
+            //     from = "<?php echo e($currStart->format('Y-m-d')); ?>";
+            //     to   = "<?php echo e($currEnd->format('Y-m-d')); ?>";
+            // }
 
-            if (value === 'last_year') {
-                from = "<?php echo e($lastStart->format('Y-m-d')); ?>";
-                to   = "<?php echo e($lastEnd->format('Y-m-d')); ?>";
-            }
+            // if (value === 'last_year') {
+            //     from = "<?php echo e($lastStart->format('Y-m-d')); ?>";
+            //     to   = "<?php echo e($lastEnd->format('Y-m-d')); ?>";
+            // }
 
-            if (value === 'custom') {
+            // if (value === 'custom') {
                 // don't auto set → user will pick manually
+            const financialYearRanges = <?php echo json_encode($financialYearOptions->keyBy('value'), 15, 512) ?>;
+            const selectedRange = financialYearRanges[value];
+            if (!selectedRange) {
                 return;
             }
 
-            document.getElementById('fy_from').value = from;
-            document.getElementById('fy_to').value = to;
+            // document.getElementById('fy_from').value = from;
+            // document.getElementById('fy_to').value = to;
+            document.getElementById('fy_from').value = selectedRange.from;
+            document.getElementById('fy_to').value = selectedRange.to;
 
             document.getElementById('graphForm').submit();
         }

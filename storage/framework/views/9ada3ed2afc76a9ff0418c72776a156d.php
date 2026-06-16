@@ -1,8 +1,7 @@
-@extends('layouts.super_admin')
-@section('title', 'All Ledger')
+<?php $__env->startSection('title', 'All Ledger'); ?>
 
-@section('content')
-    @php
+<?php $__env->startSection('content'); ?>
+    <?php
         $rows = collect($rows ?? ($data['rows'] ?? ($resp['data']['rows'] ?? [])));
         $meta = $resp['meta'] ?? [];
         // Helpers
@@ -80,7 +79,7 @@
             ->filter()
             ->values();
         $rangeOptions = $financialYearOptions->pluck('label', 'value')->all();
-    @endphp
+    ?>
 
     <div class="mt-1 border-b border-gray-200 dark:border-gray-700 pb-1">
         <div class="flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
@@ -88,21 +87,24 @@
             <div class="flex items-center gap-3 shrink-0">
                 <div
                     class="h-10 w-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white flex items-center justify-center font-bold">
-                    {{ strtoupper(substr($user->name ?? '',0,1)) }}
+                    <?php echo e(strtoupper(substr($user->name ?? '',0,1))); ?>
+
                 </div>
                 <h1 class="text-xl font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                    {{ strtoupper($user->name ?? '') }}
+                    <?php echo e(strtoupper($user->name ?? '')); ?>
+
                 </h1>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-2 flex-1">
-                @include('admin.clients.reports.tabmanu')
+                <?php echo $__env->make('admin.clients.reports.tabmanu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
             </div>
             <!-- Right : FY + Back -->
             <div class="flex items-center gap-3 shrink-0">
                 <!-- <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                    {{ $labelFY ?? '' }}
+                    <?php echo e($labelFY ?? ''); ?>
+
                 </span> -->
-                <a href="{{ url()->previous() }}" title="Go Back"
+                <a href="<?php echo e(url()->previous()); ?>" title="Go Back"
                     class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                     hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
                     <i class="fa-solid fa-arrow-left"></i>
@@ -117,10 +119,11 @@
                 <div>
                     <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">All Ledger</h1>
                     <p class="text-xs text-black-500 dark:text-gray-400 mt-0.5">
-                            • {{ $periodText() }}
+                            • <?php echo e($periodText()); ?>
+
                     </p>
                 </div>
-                @php
+                <?php
                     $queryParams = array_merge(request()->query(), [
                         'groupId' => request('groupId', $groupId ?? ''),
                         'strCustomerName' => request('strCustomerName', $strCustomerName ?? ''),
@@ -130,9 +133,9 @@
                         'guid' => $guid ?? '',
                     ]);
                     
-                @endphp
+                ?>
                 <div>
-                    <a href="{{ route('reports.ledger.export-pdf', $queryParams) }}" title="Export into PDF"
+                    <a href="<?php echo e(route('reports.ledger.export-pdf', $queryParams)); ?>" title="Export into PDF"
                         class="group btn inline-block relative text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                 transition duration-1000 ease-in-out
                                 transition-property: all;
@@ -143,7 +146,7 @@
                         <i class="fas fa-file-pdf"></i>
                     </a>
                     &nbsp;
-                    <a href="{{ route('reports.ledger.export-excel', $queryParams) }}" title="Export into Excel"
+                    <a href="<?php echo e(route('reports.ledger.export-excel', $queryParams)); ?>" title="Export into Excel"
                         class="group btn inline-block relative text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                 transition duration-1000 ease-in-out
                                 transition-property: all;
@@ -157,18 +160,18 @@
                 </div>
             </div>
             
-            {{-- Auto-search form --}}
-            <form method="POST" action="{{ route('clients.reports.ledger', $guid) }}" id="searchForm"
+            
+            <form method="POST" action="<?php echo e(route('clients.reports.ledger', $guid)); ?>" id="searchForm"
                 class="mt-2 rounded-lg p-2 flex flex-wrap items-end gap-3">
-                @csrf
+                <?php echo csrf_field(); ?>
                 
-                {{-- Group Filter --}}
+                
                 <div>
                     <div class="relative"
                         x-data="{
                             open: false,
-                            selected: '{{ request('group_id') ?? '' }}',
-                            label: '{{ collect($GroupMasters)->firstWhere('iGroupId', request('group_id'))->strGroupName ?? 'Select Group' }}'
+                            selected: '<?php echo e(request('group_id') ?? ''); ?>',
+                            label: '<?php echo e(collect($GroupMasters)->firstWhere('iGroupId', request('group_id'))->strGroupName ?? 'Select Group'); ?>'
                         }">
 
                         <label class="block text-xs text-gray-600 dark:text-gray-300 mb-1">Group</label>
@@ -214,28 +217,29 @@
                                 </button>
                             </li>
 
-                            @foreach ($GroupMasters as $Group)
+                            <?php $__currentLoopData = $GroupMasters; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $Group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <li>
-                                    <!-- @click="selected='{{ $Group->iGroupId }}'; label='{{ $Group->strGroupName }}'; open=false" -->
+                                    <!-- @click="selected='<?php echo e($Group->iGroupId); ?>'; label='<?php echo e($Group->strGroupName); ?>'; open=false" -->
                                     <button type="button"
                                         @click="
-                                            selected='{{ $Group->iGroupId }}';
-                                            label='{{ $Group->strGroupName }}';
+                                            selected='<?php echo e($Group->iGroupId); ?>';
+                                            label='<?php echo e($Group->strGroupName); ?>';
                                             open=false;
                                             setTimeout(() => {
                                                 autoSubmitIfPresetRange();
                                             }, 100);"
                                         class="w-full text-left px-4 py-2 text-sm hover:text-[#22d3ee]">
-                                        {{ $Group->strGroupName }}
+                                        <?php echo e($Group->strGroupName); ?>
+
                                     </button>
                                 </li>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                         </ul>
                     </div>
                 </div>
                 
-                {{-- Ledger Name Filter --}}
+                
                 <div>
                     <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">Ledger</label>
                     <input name="strCustomerName" id="strCustomerName" oninput="
@@ -245,18 +249,18 @@
                                 window.ledgerTimer = setTimeout(() => {
                                     document.getElementById('searchForm').submit();
                                 }, 600);
-                            }" value="{{ request('strCustomerName') }}"
+                            }" value="<?php echo e(request('strCustomerName')); ?>"
                         placeholder="Search Ledger..."
                         class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
                 </div>
                 
-                {{-- Date Range Filter --}}
+                
                 <div>
                     <div class="relative"
                         x-data="{
                             open: false,
-                            selected: @js($rangeSel),
-                            options: @js($rangeOptions),
+                            selected: <?php echo \Illuminate\Support\Js::from($rangeSel)->toHtml() ?>,
+                            options: <?php echo \Illuminate\Support\Js::from($rangeOptions)->toHtml() ?>,
 
                             init() {
                                 this.$watch('selected', value => {
@@ -293,17 +297,18 @@
                             class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
                             bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
-                            @forelse ($financialYearOptions as $financialYear)
+                            <?php $__empty_1 = true; $__currentLoopData = $financialYearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <li>
                                     <button type="button"
-                                        @click="selected=@js($financialYear['value']); open=false"
+                                        @click="selected=<?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>; open=false"
                                         class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
-                                        {{ $financialYear['label'] }}
+                                        <?php echo e($financialYear['label']); ?>
+
                                     </button>
                                 </li>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <li class="px-4 py-2 text-left text-gray-500 dark:text-gray-400">No financial years found</li>
-                            @endforelse
+                            <?php endif; ?>
                             <li>
                                 <button type="button"
                                     @click="selected='custom'; open=false"
@@ -316,28 +321,28 @@
                     
                 </div>
 
-                {{-- Custom date inputs --}}
-                <div id="customFromWrap" class="{{ $rangeSel === 'custom' ? '' : 'hidden' }}">
+                
+                <div id="customFromWrap" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>">
                     <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">From Date</label>
-                    <input type="date" name="from_custom" id="from_custom" value="{{ request('from') }}" min="1900-01-01"
+                    <input type="date" name="from_custom" id="from_custom" value="<?php echo e(request('from')); ?>" min="1900-01-01"
                         max="2099-12-31"
                         class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
                 </div>
                 <div id="customToLabel"
-                    class="pb-2 text-black-500 dark:text-gray-400 {{ $rangeSel === 'custom' ? '' : 'hidden' }}">TO</div>
-                <div id="customToWrap" class="{{ $rangeSel === 'custom' ? '' : 'hidden' }}">
+                    class="pb-2 text-black-500 dark:text-gray-400 <?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>">TO</div>
+                <div id="customToWrap" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>">
                     <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">To Date</label>
-                    <input type="date" name="to_custom" id="to_custom" value="{{ request('to') }}" min="1900-01-01"
+                    <input type="date" name="to_custom" id="to_custom" value="<?php echo e(request('to')); ?>" min="1900-01-01"
                         max="2099-12-31"
                         class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
                 </div>
 
-                {{-- Hidden fields --}}
-                <input type="hidden" name="from" id="from" value="{{ request('from') }}">
-                <input type="hidden" name="to" id="to" value="{{ request('to') }}">
+                
+                <input type="hidden" name="from" id="from" value="<?php echo e(request('from')); ?>">
+                <input type="hidden" name="to" id="to" value="<?php echo e(request('to')); ?>">
 
-                {{-- Manual search buttons for custom date range --}}
-                <div id="customSearchButtons" class="{{ $rangeSel === 'custom' ? '' : 'hidden' }} flex gap-2">
+                
+                <div id="customSearchButtons" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?> flex gap-2">
                     <button type="submit"
                         class="rounded-md border border-gray-700 text-black dark:text-white  px-4 py-2 text-sm transition duration-1000 ease-in-out
                                     transition-property: all;
@@ -346,7 +351,7 @@
                                     hover:scale-105
                                     hover:-translate-y-1"
                                     style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">Search</button>
-                    <a href="{{ route('reports.ledger') }}"
+                    <a href="<?php echo e(route('reports.ledger')); ?>"
                         class="rounded-md border border-gray-700 text-black dark:text-white px-4 py-2 text-sm transition duration-1000 ease-in-out
                                     transition-property: all;
                                     hover:border-[#a78bfa]
@@ -357,22 +362,22 @@
                 </div>
             </form>
 
-            {{-- Rest of your content remains exactly the same --}}
+            
             <!-- <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900">
                     <div class="text-sm text-gray-500 dark:text-gray-400">Total Ledgers</div>
-                    <div class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ $rows->count() }}</div>
+                    <div class="text-xl font-semibold text-gray-900 dark:text-gray-100"><?php echo e($rows->count()); ?></div>
                 </div>
             </div> -->
 
-            {{-- Grouped tables --}}
+            
             <div class="mt-2 space-y-5" id="ledgerGroups">
-                @forelse($byParent as $parent => $list)
-                    <!-- @php
+                <?php $__empty_1 = true; $__currentLoopData = $byParent; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parent => $list): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                    <!-- <?php
                         $gDr = $list->sum(fn($r) => $toFloat($r->decDr ?? 0));
                         $gCr = $list->sum(fn($r) => $toFloat($r->decCr ?? 0));
-                    @endphp -->
-                    @php
+                    ?> -->
+                    <?php
                         // ✅ Remove zero-balance rows
                         $filteredList = $list->filter(function ($r) use ($toFloat) {
                             $op = $toFloat($r->decOpBl ?? 0);
@@ -389,42 +394,44 @@
                         
                         $gDr = $filteredList->sum(fn($r) => abs($toFloat($r->decDr ?? 0)));
                         $gCr = $filteredList->sum(fn($r) => abs($toFloat($r->decCr ?? 0)));
-                    @endphp
-                    @if ($filteredList->count() > 0)
+                    ?>
+                    <?php if($filteredList->count() > 0): ?>
 
                     <div class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden group-block">
                         <div
                             class="px-4 py-3  border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                             <div class="text-sm font-semibold text-black-700 dark:text-gray-200">
-                                {{ $parent ?: 'Ungrouped' }} 
-                                <!-- — <span class="font-normal text-gray-500 dark:text-gray-400">{{ $list->count() }} ledgers</span> -->
+                                <?php echo e($parent ?: 'Ungrouped'); ?> 
+                                <!-- — <span class="font-normal text-gray-500 dark:text-gray-400"><?php echo e($list->count()); ?> ledgers</span> -->
                             </div>
                             <div class="text-xs md:text-sm text-black-600 dark:text-gray-300">
                                 <!-- <span class="mr-4">Dr: <strong
-                                        class="text-gray-600 dark:text-gray-300">{{ $inr($gDr) }}</strong></span>
-                                <span>Cr: <strong class="text-gray-600 dark:text-gray-300">{{ $inr($gCr) }}</strong></span> -->
-                                @php
+                                        class="text-gray-600 dark:text-gray-300"><?php echo e($inr($gDr)); ?></strong></span>
+                                <span>Cr: <strong class="text-gray-600 dark:text-gray-300"><?php echo e($inr($gCr)); ?></strong></span> -->
+                                <?php
                                     $gOp = $filteredList->sum(fn($r) => $toFloat($r->decOpBl ?? 0));
                                     $gCl = $filteredList->sum(fn($r) => $toFloat($r->decClBl ?? 0));
-                                @endphp
+                                ?>
 
                                 <!-- <span>Op:
                                     <strong>
-                                        {{ $inr(abs($gOp)) }} {{ $gOp < 0 ? 'Cr' : 'Dr' }}
+                                        <?php echo e($inr(abs($gOp))); ?> <?php echo e($gOp < 0 ? 'Cr' : 'Dr'); ?>
+
                                     </strong>
                                 </span> |
 
                                 <span>Dr:
-                                    <strong>{{ $inr($gDr) }}</strong>
+                                    <strong><?php echo e($inr($gDr)); ?></strong>
                                 </span> |
 
                                 <span>Cr:
-                                    <strong>{{ $inr($gCr) }}</strong>
+                                    <strong><?php echo e($inr($gCr)); ?></strong>
                                 </span> |
 
                                 <span>Cl:
                                     <strong>
-                                        {{ $inr(abs($gCl)) }} {{ $gCl < 0 ? 'Cr' : 'Dr' }}
+                                        <?php echo e($inr(abs($gCl))); ?> <?php echo e($gCl < 0 ? 'Cr' : 'Dr'); ?>
+
                                     </strong>
                                 </span> -->
                             </div>
@@ -436,7 +443,7 @@
                                     <tr class="text-black-600 dark:text-gray-300">
                                         <th class="px-4 py-2 font-bold">Ledger</th>
                                         <th class="px-4 py-2 font-bold">Parent</th>
-                                        {{-- <th class="px-4 py-2 font-semibold text-center">Side</th> --}}
+                                        
                                         <th class="px-4 py-2 font-bold text-right">Opening</th>
                                         <th class="px-4 py-2 font-bold text-right">Debit</th>
                                         <th class="px-4 py-2 font-bold text-right">Credit</th>
@@ -444,80 +451,76 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
-                                    @foreach ($filteredList as $r)
-                                        @php
+                                    <?php $__currentLoopData = $filteredList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php
                                             $op = $toFloat($r->decOpBl ?? 0);
                                             $cl = $toFloat($r->decClBl ?? 0);
                                             $rb = $toFloat($r->decRunningBalance ?? 0);
                                             $dr = $toFloat($r->decDr ?? 0);
                                             $cr = $toFloat($r->decCr ?? 0);
                                             $side = $sideByClosing($r);
-                                        @endphp
+                                        ?>
                                         <!-- hover:bg-transparent  -->
                                         <tr
                                             class="group  hover:backdrop-blur-md hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80">
                                             <td class="px-4 py-2 group-hover:text-black">
                                                 
-                                                <a href="{{ route('clients.reports.voucherHistory', [
+                                                <a href="<?php echo e(route('clients.reports.voucherHistory', [
                                                     'ledger_id' => $r->iLedgerId ?? null,
                                                     'guid' => $guid,
                                                     'from' => request('from'),
                                                     'to' => request('to'),
-                                                ]) }}"
+                                                ])); ?>"
                                                     class="text-blue-600 hover:underline group-hover:text-black">
                                                     <div class="text-gray-900 dark:text-gray-100 group-hover:text-black">
-                                                        {{ $r->strCustomerName ?? 'Ledger' }}</div>
-                                                    {{-- <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                        #{{ $r->iLedgerId ?? '-' }}</div> --}}
+                                                        <?php echo e($r->strCustomerName ?? 'Ledger'); ?></div>
+                                                    
                                                 </a>
                                             </td>
-                                            <td class="px-4 py-2 text-black-700 dark:text-gray-300 group-hover:text-black">{{ $r->strParents ?? '-' }}
+                                            <td class="px-4 py-2 text-black-700 dark:text-gray-300 group-hover:text-black"><?php echo e($r->strParents ?? '-'); ?>
+
                                             </td>
-                                            {{-- <td class="px-4 py-2 text-center">
-                                                @if ($side === 'Dr')
-                                                    <span
-                                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Dr</span>
-                                                @else
-                                                    <span
-                                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Cr</span>
-                                                @endif
-                                            </td> --}}
+                                            
                                             <td
-                                                class="px-4 py-2 group-hover:text-black  text-right {{ $op < 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 ' }}">
-                                                <!-- {{ $inr($op) }} -->
-                                                @php
+                                                class="px-4 py-2 group-hover:text-black  text-right <?php echo e($op < 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 '); ?>">
+                                                <!-- <?php echo e($inr($op)); ?> -->
+                                                <?php
                                                     $opSide = $op <= 0 ? 'Dr' : 'Cr';
-                                                @endphp
-                                                @if(abs($op) > 0)
-                                                    {{ $inr(abs($op)) }} {{ $op < 0 ? 'Dr' : 'Cr' }}
-                                                @else
+                                                ?>
+                                                <?php if(abs($op) > 0): ?>
+                                                    <?php echo e($inr(abs($op))); ?> <?php echo e($op < 0 ? 'Dr' : 'Cr'); ?>
+
+                                                <?php else: ?>
                                                     0.00
-                                                @endif
+                                                <?php endif; ?>
 
                                             </td>
                                             <td
-                                                class="px-4 py-2 group-hover:text-black text-right {{ $dr > 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 ' }}">
-                                                {{ $inr($dr) }}
+                                                class="px-4 py-2 group-hover:text-black text-right <?php echo e($dr > 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 '); ?>">
+                                                <?php echo e($inr($dr)); ?>
+
                                             </td>
                                             <td
-                                                class="px-4 py-2 group-hover:text-black text-right {{ $cr > 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 ' }}">
-                                                {{ $inr($cr) }}
+                                                class="px-4 py-2 group-hover:text-black text-right <?php echo e($cr > 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 '); ?>">
+                                                <?php echo e($inr($cr)); ?>
+
                                             </td>
                                             <td
-                                                class="px-4 py-2 group-hover:text-black text-right {{ $cl < 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 ' }}">
-                                                <!-- {{ $inr($cl) }} -->
-                                                @php
+                                                class="px-4 py-2 group-hover:text-black text-right <?php echo e($cl < 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 '); ?>">
+                                                <!-- <?php echo e($inr($cl)); ?> -->
+                                                <?php
                                                     $side = $cl <= 0 ? 'Dr' : 'Cr';
-                                                @endphp
+                                                ?>
                                                 
-                                                @if(abs($cl) > 0)
-                                                    {{ $inr(abs($cl)) }} {{ $cl < 0 ? 'Dr' : 'Cr' }}
-                                                @else
+                                                <?php if(abs($cl) > 0): ?>
+                                                    <?php echo e($inr(abs($cl))); ?> <?php echo e($cl < 0 ? 'Dr' : 'Cr'); ?>
+
+                                                <?php else: ?>
                                                     0.00
-                                                @endif
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </tbody>
                                 <tfoot class=" border-t border-gray-600">
                                     <tr>
@@ -525,10 +528,10 @@
                                             <!-- <div class="flex flex-wrap items-center justify-end gap-6 text-sm">
                                                 <span class="text-gray-700 dark:text-gray-300">Group Dr:
                                                     <strong
-                                                        class="text-gray-700 dark:text-gray-300">{{ $inr($gDr) }}</strong></span>
+                                                        class="text-gray-700 dark:text-gray-300"><?php echo e($inr($gDr)); ?></strong></span>
                                                 <span class="text-gray-700 dark:text-gray-300">Group Cr:
                                                     <strong
-                                                        class="text-gray-600 dark:text-gray-300">{{ $inr($gCr) }}</strong></span>
+                                                        class="text-gray-600 dark:text-gray-300"><?php echo e($inr($gCr)); ?></strong></span>
                                             </div> -->
                                             <div class="flex flex-wrap items-center justify-end gap-6 text-sm">
                                                 <span class="text-gray-700 dark:text-gray-300"><strong
@@ -536,33 +539,35 @@
                                             </div>
                                         </td>
                                         <td
-                                            class="px-4 py-2 group-hover:text-black  text-right {{ $op < 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 ' }}">
-                                            <!-- {{ $inr($op) }} -->
+                                            class="px-4 py-2 group-hover:text-black  text-right <?php echo e($op < 0 ? 'text-black-700 dark:text-gray-300' : 'text-black-700 dark:text-gray-300 '); ?>">
+                                            <!-- <?php echo e($inr($op)); ?> -->
                                             <strong>
-                                                @if(abs($gOp) > 0)
-                                                    {{ $inr(abs($gOp)) }} {{ $gOp < 0 ? 'Dr' : 'Cr' }}
-                                                @else
+                                                <?php if(abs($gOp) > 0): ?>
+                                                    <?php echo e($inr(abs($gOp))); ?> <?php echo e($gOp < 0 ? 'Dr' : 'Cr'); ?>
+
+                                                <?php else: ?>
                                                     0.00
-                                                @endif</strong>
+                                                <?php endif; ?></strong>
                                         </td>
                                         <td
-                                            class="px-4 py-2 group-hover:text-black text-right {{ $dr > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300 ' }}">
-                                            <strong>{{ $inr($gDr) }}</strong>
+                                            class="px-4 py-2 group-hover:text-black text-right <?php echo e($dr > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300 '); ?>">
+                                            <strong><?php echo e($inr($gDr)); ?></strong>
                                         </td>
                                         <td
-                                            class="px-4 py-2 group-hover:text-black text-right {{ $cr > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300 ' }}">
-                                            <strong>{{ $inr($gCr) }}</strong>
+                                            class="px-4 py-2 group-hover:text-black text-right <?php echo e($cr > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300 '); ?>">
+                                            <strong><?php echo e($inr($gCr)); ?></strong>
                                         </td>
                                         
                                         <td
-                                            class="px-4 py-2 group-hover:text-black text-right {{ $cl < 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300 ' }}">
-                                            <!-- {{ $inr($cl) }} -->
+                                            class="px-4 py-2 group-hover:text-black text-right <?php echo e($cl < 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300 '); ?>">
+                                            <!-- <?php echo e($inr($cl)); ?> -->
                                             <strong> 
-                                                @if(abs($gCl) > 0)
-                                                    {{ $inr(abs($gCl)) }} {{ $gCl < 0 ? 'Dr' : 'Cr' }}
-                                                @else
+                                                <?php if(abs($gCl) > 0): ?>
+                                                    <?php echo e($inr(abs($gCl))); ?> <?php echo e($gCl < 0 ? 'Dr' : 'Cr'); ?>
+
+                                                <?php else: ?>
                                                     0.00
-                                                @endif
+                                                <?php endif; ?>
                                             </strong>
                                         </td>
                                     </tr>
@@ -570,34 +575,36 @@
                             </table>
                         </div>
                     </div>
-                    @endif
-                @empty
+                    <?php endif; ?>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <div
                         class="mt-4 rounded-md bg-yellow-50 dark:bg-yellow-900/20 px-4 py-3 text-sm text-yellow-800 dark:text-yellow-300">
                         No ledgers found for the selected period.
                     </div>
-                @endforelse
+                <?php endif; ?>
             </div>
 
-            {{-- Net bar --}}
+            
             <div
                 class="mt-2 rounded-md border border-gray-200 dark:border-gray-700  p-4 flex flex-wrap items-center justify-between">
                 <div class="flex flex-wrap justify-end gap-6 text-sm text-right w-full">
                     <span>Opening: <strong>
-                        @if(abs($totalOp) > 0)
-                            {{ $inr(abs($totalOp)) }} {{ $totalOp < 0 ? 'Dr' : 'Cr' }}
-                        @else
+                        <?php if(abs($totalOp) > 0): ?>
+                            <?php echo e($inr(abs($totalOp))); ?> <?php echo e($totalOp < 0 ? 'Dr' : 'Cr'); ?>
+
+                        <?php else: ?>
                             0.00
-                        @endif
+                        <?php endif; ?>
                     </strong></span> |
-                    <span>Debit: <strong>{{ $inr($totalDr) }}</strong></span> |
-                    <span>Credit: <strong>{{ $inr($totalCr) }}</strong></span> |
+                    <span>Debit: <strong><?php echo e($inr($totalDr)); ?></strong></span> |
+                    <span>Credit: <strong><?php echo e($inr($totalCr)); ?></strong></span> |
                     <span>Closing: <strong>
-                        @if(abs($totalCl) > 0)
-                            {{ $inr(abs($totalCl)) }} {{ $totalCl < 0 ? 'Dr' : 'Cr' }}
-                        @else
+                        <?php if(abs($totalCl) > 0): ?>
+                            <?php echo e($inr(abs($totalCl))); ?> <?php echo e($totalCl < 0 ? 'Dr' : 'Cr'); ?>
+
+                        <?php else: ?>
                             0.00
-                        @endif
+                        <?php endif; ?>
                     </strong></span>
                 </div>
             </div>
@@ -824,7 +831,7 @@
             const toWrap   = document.getElementById('customToWrap');
             const toLabel  = document.getElementById('customToLabel');
             const btnWrap  = document.getElementById('customSearchButtons');
-            const financialYearRanges = @json($financialYearOptions->keyBy('value'));
+            const financialYearRanges = <?php echo json_encode($financialYearOptions->keyBy('value'), 15, 512) ?>;
             const selectedRange = financialYearRanges[value];
 
 
@@ -846,4 +853,5 @@
             }
         }
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/clients/reports/ledger.blade.php ENDPATH**/ ?>

@@ -73,7 +73,22 @@
             'decRunningBalance' => $previousBalance,
             'side' => $openingSide,
         ];
-
+        $financialYearOptions = collect($financialYears ?? [])
+            ->map(function ($year) {
+                $label = trim((string) ($year->strYear ?? ''));
+                if (! preg_match('/^(\d{4})-(\d{4})$/', $label, $matches)) {
+                    return null;
+                }
+                return [
+                    'value' => $label,
+                    'label' => $label,
+                    'from' => $matches[1] . '-04-01',
+                    'to' => $matches[2] . '-03-31',
+                ];
+            })
+            ->filter()
+            ->values();
+        $rangeOptions = $financialYearOptions->pluck('label', 'value')->all();
         // Process actual voucher rows - use the running balance from database directly
         
         foreach ($rows as $r) {
@@ -204,9 +219,9 @@
             </div>
             <!-- Right : FY + Back -->
             <div class="flex items-center gap-3 shrink-0">
-                <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                <!-- <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     {{ $labelFY ?? '' }}
-                </span>
+                </span> -->
                 <a href="{{ url()->previous() }}" title="Go Back"
                     class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                     hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
@@ -279,12 +294,8 @@
                 <div class="relative"
                     x-data="{
                         open: false,
-                        selected: '{{ $rangeSel }}',
-                        options: {
-                            'current_year': 'Current Year',
-                            'last_year': 'Last Year',
-                            'custom': 'Custom Date'
-                        },
+                        selected: @js($rangeSel),
+                        options: @js($rangeOptions),
 
                         init() {
                             this.$watch('selected', value => {
@@ -310,7 +321,7 @@
                         focus:outline-none
                         focus:ring-2 focus:ring-[#22d3ee]">
 
-                        <span x-text="options[selected]"></span>
+                        <span x-text="options[selected] || 'Select Year'"></span>
                     </button>
 
                     <!-- Arrow -->
@@ -324,22 +335,17 @@
                         class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
                         bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
-                        <li>
-                            <button type="button"
-                                @click="selected='current_year'; open=false"
-                                class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
-                                Current Year
-                            </button>
-                        </li>
-
-                        <li>
-                            <button type="button"
-                                @click="selected='last_year'; open=false"
-                                class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
-                                Last Year
-                            </button>
-                        </li>
-
+                        @forelse ($financialYearOptions as $financialYear)
+                            <li>
+                                <button type="button"
+                                    @click="selected=@js($financialYear['value']); open=false"
+                                    class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
+                                    {{ $financialYear['label'] }}
+                                </button>
+                            </li>
+                        @empty
+                            <li class="px-4 py-2 text-left text-gray-500 dark:text-gray-400">No financial years found</li>
+                        @endforelse
                         <li>
                             <button type="button"
                                 @click="selected='custom'; open=false"
@@ -660,6 +666,28 @@
 
     {{-- Your existing date range JavaScript code --}}
     <script>
-        // ... your existing JavaScript code for date ranges ...
+        function handleRangeChange(value) {
+            const financialYearRanges = @json($financialYearOptions->keyBy('value'));
+            const selectedRange = financialYearRanges[value];
+            const isCustom = value === 'custom';
+
+            document.getElementById('customFromWrap')?.classList.toggle('hidden', !isCustom);
+            document.getElementById('customToLabel')?.classList.toggle('hidden', !isCustom);
+            document.getElementById('customToWrap')?.classList.toggle('hidden', !isCustom);
+
+            if (isCustom) {
+                document.getElementById('from').value = '';
+                document.getElementById('to').value = '';
+                return;
+            }
+
+            if (! selectedRange) {
+                return;
+            }
+
+            document.getElementById('from').value = selectedRange.from;
+            document.getElementById('to').value = selectedRange.to;
+            document.getElementById('filterForm').submit();
+        }
     </script>
 @endsection

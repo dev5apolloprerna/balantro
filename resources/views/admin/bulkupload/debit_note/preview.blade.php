@@ -1913,16 +1913,28 @@
 
     // Master recalc — updates summary, footer, and custom slots
     function getSummaryBaseTotal() {
-            return (parseFloat($('#edit_amount').val()) || 0)
-                + (parseFloat($('#edit_cgst').val()) || 0)
-                + (parseFloat($('#edit_sgst').val()) || 0)
-                + (parseFloat($('#edit_igst').val()) || 0);
-        }
-
+        return (parseFloat($('#edit_amount').val()) || 0)
+            + (parseFloat($('#edit_cgst').val()) || 0)
+            + (parseFloat($('#edit_sgst').val()) || 0)
+            + (parseFloat($('#edit_igst').val()) || 0);
+    }
+    const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
     function calculateRoundOffAmountForSummary(total) {
-            total = parseFloat(total) || 0;
-            return Math.round((Math.round(total) - total) * 100) / 100;
+        total = parseFloat(total) || 0;
+        let roundedTotal;
+        switch (ROUND_OFF_SIDE) {
+            case 'upper_side':
+                roundedTotal = Math.ceil(total);
+                break;
+            case 'lower_side':
+                roundedTotal = Math.floor(total);
+                break;
+            default:
+                roundedTotal = Math.round(total);
+                break;
         }
+        return Math.round((roundedTotal - total) * 100) / 100;
+    }
 
     function applyRoundOffSummary(total, roundOff) {
             total = parseFloat(total) || 0;

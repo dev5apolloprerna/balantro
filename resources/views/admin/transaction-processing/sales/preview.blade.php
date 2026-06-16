@@ -2048,10 +2048,25 @@
             + (parseFloat($('#edit_sgst').val()) || 0)
             + (parseFloat($('#edit_igst').val()) || 0);
     }
+    const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
 
     function calculateRoundOffAmountForSummary(total) {
         total = parseFloat(total) || 0;
-        return Math.round((Math.round(total) - total) * 100) / 100;
+        let roundedTotal;
+
+        switch (ROUND_OFF_SIDE) {
+            case 'upper_side':
+                roundedTotal = Math.ceil(total);
+                break;
+            case 'lower_side':
+                roundedTotal = Math.floor(total);
+                break;
+            default:
+                roundedTotal = Math.round(total);
+                break;
+        }
+
+        return Math.round((roundedTotal - total) * 100) / 100;
     }
 
     function applyRoundOffSummary(total, roundOff) {
@@ -2221,24 +2236,44 @@
             renderCustomSlots(rateMap, grandTotal);
         }
 
-        let totalCgst = 0;
-        let totalSgst = 0;
-        let totalIgst = 0;
-        $('#customSlotsBody tr').each(function () {
-            totalCgst += parseFloat(
-                $(this).find('.cgst-amount').val() || 0
-            );
-            totalSgst += parseFloat(
-                $(this).find('.sgst-amount').val() || 0
-            );
-            totalIgst += parseFloat(
-                $(this).find('.igst-amount').val() || 0
-            );
-        });
+        // let totalCgst = 0;
+        // let totalSgst = 0;
+        // let totalIgst = 0;
+        // $('#customSlotsBody tr').each(function () {
+        //     totalCgst += parseFloat(
+        //         $(this).find('.cgst-amount').val() || 0
+        //     );
+        //     totalSgst += parseFloat(
+        //         $(this).find('.sgst-amount').val() || 0
+        //     );
+        //     totalIgst += parseFloat(
+        //         $(this).find('.igst-amount').val() || 0
+        //     );
+        // });
+        if (gstMode === 'custom') {
+            let totalCgst = 0;
+            let totalSgst = 0;
+            let totalIgst = 0;
+            $('#customSlotsBody tr').each(function () {
+                totalCgst += parseFloat(
+                    $(this).find('.slot-cgst-amt').val() || 0
+                );
+                totalSgst += parseFloat(
+                    $(this).find('.slot-sgst-amt').val() || 0
+                );
+                totalIgst += parseFloat(
+                    $(this).find('.slot-igst-amt').val() || 0
+                );
+            });
+            $('#sum_cgst').text(totalCgst.toFixed(2));
+            $('#sum_sgst').text(totalSgst.toFixed(2));
+            $('#sum_igst').text(totalIgst.toFixed(2));
+        }
+    
 
-        $('#sum_cgst').text(totalCgst.toFixed(2));
-        $('#sum_sgst').text(totalSgst.toFixed(2));
-        $('#sum_igst').text(totalIgst.toFixed(2));
+        // $('#sum_cgst').text(totalCgst.toFixed(2));
+        // $('#sum_sgst').text(totalSgst.toFixed(2));
+        // $('#sum_igst').text(totalIgst.toFixed(2));
     }
 
     $(document).on('input', '#noitem_amount', function () {

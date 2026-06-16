@@ -478,10 +478,23 @@
 
         return mapping ? mapping[`${type}_id`] : null;
     }
+    const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
 
     function calculateRoundOffAmountForSummary(total) {
         total = parseFloat(total) || 0;
-        return Math.round((Math.round(total) - total) * 100) / 100;
+        let roundedTotal;
+        switch (ROUND_OFF_SIDE) {
+            case 'upper_side':
+                roundedTotal = Math.ceil(total);
+                break;
+            case 'lower_side':
+                roundedTotal = Math.floor(total);
+                break;
+            default:
+                roundedTotal = Math.round(total);
+                break;
+        }
+        return Math.round((roundedTotal - total) * 100) / 100;
     }
 
     function getSummaryBaseTotal() {
@@ -514,9 +527,12 @@
 
     function setRoundOffSummary(total, roundOffAmount = null) {
         total = parseFloat(total) || 0;
-        let roundOff = roundOffAmount === null || roundOffAmount === undefined
-            ? calculateRoundOffAmountForSummary(total)
-            : (parseFloat(roundOffAmount) || 0);
+        if (roundOffAmount !== null && roundOffAmount !== undefined) {
+            let roundOff = parseFloat(roundOffAmount) || 0;
+            return applyRoundOffSummary(total - roundOff, roundOff);
+        }
+
+        let roundOff = calculateRoundOffAmountForSummary(total);
 
         return applyRoundOffSummary(total, roundOff);
     }

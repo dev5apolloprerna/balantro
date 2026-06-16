@@ -120,7 +120,7 @@ class SalesUploadController extends Controller
             'sGstLedgers' => Ledger::getAllsGstLedgers($iPartyId),
             'salesLedgers' => Ledger::getSalesLedgers($iPartyId),
             'salesGstMappings' => $this->getSalesLedgerGstMappings($iPartyId),
-
+            'roundOffSide' => $this->getRoundOffSetting($iPartyId)['side'],
             'stockItems' => DB::table('StockItemMaster')
                 ->select(
                     'iStockIdtemId',
@@ -410,6 +410,15 @@ class SalesUploadController extends Controller
 
         return round($roundedGrandTotal - $grandTotal, 2);
     }
+    
+    private function calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, ?string $side = 'normal'): float
+    {
+        $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        $roundOff = $this->calculateRoundOffAmount($amount, $sgst, $cgst, $igst, $side);
+
+        return round($grandTotal + $roundOff, 2);
+    }
+
     public function upload(Request $request)
     {
         $iPartyId = session('iPartyId');
@@ -625,7 +634,8 @@ class SalesUploadController extends Controller
                         'sgst'              => $sumSgst,
                         'cgst'              => $sumCgst,
                         'igst'              => $sumIgst,
-                        'total_amount'      => $sumTotalAmount,
+                        // 'total_amount'      => $sumTotalAmount,
+                        'total_amount'      => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                         'is_igst'           => $is_igst,
                         'status'            => $status,
                         'vchType'           => 'sales',
@@ -800,8 +810,8 @@ class SalesUploadController extends Controller
                         'sgst'              => $sumSgst,
                         'cgst'              => $sumCgst,
                         'igst'              => $sumIgst,
-                        'total_amount'      => $sumTotalAmount,
-
+                        // 'total_amount'      => $sumTotalAmount,
+                        'total_amount'      => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                         'status'            => $status,
                         'vchType'           => 'sales',
                         'roundoff_id'          => $roundOffLedger?->iLedgerId,
@@ -1500,7 +1510,8 @@ class SalesUploadController extends Controller
                 'sgst'         => $sumSgst,
                 'cgst'         => $sumCgst,
                 'igst'         => $sumIgst,
-                'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                // 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                 'roundoff_id'  => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
@@ -1876,7 +1887,8 @@ class SalesUploadController extends Controller
                 'sgst'         => $sumSgst,
                 'cgst'         => $sumCgst,
                 'igst'         => $sumIgst,
-                'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                // 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                 'roundoff_id'  => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),

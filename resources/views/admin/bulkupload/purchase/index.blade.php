@@ -2847,11 +2847,55 @@
                 sgst_id: item.SGSTLedgerId ? String(item.SGSTLedgerId) : null
             };
         }
+        const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
+        @@ -2826,88 +2826,106 @@
+        });
+
+        function normalizeLedgerName(name) {
+            return String(name || '').trim().toLowerCase();
+        }
+
+        function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {
+            let normalizedText = normalizeLedgerName(ledgerText);
+            return PURCHASE_GST_MAPPINGS.find(mapping =>
+                String(mapping.id || '') === String(ledgerValue || '') ||
+                normalizeLedgerName(mapping.name) === normalizedText
+            ) || null;
+        }
+
+        function itemGstMappingObject(item) {
+            if (!item) {
+                return null;
+            }
+            return {
+                igst_id: item.IGSTLedgerId ? String(item.IGSTLedgerId) : null,
+                cgst_id: item.CGSTLedgerId ? String(item.CGSTLedgerId) : null,
+                sgst_id: item.SGSTLedgerId ? String(item.SGSTLedgerId) : null
+            };
+        }
 
         function calculateRoundOffAmountForSummary(total) {
             total = parseFloat(total) || 0;
             return Math.round((Math.round(total) - total) * 100) / 100;
+        const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
+
+        function calculateRoundOffAmountForSummary(total) {
+            total = parseFloat(total) || 0;
+            let roundedTotal;
+            switch (ROUND_OFF_SIDE) {
+                case 'upper_side':
+                    roundedTotal = Math.ceil(total);
+                    break;
+                case 'lower_side':
+                    roundedTotal = Math.floor(total);
+                    break;
+                default:
+                    roundedTotal = Math.round(total);
+                    break;
+            }
+            return Math.round((roundedTotal - total) * 100) / 100;
         }
+
 
         function getSummaryBaseTotal() {
             return (parseFloat($('#edit_amount').val()) || 0)
@@ -2882,9 +2926,12 @@
 
         function setRoundOffSummary(total, roundOffAmount = null) {
             total = parseFloat(total) || 0;
-            let roundOff = roundOffAmount === null || roundOffAmount === undefined
-                ? calculateRoundOffAmountForSummary(total)
-                : (parseFloat(roundOffAmount) || 0);
+            if (roundOffAmount !== null && roundOffAmount !== undefined) {
+                let roundOff = parseFloat(roundOffAmount) || 0;
+                return applyRoundOffSummary(total - roundOff, roundOff);
+            }
+
+            let roundOff = calculateRoundOffAmountForSummary(total);
 
             return applyRoundOffSummary(total, roundOff);
         }

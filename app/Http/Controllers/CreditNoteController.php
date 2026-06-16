@@ -75,8 +75,9 @@ class CreditNoteController extends Controller
             ->orderBy('strItemName', 'asc') // optional (recommended)
             ->get();
         $salesGstMappings = $this->getSalesLedgerGstMappings($iPartyId);
+         $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
         return view('admin.bulkupload.credit_note.index', compact('uploads', 'clients','vchTypes','states','groups'
-        ,'parents','ledgers','iGstLedgers','cGstLedgers','sGstLedgers','salesLedgers','stockItems','years','salesGstMappings'));
+        ,'parents','ledgers','iGstLedgers','cGstLedgers','sGstLedgers','salesLedgers','stockItems','roundOffSide','years','salesGstMappings'));
     }
 
     public function selectCompany($id)
@@ -452,6 +453,15 @@ class CreditNoteController extends Controller
 
         return round($roundedGrandTotal - $grandTotal, 2);
     }
+
+    private function calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, ?string $side = 'normal'): float
+    {
+        $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        $roundOff = $this->calculateRoundOffAmount($amount, $sgst, $cgst, $igst, $side);
+
+        return round($grandTotal + $roundOff, 2);
+    }
+
     // public function upload(Request $request)
     // {
     //     $iPartyId = session('iPartyId'); // same as sales
@@ -1054,7 +1064,8 @@ class CreditNoteController extends Controller
                         'sgst' => $sumSgst,
                         'cgst' => $sumCgst,
                         'igst' => $sumIgst,
-                        'total_amount' => $sumTotalAmount,
+                        // 'total_amount' => $sumTotalAmount,
+                        'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                         'status' => $status,
                         'vch_type' => 'Credit Note',
                         'roundoff_id' => $roundOffLedger?->iLedgerId,
@@ -1259,8 +1270,8 @@ class CreditNoteController extends Controller
                         'sgst'              => $sumSgst,
                         'cgst'              => $sumCgst,
                         'igst'              => $sumIgst,
-                        'total_amount'      => $sumTotalAmount,
-                        
+                        // 'total_amount'      => $sumTotalAmount,
+                        'total_amount'      => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                         'status'            => $status,
                         'vch_type'          => 'Credit Note',
                         
@@ -1375,6 +1386,7 @@ class CreditNoteController extends Controller
             ->orderBy('strItemName', 'asc') // optional (recommended)
             ->get();
         $salesGstMappings = $this->getSalesLedgerGstMappings($iPartyId);
+        $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
         return view('admin.bulkupload.credit_note.preview', compact(
             'rows',
             'ledgers',
@@ -1758,7 +1770,8 @@ class CreditNoteController extends Controller
                 'cgst' => $sumCgst,
                 'sgst' => $sumSgst,
                 'igst' => $sumIgst,
-                'total_amount' => $sumAmount + $sumCgst + $sumSgst + $sumIgst,
+                // 'total_amount' => $sumAmount + $sumCgst + $sumSgst + $sumIgst,
+                'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                 'roundoff_id' => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
@@ -2275,7 +2288,8 @@ class CreditNoteController extends Controller
                 'sgst'         => $sumSgst,
                 'cgst'         => $sumCgst,
                 'igst'         => $sumIgst,
-                'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                // 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
+                'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
                 'roundoff_id' => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),

@@ -66,6 +66,13 @@ class TransactionProcessingController extends Controller
         ]);
     }
 
+    private function getRoundOffSide($partyId): string
+    {
+        $profile = DB::table('profiles')->where('user_id', $partyId)->first();
+
+        return $profile->roundoff_side ?? 'normal';
+    }
+    
     private function getLedgerGstMappings($iPartyId, string $parent): array
     {
         return DB::table('LedgerMaster')
@@ -159,9 +166,10 @@ class TransactionProcessingController extends Controller
                 ->where('iPartyId', $iPartyId)
                 ->orderBy('strItemName', 'asc')
                 ->get();
+        $roundOffSide = $this->getRoundOffSide($iPartyId);
         return view('admin.transaction-processing.sales.preview', compact('rows', 'ledgers', 'vchTypes', 'groups', 'states', 'parents','iGstLedgers',
             'cGstLedgers',
-            'sGstLedgers','salesLedgers', 'stockItems', 'salesGstMappings'));
+            'sGstLedgers','salesLedgers', 'stockItems', 'salesGstMappings', 'roundOffSide'));
     }
 
     public function processing_purchase()
@@ -252,6 +260,7 @@ class TransactionProcessingController extends Controller
             ->orderBy('strItemName', 'asc') // optional (recommended)
             ->get();
         $purchaseGstMappings = $this->getPurchaseLedgerGstMappings($iPartyId);
+        $roundOffSide = $this->getRoundOffSide($iPartyId);
         return view('admin.transaction-processing.purchase.preview', compact(
             'rows',
             'ledgers',
@@ -264,7 +273,8 @@ class TransactionProcessingController extends Controller
             'sGstLedgers',
             'purchaseLedgers',
             'stockItems',
-            'purchaseGstMappings'
+            'purchaseGstMappings',
+            'roundOffSide'
         ));
     }
 
@@ -545,9 +555,10 @@ class TransactionProcessingController extends Controller
             ->get();
         $salesLedgers = Ledger::getSalesLedgers($iPartyId);
         $salesGstMappings = $this->getLedgerGstMappings($iPartyId, 'Sales Accounts');
+        $roundOffSide = $this->getRoundOffSide($iPartyId);
         return view('admin.transaction-processing.credit_note.preview', compact('rows', 'ledgers', 'vchTypes', 'groups', 'states', 'parents','iGstLedgers',
             'cGstLedgers',
-            'sGstLedgers', 'stockItems','salesLedgers', 'salesGstMappings'));
+            'sGstLedgers', 'stockItems','salesLedgers', 'salesGstMappings', 'roundOffSide'));
     }
 
     public function credit_note_sumbit(Request $request)
@@ -660,6 +671,7 @@ class TransactionProcessingController extends Controller
             ->where('iPartyId', $iPartyId)
             ->orderBy('strItemName', 'asc')
             ->get();
+        $roundOffSide = $this->getRoundOffSide($iPartyId);
         return view('admin.transaction-processing.debit_note.preview', compact(
             'rows',
             'ledgers',
@@ -672,7 +684,8 @@ class TransactionProcessingController extends Controller
             'sGstLedgers',
             'stockItems',
             'purchaseLedgers',
-            'purchaseGstMappings'
+            'purchaseGstMappings',
+            'roundOffSide'
         ));
     }
 

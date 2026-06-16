@@ -653,38 +653,40 @@ class ClientsController extends Controller
                     ->route('clients.index')
                     ->with('error', 'Invalid request. Client GUID is missing.');
             }
-            $rangeSel = $r->input('range');
-            if ($rangeSel) {
-                session([
-                    'selectedRange' => $rangeSel,
-                    'selectedFrom'  => $r->input('from'),
-                    'selectedTo'    => $r->input('to'),
-                ]);
-            }
+            // $rangeSel = $r->input('range');
+            // if ($rangeSel) {
+            //     session([
+            //         'selectedRange' => $rangeSel,
+            //         'selectedFrom'  => $r->input('from'),
+            //         'selectedTo'    => $r->input('to'),
+            //     ]);
+            // }
             $user = Client::where('guid', $guid)->first();
             $toDMY = fn($d) => $d ? \Carbon\Carbon::parse($d)->format('d-m-Y') : '';
-            $rangeSel = $rangeSel ?: session('selectedRange', 'current_year');
-            // Restore from session
-            $from = $r->input('from', session('selectedFrom'));
-            $to   = $r->input('to', session('selectedTo'));
-            // ✅ Auto set from/to if not provided
-            if (!$from || !$to) {
-                $today = now();
+            // $rangeSel = $rangeSel ?: session('selectedRange', 'current_year');
+            // // Restore from session
+            // $from = $r->input('from', session('selectedFrom'));
+            // $to   = $r->input('to', session('selectedTo'));
+            // // ✅ Auto set from/to if not provided
+            // if (!$from || !$to) {
+            //     $today = now();
 
-                if ($rangeSel === 'current_year') {
-                    $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
-                    $from = date('Y-m-d', strtotime("$startYear-04-01"));
-                    $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
-                }
+            //     if ($rangeSel === 'current_year') {
+            //         $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
+            //         $from = date('Y-m-d', strtotime("$startYear-04-01"));
+            //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
+            //     }
 
-                if ($rangeSel === 'last_year') {
-                    $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
-                    $from = date('Y-m-d', strtotime("$startYear-04-01"));
-                    $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
-                }
-            }
+            //     if ($rangeSel === 'last_year') {
+            //         $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
+            //         $from = date('Y-m-d', strtotime("$startYear-04-01"));
+            //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
+            //     }
+            // }
             
-            $resp = $svc->pandl($user->id, $toDMY($r->input('from')), $toDMY($r->input('to')));
+            // $resp = $svc->pandl($user->id, $toDMY($r->input('from')), $toDMY($r->input('to')));
+            [$financialYears, $rangeSel, $from, $to] = $this->resolveClientFinancialYear($r, $user);
+            $resp = $svc->pandl($user->id, $toDMY($from), $toDMY($to));
             
             // $from = $r->input('from') ? date('d-m-Y',strtotime($r->input('from'))) : '';
             // $to = $r->input('to') ? date('d-m-Y',strtotime($r->input('to'))) : '';
@@ -706,7 +708,8 @@ class ClientsController extends Controller
             //     $from = $fyStart->format('Y-m-d');
             //     $to   = $fyEnd->format('Y-m-d');
             // }
-            return view('admin.clients.reports.pl', compact('resp', 'from', 'to', 'pl', 'guid','user','rangeSel'));
+            //return view('admin.clients.reports.pl', compact('resp', 'from', 'to', 'pl', 'guid','user','rangeSel'));
+            return view('admin.clients.reports.pl', compact('resp', 'from', 'to', 'pl', 'guid','user','rangeSel', 'financialYears'));
         // } catch (\Throwable $e) {
         //     // 🔹 Log error and redirect with friendly message
         //     Log::error("Dashboard error for GUID {$guid}: " . $e->getMessage(), [
@@ -730,31 +733,32 @@ class ClientsController extends Controller
             }
             $user = Client::where('guid', $guid)->first();
             // inputs
-            $rangeSel = $r->input('range');
-            $from = $r->input('from') ? date('d-m-Y',strtotime($r->input('from'))) : '';
-            $to = $r->input('to') ? date('d-m-Y',strtotime($r->input('to'))) : '';
+            // $rangeSel = $r->input('range');
+            // $from = $r->input('from') ? date('d-m-Y',strtotime($r->input('from'))) : '';
+            // $to = $r->input('to') ? date('d-m-Y',strtotime($r->input('to'))) : '';
+            [$financialYears, $rangeSel, $from, $to] = $this->resolveClientFinancialYear($r, $user);
             $partyguid = $guid; // provide via UI/session
             $partyId   = $user->id;
 
-            $from = $r->input('from', session('selectedFrom'));
-            $to   = $r->input('to', session('selectedTo'));
-            $rangeSel = $rangeSel ?: session('selectedRange', 'current_year');
-            // ✅ Auto set from/to if not provided
-            if (!$from || !$to) {
-                $today = now();
+            // $from = $r->input('from', session('selectedFrom'));
+            // $to   = $r->input('to', session('selectedTo'));
+            // $rangeSel = $rangeSel ?: session('selectedRange', 'current_year');
+            // // ✅ Auto set from/to if not provided
+            // if (!$from || !$to) {
+            //     $today = now();
 
-                if ($rangeSel === 'current_year') {
-                    $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
-                    $from = date('Y-m-d', strtotime("$startYear-04-01"));
-                    $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
-                }
+            //     if ($rangeSel === 'current_year') {
+            //         $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
+            //         $from = date('Y-m-d', strtotime("$startYear-04-01"));
+            //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
+            //     }
 
-                if ($rangeSel === 'last_year') {
-                    $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
-                    $from = date('Y-m-d', strtotime("$startYear-04-01"));
-                    $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
-                }
-            }
+            //     if ($rangeSel === 'last_year') {
+            //         $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
+            //         $from = date('Y-m-d', strtotime("$startYear-04-01"));
+            //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
+            //     }
+            // }
             $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
 
             $data = data_get($resp, 'data', []);
@@ -776,7 +780,8 @@ class ClientsController extends Controller
             //     $to   = $fyEnd->format('Y-m-d');
             // }
             
-            return view('admin.clients.reports.balance_sheet', compact('resp', 'from', 'to', 'data', 'partyguid', 'guid','user','rangeSel'));
+            // return view('admin.clients.reports.balance_sheet', compact('resp', 'from', 'to', 'data', 'partyguid', 'guid','user','rangeSel'));
+            return view('admin.clients.reports.balance_sheet', compact('resp', 'from', 'to', 'data', 'partyguid', 'guid','user','rangeSel', 'financialYears'));
         } catch (\Throwable $e) {
             // 🔹 Log error and redirect with friendly message
             Log::error("Dashboard error for GUID {$guid}: " . $e->getMessage(), [
@@ -799,38 +804,40 @@ class ClientsController extends Controller
                     ->with('error', 'Invalid request. Client GUID is missing.');
             }
             $user = Client::where('guid', $guid)->first();
-            $from = $r->input('from');
-            $to   = $r->input('to');
-            $rangeSel = $r->input('range');
+            // $from = $r->input('from');
+            // $to   = $r->input('to');
+            // $rangeSel = $r->input('range');
+            [$financialYears, $rangeSel, $from, $to] = $this->resolveClientFinancialYear($r, $user);
             $groupId = (int) $r->input('group_id'); // iGroupId
             $strCustomerName =  $r->input('strCustomerName');
 
-            if ($rangeSel) {
-                session([
-                    'selectedRange' => $rangeSel,
-                    'selectedFrom'  => $r->input('from'),
-                    'selectedTo'    => $r->input('to'),
-                ]);
-            }
-            $from = $r->input('from', session('selectedFrom'));
-            $to   = $r->input('to', session('selectedTo'));
-            $rangeSel = $rangeSel ?: session('selectedRange', 'current_year');
+            // if ($rangeSel) {
+            //     session([
+            //         'selectedRange' => $rangeSel,
+            //         'selectedFrom'  => $r->input('from'),
+            //         'selectedTo'    => $r->input('to'),
+            //     ]);
+            // }
+            // $from = $r->input('from', session('selectedFrom'));
+            // $to   = $r->input('to', session('selectedTo'));
+            // $rangeSel = $rangeSel ?: session('selectedRange', 'current_year');
+
             $partyId = $user->id;
             $partyguid = $guid; // provide via UI/session
             // ✅ Auto set from/to if not provided
-            if (!$from || !$to) {
-                $today = now();
-                if ($rangeSel === 'current_year') {
-                    $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
-                    $from = date('Y-m-d', strtotime("$startYear-04-01"));
-                    $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
-                }
-                if ($rangeSel === 'last_year') {
-                    $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
-                    $from = date('Y-m-d', strtotime("$startYear-04-01"));
-                    $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
-                }
-            }
+            // if (!$from || !$to) {
+            //     $today = now();
+            //     if ($rangeSel === 'current_year') {
+            //         $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
+            //         $from = date('Y-m-d', strtotime("$startYear-04-01"));
+            //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
+            //     }
+            //     if ($rangeSel === 'last_year') {
+            //         $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
+            //         $from = date('Y-m-d', strtotime("$startYear-04-01"));
+            //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
+            //     }
+            // }
             
             $resp = $svc->ledger($partyId, $groupId, $from, $to, $strCustomerName);
             $data = data_get($resp, 'data', []);
@@ -841,7 +848,8 @@ class ClientsController extends Controller
             
 			// $from = $r->input('from') ? date('d-m-Y',strtotime($r->input('from'))) : '';
             // $to = $r->input('to') ? date('d-m-Y',strtotime($r->input('to'))) : '';
-            return view('admin.clients.reports.ledger', compact('resp', 'from', 'to', 'strCustomerName', 'data', 'groupId', 'GroupMasters', 'guid','user','rangeSel'));
+            //return view('admin.clients.reports.ledger', compact('resp', 'from', 'to', 'strCustomerName', 'data', 'groupId', 'GroupMasters', 'guid','user','rangeSel'));
+            return view('admin.clients.reports.ledger', compact('resp', 'from', 'to', 'strCustomerName', 'data', 'groupId', 'GroupMasters', 'guid','user','rangeSel', 'financialYears'));
         } catch (\Throwable $e) {
             // 🔹 Log error and redirect with friendly message
             Log::error("Dashboard error for GUID {$guid}: " . $e->getMessage(), [
@@ -858,54 +866,54 @@ class ClientsController extends Controller
     {
         try {
             $guid = $r->input('guid');
-            $rangeSel = $r->input('range');
+            // $rangeSel = $r->input('range');
             // 🔹 Check if GUID is provided
             if (!$guid) {
                 return redirect()
                     ->route('clients.index')
                     ->with('error', 'Invalid request. Client GUID is missing.');
             }
-            $from = $r->input('from');
-            $to   = $r->input('to');
-            if ($r->input('range') === 'custom') {
+            // $from = $r->input('from');
+            // $to   = $r->input('to');
+            // if ($r->input('range') === 'custom') {
 
-                $from = $r->input('from_custom');
-                $to   = $r->input('to_custom');
+            //     $from = $r->input('from_custom');
+            //     $to   = $r->input('to_custom');
 
-            } else {
+            // } else {
 
-                $from = $r->input('from', session('selectedFrom'));
-                $to   = $r->input('to', session('selectedTo'));
-            }
+            //     $from = $r->input('from', session('selectedFrom'));
+            //     $to   = $r->input('to', session('selectedTo'));
+            // }
             $user = Client::where('guid', $guid)->first();
-            
+            [$financialYears, $rangeSel, $from, $to] = $this->resolveClientFinancialYear($r, $user);
             $ledgerId  = (int) $r->input('ledger_id'); // iledgerid
             $partyguid = $guid; // provide via UI/session
-            if ($rangeSel) {
-                session([
-                    'selectedRange' => $rangeSel,
-                    'selectedFrom'  => $r->input('from'),
-                    'selectedTo'    => $r->input('to'),
-                ]);
-            }
-            $rangeSel = $rangeSel ?: session('selectedRange', 'current_year');
+            // if ($rangeSel) {
+            //     session([
+            //         'selectedRange' => $rangeSel,
+            //         'selectedFrom'  => $r->input('from'),
+            //         'selectedTo'    => $r->input('to'),
+            //     ]);
+            // }
+            // $rangeSel = $rangeSel ?: session('selectedRange', 'current_year');
 
-            // ✅ Auto set from/to if not provided
-            if (!$from || !$to) {
-                $today = now();
+            // // ✅ Auto set from/to if not provided
+            // if (!$from || !$to) {
+            //     $today = now();
 
-                if ($rangeSel === 'current_year') {
-                    $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
-                    $from = date('Y-m-d', strtotime("$startYear-04-01"));
-                    $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
-                }
+            //     if ($rangeSel === 'current_year') {
+            //         $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
+            //         $from = date('Y-m-d', strtotime("$startYear-04-01"));
+            //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
+            //     }
 
-                if ($rangeSel === 'last_year') {
-                    $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
-                    $from = date('Y-m-d', strtotime("$startYear-04-01"));
-                    $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
-                }
-            }
+            //     if ($rangeSel === 'last_year') {
+            //         $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
+            //         $from = date('Y-m-d', strtotime("$startYear-04-01"));
+            //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
+            //     }
+            // }
             $resp = $svc->voucherHistory($partyguid, $ledgerId, $from, $to);
             $data = data_get($resp, 'data', []);
 			$ledgerName = '';
@@ -913,9 +921,10 @@ class ClientsController extends Controller
                 $ledger = DB::table('LedgerMaster')->where('iLedgerId', $ledgerId)->first();
                 $ledgerName = $ledger->strCustomerName ?? '';
             }
-			$from = $r->input('from') ? date('d-m-Y',strtotime($r->input('from'))) : '';
-            $to = $r->input('to') ? date('d-m-Y',strtotime($r->input('to'))) : '';
-            return view('admin.clients.reports.voucher_history', compact('resp', 'from', 'to', 'data', 'ledgerId', 'partyguid', 'guid','user','ledgerName','rangeSel'));
+			// $from = $r->input('from') ? date('d-m-Y',strtotime($r->input('from'))) : '';
+            // $to = $r->input('to') ? date('d-m-Y',strtotime($r->input('to'))) : '';
+            // return view('admin.clients.reports.voucher_history', compact('resp', 'from', 'to', 'data', 'ledgerId', 'partyguid', 'guid','user','ledgerName','rangeSel'));
+            return view('admin.clients.reports.voucher_history', compact('resp', 'from', 'to', 'data', 'ledgerId', 'partyguid', 'guid','user','ledgerName','rangeSel', 'financialYears'));
         } catch (\Throwable $e) {
             // 🔹 Log error and redirect with friendly message
             Log::error("Dashboard error for GUID {$guid}: " . $e->getMessage(), [
@@ -926,6 +935,46 @@ class ClientsController extends Controller
                 ->route('clients.index')
                 ->with('error', 'Something went wrong while loading the dashboard. Please try again.');
         }
+    }
+
+    private function resolveClientFinancialYear(Request $request, Client $client): array
+    {
+        $financialYears = DB::table('YearMaster')
+            ->where('iPartyId', $client->id)
+            ->orderBy('iYearId', 'desc')
+            ->get();
+
+        $defaultRange = $financialYears->first()->strYear ?? null;
+        $sessionPrefix = "client_{$client->id}";
+        $rangeSel = $request->input('range', session("{$sessionPrefix}_selectedRange", $defaultRange));
+        $from = $request->input('from', session("{$sessionPrefix}_selectedFrom"));
+        $to = $request->input('to', session("{$sessionPrefix}_selectedTo"));
+
+        if ($rangeSel === 'custom') {
+            $from = $request->input('from_custom', $from);
+            $to = $request->input('to_custom', $to);
+        }
+
+        if ((! $from || ! $to) && preg_match('/^(\d{4})-(\d{4})$/', (string) $rangeSel, $matches)) {
+            $from = $matches[1] . '-04-01';
+            $to = $matches[2] . '-03-31';
+        }
+
+        if (! $rangeSel) {
+            $today = now();
+            $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
+            $rangeSel = $startYear . '-' . ($startYear + 1);
+            $from = $from ?: $startYear . '-04-01';
+            $to = $to ?: ($startYear + 1) . '-03-31';
+        }
+
+        session([
+            "{$sessionPrefix}_selectedRange" => $rangeSel,
+            "{$sessionPrefix}_selectedFrom" => $from,
+            "{$sessionPrefix}_selectedTo" => $to,
+        ]);
+
+        return [$financialYears, $rangeSel, $from, $to];
     }
 
     public function viewVoucher($guid,$strGUID, $vchType)
@@ -992,8 +1041,31 @@ class ClientsController extends Controller
             ];
 
             $type = (int) $r->input('type', 1);
-            $from = $r->input('from');
-            $to   = $r->input('to');
+            // $from = $r->input('from');
+            // $to   = $r->input('to');
+            $financialYears = DB::table('YearMaster')
+                ->where('iPartyId', $user->id)
+                ->orderBy('iYearId', 'desc')
+                ->get();
+
+            $currentFinancialYear = $financialYears->first();
+            $defaultRange = $currentFinancialYear->strYear ?? null;
+            $selectedRangeLabel = $r->input("range", session("client_{$user->id}_selectedRange", $defaultRange));
+            $from = $r->input("from", session("client_{$user->id}_selectedFrom"));
+            $to   = $r->input("to", session("client_{$user->id}_selectedTo"));
+
+            if ((! $from || ! $to) && preg_match('/^(\d{4})-(\d{4})$/', (string) $selectedRangeLabel, $matches)) {
+                $from = $matches[1] . '-04-01';
+                $to = $matches[2] . '-03-31';
+            }
+
+            if ($selectedRangeLabel || $from || $to) {
+                session([
+                    "client_{$user->id}_selectedRange" => $selectedRangeLabel,
+                    "client_{$user->id}_selectedFrom" => $from,
+                    "client_{$user->id}_selectedTo" => $to,
+                ]);
+            }
 
             // Titles per type (for tabs / card title)
             $titles = [
@@ -1127,6 +1199,8 @@ class ClientsController extends Controller
             $range     = $selectedRes['range']      ?? ($basis['range']      ?? ['from' => $from, 'to' => $to]);
             $allTotals = $selectedRes['allTotals']  ?? ($basis['allTotals']  ?? []);
             $fySel = $r->input('fySel');
+            $fyRangeSel = $selectedRangeLabel;
+            $activeType = $type;
 
             // Get groups data for the client - IMPORTANT for cards
             $defaultGroupNames = [
@@ -1303,7 +1377,10 @@ class ClientsController extends Controller
                 'activeTab',
                 'allGroupCards', // This is the key variable for showing all account cards
                 'plData',
-                'bsData'
+                'bsData',
+                'financialYears',
+                'fyRangeSel',
+                'activeType'
             ));
         } catch (\Throwable $e) {
             \Log::error("Dashboard error for GUID {$guid}: " . $e->getMessage(), [

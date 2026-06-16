@@ -1,8 +1,7 @@
-@extends('layouts.super_admin')
-@section('title', 'Balance Sheet')
+<?php $__env->startSection('title', 'Balance Sheet'); ?>
 
-@section('content')
-@php
+<?php $__env->startSection('content'); ?>
+<?php
 /* ============================================
    SIMPLE & SAFE BALANCE SHEET LOGIC
    ============================================ */
@@ -103,8 +102,8 @@ $balanceDiff = round($totalAssets - $totalCr, 2);
    OPTIONAL (keep existing vars used in design)
    ============================================ */
 $assets = $totalAssets;
-@endphp
-@php
+?>
+<?php
 /* ============================================
    DEFAULT VALUES (REQUIRED FOR EXISTING DESIGN)
    ============================================ */
@@ -114,9 +113,9 @@ $closingStockAmount  = $payload['totals']['closing_stock'] ?? 0;
 $closingStockDisplay = abs((float)$closingStockAmount);
 
 
-@endphp
+?>
 
-@php
+<?php
 /* ============================================
    CALCULATE CURRENT ASSETS (GROUP LEVEL)
    ============================================ */
@@ -129,9 +128,9 @@ foreach ($drRows as $r) {
         $iPrimaryGroupIdcurrentAsset = $r->iPrimaryGroupId;
     }
 }
-@endphp
+?>
 
-@php
+<?php
 
 $otherAssets = max(
     0,
@@ -142,15 +141,15 @@ $otherAssets = max(
     - $closingStockDisplay
 );
 
-@endphp
-@php
+?>
+<?php
     $differenceAmount = abs($balanceDiff);
 
     $showDiffOnAssetSide = $totalAssets < $totalCr;
     $showDiffOnLiabilitySide = $totalCr < $totalAssets;
-@endphp
+?>
 <div class="mt-1 border-b border-gray-200 dark:border-gray-700 pb-1">
-    @php
+    <?php
         $queryParams = array_merge(request()->query(), [
             'from' => request('from', $from ?? ''),
             'to' => request('to', $to ?? ''),
@@ -182,27 +181,29 @@ $otherAssets = max(
             // Add more cases as needed
             return '';
         };
-    @endphp
+    ?>
     <div class="flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
         <!-- Left : Client Name -->
         <div class="flex items-center gap-3 shrink-0">
             <div
                 class="h-10 w-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white flex items-center justify-center font-bold">
-                {{ strtoupper(substr($user->name ?? '',0,1)) }}
+                <?php echo e(strtoupper(substr($user->name ?? '',0,1))); ?>
+
             </div>
             <h1 class="text-xl font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-                {{ strtoupper($user->name ?? '') }}
+                <?php echo e(strtoupper($user->name ?? '')); ?>
+
             </h1>
         </div>
         <div class="flex flex-wrap items-center justify-center gap-2 flex-1">
-            @include('admin.clients.reports.tabmanu')
+            <?php echo $__env->make('admin.clients.reports.tabmanu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </div>
         <!-- Right : FY + Back -->
         <div class="flex items-center gap-3 shrink-0">
             <!-- <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                {{ $labelFY ?? '' }} -->
+                <?php echo e($labelFY ?? ''); ?> -->
             </span>
-            <a href="{{ url()->previous() }}" title="Go Back"
+            <a href="<?php echo e(url()->previous()); ?>" title="Go Back"
                 class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                 hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
                 <i class="fa-solid fa-arrow-left"></i>
@@ -216,26 +217,27 @@ $otherAssets = max(
         <div class="flex items-center justify-between">
             <div>
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Balance Sheet</h1>
-            @php
+            <?php
                 $asOnText = '';
 
                 $asOnText = 'Balance Sheet as on ' . date('d-m-Y', strtotime($to));
-            @endphp
+            ?>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    • {{ $asOnText }}
+                    • <?php echo e($asOnText); ?>
+
             </p>
             </div>
             <div>
                 <div class="export-buttons mb-3">
-                    @php
+                    <?php
                         $queryParams = array_merge(request()->query(), [
                             'from' => request('from', $from ?? ''),
                             'to' => request('to', $to ?? ''),
                             'range' => request('range', $rangeSel ?? ''),
                             'guid' => $guid
                         ]);
-                    @endphp
-                    <a href="{{ route('reports.balance-sheet.export-pdf', $queryParams) }}" title="Export into PDF"
+                    ?>
+                    <a href="<?php echo e(route('reports.balance-sheet.export-pdf', $queryParams)); ?>" title="Export into PDF"
                         class="group btn inline-block relative text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                 transition duration-1000 ease-in-out
                                 transition-property: all;
@@ -246,7 +248,7 @@ $otherAssets = max(
                         <i class="fas fa-file-pdf"></i>
                     </a>
                     &nbsp;
-                    <a href="{{ route('reports.balance-sheet.export-excel', $queryParams) }}" title="Export into Excel"
+                    <a href="<?php echo e(route('reports.balance-sheet.export-excel', $queryParams)); ?>" title="Export into Excel"
                         class="group btn inline-block relative text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                 transition duration-1000 ease-in-out
                                 transition-property: all;
@@ -261,18 +263,18 @@ $otherAssets = max(
             </div>
         </div>
         
-        <form method="POST" action="{{ route('clients.reports.balanceSheet',$guid) }}" id="filterForm"
+        <form method="POST" action="<?php echo e(route('clients.reports.balanceSheet',$guid)); ?>" id="filterForm"
             class="mt-2 rounded-lg p-2 flex flex-wrap items-end gap-3">
-            @csrf
-            @php
+            <?php echo csrf_field(); ?>
+            <?php
                 $rangeSel = request('range', $rangeSel ?? ($financialYearOptions->first()['value'] ?? ''));
                 $rangeOptions = $financialYearOptions->pluck('label', 'value')->all();
-            @endphp
+            ?>
             <div class="relative"
                 x-data="{
                     open: false,
-                    selected: @js($rangeSel),
-                    options: @js($rangeOptions),
+                    selected: <?php echo \Illuminate\Support\Js::from($rangeSel)->toHtml() ?>,
+                    options: <?php echo \Illuminate\Support\Js::from($rangeOptions)->toHtml() ?>,
 
                     init() {
                         this.$watch('selected', value => {
@@ -321,18 +323,19 @@ $otherAssets = max(
                     shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
                     style="backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
 
-                    @forelse ($financialYearOptions as $financialYear)
+                    <?php $__empty_1 = true; $__currentLoopData = $financialYearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <li>
                             <button type="button"
-                                @click="selected = @js($financialYear['value']); open = false"
+                                @click="selected = <?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>; open = false"
                                 class="w-full text-left px-4 py-2 text-sm transition-all duration-200 text-gray-800 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 hover:text-[#22d3ee]"
-                                :class="selected === @js($financialYear['value']) ? 'bg-[#22d3ee]/20 text-[#22d3ee]' : ''">
-                                {{ $financialYear['label'] }}
+                                :class="selected === <?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?> ? 'bg-[#22d3ee]/20 text-[#22d3ee]' : ''">
+                                <?php echo e($financialYear['label']); ?>
+
                             </button>
                         </li>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <li class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">No financial years found</li>
-                    @endforelse
+                    <?php endif; ?>
                     <li>
                         <button type="button"
                             @click="selected = 'custom'; open = false"
@@ -344,21 +347,21 @@ $otherAssets = max(
 
                 </ul>
             </div>
-            <div id="customFromWrap" class="{{ $rangeSel === 'custom' ? '' : 'hidden' }}" style="display: none;">
+            <div id="customFromWrap" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>" style="display: none;">
                 <label class="block text-xs text-gray-600 dark:text-gray-300 mb-1">From Date</label>
-                <input type="date" name="from_custom" id="from_custom" value="{{ request('from') }}" min="1900-01-01" max="2099-12-31"
+                <input type="date" name="from_custom" id="from_custom" value="<?php echo e(request('from')); ?>" min="1900-01-01" max="2099-12-31"
                     class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
             </div>
-            <div id="customToWrap" class="{{ $rangeSel === 'custom' ? '' : 'hidden' }}">
+            <div id="customToWrap" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>">
                 <label class="block text-xs text-gray-600 dark:text-gray-300 mb-1">As on Date</label>
-                <input type="date" name="to_custom" id="to_custom" value="{{ request('to') }}" min="1900-01-01" max="2099-12-31"
+                <input type="date" name="to_custom" id="to_custom" value="<?php echo e(request('to')); ?>" min="1900-01-01" max="2099-12-31"
                     class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
             </div>
 
-            <input type="hidden" name="from" id="from" value="{{ request('from') }}">
-            <input type="hidden" name="to" id="to" value="{{ request('to') }}">
+            <input type="hidden" name="from" id="from" value="<?php echo e(request('from')); ?>">
+            <input type="hidden" name="to" id="to" value="<?php echo e(request('to')); ?>">
 
-            <div class="flex gap-2 {{ $rangeSel === 'custom' ? '' : 'hidden' }}" id="searchBtn">
+            <div class="flex gap-2 <?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>" id="searchBtn">
                 <button type="submit"
                     class="rounded-md border border-gray-700 text-black dark:text-white  px-4 py-2 text-sm transition duration-1000 ease-in-out
                                 transition-property: all;
@@ -368,7 +371,7 @@ $otherAssets = max(
                                 hover:-translate-y-1"
                                 style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);"
                                 >Search</button>
-                <a href="{{ route('reports.balance_sheet') }}"
+                <a href="<?php echo e(route('reports.balance_sheet')); ?>"
                     class="rounded-md border border-gray-700 text-black dark:text-white px-4 py-2 text-sm transition duration-1000 ease-in-out
                                 transition-property: all;
                                 hover:border-[#a78bfa]
@@ -379,90 +382,94 @@ $otherAssets = max(
             </div>
         </form>
 
-        @if ($resp['success'] ?? false)
-            {{-- DEBUG INFORMATION (Remove in production) --}}
+        <?php if($resp['success'] ?? false): ?>
+            
            
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {{-- LEFT COLUMN: DETAILED REPORT --}}
+                
                 <div class="space-y-6">
                     <!-- <div class="flex items-center justify-between">
                         <div>
                             <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Balance Sheet Report</h2>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Period: {{ $from }} to
-                                {{ $to }}</p>
-                            @if ($closingStockAmount > 0)
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Period: <?php echo e($from); ?> to
+                                <?php echo e($to); ?></p>
+                            <?php if($closingStockAmount > 0): ?>
                                 <p class="text-sm text-green-600 dark:text-green-400">
-                                    <i class="fas fa-box mr-1"></i>Closing Stock as of {{ $to }}: ₹{{ $inr($closingStockAmount) }}
+                                    <i class="fas fa-box mr-1"></i>Closing Stock as of <?php echo e($to); ?>: ₹<?php echo e($inr($closingStockAmount)); ?>
+
                                 </p>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div> -->
-                    {{-- ASSETS (DR) --}}
+                    
                     <div
                         class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden  shadow-sm">
                         <div class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-b border-gray-200 dark:border-gray-700">
                             <h2 class="text-lg font-semibold text-black-700 dark:text-gray-200">Assets</h2>
                         </div>
                         <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                            {{-- Fixed Assets --}}
+                            
                             <?php $TotalDr = 0; ?>
-                            @forelse ($drRows->where('strGroupName', 'Fixed Assets') as $r)
+                            <?php $__empty_1 = true; $__currentLoopData = $drRows->where('strGroupName', 'Fixed Assets'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <?php $amount = (float) ($r->decMainAmount ?? 0); ?>
-                                @if($amount > 0 )
-                                    @php $amt = -1 * $r->decMainAmount; @endphp
-                                @else 
-                                    @php $amt = $displayAmountDr($r->decMainAmount ?? 0); @endphp
-                                @endif
-                                <a href="{{ route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                <?php if($amount > 0 ): ?>
+                                    <?php $amt = -1 * $r->decMainAmount; ?>
+                                <?php else: ?> 
+                                    <?php $amt = $displayAmountDr($r->decMainAmount ?? 0); ?>
+                                <?php endif; ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                     class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
                                     <div class="flex items-center justify-between px-4 py-3">
-                                        <span class="text-gray-900 dark:text-white group-hover:text-black">{{ $r->strGroupName ?? '-' }}</span>
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
                                         <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                            {{ $inr($amt) }}
+                                            <?php echo e($inr($amt)); ?>
+
                                             <?php $TotalDr+= $amt; ?>
                                         </span>
                                     </div>
                                 </a>
-                            @empty
-                            @endforelse
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
 
-                            {{-- Investments --}}
-                            @forelse ($drRows->where('strGroupName', 'Investments') as $r)
+                            
+                            <?php $__empty_1 = true; $__currentLoopData = $drRows->where('strGroupName', 'Investments'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <?php $amount = (float) ($r->decMainAmount ?? 0); ?>
-                                @if($amount > 0 )
-                                    @php $amt = -1 * $r->decMainAmount; @endphp
-                                @else 
-                                    @php $amt = $displayAmountDr($r->decMainAmount ?? 0); @endphp
-                                @endif
-                                <a href="{{ route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                <?php if($amount > 0 ): ?>
+                                    <?php $amt = -1 * $r->decMainAmount; ?>
+                                <?php else: ?> 
+                                    <?php $amt = $displayAmountDr($r->decMainAmount ?? 0); ?>
+                                <?php endif; ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                     class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
                                     <div class="flex items-center justify-between px-4 py-3">
-                                        <span class="text-gray-900 dark:text-white group-hover:text-black">{{ $r->strGroupName ?? '-' }}</span>
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
                                         <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                            {{ $inr($amt) }}
+                                            <?php echo e($inr($amt)); ?>
+
                                             <?php $TotalDr+= $amt; ?>
                                         </span>
                                     </div>
                                 </a>
-                            @empty
-                            @endforelse
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
 
-                            {{-- Current Assets (without closing stock) --}}
-                            @if ($currentAssetsWithoutStock > 0)
-                                <a href="{{ route('reports.ledger', ['group_id' => $iPrimaryGroupIdcurrentAsset, 'from' => request('from'), 'to' => request('to')]) }}"
+                            
+                            <?php if($currentAssetsWithoutStock > 0): ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $iPrimaryGroupIdcurrentAsset, 'from' => request('from'), 'to' => request('to')])); ?>"
                                     class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
                                     <div class="flex items-center justify-between px-4 py-3">
                                         <span class="text-gray-900 dark:text-white group-hover:text-black">Current Assets</span>
                                         <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                            {{ $inr($currentAssetsWithoutStock) }}
+                                            <?php echo e($inr($currentAssetsWithoutStock)); ?>
+
                                             <?php $TotalDr+= $currentAssetsWithoutStock; ?>
                                         </span>
                                     </div>
                                 </a>
-                            @endif
+                            <?php endif; ?>
 
-                            {{-- Closing Stock - SEPARATE LINE ITEM --}}
-                            @if ($closingStockAmount > 0)
+                            
+                            <?php if($closingStockAmount > 0): ?>
                                 <div class="block bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border-l-4 border-green-500">
                                     <div class="flex items-center justify-between px-4 py-3">
                                         <span class="text-gray-900 dark:text-white group-hover:text-black flex items-center">
@@ -470,73 +477,77 @@ $otherAssets = max(
                                             <span class="font-medium">Closing Stock</span>
                                         </span>
                                         <span class="font-bold text-green-700 dark:text-green-300 text-lg">
-                                            {{ $inr($closingStockAmount) }}
+                                            <?php echo e($inr($closingStockAmount)); ?>
+
                                             <?php $TotalDr+= $closingStockAmount; ?>
                                         </span>
                                     </div>
-                                    @if ($to)
+                                    <?php if($to): ?>
                                         <div class="px-4 pb-2">
                                             <span class="text-xs text-green-600 dark:text-green-400">
-                                                As of {{ $to }}
+                                                As of <?php echo e($to); ?>
+
                                             </span>
                                         </div>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
-                            @endif
+                            <?php endif; ?>
 
-                            {{-- Other Assets from groups --}}
                             
-                            @foreach ($drRows as $r)
-                                @if (!in_array($r->strGroupName, ['Fixed Assets', 'Investments', 'Current Assets']))
+                            
+                            <?php $__currentLoopData = $drRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php if(!in_array($r->strGroupName, ['Fixed Assets', 'Investments', 'Current Assets'])): ?>
                                     <?php $amount = (float) ($r->decMainAmount ?? 0); ?>
-                                    @if($amount > 0 )
-                                        @php $amt = -1 * $r->decMainAmount; @endphp
-                                    @else 
-                                        @php $amt = $displayAmountDr($r->decMainAmount ?? 0); @endphp
-                                    @endif
-                                    @if(abs($amt) > 0)
-                                        <a href="{{ route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                    <?php if($amount > 0 ): ?>
+                                        <?php $amt = -1 * $r->decMainAmount; ?>
+                                    <?php else: ?> 
+                                        <?php $amt = $displayAmountDr($r->decMainAmount ?? 0); ?>
+                                    <?php endif; ?>
+                                    <?php if(abs($amt) > 0): ?>
+                                        <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                             class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
                                             <div class="flex items-center justify-between px-4 py-3">
-                                                <span class="text-gray-900 dark:text-white group-hover:text-black">{{ $r->strGroupName ?? '-' }}</span>
+                                                <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
                                                 <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                                    {{ $inr($amt) }}
+                                                    <?php echo e($inr($amt)); ?>
+
                                                     <?php $TotalDr+= $amt; ?>
                                                 </span>
                                             </div>
                                         </a>
-                                    @endif
-                                @endif
-                            @endforeach
-                            @if ($showDiffOnAssetSide)
-                                @if (abs($differenceAmount) > 0)
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            <?php if($showDiffOnAssetSide): ?>
+                                <?php if(abs($differenceAmount) > 0): ?>
                                 <div class="flex items-center justify-between px-4 py-3">
                                     <span class="text-gray-900 dark:text-white group-hover:text-black">
                                         Difference in Balance Sheet
                                     </span>
 
                                     <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                        {{ $inr($differenceAmount) }}
+                                        <?php echo e($inr($differenceAmount)); ?>
+
                                     </span>
                                 </div>
-                                @endif
-                                @php
+                                <?php endif; ?>
+                                <?php
                                     $TotalDr += $differenceAmount;
-                                @endphp
-                            @endif
-                            @if ($drRows->isEmpty() && $closingStockAmount == 0)
+                                ?>
+                            <?php endif; ?>
+                            <?php if($drRows->isEmpty() && $closingStockAmount == 0): ?>
                                 <div class="px-4 py-3 text-black-500 dark:text-gray-400 text-center">No asset rows.</div>
-                            @endif
+                            <?php endif; ?>
                             
                         </div>
                         <div
                             class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-t border-gray-200 dark:border-gray-700 flex justify-between">
                             <span class="font-semibold text-black-700 dark:text-gray-300">Total Assets</span>
-                            <span class="font-bold text-gray-900 dark:text-gray-100">{{ $inr($TotalDr) }}</span>
+                            <span class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($TotalDr)); ?></span>
                         </div>
                     </div>
 
-                    {{-- LIABILITIES & EQUITY (CR) --}}
+                    
                     <div
                         class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden  shadow-sm">
                         <div class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-b border-gray-200 dark:border-gray-700">
@@ -545,138 +556,144 @@ $otherAssets = max(
                         </div>
                         <div class="divide-y divide-gray-200 dark:divide-gray-700">
                             <?php $TotalCr = 0; ?>
-                            @forelse ($crRows->where('strGroupName', 'Capital Account') as $r)
-                                @php $amt = $displayAmount($r->decMainAmount ?? 0); @endphp
-                                @if(abs($amt) > 0)
-                                    <a href="{{ route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows->where('strGroupName', 'Capital Account'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                <?php if(abs($amt) > 0): ?>
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                         class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
                                         <div class="flex items-center justify-between px-4 py-3">
-                                            <span class="text-gray-900 dark:text-white group-hover:text-black">{{ $r->strGroupName ?? '-' }}</span>
+                                            <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
                                             <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                                {{ $inr($amt) }}
-                                                <?php $TotalCr+= $amt; ?>
-                                            </span>
-                                        </div>
-                                    </a>
-                                @endif
-                            @empty
-                            @endforelse
-                            @forelse ($crRows->where('strGroupName', 'Loans (Liability)') as $r)
-                                @php $amt = $displayAmount($r->decMainAmount ?? 0); @endphp
-                                @if(abs($amt) > 0)
-                                    <a href="{{ route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
-                                        class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
-                                        <div class="flex items-center justify-between px-4 py-3">
-                                            <span class="text-gray-900 dark:text-white group-hover:text-black">{{ $r->strGroupName ?? '-' }}</span>
-                                            <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                                {{ $inr($amt) }}
-                                                <?php $TotalCr+= $amt; ?>
-                                            </span>
-                                        </div>
-                                    </a>
-                                @endif
-                            @empty
-                            @endforelse
-                            @forelse ($crRows->where('strGroupName', 'Current Liabilities') as $r)
-                                @php $amt = $displayAmount($r->decMainAmount ?? 0); @endphp
-                                @if(abs($amt) > 0)
-                                <a href="{{ route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
-                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
-                                    <div class="flex items-center justify-between px-4 py-3">
-                                        <span class="text-gray-900 dark:text-white group-hover:text-black">{{ $r->strGroupName ?? '-' }}</span>
-                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                            {{ $inr($amt) }}
-                                            <?php $TotalCr+= $amt; ?>
-                                        </span>
-                                    </div>
-                                </a>
-                                @endif
-                            @empty
-                            @endforelse
-                            @forelse ($crRows->where('strGroupName', 'Suspense A/c') as $r)
-                                @php $amt = $displayAmount($r->decMainAmount ?? 0); @endphp
-                                @if(abs($amt) > 0)
-                                <a href="{{ route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
-                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
-                                    <div class="flex items-center justify-between px-4 py-3">
-                                        <span class="text-gray-900 dark:text-white group-hover:text-black">{{ $r->strGroupName ?? '-' }}</span>
-                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                            {{ $inr($amt) }}
-                                            <?php $TotalCr+= $amt; ?>
-                                        </span>
-                                    </div>
-                                </a>
-                                @endif
-                            @empty
-                            @endforelse
+                                                <?php echo e($inr($amt)); ?>
 
-                            @forelse ($crRows as $r)
-                                @if (!in_array($r->strGroupName, ['Capital Account','Loans (Liability)','Current Liabilities','Suspense A/c']))
-                                    @php $amt = $displayAmount($r->decMainAmount ?? 0); @endphp
-                                    @if(abs($amt) > 0)
-                                    <a href="{{ route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
-                                        class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
-                                        <div class="flex items-center justify-between px-4 py-3">
-                                            <span class="text-gray-900 dark:text-white group-hover:text-black">{{ $r->strGroupName ?? '-' }}</span>
-                                            <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                                {{ $inr($amt) }}
                                                 <?php $TotalCr+= $amt; ?>
                                             </span>
                                         </div>
                                     </a>
-                                    @endif
-                                @endif
-                            @empty
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows->where('strGroupName', 'Loans (Liability)'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                <?php if(abs($amt) > 0): ?>
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                        class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                        <div class="flex items-center justify-between px-4 py-3">
+                                            <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                            <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                                <?php echo e($inr($amt)); ?>
+
+                                                <?php $TotalCr+= $amt; ?>
+                                            </span>
+                                        </div>
+                                    </a>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows->where('strGroupName', 'Current Liabilities'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                <?php if(abs($amt) > 0): ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                            <?php echo e($inr($amt)); ?>
+
+                                            <?php $TotalCr+= $amt; ?>
+                                        </span>
+                                    </div>
+                                </a>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows->where('strGroupName', 'Suspense A/c'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                <?php if(abs($amt) > 0): ?>
+                                <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                    class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                    <div class="flex items-center justify-between px-4 py-3">
+                                        <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                        <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                            <?php echo e($inr($amt)); ?>
+
+                                            <?php $TotalCr+= $amt; ?>
+                                        </span>
+                                    </div>
+                                </a>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                            <?php endif; ?>
+
+                            <?php $__empty_1 = true; $__currentLoopData = $crRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <?php if(!in_array($r->strGroupName, ['Capital Account','Loans (Liability)','Current Liabilities','Suspense A/c'])): ?>
+                                    <?php $amt = $displayAmount($r->decMainAmount ?? 0); ?>
+                                    <?php if(abs($amt) > 0): ?>
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => $r->iPrimaryGroupId ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
+                                        class="group block hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 transition-colors">
+                                        <div class="flex items-center justify-between px-4 py-3">
+                                            <span class="text-gray-900 dark:text-white group-hover:text-black"><?php echo e($r->strGroupName ?? '-'); ?></span>
+                                            <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
+                                                <?php echo e($inr($amt)); ?>
+
+                                                <?php $TotalCr+= $amt; ?>
+                                            </span>
+                                        </div>
+                                    </a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <div class="px-4 py-3 text-black-500 dark:text-gray-400 text-center">No liability/equity
                                     rows.</div>
-                            @endforelse
-                            @if ($showDiffOnLiabilitySide)
-                                @if (abs($differenceAmount) > 0)    
+                            <?php endif; ?>
+                            <?php if($showDiffOnLiabilitySide): ?>
+                                <?php if(abs($differenceAmount) > 0): ?>    
                                 <div class="flex items-center justify-between px-4 py-3">
                                     <span class="text-gray-900 dark:text-white group-hover:text-black">
                                         Difference in Balance Sheet
                                     </span>
 
                                     <span class="font-medium text-gray-900 dark:text-white group-hover:text-black">
-                                        {{ $inr($differenceAmount) }}
+                                        <?php echo e($inr($differenceAmount)); ?>
+
                                     </span>
                                 </div>
-                                @endif
+                                <?php endif; ?>
 
-                                @php
+                                <?php
                                     $TotalCr += $differenceAmount;
-                                @endphp
-                            @endif
+                                ?>
+                            <?php endif; ?>
                         </div>
                         
                         <div
                             class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-t border-gray-200 dark:border-gray-700 space-y-2">
                             <!-- <div class="flex items-center justify-between">
                                 <span class="font-semibold text-gray-700 dark:text-gray-300">Liabilities</span>
-                                <span class="font-bold text-gray-900 dark:text-gray-100">{{ $inr($liabs) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($liabs)); ?></span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="font-semibold text-gray-700 dark:text-gray-300">Equity</span>
-                                <span class="font-bold text-gray-900 dark:text-gray-100">{{ $inr($equity) }}</span>
+                                <span class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($equity)); ?></span>
                             </div> -->
                             <div
                                 class="flex items-center justify-between ">
                                 <span class="font-semibold text-black-700 dark:text-gray-300">Total Liabilities & Equity </span>
                                 <!-- <span
-                                    class="font-bold text-gray-900 dark:text-gray-100">{{ $inr($liabs + $equity) }}</span> -->
+                                    class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($liabs + $equity)); ?></span> -->
                                     <span
-                                    class="font-bold text-gray-900 dark:text-gray-100">{{ $inr($TotalCr) }}</span>
+                                    class="font-bold text-gray-900 dark:text-gray-100"><?php echo e($inr($TotalCr)); ?></span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- RIGHT COLUMN: CHARTS & SUMMARY --}}
+                
                 <div class="space-y-6">
                     <h2 class="text-[#22d3ee] font-semibold dark:text-[#22d3ee] mb-3">Balance Sheet Analysis</h2>
-                    {{-- PIE CHARTS SECTION --}}
+                    
                     <div class="space-y-6">
-                        {{-- Assets vs Liabilities + Equity --}}
+                        
                         <!-- <div class=" rounded-xl shadow p-4">
                             <h3 class="font-semibold mb-3 text-center">Assets vs Liabilities + Equity</h3>
                             <div class="h-64">
@@ -686,15 +703,18 @@ $otherAssets = max(
                                 <div class="flex flex-col space-y-1">
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#34d399] rounded-full mr-1"></span>
-                                        Assets: ₹{{ number_format($assets, 2) }}
+                                        Assets: ₹<?php echo e(number_format($assets, 2)); ?>
+
                                     </span>
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#22d3ee] rounded-full mr-1"></span>
-                                        Liabilities: ₹{{ number_format($liabs, 2) }}
+                                        Liabilities: ₹<?php echo e(number_format($liabs, 2)); ?>
+
                                     </span>
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#a78bfa] rounded-full mr-1"></span>
-                                        Equity: ₹{{ number_format($equity, 2) }}
+                                        Equity: ₹<?php echo e(number_format($equity, 2)); ?>
+
                                     </span>
                                 </div>
                             </div>
@@ -708,7 +728,7 @@ $otherAssets = max(
                             <div id="bsLegend" class="flex-1"></div>
                         </div>
 
-                        {{-- Breakdown Chart with Dropdown --}}
+                        
                         <!-- <div class=" rounded-xl shadow p-4">
                             <div class="flex items-center justify-between mb-3">
                                 <h3 class="font-semibold text-center">Breakdown Analysis</h3>
@@ -725,37 +745,45 @@ $otherAssets = max(
                                 <div id="assetsLegend" class="flex flex-col space-y-1">
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#a78bfa] rounded-full mr-1"></span>
-                                        Current Assets: ₹{{ number_format($currentAssetsWithoutStock, 2) }}
+                                        Current Assets: ₹<?php echo e(number_format($currentAssetsWithoutStock, 2)); ?>
+
                                     </span>
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#34d399] rounded-full mr-1"></span>
-                                        Closing Stock: ₹{{ number_format($closingStockDisplay, 2) }}
+                                        Closing Stock: ₹<?php echo e(number_format($closingStockDisplay, 2)); ?>
+
                                     </span>
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#fbbf24] rounded-full mr-1"></span>
-                                        Fixed Assets: ₹{{ number_format($fixedAssets, 2) }}
+                                        Fixed Assets: ₹<?php echo e(number_format($fixedAssets, 2)); ?>
+
                                     </span>
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#f472b6] rounded-full mr-1"></span>
-                                        Investments: ₹{{ number_format($investments, 2) }}
+                                        Investments: ₹<?php echo e(number_format($investments, 2)); ?>
+
                                     </span>
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#60a5fa] rounded-full mr-1"></span>
-                                        Other Assets: ₹{{ number_format($otherAssets, 2) }}
+                                        Other Assets: ₹<?php echo e(number_format($otherAssets, 2)); ?>
+
                                     </span>
                                 </div>
                                 <div id="liabilitiesLegend" class="hidden flex-col space-y-1">
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#a78bfa] rounded-full mr-1"></span>
-                                        Current Liabilities: ₹{{ number_format($currentLiabilities, 2) }}
+                                        Current Liabilities: ₹<?php echo e(number_format($currentLiabilities, 2)); ?>
+
                                     </span>
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#f472b6] rounded-full mr-1"></span>
-                                        Long-term Liabilities: ₹{{ number_format($longTermLiabilities, 2) }}
+                                        Long-term Liabilities: ₹<?php echo e(number_format($longTermLiabilities, 2)); ?>
+
                                     </span>
                                     <span class="flex items-center justify-center">
                                         <span class="inline-block w-3 h-3 bg-[#fbbf24] rounded-full mr-1"></span>
-                                        Other Liabilities: ₹{{ number_format($otherLiabilities, 2) }}
+                                        Other Liabilities: ₹<?php echo e(number_format($otherLiabilities, 2)); ?>
+
                                     </span>
                                 </div>
                             </div>
@@ -860,8 +888,8 @@ $otherAssets = max(
                         </div>
                     </div>
 
-                    {{-- CLOSING STOCK SUMMARY CARD --}}
-                    @if ($closingStockAmount > 0)
+                    
+                    <?php if($closingStockAmount > 0): ?>
                         <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -870,24 +898,26 @@ $otherAssets = max(
                                         Closing Stock Summary
                                     </h3>
                                     <p class="text-sm text-green-600 dark:text-green-400 mt-1">
-                                        As of {{ $to }}
+                                        As of <?php echo e($to); ?>
+
                                     </p>
                                 </div>
                                 <div class="text-right">
                                     <div class="text-2xl font-bold text-green-700 dark:text-green-300">
-                                        ₹{{ $inr($closingStockAmount) }}
+                                        ₹<?php echo e($inr($closingStockAmount)); ?>
+
                                     </div>
                                     <div class="text-sm text-green-600 dark:text-green-400">
-                                        {{ number_format(($closingStockAmount / $assets) * 100, 1) }}% of Total Assets
+                                        <?php echo e(number_format(($closingStockAmount / $assets) * 100, 1)); ?>% of Total Assets
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
 
-            {{-- SUMMARY CARDS --}}
+            
             <!-- <div class="mt-6  grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="group">
                     <div class="border  border-gray-700 rounded-lg p-4
@@ -900,7 +930,8 @@ $otherAssets = max(
                                     style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">
                         <div class="text-gray-500 group-hover:text-[#34d399] dark:group-hover:text-[#34d399] dark:text-gray-400 text-[12px] font-medium">Total Assets</div>
                         <div class="text-[16px] font-semiBold text-gray-900 dark:text-white">
-                            ₹{{ number_format($assets, 2) }}
+                            ₹<?php echo e(number_format($assets, 2)); ?>
+
                         </div>
                     </div>
                 </div>
@@ -916,7 +947,8 @@ $otherAssets = max(
                                     style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">
                         <div class="text-gray-500 group-hover:text-[#22d3ee] dark:group-hover:text-[#22d3ee] dark:text-gray-400 text-[12px] font-medium">Total Liabilities</div>
                         <div class="text-[16px] font-semiBold text-gray-900 dark:text-white">
-                            ₹{{ number_format($liabs, 2) }}
+                            ₹<?php echo e(number_format($liabs, 2)); ?>
+
                         </div>
                     </div>
                 </div>
@@ -933,14 +965,15 @@ $otherAssets = max(
                                     style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">
                         <div class="text-gray-500 group-hover:text-[#a78bfa] dark:group-hover:text-[#a78bfa] dark:text-gray-400 text-[12px] font-medium">Total Equity</div>
                         <div class="text-[16px] font-semiBold text-gray-900 dark:text-white">
-                            ₹{{ number_format($equity, 2) }}
+                            ₹<?php echo e(number_format($equity, 2)); ?>
+
                         </div>
                     </div>
                 </div>
 
                 <div class="group">
                     <div
-                        class="{{ $balanceDiff === 0.0 ? ' border-gray-700' : ' border-gray-700 ' }} border rounded-lg p-4
+                        class="<?php echo e($balanceDiff === 0.0 ? ' border-gray-700' : ' border-gray-700 '); ?> border rounded-lg p-4
                         transition duration-1000 ease-in-out
                                     transition-property: all;
                                     group-hover:border-[#fbbf24]
@@ -949,54 +982,56 @@ $otherAssets = max(
                                     group-hover:-translate-y-1"
                                     style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">
                         <div
-                            class="{{ $balanceDiff === 0.0 ? 'text-gray-500 group-hover:text-[#fbbf24] dark:group-hover:text-[#fbbf24] dark:text-gray-400 text-[12px] font-medium' : 'text-gray-500 group-hover:text-[#fbbf24] dark:group-hover:text-[#fbbf24] dark:text-gray-400 text-[12px] font-medium' }} ">
+                            class="<?php echo e($balanceDiff === 0.0 ? 'text-gray-500 group-hover:text-[#fbbf24] dark:group-hover:text-[#fbbf24] dark:text-gray-400 text-[12px] font-medium' : 'text-gray-500 group-hover:text-[#fbbf24] dark:group-hover:text-[#fbbf24] dark:text-gray-400 text-[12px] font-medium'); ?> ">
                             Balance Status</div>
                         <div
-                            class="text-[16px] font-semiBold {{ $balanceDiff === 0.0 ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-white' }}">
-                            {{ $balanceDiff === 0.0 ? 'Balanced' : 'Difference: ₹' . number_format(abs($balanceDiff), 2) }}
+                            class="text-[16px] font-semiBold <?php echo e($balanceDiff === 0.0 ? 'text-gray-900 dark:text-white' : 'text-gray-900 dark:text-white'); ?>">
+                            <?php echo e($balanceDiff === 0.0 ? 'Balanced' : 'Difference: ₹' . number_format(abs($balanceDiff), 2)); ?>
+
                         </div>
                     </div>
                 </div>
             </div> -->
 
-            {{-- Balance note --}}
+            
             <!-- <div class="mt-4">
-                @if ($balanceDiff === 0.0)
+                <?php if($balanceDiff === 0.0): ?>
                     <div
                         class="rounded-md bg-green-50 dark:bg-green-900/20 px-4 py-3 text-sm text-green-800 dark:text-green-300">
                         Balanced: Dr equals Cr.
                     </div>
-                @else
+                <?php else: ?>
                     <div
                         class="rounded-md bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
-                        Note: Dr and Cr differ by <strong>{{ $inr($balanceDiff) }}</strong>.
+                        Note: Dr and Cr differ by <strong><?php echo e($inr($balanceDiff)); ?></strong>.
                     </div>
-                @endif
+                <?php endif; ?>
             </div> -->
-        @else
+        <?php else: ?>
             <div class="mt-4 rounded-md bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-800 dark:text-red-300">
-                {{ $resp['message'] ?? 'Failed to load' }}
+                <?php echo e($resp['message'] ?? 'Failed to load'); ?>
+
             </div>
-        @endif
+        <?php endif; ?>
     </div>
 </div>
 
-    {{-- Chart.js Library --}}
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         // Initialize Pie Charts
         let breakdownChart; 
-        const currentAssetsWithoutStock = {{ $currentAssetsWithoutStock ?? 0 }};
-        const closingStock = {{ $closingStockDisplay ?? 0 }};
-        const fixedAssets = {{ $fixedAssets ?? 0 }};
-        const investments = {{ $investments ?? 0 }};
-        const otherAssets = {{ $otherAssets ?? 0 }};
+        const currentAssetsWithoutStock = <?php echo e($currentAssetsWithoutStock ?? 0); ?>;
+        const closingStock = <?php echo e($closingStockDisplay ?? 0); ?>;
+        const fixedAssets = <?php echo e($fixedAssets ?? 0); ?>;
+        const investments = <?php echo e($investments ?? 0); ?>;
+        const otherAssets = <?php echo e($otherAssets ?? 0); ?>;
 
-        const currentLiabilities = {{ $currentLiabilities ?? 0 }};
-        const longTermLiabilities = {{ $longTermLiabilities ?? 0 }};
-        const otherLiabilities = {{ $otherLiabilities ?? 0 }};
-        const capitalAccount = {{ $capitalAccount ?? 0 }};
+        const currentLiabilities = <?php echo e($currentLiabilities ?? 0); ?>;
+        const longTermLiabilities = <?php echo e($longTermLiabilities ?? 0); ?>;
+        const otherLiabilities = <?php echo e($otherLiabilities ?? 0); ?>;
+        const capitalAccount = <?php echo e($capitalAccount ?? 0); ?>;
         document.addEventListener('DOMContentLoaded', function() {
             
 
@@ -1162,11 +1197,11 @@ $otherAssets = max(
             breakdownChart.update();
         }
 
-        let assets = Math.abs(Number({{ $assets ?? 0 }}));
+        let assets = Math.abs(Number(<?php echo e($assets ?? 0); ?>));
         // Liabilities
-        let liabilities = Number({{ $liabs }});
+        let liabilities = Number(<?php echo e($liabs); ?>);
         // Equity (Capital)
-        let equity = Number({{ $equity }});
+        let equity = Number(<?php echo e($equity); ?>);
         // Total for center
         let totalAssets = assets;
         console.log('Balance Sheet Data:', {
@@ -1309,7 +1344,7 @@ $otherAssets = max(
             const hidFrom = document.getElementById('from');
             const hidTo = document.getElementById('to');
 
-            const financialYearRanges = @json($financialYearOptions->keyBy('value'));
+            const financialYearRanges = <?php echo json_encode($financialYearOptions->keyBy('value'), 15, 512) ?>;
             const selectedRange = financialYearRanges[value];
 
             const cfWrap = document.getElementById('customFromWrap');
@@ -1450,4 +1485,5 @@ $otherAssets = max(
     </script>
 
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/clients/reports/balance_sheet.blade.php ENDPATH**/ ?>
