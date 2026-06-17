@@ -1371,7 +1371,8 @@
                 $('#edit_invoice').val(res.note_no);
                 $('#edit_date').val(res.note_date);
                 $('#edit_gst').val(res.gst_no);
-                $('#edit_party').val(res.party_name);
+                //$('#edit_party').val(res.party_name);
+                $('#edit_party').val(res.party_name).trigger('change');
                 $('#edit_place').val(res.place_of_supply);
                 $('#edit_voucher_type').val(res.vch_type);
                 $('#edit_address').val(res.address);
@@ -1610,7 +1611,8 @@
         $('#edit_gst').val(btn.data('gst_no'));
         $('#edit_against_invoice').val(btn.data('against_invoice'));
         // $('#edit_voucher_type').val(btn.data('vchtype'));
-        $('#edit_party').val(btn.data('party'));
+        // $('#edit_party').val(btn.data('party'));
+        $('#edit_party').val(btn.data('party')).trigger('change');
         // $('#edit_place').val(btn.data('place'));
         $('#edit_ledger').val(btn.data('ledger'));
         

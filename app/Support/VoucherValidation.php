@@ -89,13 +89,17 @@ trait VoucherValidation
 
     private function vchHistoryCombinationExists(array $columns): bool
     {
+        $yearId = DB::table('YearMaster')
+            ->where('iPartyId', $columns['iPartyId'])
+            ->where('strYear', $columns['year_value'])
+            ->value('iYearId');
         return DB::table('VchHistory')
             ->where('iPartyId', $columns['iPartyId'])
             ->where('vchType', $columns['voucher_value'])
             ->where('vchNo', $columns['number_value'])
             ->where('trnAccount', $columns['party_value'])
             ->where('strVchDate', $columns['history_date_value'])
-            ->where('iYearId', $columns['year_value'])
+            ->where('iYearId', $yearId)
             ->exists();
     }
 

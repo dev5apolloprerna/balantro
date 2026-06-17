@@ -1239,7 +1239,8 @@ window.addEventListener('load', function () {
                 $('#edit_invoice').val(res.invoice_no);
                 $('#edit_date').val(res.date);
                 $('#edit_gst').val(res.gst_no);
-                $('#edit_party').val(res.party_name);
+                // $('#edit_party').val(res.party_name);
+                $('#edit_party').val(res.party_name).trigger('change'); // 🔥 IMPORTANT
                 //$('#edit_place').val(res.place_of_supply);
                 $('#edit_place option').each(function () {
                     if ($(this).val().toLowerCase().trim() === String(res.place_of_supply).toLowerCase().trim()) {
@@ -1951,8 +1952,16 @@ window.addEventListener('load', function () {
             let sgst    = parseFloat(row.find('.item-sgst').val())   || 0;
             let cgst    = parseFloat(row.find('.item-cgst').val())   || 0;
             let igst    = parseFloat(row.find('.item-igst').val())   || 0;
-            let total   = parseFloat(row.find('.item-total').val())  || 0;
+            // let total   = parseFloat(row.find('.item-total').val())  || 0;
             let gstRate = row.find('.item-gst_rate').val() || '0';
+            if (gstMode === 'custom') {
+                let taxParts = calculateGstParts(amt, gstRate, isIGST);
+                igst = taxParts.igst;
+                cgst = taxParts.cgst;
+                sgst = taxParts.sgst;
+            }
+
+            let total   = amt + sgst + cgst + igst;
             let itemName = row.find('.item-name option:selected').text() || row.find('.item-name').val() || '';
             let itemMapping = findItemGstMapping(itemName);
 
@@ -2125,6 +2134,18 @@ window.addEventListener('load', function () {
             String(mapping.id || '') === String(ledgerValue || '') ||
             normalizeLedgerName(mapping.name) === normalizedText
         ) || null;
+    }
+
+    function calculateGstParts(amount, rate, isIGST) {
+        amount = parseFloat(amount) || 0;
+        rate = parseFloat(rate) || 0;
+        let gstAmount = (amount * rate) / 100;
+
+        return {
+            igst: isIGST ? gstAmount : 0,
+            cgst: isIGST ? 0 : gstAmount / 2,
+            sgst: isIGST ? 0 : gstAmount / 2
+        };
     }
 
     function itemGstMappingObject(item) {
@@ -2367,6 +2388,9 @@ window.addEventListener('load', function () {
                 igst_amount: row.find('.slot-igst-amt').val(),
                 cgst_amount: row.find('.slot-cgst-amt').val(),
                 sgst_amount: row.find('.slot-sgst-amt').val(),
+                igst_manual: row.find('.slot-igst-amt').data('manual') == 1,
+                cgst_manual: row.find('.slot-cgst-amt').data('manual') == 1,
+                sgst_manual: row.find('.slot-sgst-amt').data('manual') == 1,
                 purchase_ledger_id: row.data('purchase-ledger-id') || row.find('.slot_purchase_ledger_id').val(),
                 itemName: row.data('item-name') || row.find('.slot_item_name').val() || ''
             };
@@ -2383,9 +2407,15 @@ window.addEventListener('load', function () {
             let displayRate = data.rate ?? rate;
             let halfR  = parseFloat(rate) / 2;
             // Auto-compute: use sum from item recalc (standard) or preserve existing custom values
-            let igstAmt = existingSlot?.igst_amount ?? data.igst;
-            let cgstAmt = existingSlot?.cgst_amount ?? data.cgst;
-            let sgstAmt = existingSlot?.sgst_amount ?? data.sgst;
+            // let igstAmt = existingSlot?.igst_amount ?? data.igst;
+            // let cgstAmt = existingSlot?.cgst_amount ?? data.cgst;
+            // let sgstAmt = existingSlot?.sgst_amount ?? data.sgst;
+            // Auto-compute GST from the current taxable amount/rate. Only keep a
+            // manually edited slot amount; stale loaded values must not block recalculation
+            // when the user changes item qty/rate/GST or no-item amount/rate.
+            let igstAmt = existingSlot?.igst_manual ? existingSlot.igst_amount : data.igst;
+            let cgstAmt = existingSlot?.cgst_manual ? existingSlot.cgst_amount : data.cgst;
+            let sgstAmt = existingSlot?.sgst_manual ? existingSlot.sgst_amount : data.sgst;
             customIgst += parseFloat(igstAmt);
             customCgst += parseFloat(cgstAmt);
             customSgst += parseFloat(sgstAmt);
@@ -2430,6 +2460,7 @@ window.addEventListener('load', function () {
 
     // When user manually edits a slot amount → recalc grand total
     $(document).on('input', '.slot-igst-amt, .slot-cgst-amt, .slot-sgst-amt', function () {
+        $(this).data('manual', 1);
         let igst=0, cgst=0, sgst=0;
         $('.slot-igst-amt').each(function () { igst += parseFloat($(this).val())||0; });
         $('.slot-cgst-amt').each(function () { cgst += parseFloat($(this).val())||0; });

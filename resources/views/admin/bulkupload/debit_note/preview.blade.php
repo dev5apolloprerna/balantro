@@ -1231,7 +1231,8 @@
                 $('#edit_invoice').val(res.note_no);
                 $('#edit_date').val(res.note_date);
                 $('#edit_gst').val(res.gst_no);
-                $('#edit_party').val(res.party_name);
+                // $('#edit_party').val(res.party_name);
+                $('#edit_party').val(res.party_name).trigger('change'); // 🔥 IMPORTANT
                 $('#edit_place').val(res.place_of_supply);
                 $('#edit_voucher_type').val(res.vch_type);
                 $('#edit_address').val(res.address);

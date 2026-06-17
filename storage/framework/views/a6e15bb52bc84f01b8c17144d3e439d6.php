@@ -250,7 +250,7 @@
                                 
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300" 
                                     title="View" data-id="<?php echo e($row->id); ?>">
-                                    <i class="fa-solid fa-eye"></i>
+                                    <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
 
                                 <!-- <button
@@ -289,11 +289,11 @@
                                     data-cgst="<?php echo e($row->cgst); ?>"
                                     data-sgst="<?php echo e($row->sgst); ?>"
                                     data-igst="<?php echo e($row->igst); ?>">
-                                    <i class="fa-solid fa-pen"></i>
+                                    <i class="fa-solid fa-pen action-icon"></i>
                                 </button>
 
                                 <button class="text-red-500 deleteRow" data-id="<?php echo e($row->id); ?>">
-                                    <i class="fa-solid fa-trash"></i>
+                                    <i class="fa-solid fa-trash action-icon"></i>
                                 </button>
                             </td>
                         </tr>
@@ -919,27 +919,40 @@
     #no_item_section .receipt-field-row { max-width: 400px; }
 
     /* Select2 dropdown background fix */
-    .select2-container--default .select2-results__option {
-        background: #ffffff !important;
-        color: #000000 !important;
-    }
-
-    .select2-container--default .select2-results__option--highlighted {
-        background: #2563eb !important; /* blue highlight */
-        color: #ffffff !important;
-    }
-
-    /* Selected item (top input box) */
-    .select2-container--default .select2-selection--single {
-        background: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #d1d5db !important;
-    }
-
-    /* Dropdown box */
+    .select2-container--default .select2-selection--single,
+    .select2-container--default .select2-results__option,
     .select2-dropdown {
         background: #ffffff !important;
         color: #000000 !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #d1d5db !important;
+    }
+
+    .dark .select2-container--default .select2-selection--single,
+    .dark .select2-container--default .select2-results__option,
+    .dark .select2-dropdown,
+    .select2-dropdown.dark-theme,
+    .select2-dropdown.dark-theme .select2-results__option {
+        background: #020617 !important;
+        color: #ffffff !important;
+        transition: none !important;
+    }
+
+    /* Selected item (top input box) */
+    .dark .select2-container--default .select2-selection--single,
+    .dark .select2-dropdown,
+    .select2-dropdown.dark-theme {
+        border: 1px solid #374151 !important;
+    }
+
+    /* Dropdown box */
+    .select2-container--default .select2-results__option--highlighted,
+    .dark .select2-container--default .select2-results__option--highlighted,
+    .select2-dropdown.dark-theme .select2-results__option--highlighted {
+        background: #2563eb !important;
+        color: #ffffff !important;
     }
 </style>
 <?php $__env->stopSection(); ?>
@@ -2545,7 +2558,11 @@
                     // btn.html('Save');
                 }
             },
-            error:   () => alert('Update failed')
+            // error:   () => alert('Update failed')
+            error: (xhr) => {
+                const message = xhr.responseJSON?.message || 'Update failed';
+                showToast(message, 'error');
+            }
         });
     });
 
@@ -2747,10 +2764,22 @@
             + (parseFloat($('#edit_sgst').val()) || 0)
             + (parseFloat($('#edit_igst').val()) || 0);
     }
-
+    const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
     function calculateRoundOffAmountForSummary(total) {
         total = parseFloat(total) || 0;
-        return Math.round((Math.round(total) - total) * 100) / 100;
+        let roundedTotal;
+        switch (ROUND_OFF_SIDE) {
+            case 'upper_side':
+                roundedTotal = Math.ceil(total);
+                break;
+            case 'lower_side':
+                roundedTotal = Math.floor(total);
+                break;
+            default:
+                roundedTotal = Math.round(total);
+                break;
+        }
+        return Math.round((roundedTotal - total) * 100) / 100;
     }
 
     function applyRoundOffSummary(total, roundOff) {

@@ -1180,19 +1180,16 @@ class SalesUploadController extends Controller
             $igstAmount = 0;
             $cgstAmount = 0;
             $sgstAmount = 0;
+            $gstTotal = ($rowAmount * $gstRate) / 100;
 
-            if ($slot) {
-                $igstAmount = (float) ($slot['igst_amount'] ?? 0);
-                $cgstAmount = (float) ($slot['cgst_amount'] ?? 0);
-                $sgstAmount = (float) ($slot['sgst_amount'] ?? 0);
+            // For no-item rows the tax amount must always be derived from the
+            // edited taxable amount and GST rate. Custom slots are used to keep
+            // the selected tax ledgers, not to reuse stale GST amounts.
+            if ($isIgst) {
+                $igstAmount = $gstTotal;
             } else {
-                $gstTotal = ($rowAmount * $gstRate) / 100;
-                if ($isIgst) {
-                    $igstAmount = $gstTotal;
-                } else {
-                    $cgstAmount = $gstTotal / 2;
-                    $sgstAmount = $gstTotal / 2;
-                }
+                $cgstAmount = $gstTotal / 2;
+                $sgstAmount = $gstTotal / 2;
             }
 
             $salesLedgerRow = !empty($row['ledger']) ? Ledger::getLedgerById($transaction->iPartyId, $row['ledger']) : null;

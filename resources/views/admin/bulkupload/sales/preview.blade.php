@@ -1958,19 +1958,12 @@
                 existingSelections[`${rate}|${data.ledgerId || ''}`] ||
                 existingSelections[rate] ||
                 {};
-            // let igstAmt = existing.igst_amt !== undefined ? existing.igst_amt : data.igst;
-            // let cgstAmt = existing.cgst_amt !== undefined ? existing.cgst_amt : data.cgst;
-            // let sgstAmt = existing.sgst_amt !== undefined ? existing.sgst_amt : data.sgst;
-            // let igstAmt = parseFloat(existing.igst_amt !== undefined ? existing.igst_amt : data.igst) || 0;
-            // let cgstAmt = parseFloat(existing.cgst_amt !== undefined ? existing.cgst_amt : data.cgst) || 0;
-            // let sgstAmt = parseFloat(existing.sgst_amt !== undefined ? existing.sgst_amt : data.sgst) || 0;
-            
-            // customIgst += parseFloat(igstAmt) || 0;
-            // customCgst += parseFloat(cgstAmt) || 0;
-            // customSgst += parseFloat(sgstAmt) || 0;
-            let igstAmt = parseFloat(existing.igst_amt !== undefined && existing.igst_amt !== '' ? existing.igst_amt : data.igst) || 0;
-            let cgstAmt = parseFloat(existing.cgst_amt !== undefined && existing.cgst_amt !== '' ? existing.cgst_amt : data.cgst) || 0;
-            let sgstAmt = parseFloat(existing.sgst_amt !== undefined && existing.sgst_amt !== '' ? existing.sgst_amt : data.sgst) || 0;
+            // GST amounts are derived from the current taxable amount and GST rate.
+            // Preserve only ledger selections here; otherwise editing a no-item row amount
+            // would keep stale tax amounts from the previously rendered slot row.
+            let igstAmt = parseFloat(data.igst) || 0;
+            let cgstAmt = parseFloat(data.cgst) || 0;
+            let sgstAmt = parseFloat(data.sgst) || 0;
             customIgst += igstAmt;
             customCgst += cgstAmt;
             customSgst += sgstAmt;
