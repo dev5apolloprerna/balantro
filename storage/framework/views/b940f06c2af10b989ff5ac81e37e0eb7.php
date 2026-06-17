@@ -1,7 +1,8 @@
 
 <?php $__env->startSection('content'); ?>
 <div data-controller="confirm-delete"
-    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }">
+    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }"
+    x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
             <h6 class="font-semibold mb-0 dark:text-white"><?php echo e(__("Purchase")); ?></h6>
@@ -227,7 +228,7 @@
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
                                         <a href="<?php echo e(route('purchase.preview',$upload->id)); ?>">
-                                            <i class="fa-regular fa-eye text-gray-500 cursor-pointer"></i>
+                                            <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
                                         <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i> -->
                                         <div x-data="{ open:false }" class="relative inline-block">
@@ -235,7 +236,7 @@
                                             <!-- Button -->
                                             <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                                 class="text-gray-500 hover:text-gray-700 px-2">
-                                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                             </button>
 
                                             <!-- Dropdown -->
@@ -272,9 +273,10 @@
     <!-- Upload Purchase Modal -->
     <div
         x-cloak
-        style="display: none;"
         x-show="openUpload"
         x-transition
+        style="display: none;"
+        data-upload-modal
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
 
         <div class="bg-white dark:bg-neutral-800 w-[720px] rounded-lg shadow-xl">
@@ -1989,6 +1991,7 @@
         const ITEM_MASTER = <?php echo json_encode($stockItems, 15, 512) ?>;
         const PURCHASE_LEDGERS = <?php echo json_encode($purcasheLedgers ?? [], 15, 512) ?>;
         const PURCHASE_GST_MAPPINGS = <?php echo json_encode($purchaseGstMappings ?? [], 15, 512) ?>;
+        const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
     </script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -2422,157 +2425,6 @@
             recalcTotals(); // 🔥 important
         });
 
-        // function recalcTotals() {
-
-        //     let mode = $('#gst_calc_mode').val();
-        //     let taxable = 0;
-        //     let totalGST = 0;
-
-        //     let isIGST = $('#edit_is_igst').is(':checked');
-
-        //     let rateMap = {}; // 🔥 required for custom mode
-
-        //     $('#editItemsBody tr').each(function() {
-
-        //         let row = $(this);
-
-        //         // let amount = parseFloat(row.find('.amount').val()) || 0;
-        //         let qty = parseFloat(row.find('.qty').val()) || 0;
-        //         let rate = parseFloat(row.find('.rate').val()) || 0;
-
-        //         let amount = qty * rate;
-
-        //         // update UI also
-        //         row.find('.amount').val(amount.toFixed(2));
-
-        //         let gst = parseFloat(row.find('.gst').val()) || 0;
-
-        //         taxable += amount;
-
-        //         let gstAmt = (amount * gst) / 100;
-
-        //         // 🔥 STANDARD
-        //         totalGST += gstAmt;
-
-        //         // 🔥 CUSTOM grouping
-        //         if (!rateMap[gst]) {
-        //             rateMap[gst] = {
-        //                 amt: 0,
-        //                 gst: 0
-        //             };
-        //         }
-
-        //         rateMap[gst].amt += amount;
-        //         rateMap[gst].gst += gstAmt;
-        //     });
-
-        //     let cgst = 0,
-        //         sgst = 0,
-        //         igst = 0;
-
-        //     // =========================
-        //     // ✅ STANDARD MODE
-        //     // =========================
-        //     if (mode === 'standard') {
-
-        //         if (isIGST) {
-        //             igst = totalGST;
-        //             cgst = 0;
-        //             sgst = 0;
-
-        //             $('#manual_igst').val(igst.toFixed(2));
-        //             $('#manual_cgst').val(0);
-        //             $('#manual_sgst').val(0);
-
-        //         } else {
-        //             cgst = totalGST / 2;
-        //             sgst = totalGST / 2;
-        //             igst = 0;
-
-        //             $('#manual_cgst').val(cgst.toFixed(2));
-        //             $('#manual_sgst').val(sgst.toFixed(2));
-        //             $('#manual_igst').val(0);
-        //         }
-        //     }
-
-        //     // =========================
-        //     // ✅ CUSTOM MODE
-        //     // =========================
-        //     if (mode === 'custom') {
-
-        //         let html = '';
-
-        //         Object.keys(rateMap).forEach(rate => {
-
-        //             let data = rateMap[rate];
-
-        //             let cg = data.gst / 2;
-        //             let sg = data.gst / 2;
-
-        //             html += `
-        //                 <tr>
-        //                     <td class="gst_rate">${rate}%</td>
-        //                     <td>${data.amt.toFixed(2)}</td>
-
-        //                     <!-- IGST -->
-        //                     <td>
-        //                         <select class="receipt-input igst_ledger">
-        //                             ${buildLedgerOptions(IGST_LEDGERS)}
-        //                         </select>
-        //                     </td>
-        //                     <td>
-        //                         <input type="number" value="${data.gst.toFixed(2)}" class="receipt-input igst_amt">
-        //                     </td>
-
-        //                     <!-- CGST -->
-        //                     <td>
-        //                         <select class="receipt-input cgst_ledger">
-        //                             ${buildLedgerOptions(CGST_LEDGERS)}
-        //                         </select>
-        //                     </td>
-        //                     <td>
-        //                         <input type="number" value="${cg.toFixed(2)}" class="receipt-input cgst_amt">
-        //                     </td>
-
-        //                     <!-- SGST -->
-        //                     <td>
-        //                         <select class="receipt-input sgst_ledger">
-        //                             ${buildLedgerOptions(SGST_LEDGERS)}
-        //                         </select>
-        //                     </td>
-        //                     <td>
-        //                         <input type="number" value="${sg.toFixed(2)}" class="receipt-input sgst_amt">
-        //                     </td>
-        //                 </tr>
-        //                 `;
-
-        //             cgst += cg;
-        //             sgst += sg;
-        //         });
-
-        //         $('#customSlotsBody').html(html);
-        //     }
-
-        //     // =========================
-        //     // FINAL TOTAL
-        //     // =========================
-        //     let grandTotal = taxable + cgst + sgst + igst;
-
-        //     $('#sum_amount').text(taxable.toFixed(2));
-        //     $('#sum_grand_total').text(grandTotal.toFixed(2));
-
-        //     // hidden
-        //     $('#edit_amount').val(taxable.toFixed(2));
-        //     $('#edit_cgst').val(cgst.toFixed(2));
-        //     $('#edit_sgst').val(sgst.toFixed(2));
-        //     $('#edit_igst').val(igst.toFixed(2));
-        //     $('#edit_total_amount').val(grandTotal.toFixed(2));
-
-        //     // footer
-        //     $('#foot_amount').text(taxable.toFixed(2));
-        //     $('#foot_total').text(grandTotal.toFixed(2));
-        // }
-
         function recalcTotals() {
 
             let mode = $('#gst_calc_mode').val();
@@ -2858,10 +2710,51 @@
             };
         }
 
+        
+       
+
+        function normalizeLedgerName(name) {
+            return String(name || '').trim().toLowerCase();
+        }
+
+        function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {
+            let normalizedText = normalizeLedgerName(ledgerText);
+            return PURCHASE_GST_MAPPINGS.find(mapping =>
+                String(mapping.id || '') === String(ledgerValue || '') ||
+                normalizeLedgerName(mapping.name) === normalizedText
+            ) || null;
+        }
+
+        function itemGstMappingObject(item) {
+            if (!item) {
+                return null;
+            }
+            return {
+                igst_id: item.IGSTLedgerId ? String(item.IGSTLedgerId) : null,
+                cgst_id: item.CGSTLedgerId ? String(item.CGSTLedgerId) : null,
+                sgst_id: item.SGSTLedgerId ? String(item.SGSTLedgerId) : null
+            };
+        }
+
+        
+
         function calculateRoundOffAmountForSummary(total) {
             total = parseFloat(total) || 0;
-            return Math.round((Math.round(total) - total) * 100) / 100;
+            let roundedTotal;
+            switch (ROUND_OFF_SIDE) {
+                case 'upper_side':
+                    roundedTotal = Math.ceil(total);
+                    break;
+                case 'lower_side':
+                    roundedTotal = Math.floor(total);
+                    break;
+                default:
+                    roundedTotal = Math.round(total);
+                    break;
+            }
+            return Math.round((roundedTotal - total) * 100) / 100;
         }
+
 
         function getSummaryBaseTotal() {
             return (parseFloat($('#edit_amount').val()) || 0)
@@ -2892,9 +2785,12 @@
 
         function setRoundOffSummary(total, roundOffAmount = null) {
             total = parseFloat(total) || 0;
-            let roundOff = roundOffAmount === null || roundOffAmount === undefined
-                ? calculateRoundOffAmountForSummary(total)
-                : (parseFloat(roundOffAmount) || 0);
+            if (roundOffAmount !== null && roundOffAmount !== undefined) {
+                let roundOff = parseFloat(roundOffAmount) || 0;
+                return applyRoundOffSummary(total - roundOff, roundOff);
+            }
+
+            let roundOff = calculateRoundOffAmountForSummary(total);
 
             return applyRoundOffSummary(total, roundOff);
         }
@@ -3029,6 +2925,7 @@
             });
             return html;
         }
+
         $(document).on('change','.item_name',function(){
             let itemId = $(this).val();
             let item = ITEM_MASTER.find(
@@ -3097,6 +2994,7 @@
                 }
             });
         });
+
     </script>
     <?php $__env->stopSection(); ?>
 

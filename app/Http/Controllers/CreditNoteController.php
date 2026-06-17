@@ -2027,8 +2027,7 @@ class CreditNoteController extends Controller
         if ($rate <= 0) {
             return true;
         }
-
-        return in_array($rate, [0.0,0.1, 0.25, 1, 1.5, 3, 5, 6, 7.5, 12, 18, 28], true);
+        return in_array($rate, [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0], true);
     }
 
     private function hasOnlyValidGstSlabs(array $rates): bool
@@ -2044,22 +2043,24 @@ class CreditNoteController extends Controller
 
     private function extractCreditNoteRequestGstRates(Request $request, float $sumAmount = 0, float $sumCgst = 0, float $sumSgst = 0, float $sumIgst = 0): array
     {
-        $rates = [];
+        $lineRates = [];
         foreach ((array) $request->input('items', []) as $item) {
-            $rates[] = $item['gst_rate'] ?? null;
+            $lineRates[] = $item['gst_rate'] ?? null;
         }
         foreach ((array) $request->input('custom_slots', []) as $slot) {
-            $rates[] = $slot['rate'] ?? null;
+            $lineRates[] = $slot['rate'] ?? null;
         }
         foreach ((array) $request->input('noitem_rows', []) as $row) {
-            $rates[] = $row['gst'] ?? null;
+            $lineRates[] = $row['gst'] ?? null;
         }
-        $rates[] = $request->input('gst_rate');
-        if ($sumAmount > 0) {
-            $rates[] = (($sumCgst + $sumSgst + $sumIgst) * 100) / $sumAmount;
+        $lineRates = array_values(array_filter($lineRates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0));
+
+        if (!empty($lineRates)) {
+            return $lineRates;
         }
 
-        return array_filter($rates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0);
+        $headerRate = $request->input('gst_rate');
+        return ($headerRate !== null && $headerRate !== '' && (float) $headerRate > 0) ? [$headerRate] : [];
     }
 
     private function getCellValue($cell)

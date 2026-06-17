@@ -1569,11 +1569,11 @@ class PurchaseUploadController extends Controller
                 'igst'         => $sumIgst,
                 // 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
                 'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status'       => $this->allGstRatesAreApplicable(array_merge(
-                    collect($data['items'] ?? [])->pluck('gst_rate')->all(),
-                    collect($request->noitem_rows ?? [])->pluck('gst')->all(),
-                    collect($request->custom_slots ?? [])->pluck('rate')->all(),
-                    [$request->gst_rate ?? 0]
+                'status'       => $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
+                    $data['items'] ?? [],
+                    $request->noitem_rows ?? [],
+                    $request->custom_slots ?? [],
+                    $request->gst_rate ?? null
                 )) ? 'saved' : 'pending',
                 'roundoff_id'  => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,

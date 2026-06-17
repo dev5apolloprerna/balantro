@@ -1981,6 +1981,7 @@
         const ITEM_MASTER = @json($stockItems);
         const PURCHASE_LEDGERS = @json($purcasheLedgers ?? []);
         const PURCHASE_GST_MAPPINGS = @json($purchaseGstMappings ?? []);
+        const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
     </script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -2414,157 +2415,6 @@
             recalcTotals(); // 🔥 important
         });
 
-        // function recalcTotals() {
-
-        //     let mode = $('#gst_calc_mode').val();
-        //     let taxable = 0;
-        //     let totalGST = 0;
-
-        //     let isIGST = $('#edit_is_igst').is(':checked');
-
-        //     let rateMap = {}; // 🔥 required for custom mode
-
-        //     $('#editItemsBody tr').each(function() {
-
-        //         let row = $(this);
-
-        //         // let amount = parseFloat(row.find('.amount').val()) || 0;
-        //         let qty = parseFloat(row.find('.qty').val()) || 0;
-        //         let rate = parseFloat(row.find('.rate').val()) || 0;
-
-        //         let amount = qty * rate;
-
-        //         // update UI also
-        //         row.find('.amount').val(amount.toFixed(2));
-
-        //         let gst = parseFloat(row.find('.gst').val()) || 0;
-
-        //         taxable += amount;
-
-        //         let gstAmt = (amount * gst) / 100;
-
-        //         // 🔥 STANDARD
-        //         totalGST += gstAmt;
-
-        //         // 🔥 CUSTOM grouping
-        //         if (!rateMap[gst]) {
-        //             rateMap[gst] = {
-        //                 amt: 0,
-        //                 gst: 0
-        //             };
-        //         }
-
-        //         rateMap[gst].amt += amount;
-        //         rateMap[gst].gst += gstAmt;
-        //     });
-
-        //     let cgst = 0,
-        //         sgst = 0,
-        //         igst = 0;
-
-        //     // =========================
-        //     // ✅ STANDARD MODE
-        //     // =========================
-        //     if (mode === 'standard') {
-
-        //         if (isIGST) {
-        //             igst = totalGST;
-        //             cgst = 0;
-        //             sgst = 0;
-
-        //             $('#manual_igst').val(igst.toFixed(2));
-        //             $('#manual_cgst').val(0);
-        //             $('#manual_sgst').val(0);
-
-        //         } else {
-        //             cgst = totalGST / 2;
-        //             sgst = totalGST / 2;
-        //             igst = 0;
-
-        //             $('#manual_cgst').val(cgst.toFixed(2));
-        //             $('#manual_sgst').val(sgst.toFixed(2));
-        //             $('#manual_igst').val(0);
-        //         }
-        //     }
-
-        //     // =========================
-        //     // ✅ CUSTOM MODE
-        //     // =========================
-        //     if (mode === 'custom') {
-
-        //         let html = '';
-
-        //         Object.keys(rateMap).forEach(rate => {
-
-        //             let data = rateMap[rate];
-
-        //             let cg = data.gst / 2;
-        //             let sg = data.gst / 2;
-
-        //             html += `
-        //                 <tr>
-        //                     <td class="gst_rate">${rate}%</td>
-        //                     <td>${data.amt.toFixed(2)}</td>
-
-        //                     <!-- IGST -->
-        //                     <td>
-        //                         <select class="receipt-input igst_ledger">
-        //                             ${buildLedgerOptions(IGST_LEDGERS)}
-        //                         </select>
-        //                     </td>
-        //                     <td>
-        //                         <input type="number" value="${data.gst.toFixed(2)}" class="receipt-input igst_amt">
-        //                     </td>
-
-        //                     <!-- CGST -->
-        //                     <td>
-        //                         <select class="receipt-input cgst_ledger">
-        //                             ${buildLedgerOptions(CGST_LEDGERS)}
-        //                         </select>
-        //                     </td>
-        //                     <td>
-        //                         <input type="number" value="${cg.toFixed(2)}" class="receipt-input cgst_amt">
-        //                     </td>
-
-        //                     <!-- SGST -->
-        //                     <td>
-        //                         <select class="receipt-input sgst_ledger">
-        //                             ${buildLedgerOptions(SGST_LEDGERS)}
-        //                         </select>
-        //                     </td>
-        //                     <td>
-        //                         <input type="number" value="${sg.toFixed(2)}" class="receipt-input sgst_amt">
-        //                     </td>
-        //                 </tr>
-        //                 `;
-
-        //             cgst += cg;
-        //             sgst += sg;
-        //         });
-
-        //         $('#customSlotsBody').html(html);
-        //     }
-
-        //     // =========================
-        //     // FINAL TOTAL
-        //     // =========================
-        //     let grandTotal = taxable + cgst + sgst + igst;
-
-        //     $('#sum_amount').text(taxable.toFixed(2));
-        //     $('#sum_grand_total').text(grandTotal.toFixed(2));
-
-        //     // hidden
-        //     $('#edit_amount').val(taxable.toFixed(2));
-        //     $('#edit_cgst').val(cgst.toFixed(2));
-        //     $('#edit_sgst').val(sgst.toFixed(2));
-        //     $('#edit_igst').val(igst.toFixed(2));
-        //     $('#edit_total_amount').val(grandTotal.toFixed(2));
-
-        //     // footer
-        //     $('#foot_amount').text(taxable.toFixed(2));
-        //     $('#foot_total').text(grandTotal.toFixed(2));
-        // }
-
         function recalcTotals() {
 
             let mode = $('#gst_calc_mode').val();
@@ -2849,9 +2699,9 @@
                 sgst_id: item.SGSTLedgerId ? String(item.SGSTLedgerId) : null
             };
         }
-        const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
-        @@ -2826,88 +2826,106 @@
-        });
+
+        
+       
 
         function normalizeLedgerName(name) {
             return String(name || '').trim().toLowerCase();
@@ -2876,10 +2726,7 @@
             };
         }
 
-        function calculateRoundOffAmountForSummary(total) {
-            total = parseFloat(total) || 0;
-            return Math.round((Math.round(total) - total) * 100) / 100;
-        const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
+        
 
         function calculateRoundOffAmountForSummary(total) {
             total = parseFloat(total) || 0;
@@ -3068,6 +2915,7 @@
             });
             return html;
         }
+
         $(document).on('change','.item_name',function(){
             let itemId = $(this).val();
             let item = ITEM_MASTER.find(
@@ -3136,5 +2984,6 @@
                 }
             });
         });
+
     </script>
     @endsection

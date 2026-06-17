@@ -1550,11 +1550,11 @@ class DebitNoteController extends Controller
                 'roundoff_id' => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status' => $this->allGstRatesAreApplicable(array_merge(
-                    collect($data['items'] ?? [])->pluck('gst_rate')->all(),
-                    collect($request->noitem_rows ?? [])->pluck('gst')->all(),
-                    collect($request->custom_slots ?? [])->pluck('rate')->all(),
-                    [$request->gst_rate ?? 0]
+                'status' => $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
+                    $data['items'] ?? [],
+                    $request->noitem_rows ?? [],
+                    $request->custom_slots ?? [],
+                    $request->gst_rate ?? null
                 )) ? 'saved' : 'Pending'
             ]);
 

@@ -236,7 +236,7 @@
                                 
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300" 
                                     title="View" data-id="<?php echo e($row->id); ?>">
-                                    <i class="fa-solid fa-eye"></i>
+                                    <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
 
                                 <!-- <button
@@ -279,7 +279,7 @@
                                 </button>
 
                                 <button class="text-red-500 deleteRow" data-id="<?php echo e($row->id); ?>">
-                                    <i class="fa-solid fa-trash"></i>
+                                    <i class="fa-solid fa-trash action-icon"></i>
                                 </button>
                             </td>
                         </tr>
@@ -1808,7 +1808,11 @@ window.addEventListener('load', function () {
                     // btn.html('Save');
                 }
             },
-            error:   () => alert('Update failed')
+            //error:   () => alert('Update failed')
+            error: (xhr) => {
+                const message = xhr.responseJSON?.message || 'Update failed';
+                showToast(message, 'error');
+            }
         });
     });
 
@@ -2138,10 +2142,22 @@ window.addEventListener('load', function () {
             sgst_id: item.SGSTLedgerId ? String(item.SGSTLedgerId) : null
         };
     }
-
+    const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
     function calculateRoundOffAmountForSummary(total) {
         total = parseFloat(total) || 0;
-        return Math.round((Math.round(total) - total) * 100) / 100;
+        let roundedTotal;
+        switch (ROUND_OFF_SIDE) {
+            case 'upper_side':
+                roundedTotal = Math.ceil(total);
+                break;
+            case 'lower_side':
+                roundedTotal = Math.floor(total);
+                break;
+            default:
+                roundedTotal = Math.round(total);
+                break;
+        }
+        return Math.round((roundedTotal - total) * 100) / 100;
     }
 
     function getSummaryBaseTotal() {
@@ -2173,9 +2189,12 @@ window.addEventListener('load', function () {
 
     function setRoundOffSummary(total, roundOffAmount = null) {
         total = parseFloat(total) || 0;
-        let roundOff = roundOffAmount === null || roundOffAmount === undefined
-            ? calculateRoundOffAmountForSummary(total)
-            : (parseFloat(roundOffAmount) || 0);
+         if (roundOffAmount !== null && roundOffAmount !== undefined) {
+            let roundOff = parseFloat(roundOffAmount) || 0;
+            return applyRoundOffSummary(total - roundOff, roundOff);
+        }
+
+        let roundOff = calculateRoundOffAmountForSummary(total);
 
         return applyRoundOffSummary(total, roundOff);
     }

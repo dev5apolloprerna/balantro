@@ -90,7 +90,7 @@
                 font-size: 1.125rem;
             }
         }
-        
+
         /* ── STARFIELD ADDITIONS (do not remove) ── */
         #starfield-canvas {
             position: fixed;
@@ -237,7 +237,7 @@
                         .dark select,
                         .dark select option,
                         .dark select optgroup {
-                            background-color: #020617 !important;
+                            background-color: #000000 !important;
                             color: #ffffff !important;
                         }
 
@@ -249,8 +249,8 @@
                         .select2-dropdown.dark-theme,
                         .select2-dropdown.dark-theme .select2-results,
                         .select2-dropdown.dark-theme .select2-results__option {
-                            background-color: #020617 !important;
-                            color: #ffffff !important;
+                            background-color: #ffffff !important;
+                            color: #000000 !important;
                             transition: none !important;
                         }
 
@@ -258,13 +258,13 @@
                         .dark .select2-container--default .select2-selection--multiple,
                         .dark .select2-dropdown,
                         .select2-dropdown.dark-theme {
-                            border-color: #374151 !important;
+                            border-color: #d1d5db !important;
                         }
 
                         .dark .select2-container--default .select2-selection__rendered,
                         .dark .select2-container--default .select2-selection__placeholder,
                         .select2-dropdown.dark-theme .select2-search__field {
-                            color: #ffffff !important;
+                            color: #000000 !important;
                         }
 
                         .dark .select2-container--default .select2-search--dropdown .select2-search__field,
