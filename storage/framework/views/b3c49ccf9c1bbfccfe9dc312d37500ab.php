@@ -1453,7 +1453,11 @@
                     // btn.html('Save');
                 }
             },
-            error: () => alert('Update failed')
+            //error: () => alert('Update failed')
+            error: (xhr) => {
+                const message = xhr.responseJSON?.message || 'Update failed';
+                showToast(message, 'error');
+            }
         });
     });
 

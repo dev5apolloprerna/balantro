@@ -11,9 +11,58 @@ use Illuminate\Support\Facades\Session;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Models\BulkBankUpload;
 use App\Models\BankTransaction;
+use App\Support\VoucherValidation;
 
 class BankUploadController extends Controller
 {
+    use VoucherValidation;
+
+
+    private function bankVoucherNumber($chequeNo, $refNo): ?string
+    {
+        $number = trim((string) ($chequeNo ?: $refNo));
+        return $number !== '' ? $number : null;
+    }
+
+    private function bankVoucherCombinationExists($voucherType, $voucherNumber, $partyName, $txnDate, ?int $ignoreId = null): bool
+    {
+        $iPartyId = session('iPartyId');
+        $voucherType = trim((string) $voucherType);
+        $voucherNumber = trim((string) $voucherNumber);
+        $partyName = trim((string) $partyName);
+
+        if (!$iPartyId || $voucherType === '' || !$voucherNumber || $partyName === '' || !$txnDate) {
+            return false;
+        }
+
+        $query = DB::table('bank_transactions')
+            ->where('iPartyId', $iPartyId)
+            ->where('vch_type', $voucherType)
+            ->where('ledger_name', $partyName)
+            ->where('txn_date', $txnDate)
+            ->where(function ($query) use ($voucherNumber) {
+                $query->where('cheque_no', $voucherNumber)
+                    ->orWhere('ref_no', $voucherNumber);
+            });
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        if ($query->exists()) {
+            return true;
+        }
+
+        return $this->vchHistoryCombinationExists([
+            'iPartyId' => $iPartyId,
+            'voucher_value' => $voucherType,
+            'number_value' => $voucherNumber,
+            'party_value' => $partyName,
+            'history_date_value' => $this->historyDate($txnDate),
+            'year_value' => session('year'),
+        ]);
+    }
+
     public function index()
     {
         $iPartyId = session('iPartyId');
@@ -266,7 +315,7 @@ class BankUploadController extends Controller
 
             $unique_key = md5($txn_date . $amount . $narration . $ref_no);
 
-            if (BankTransaction::where('unique_key', $unique_key)->exists()) {
+            if (BankTransaction::where('iPartyId', $iPartyId)->where('unique_key', $unique_key)->exists()) {
                 continue;
             }
             if ($amount > 999999999999 || $balance > 999999999999) {
@@ -456,15 +505,29 @@ class BankUploadController extends Controller
             // capture upload id
             $uploadId = $row->upload_id;
 
-            $row->txn_date    = $request->txn_date[$id] ?? $row->txn_date;
+            $txnDate = $request->txn_date[$id] ?? $row->txn_date;
+            $ledgerName = $request->ledger[$id] ?? $row->ledger_name;
+            $chequeNo = $request->cheque_no[$id] ?? $row->cheque_no;
+            $refNo = $request->ref_no[$id] ?? $row->ref_no;
+            $voucherType = $request->type[$id] ?? $row->vch_type;
+            $voucherNumber = $this->bankVoucherNumber($chequeNo, $refNo);
+
+            if ($this->bankVoucherCombinationExists($voucherType, $voucherNumber, $ledgerName, $txnDate, $row->id)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Duplicate voucher combination is not allowed.'
+                ]);
+            }
+
+            $row->txn_date    = $txnDate;
             $row->value_date  = $request->value_date[$id] ?? $row->value_date;
             $row->narration   = $request->narration[$id] ?? $row->narration;
-            $row->ledger_name = $request->ledger[$id] ?? $row->ledger_name;
+            $row->ledger_name = $ledgerName;
             // 🔥 NEW FIELDS
-            $row->cheque_no   = $request->cheque_no[$id] ?? null;
-            $row->ref_no      = $request->ref_no[$id] ?? $row->ref_no;
+            $row->cheque_no   = $chequeNo;
+            $row->ref_no      = $refNo;
             $row->cost_center = $request->cost_center[$id] ?? null;
-            $row->vch_type    = $request->type[$id] ?? null;
+            $row->vch_type    = $voucherType;
             $row->status      = 'saved';
 
             $row->save();
@@ -571,6 +634,14 @@ class BankUploadController extends Controller
             ]);
         }
         $uploadId = $row->upload_id;
+        $voucherNumber = $this->bankVoucherNumber($request->cheque_no, $request->reference ?? $row->ref_no);
+        if ($this->bankVoucherCombinationExists($request->type, $voucherNumber, $request->ledger, $request->txn_date, $row->id)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Duplicate voucher combination is not allowed.'
+            ]);
+        }
+
         $amount = $request->amount;
         $debit = 0;
         $credit = 0;

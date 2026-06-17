@@ -1525,7 +1525,11 @@ $('#updateRow').click(function () {
                     // btn.html('Save');
                 }
              },
-        error:   () => showToast('Update failed', 'error')
+        //error:   () => showToast('Update failed', 'error')
+        error: (xhr) => {
+            const message = xhr.responseJSON?.message || 'Update failed';
+            showToast(message, 'error');
+        }
     });
 });
 
