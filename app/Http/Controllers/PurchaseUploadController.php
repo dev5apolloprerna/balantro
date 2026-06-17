@@ -1375,7 +1375,16 @@ class PurchaseUploadController extends Controller
             // ===============================
             // HEADER UPDATE
             // ===============================
-            $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger" ? $request['purchase_ledger_name'] : $transaction->purchase_ledger;
+            // $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger" ? $request['purchase_ledger_name'] : $transaction->purchase_ledger;
+            $firstNoItemLedger = collect($request->noitem_rows ?? [])->firstWhere('ledger');
+            $purchaseLedgerId = $request->purchase_ledger_id ?: ($firstNoItemLedger['ledger'] ?? null);
+            $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger"
+                ? $request['purchase_ledger_name']
+                : $transaction->purchase_ledger;
+            $purchase_ledger_id = $purchaseLedgerId
+                ? Ledger::getLedgerById($transaction->iPartyId, $purchaseLedgerId)
+                : Ledger::getLedgerByName($transaction->iPartyId, $purchase_ledger);
+            $purchase_ledger = $purchase_ledger_id->name ?? $purchase_ledger;
             $purchase_ledger_id = Ledger::getLedgerByName($transaction->iPartyId, $purchase_ledger);
             $transaction->update([
                 'invoice_no'      => $request['invoice_no'] ?? $transaction->invoice_no,
@@ -1383,7 +1392,8 @@ class PurchaseUploadController extends Controller
                 'party_name'      => $request['party_name'],
                 'gst_no'          => $request['gst_no'],
                 'place_of_supply' => $request['place_of_supply'],
-                'purchase_ledger' => isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger" ? $request['purchase_ledger_name'] : $transaction->purchase_ledger,
+                //'purchase_ledger' => isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger" ? $request['purchase_ledger_name'] : $transaction->purchase_ledger,
+                'purchase_ledger' => $purchase_ledger,
                 'vchType'         => $request['vchType'],
                 'address'         => $request['address'],
                 'pincode'         => $request['pincode'],
@@ -1395,8 +1405,10 @@ class PurchaseUploadController extends Controller
                 'gst_mode'        => $request->gst_mode ?? 'standard',
 
                 // ✅ Ledger store (without item case)
-                'purchase_ledger_id'   => $purchase_ledger_id->id ?? 0,
-                'purchase_ledger_name' => $purchase_ledger_id->name ?? '',
+                // 'purchase_ledger_id'   => $purchase_ledger_id->id ?? 0,
+                // 'purchase_ledger_name' => $purchase_ledger_id->name ?? '',
+                'purchase_ledger_id'   => $purchase_ledger_id->id ?? null,
+                'purchase_ledger_name' => $purchase_ledger,
                 'strYear'       => session('year'),
                 'year_from_date' => session('year_from'),
                 'year_to_date'  => session('year_to'),
@@ -1404,7 +1416,8 @@ class PurchaseUploadController extends Controller
             ]);
 
             $gstMode = $request->gst_mode ?? 'standard';
-            $gstMapping = $this->getGstMapping($transaction->iPartyId, $purchase_ledger_id->name ?? $purchase_ledger);
+            // $gstMapping = $this->getGstMapping($transaction->iPartyId, $purchase_ledger_id->name ?? $purchase_ledger);
+            $gstMapping = $this->getGstMapping($transaction->iPartyId, $purchase_ledger);
 
             // ===============================
             // ITEMS HANDLING
@@ -1704,9 +1717,21 @@ class PurchaseUploadController extends Controller
                     'saved'     => 0
                 ]);
             }
-            $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
-            $purcashe_ledger_id = Ledger::getLedgerByName($iPartyId, $purchase_ledger);
-            $gstMapping = $this->getGstMapping($iPartyId, $purcashe_ledger_id->name ?? $purchase_ledger);
+            // $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
+            // $purcashe_ledger_id = Ledger::getLedgerByName($iPartyId, $purchase_ledger);
+            // $gstMapping = $this->getGstMapping($iPartyId, $purcashe_ledger_id->name ?? $purchase_ledger);
+            $firstNoItemLedger = collect($request->noitem_rows ?? [])->firstWhere('ledger');
+            $purchaseLedgerId = $request->purchase_ledger_id ?: ($firstNoItemLedger['ledger'] ?? null);
+            $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger"
+                ? $request['purchase_ledger']
+                : null;
+
+            $purcashe_ledger_id = $purchaseLedgerId
+                ? Ledger::getLedgerById($iPartyId, $purchaseLedgerId)
+                : Ledger::getLedgerByName($iPartyId, $purchase_ledger);
+
+            $purchase_ledger = $purcashe_ledger_id->name ?? $purchase_ledger;
+            $gstMapping = $this->getGstMapping($iPartyId, $purchase_ledger);
             if ($this->voucherCombinationExists('purchase_transactions', ['iPartyId'=>$iPartyId,'voucher_column'=>'vchType','voucher_value'=>$request->voucher_type ?? 'Purchase','number_column'=>'invoice_no','number_value'=>$request->invoice,'party_column'=>'party_name','party_value'=>$request->party,'date_column'=>'date','date_value'=>$request->date,'year_column'=>'strYear','year_value'=>session('year')]) || $this->vchHistoryCombinationExists(['iPartyId'=>$iPartyId,'voucher_value'=>$request->voucher_type ?? 'Purchase','number_value'=>$request->invoice,'party_value'=>$request->party,'history_date_value'=>$this->historyDate($request->date),'year_value'=>session('year')])) { return response()->json(['status'=>false,'message'=>'Duplicate voucher combination is not allowed.']); }
             // ✅ CREATE TRANSACTION
             $transaction = PurchaseTransaction::create([
@@ -1723,14 +1748,16 @@ class PurchaseUploadController extends Controller
                 'gst_mode'     => $request->gst_mode ?? 'standard',
                 'Remarks'      => $request->remarks,
                 'is_igst'      => $request->is_igst,
-                'purchase_ledger' => $purcashe_ledger_id->name,
+                // 'purchase_ledger' => $purcashe_ledger_id->name,
+                'purchase_ledger' => $purchase_ledger,
                 'address'      => $request->address,
                 'pincode'      => $request->pincode,
                 'city'         => $request->city,
                 // ✅ Ledger store (without item case)
-                'purchase_ledger_id'   => $purcashe_ledger_id->id, // $request->sales_ledger_id ?? null,
-                'purchase_ledger_name' => $purcashe_ledger_id->name,
-
+                // 'purchase_ledger_id'   => $purcashe_ledger_id->id, // $request->sales_ledger_id ?? null,
+                // 'purchase_ledger_name' => $purcashe_ledger_id->name,
+                'purchase_ledger_id'   => $purcashe_ledger_id->id ?? null, // $request->sales_ledger_id ?? null,
+                'purchase_ledger_name' => $purchase_ledger,
                 'strYear'       => session('year'),
                 'year_from_date' => session('year_from'),
                 'year_to_date'  => session('year_to'),

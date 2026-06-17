@@ -2113,10 +2113,16 @@ window.addEventListener('load', function () {
         $('#editItemsBody tr').each(function(i) { $(this).find('.td-sr').text(i+1); });
 
         if (mode === 'standard') {
+            $('#standard_tax_rows').show();
+            $('#custom_slots_section').hide();
+            $('#custom_tax_rows').hide();
             $('#sum_sgst').text(fmt(sumSgst));
             $('#sum_cgst').text(fmt(sumCgst));
             $('#sum_igst').text(fmt(sumIgst));
         } else {
+            $('#standard_tax_rows').hide();
+            $('#custom_slots_section').show();
+            $('#custom_tax_rows').show();
             // CUSTOM MODE: render rate-wise slots
             renderCustomSlots(rateMap, sumTotal);
         }

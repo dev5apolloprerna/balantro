@@ -2342,7 +2342,7 @@
                 $('#no_item_section').show();
                 $('#addItemRow').hide();
                 $('#addNoItemRow').show();
-                $('#gst_mode_wrap').hide();
+                $('#gst_mode_wrap').show();
                 $('#gst_calc_mode').val('custom').trigger('change');
                 if ($('#noItemBody tr').length === 0) {
                     addNoItemRow();
@@ -2424,7 +2424,7 @@
             let totalGST = 0;
 
             let isIGST = $('#edit_is_igst').is(':checked');
-
+            applyGstLedgerMapping(false);
             let rateMap = {};
 
             // =========================
@@ -2608,6 +2608,10 @@
             $('#sum_amount').text(taxable.toFixed(2));
             // $('#sum_grand_total').text(grandTotal.toFixed(2));
             setRoundOffSummary(grandTotal);
+            
+            $('#manual_igst').val(igst.toFixed(2));
+            $('#manual_cgst').val(cgst.toFixed(2));
+            $('#manual_sgst').val(sgst.toFixed(2));
 
             $('#edit_amount').val(taxable.toFixed(2));
             $('#edit_cgst').val(cgst.toFixed(2));
@@ -2617,6 +2621,42 @@
 
             $('#foot_amount').text(taxable.toFixed(2));
             $('#foot_total').text(grandTotal.toFixed(2));
+        }
+
+        function applyGstLedgerMapping(force = false) {
+            const mapping = getSelectedSalesLedgerMapping();
+
+            if (!mapping) {
+                return;
+            }
+
+            if (mapping.igst_id && (force || !$('#igst_ledger').val())) {
+                $('#igst_ledger').val(mapping.igst_id).trigger('change');
+            }
+
+            if (mapping.cgst_id && (force || !$('#cgst_ledger').val())) {
+                $('#cgst_ledger').val(mapping.cgst_id).trigger('change');
+            }
+
+            if (mapping.sgst_id && (force || !$('#sgst_ledger').val())) {
+                $('#sgst_ledger').val(mapping.sgst_id).trigger('change');
+            }
+        }
+
+        function getSelectedSalesLedgerMapping(selectId = '#noitem_sales_ledger') {
+            const select = $(selectId);
+            const selectedValue = select.val();
+            const selectedText = select.find('option:selected').text();
+
+            return findSalesLedgerMapping(selectedValue, selectedText);
+        }
+
+        function findSalesLedgerMapping(ledgerValue = '', ledgerText = '') {
+            return PURCHASE_GST_MAPPINGS.find(mapping =>
+                String(mapping.id) === String(ledgerValue) ||
+                normalizeLedgerName(mapping.name) === normalizeLedgerName(ledgerValue) ||
+                normalizeLedgerName(mapping.name) === normalizeLedgerName(ledgerText)
+            ) || null;
         }
 
         $(document).on('click', '#addNoItemRow', function() {
@@ -2653,7 +2693,8 @@
 
             let mode = $(this).val();
             let entryMode = $('input[name="entry_mode"]:checked').val();
-            $('#gst_mode_wrap').toggle(entryMode === 'item');
+            // $('#gst_mode_wrap').toggle(entryMode === 'item');
+            $('#gst_mode_wrap').show();
 
             if (mode === 'standard') {
                 $('#standard_items_section').toggle(entryMode === 'item');

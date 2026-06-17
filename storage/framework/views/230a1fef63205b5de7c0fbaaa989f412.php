@@ -1307,7 +1307,8 @@
                 $('#edit_date').val(res.date);
                 $('#edit_gst').val(res.gst_no);
                 // $('#edit_party').val(res.party_name);
-                setSelectValueByTextOrValue($('#edit_party'), res.party_name);
+                $('#edit_party').val(res.party_name).trigger('change');
+                // setSelectValueByTextOrValue($('#edit_party'), res.party_name);
                 // $('#edit_place').val(res.place_of_supply);
                 $('#edit_place option').each(function () {
                     if ($(this).val().toLowerCase().trim() === String(res.place_of_supply).toLowerCase().trim()) {
