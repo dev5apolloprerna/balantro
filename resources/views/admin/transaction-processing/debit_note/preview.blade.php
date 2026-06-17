@@ -1998,15 +1998,19 @@
                         btn.html('Save');
                     }
              },
-            error:   (xhr) => { 
-                    let msg = 'Server error';
+            // error:   (xhr) => { 
+            //         let msg = 'Server error';
 
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        msg = xhr.responseJSON.message;
-                    }
+            //         if (xhr.responseJSON && xhr.responseJSON.message) {
+            //             msg = xhr.responseJSON.message;
+            //         }
 
-                    showToast(msg, 'error');
-                }
+            //         showToast(msg, 'error');
+            //     }
+            error: (xhr) => {
+                const message = xhr.responseJSON?.message || 'Update failed';
+                showToast(message, 'error');
+            }
         });
     });
 

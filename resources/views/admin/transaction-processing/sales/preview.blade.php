@@ -1287,7 +1287,8 @@
                 $('#edit_invoice').val(res.invoice_no);
                 $('#edit_date').val(res.date);
                 $('#edit_gst').val(res.gst_no);
-                $('#edit_party').val(res.party_name);
+                // $('#edit_party').val(res.party_name);
+                setSelectValueByTextOrValue($('#edit_party'), res.party_name);
                 // $('#edit_place').val(res.place_of_supply);
                 $('#edit_place option').each(function () {
                     if ($(this).val().toLowerCase().trim() === String(res.place_of_supply).toLowerCase().trim()) {
@@ -1468,8 +1469,10 @@
         if (match.length) {
             $select.val(match.val());
         } else {
-            $select.val(value);
+            // $select.val(value);
+            $select.append(new Option(value, value, true, true));
         }
+        $select.trigger('change.select2');
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -1527,6 +1530,7 @@
             url: "{{ route('sales.show',':id') }}".replace(':id', id),
             type: "GET",
             success: function(res) {
+                setSelectValueByTextOrValue($('#edit_party'), res.party_name);
                 $('#edit_address').val(res.address || '');
                 $('#edit_pincode').val(res.pincode || '');
                 $('#edit_city').val(res.city || '');
@@ -1560,7 +1564,7 @@
                     // res.items.forEach(item => tbody.append(buildItemRow(item)));
                     res.items.forEach(item => {
                         let row = buildItemRow(item);
-                         recalcItemRow(row);
+                        recalcItemRow(row);
                         tbody.append(row);
                     });
                 } else {
@@ -1883,7 +1887,11 @@
                     // btn.html('Save');
                 }
             },
-            error: () => alert('Update failed')
+            // error: () => alert('Update failed')
+            error: (xhr) => {
+                const message = xhr.responseJSON?.message || 'Update failed';
+                showToast(message, 'error');
+            }
         });
     });
 
@@ -2023,7 +2031,8 @@
             sgst = 0,
             igst = 0;
 
-        if (mode === 'standard' && gstRate > 0) {
+        //if (mode === 'standard' && gstRate > 0) {
+        if (gstRate > 0) {
             if (isIGST) {
                 igst = amount * gstRate / 100;
             } else {
@@ -2031,7 +2040,7 @@
                 sgst = amount * (gstRate / 2) / 100;
             }
         }
-        // In custom mode GST comes from slot ledger selection — item rows just store amount
+        // Custom mode uses these calculated amounts to populate the rate-wise slot table.
         let total = amount + cgst + sgst + igst;
 
         row.find('.item-amount').val(amount.toFixed(2));
@@ -2332,7 +2341,7 @@
 
             slotHtml += `<tr class="${isZero ? 'zero-row' : ''}" data-rate="${rate}">
                 <td><span class="rate-badge"><span class="slot-rate"></span>${rate}%</span></td>
-                <td><strong>${fmt(data.amt)}</strong></td>
+                <td class="slot-taxable"><strong>${fmt(data.amt)}</strong></td>
                 <td><select class="slot-igst-ledger" data-rate="${rate}""><option value="">— Ledger —</option>${iOpts}</select></td>
                 <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${igstAmt.toFixed(2)}" step="any"></td>
                 <td><select class="slot-cgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${cOpts}</select></td>
@@ -2460,7 +2469,7 @@
 
             slotHtml += `<tr class="${isZero ? 'zero-row' : ''}" data-slot-key="${data.slotKey || mapKey}" data-rate="${rate}">
                 <td><span class="rate-badge"><span class="slot-rate"></span>${rate}%</span></td>
-                <td style="color: black;"><strong>${fmt(data.amt)}</strong><input type="hidden" class="slot_sales_ledger_id" value="${data.ledgerId || ''}"></td>
+                <td class="slot-taxable" style="color: black;"><strong>${fmt(data.amt)}</strong><input type="hidden" class="slot_sales_ledger_id" value="${data.ledgerId || ''}"></td>
                 <td><select class="slot-igst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${iOpts}</select></td>
                 <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${igstAmt.toFixed(2)}" step="any"></td>
                 <td><select class="slot-cgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${cOpts}</select></td>

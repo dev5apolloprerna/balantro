@@ -1633,12 +1633,19 @@ class SalesUploadController extends Controller
         foreach ((array) $request->input('noitem_rows', []) as $row) {
             $rates[] = $row['gst'] ?? null;
         }
-        $rates[] = $request->input('gst_rate');
-        if ($sumAmount > 0) {
+        // $rates[] = $request->input('gst_rate');
+        // if ($sumAmount > 0) {
+        //     $rates[] = (($sumCgst + $sumSgst + $sumIgst) * 100) / $sumAmount;
+        // }
+
+        $rates = array_filter($rates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0);
+
+        if (empty($rates) && $sumAmount > 0) {
             $rates[] = (($sumCgst + $sumSgst + $sumIgst) * 100) / $sumAmount;
         }
 
-        return array_filter($rates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0);
+        // return array_filter($rates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0);
+        return $rates;
     }
 
     private function getCellValue(Cell $cell): mixed
