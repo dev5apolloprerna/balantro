@@ -1623,29 +1623,34 @@ class SalesUploadController extends Controller
 
     private function extractSalesRequestGstRates(Request $request, float $sumAmount = 0, float $sumCgst = 0, float $sumSgst = 0, float $sumIgst = 0): array
     {
-        $rates = [];
+        $lineRates = [];
         foreach ((array) $request->input('items', []) as $item) {
-            $rates[] = $item['gst_rate'] ?? null;
+            $lineRates[] = $item['gst_rate'] ?? null;
         }
         foreach ((array) $request->input('custom_slots', []) as $slot) {
-            $rates[] = $slot['rate'] ?? null;
+            $lineRates[] = $slot['rate'] ?? null;
         }
         foreach ((array) $request->input('noitem_rows', []) as $row) {
-            $rates[] = $row['gst'] ?? null;
+            $lineRates[] = $row['gst'] ?? null;
         }
         // $rates[] = $request->input('gst_rate');
         // if ($sumAmount > 0) {
         //     $rates[] = (($sumCgst + $sumSgst + $sumIgst) * 100) / $sumAmount;
         // }
 
-        $rates = array_filter($rates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0);
+        // $rates = array_filter($rates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0);
 
-        if (empty($rates) && $sumAmount > 0) {
-            $rates[] = (($sumCgst + $sumSgst + $sumIgst) * 100) / $sumAmount;
+        // if (empty($rates) && $sumAmount > 0) {
+        //     $rates[] = (($sumCgst + $sumSgst + $sumIgst) * 100) / $sumAmount;
+        // }
+        $lineRates = array_values(array_filter($lineRates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0));
+        if (!empty($lineRates)) {
+            return $lineRates;
         }
-
         // return array_filter($rates, fn ($rate) => $rate !== null && $rate !== '' && (float) $rate > 0);
-        return $rates;
+        // return $rates;
+        $headerRate = $request->input('gst_rate');
+        return ($headerRate !== null && $headerRate !== '' && (float) $headerRate > 0) ? [$headerRate] : [];
     }
 
     private function getCellValue(Cell $cell): mixed

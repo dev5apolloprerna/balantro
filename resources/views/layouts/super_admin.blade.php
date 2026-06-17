@@ -213,6 +213,61 @@
                     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script> -->
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
                     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+                    
+                    <style>
+                        /* Keep native and Select2 dropdowns dark immediately when the page is in dark mode. */
+                        .dark select,
+                        .dark select option,
+                        .dark select optgroup {
+                            background-color: #020617 !important;
+                            color: #ffffff !important;
+                        }
+
+                        .dark .select2-container--default .select2-selection--single,
+                        .dark .select2-container--default .select2-selection--multiple,
+                        .dark .select2-container--default .select2-results__option,
+                        .dark .select2-container--default .select2-results,
+                        .dark .select2-dropdown,
+                        .select2-dropdown.dark-theme,
+                        .select2-dropdown.dark-theme .select2-results,
+                        .select2-dropdown.dark-theme .select2-results__option {
+                            background-color: #020617 !important;
+                            color: #ffffff !important;
+                            transition: none !important;
+                        }
+
+                        .dark .select2-container--default .select2-selection--single,
+                        .dark .select2-container--default .select2-selection--multiple,
+                        .dark .select2-dropdown,
+                        .select2-dropdown.dark-theme {
+                            border-color: #374151 !important;
+                        }
+
+                        .dark .select2-container--default .select2-selection__rendered,
+                        .dark .select2-container--default .select2-selection__placeholder,
+                        .select2-dropdown.dark-theme .select2-search__field {
+                            color: #ffffff !important;
+                        }
+
+                        .dark .select2-container--default .select2-search--dropdown .select2-search__field,
+                        .select2-dropdown.dark-theme .select2-search__field {
+                            background-color: #111827 !important;
+                            border-color: #374151 !important;
+                            color: #ffffff !important;
+                        }
+
+                        .dark .select2-container--default .select2-results__option--highlighted,
+                        .select2-dropdown.dark-theme .select2-results__option--highlighted {
+                            background-color: #2563eb !important;
+                            color: #ffffff !important;
+                        }
+                    </style>
+                    <script>
+                        $(document).on('select2:open', function () {
+                            const isDark = document.documentElement.classList.contains('dark');
+                            $('.select2-dropdown').toggleClass('dark-theme', isDark);
+                        });
+                    </script>
 
                     @include('common.footer')
 

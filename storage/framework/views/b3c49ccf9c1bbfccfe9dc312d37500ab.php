@@ -1973,7 +1973,7 @@
 
             slotHtml += `<tr class="${isZero ? 'zero-row' : ''}" data-slot-key="${data.slotKey || mapKey}" data-rate="${rate}">
                 <td><span class="rate-badge"><span class="slot-rate"></span>${rate}%</span></td>
-                <td><strong>${fmt(data.amt)}</strong><input type="hidden" class="slot_sales_ledger_id" value="${data.ledgerId || ''}"></td>
+                <td class="slot-taxable"><strong>${fmt(data.amt)}</strong><input type="hidden" class="slot_sales_ledger_id" value="${data.ledgerId || ''}"></td>
                 <td><select class="slot-igst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${iOpts}</select></td>
                 <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${igstAmt.toFixed(2)}" step="any"></td>
                 <td><select class="slot-cgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${cOpts}</select></td>
