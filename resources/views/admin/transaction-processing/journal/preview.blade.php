@@ -108,13 +108,13 @@
                                 onclick="editRow({{ $row->id }})"
                                 class="text-blue-400 hover:text-blue-300"
                                 title="Edit">
-                                <i class="fa-solid fa-pen"></i>
+                                <i class="fa-solid fa-pen action-icon"></i>
                             </button>
 
                             <button type="button"
                                 class="text-red-500"
                                 onclick="deleteRow({{ $row->id }})">
-                                <i class="fa-solid fa-trash"></i>
+                                <i class="fa-solid fa-trash action-icon"></i>
                             </button>
                             <!-- <button type="button" onclick="editRow({{ $row->id }})"
                                 class="text-blue-400 hover:text-blue-300 editRow"

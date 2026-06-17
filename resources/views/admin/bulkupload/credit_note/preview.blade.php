@@ -125,7 +125,7 @@
                             <td class="px-3 py-2"><span class="text-yellow-400">{{$row->status}}</span></td>
                             <td class="px-3 py-2">
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300" title="View" data-id="{{ $row->id }}">
-                                    <i class="fa-solid fa-eye"></i>
+                                    <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
                                 <button type="button" class="text-blue-400 hover:text-blue-300 editRow" title="Edit"
                                     data-id="{{ $row->id }}"
@@ -138,10 +138,10 @@
                                     data-ledger="{{ $row->sales_ledger_name }}"
                                     data-mode="{{ $row->gst_mode }}"
                                     data-remarks="{{ $row->remarks }}">
-                                    <i class="fa-solid fa-pen"></i>
+                                    <i class="fa-solid fa-pen action-icon"></i>
                                 </button>
                                 <button type="button" class="text-red-500 deleteRow" data-id="{{$row->id}}">
-                                    <i class="fa-solid fa-trash"></i>
+                                    <i class="fa-solid fa-trash action-icon"></i>
                                 </button>
                             </td>
                         </tr>

@@ -1,7 +1,8 @@
 
 <?php $__env->startSection('content'); ?>
 <div data-controller="confirm-delete"
-    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }">
+    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }"
+    x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
             <h6 class="font-semibold mb-0 dark:text-white"><?php echo e(__("Sales")); ?></h6>
@@ -271,9 +272,10 @@
     <!-- Upload Sales Modal -->
     <div
         x-cloak
-        style="display: none;"
         x-show="openUpload"
         x-transition
+        style="display: none;"
+        data-upload-modal
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
         <div class="bg-white dark:bg-neutral-800 w-[720px] rounded-lg shadow-xl">
             <!-- Header -->

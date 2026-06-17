@@ -73,6 +73,24 @@
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
+        /* Responsive action icons: compact on small screens, clearer on large displays. */
+        .action-icon {
+            font-size: 0.875rem;
+            line-height: 1;
+        }
+
+        @media (min-width: 1280px) {
+            .action-icon {
+                font-size: 1rem;
+            }
+        }
+
+        @media (min-width: 1536px) {
+            .action-icon {
+                font-size: 1.125rem;
+            }
+        }
+        
         /* ── STARFIELD ADDITIONS (do not remove) ── */
         #starfield-canvas {
             position: fixed;

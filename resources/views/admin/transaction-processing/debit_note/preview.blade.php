@@ -227,7 +227,7 @@
                                 {{-- VIEW BUTTON --}}
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300" 
                                     title="View" data-id="{{ $row->id }}">
-                                    <i class="fa-solid fa-eye"></i>
+                                    <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
 
                                 <!-- <button
@@ -266,11 +266,11 @@
                                     data-cgst="{{ $row->cgst }}"
                                     data-sgst="{{ $row->sgst }}"
                                     data-igst="{{ $row->igst }}">
-                                    <i class="fa-solid fa-pen"></i>
+                                    <i class="fa-solid fa-pen action-icon"></i>
                                 </button>
 
                                 <button class="text-red-500 deleteRow" data-id="{{$row->id}}">
-                                    <i class="fa-solid fa-trash"></i>
+                                    <i class="fa-solid fa-trash action-icon"></i>
                                 </button>
                             </td>
                         </tr>

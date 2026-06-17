@@ -227,7 +227,7 @@
                                 {{-- VIEW BUTTON --}}
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300" 
                                     title="View" data-id="{{ $row->id }}">
-                                    <i class="fa-solid fa-eye"></i>
+                                    <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
 
                                 <!-- <button
@@ -270,7 +270,7 @@
                                 </button>
 
                                 <button class="text-red-500 deleteRow" data-id="{{$row->id}}">
-                                    <i class="fa-solid fa-trash"></i>
+                                    <i class="fa-solid fa-trash action-icon"></i>
                                 </button>
                             </td>
                         </tr>

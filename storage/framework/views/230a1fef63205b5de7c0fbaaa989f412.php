@@ -896,27 +896,40 @@
     #no_item_section .receipt-field-row { max-width: 400px; }
 
     /* Select2 dropdown background fix */
-    .select2-container--default .select2-results__option {
-        background: #ffffff !important;
-        color: #000000 !important;
-    }
-
-    .select2-container--default .select2-results__option--highlighted {
-        background: #2563eb !important; /* blue highlight */
-        color: #ffffff !important;
-    }
-
-    /* Selected item (top input box) */
-    .select2-container--default .select2-selection--single {
-        background: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #d1d5db !important;
-    }
-
-    /* Dropdown box */
+    .select2-container--default .select2-selection--single,
+    .select2-container--default .select2-results__option,
     .select2-dropdown {
         background: #ffffff !important;
         color: #000000 !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #d1d5db !important;
+    }
+
+    .dark .select2-container--default .select2-selection--single,
+    .dark .select2-container--default .select2-results__option,
+    .dark .select2-dropdown,
+    .select2-dropdown.dark-theme,
+    .select2-dropdown.dark-theme .select2-results__option {
+        background: #020617 !important;
+        color: #ffffff !important;
+        transition: none !important;
+    }
+
+    /* Selected item (top input box) */
+    .dark .select2-container--default .select2-selection--single,
+    .dark .select2-dropdown,
+    .select2-dropdown.dark-theme {
+        border: 1px solid #374151 !important;
+    }
+
+    /* Dropdown box */
+    .select2-container--default .select2-results__option--highlighted,
+    .dark .select2-container--default .select2-results__option--highlighted,
+    .select2-dropdown.dark-theme .select2-results__option--highlighted {
+        background: #2563eb !important;
+        color: #ffffff !important;
     }
 </style>
 <?php $__env->stopSection(); ?>
@@ -1873,7 +1886,8 @@
                 noitem_rows: collectNoItemRows(),
                 sales_ledger_id: $('#noitem_sales_ledger').val(),
                 sales_ledger_name: $('#noitem_sales_ledger option:selected').text(),
-                gst_rate: $('#noitem_gst_rate').val(),
+                //gst_rate: $('#noitem_gst_rate').val(),
+                gst_rate: $('#no_item_section').is(':visible') ? $('#noitem_gst_rate').val() : null,
                 items: items,
                 entry_mode: $('#no_item_section').is(':visible') ? 'noitem' : 'item',
                 custom_slots: collectCustomSlots()

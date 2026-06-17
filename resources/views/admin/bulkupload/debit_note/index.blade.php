@@ -2,7 +2,8 @@
 @section('content')
 
 <div data-controller="confirm-delete"
-    x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }">
+    x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
+    x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
             <h6 class="font-semibold mb-0 dark:text-white">{{ __("Debit Notes Notes") }}</h6>
@@ -218,13 +219,13 @@
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
                                         <a href="{{ route('dn.preview',$upload->id) }}">
-                                            <i class="fa-regular fa-eye text-gray-500 cursor-pointer"></i>
+                                            <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
                                         <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i> -->
                                         <div class="relative inline-block">
                                             <button onclick="openDropdown(event, {{ $upload->id }})"
                                                 class="text-gray-500 hover:text-gray-700 px-2">
-                                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                             </button>
                                             <div id="globalDropdown"
                                                 class="hidden fixed bg-white dark:bg-neutral-800 border rounded-xl shadow-xl w-48 z-[99999]">
@@ -258,9 +259,10 @@
     <!-- Upload Sales Modal -->
     <div
         x-cloak
-        style="display: none;"
         x-show="openUpload"
         x-transition
+        style="display: none;"
+        data-upload-modal
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
         <div class="bg-white dark:bg-neutral-800 w-[720px] rounded-lg shadow-xl">
             <!-- Header -->

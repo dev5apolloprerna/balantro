@@ -1,7 +1,8 @@
 @extends('layouts.super_admin')
 @section('content')
 
-<div x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }">
+<div x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
+    x-init="openUpload = false">
 
     <div class="container mx-auto">
 
@@ -97,14 +98,14 @@
 
                             <td class="px-4 py-3 text-right">
                                 <a href="{{ route('transaction_processing.preview_processing_journal',$upload->id) }}">
-                                    <i class="fa-regular fa-eye text-gray-500"></i>
+                                    <i class="fa-regular fa-eye action-icon text-gray-500"></i>
                                 </a>
                                 <div x-data="{ open:false }" class="relative inline-block">
 
                                     <!-- Button -->
                                     <button onclick="openDropdown(event, {{ $upload->id }})"
                                         class="text-gray-500 hover:text-gray-700 px-2">
-                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                     </button>
 
                                     <!-- Dropdown -->
@@ -141,8 +142,9 @@
     <!-- ================= UPLOAD MODAL ================= -->
     <div
         x-cloak
-        style="display: none;"
         x-show="openUpload"
+        style="display: none;"
+        data-upload-modal
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
 
         <div class="bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 w-[700px] rounded-lg shadow-xl">

@@ -238,7 +238,7 @@
                                 
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300"
                                     title="View" data-id="<?php echo e($row->id); ?>">
-                                    <i class="fa-solid fa-eye"></i>
+                                    <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
                                 <button type="button"
                                     class="text-blue-400 hover:text-blue-300 editRow"
@@ -255,10 +255,10 @@
                                     data-cgst="<?php echo e($row->cgst); ?>"
                                     data-sgst="<?php echo e($row->sgst); ?>"
                                     data-igst="<?php echo e($row->igst); ?>">
-                                    <i class="fa-solid fa-pen"></i>
+                                    <i class="fa-solid fa-pen action-icon"></i>
                                 </button>
                                 <button class="text-red-500 deleteRow" data-id="<?php echo e($row->id); ?>">
-                                    <i class="fa-solid fa-trash"></i>
+                                    <i class="fa-solid fa-trash action-icon"></i>
                                 </button>
                             </td>
                         </tr>
@@ -856,7 +856,9 @@
                 $('#edit_invoice').val(res.invoice_no);
                 $('#edit_date').val(res.date);
                 $('#edit_gst').val(res.gst_no);
-                $('#edit_party').val(res.party_name);
+                // $('#edit_party').val(res.party_name);
+                //setSelectValueByTextOrValue($('#edit_party'), res.party_name);
+                $('#edit_party').val(res.party_name).trigger('change'); // 🔥 IMPORTANT
                 //$('#edit_place').val(res.place_of_supply);
                 $('#edit_place option').each(function () {
                     if ($(this).val().toLowerCase().trim() === String(res.place_of_supply).toLowerCase().trim()) {
@@ -1014,6 +1016,36 @@
         document.getElementById('viewModal').classList.remove('show');
     }
 
+    function normalizeLedgerValue(value) {
+        return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+    }
+
+    function setSelectValueByTextOrValue($select, value) {
+        alert(value);
+        if (!value) {
+            $select.val('');
+            return;
+        }
+
+        if ($select.find(`option[value="${value}"]`).length) {
+            $select.val(value);
+            return;
+        }
+
+        const normalized = normalizeLedgerValue(value);
+        const match = $select.find('option').filter(function () {
+            return normalizeLedgerValue($(this).val()) === normalized || normalizeLedgerValue($(this).text()) === normalized;
+        }).first();
+
+        if (match.length) {
+            $select.val(match.val());
+        } else {
+            $select.append(new Option(value, value, true, true));
+        }
+
+        $select.trigger('change.select2');
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // EDIT MODAL
     // ═══════════════════════════════════════════════════════════════════════
@@ -1040,7 +1072,7 @@
         $('#edit_date').val(btn.data('date'));
         $('#edit_gst').val(btn.data('gst_no'));
         // $('#edit_voucher_type').val(btn.data('vchtype'));
-        $('#edit_party').val(btn.data('party'));
+        // $('#edit_party').val(btn.data('party'));
         // $('#edit_place').val(btn.data('place'));
         $('#edit_ledger').val(btn.data('ledger'));
 
@@ -1433,7 +1465,8 @@
                 noitem_rows: collectNoItemRows(),
                 sales_ledger_id: $('#noitem_sales_ledger').val(),
                 sales_ledger_name: $('#noitem_sales_ledger option:selected').text(),
-                gst_rate: $('#noitem_gst_rate').val(),
+                // gst_rate: $('#noitem_gst_rate').val(),
+                gst_rate: $('#no_item_section').is(':visible') ? $('#noitem_gst_rate').val() : null,
                 items: items,
                 entry_mode: $('#no_item_section').is(':visible') ? 'noitem' : 'item',
                 custom_slots: collectCustomSlots()

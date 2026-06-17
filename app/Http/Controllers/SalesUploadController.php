@@ -595,6 +595,7 @@ class SalesUploadController extends Controller
                         count($rates)
                             ? reset($rates)
                             : 0;
+                    
                     if (!$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
                         $status = 'pending';
                     }
@@ -1525,6 +1526,7 @@ class SalesUploadController extends Controller
             // =========================================================
             $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
+            
             $updateData = [
                 'amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
@@ -1602,13 +1604,12 @@ class SalesUploadController extends Controller
 
     private function isGstRateWithinDefinedSlabs($rate): bool
     {
+        
         $rate = round((float) $rate, 2);
         if ($rate <= 0) {
             return true;
         }
-
-        // return in_array($rate, [0.0,0.1, 0.25, 1, 1.5, 3, 5, 6, 7.5, 12, 18, 28], true);
-        return in_array($rate, [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1, 1.5, 2.5, 3, 5, 6, 7.5, 9, 12, 14, 18, 28], true);
+        return in_array($rate, [0.0,0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0], true);
     }
 
     private function hasOnlyValidGstSlabs(array $rates): bool

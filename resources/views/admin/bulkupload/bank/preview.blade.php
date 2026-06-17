@@ -244,18 +244,18 @@
                                     <button type="button"  {{ $row->is_suspense == 1 ? 'disabled' : '' }}
                                         class="text-blue-400 viewRemarkBtn"
                                         data-remark="{{ $row->resolution_remark }}">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="fas fa-eye action-icon"></i>
                                     </button>
                                 @endif
                                 <button type="button"
                                     class="text-green-500 saveRowBtn"  {{ $row->is_suspense == 1 ? 'disabled' : '' }}
                                     data-id="{{$row->id}}">
-                                    <i class="fa-solid fa-check"></i>
+                                    <i class="fa-solid fa-check action-icon "></i>
                                 </button>
                                 <button type="button"  {{ $row->is_suspense == 1 ? 'disabled' : '' }}
                                     class="text-red-400 deleteBtn"
                                     data-id="{{$row->id}}">
-                                    <i class="fa-solid fa-trash"></i>
+                                    <i class="fa-solid fa-trash action-icon "></i>
                                 </button>
                                 </div>
                             </td> 
