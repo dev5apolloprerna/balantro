@@ -1423,7 +1423,8 @@
                 noitem_rows: collectNoItemRows(),
                 sales_ledger_id: $('#noitem_sales_ledger').val(),
                 sales_ledger_name: $('#noitem_sales_ledger option:selected').text(),
-                gst_rate: $('#noitem_gst_rate').val(),
+                // gst_rate: $('#noitem_gst_rate').val(),
+                gst_rate: $('#no_item_section').is(':visible') ? $('#noitem_gst_rate').val() : null,
                 items: items,
                 entry_mode: $('#no_item_section').is(':visible') ? 'noitem' : 'item',
                 custom_slots: collectCustomSlots()

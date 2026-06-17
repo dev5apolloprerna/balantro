@@ -1607,7 +1607,8 @@ class SalesUploadController extends Controller
             return true;
         }
 
-        return in_array($rate, [0.0,0.1, 0.25, 1, 1.5, 3, 5, 6, 7.5, 12, 18, 28], true);
+        // return in_array($rate, [0.0,0.1, 0.25, 1, 1.5, 3, 5, 6, 7.5, 12, 18, 28], true);
+        return in_array($rate, [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1, 1.5, 2.5, 3, 5, 6, 7.5, 9, 12, 14, 18, 28], true);
     }
 
     private function hasOnlyValidGstSlabs(array $rates): bool
