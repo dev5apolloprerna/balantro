@@ -30,6 +30,7 @@ class SalesUploadController extends Controller
             ->latest()->get();
 
         $clients = Client::orderBy('name')->get();
+        
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')

@@ -530,10 +530,10 @@
                         <div class="receipt-block-title"><i class="fa-solid fa-file-invoice text-blue-400 mr-1"></i> Invoice Details</div>
                         <div class="receipt-field-row">
                             <label>Purcashe Ledger</label>
-                            <select id="noitem_purcashe_ledger" class="receipt-input ledgerSelect" required>
+                            <select id="noitem_purcashe_ledger" class="receipt-input ledgerSelect">
                                 <option value="">Select Ledger</option>
                                 <?php $__currentLoopData = $purcasheLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <option value="<?php echo e($ledger->name); ?>"><?php echo e($ledger->name); ?></option>
+                                <option value="<?php echo e($ledger->name); ?>" data-ledger-id="<?php echo e($ledger->id); ?>" data-without-item="<?php echo e($ledger->is_without_item ?? 0); ?>"><?php echo e($ledger->name); ?></option>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
@@ -3035,7 +3035,12 @@
                 }
             });
         });
-
+        $('input[name="entry_mode"]').on('change', function ()
+        {
+            const mode = $(this).val();
+            alert(mode);
+            //filterPurchaseLedgers(mode);
+        });
     </script>
     <?php $__env->stopSection(); ?>
 

@@ -75,6 +75,7 @@ class PurchaseUploadController extends Controller
             ->where('iPartyId', $iPartyId)
             ->orderBy('strItemName', 'asc') // optional (recommended)
             ->get();
+        
         $purchaseGstMappings = $this->getPurchaseLedgerGstMappings($iPartyId);
         $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
         return view('admin.bulkupload.purchase.index', compact('uploads', 'clients', 'purcasheLedgers','vchTypes',
