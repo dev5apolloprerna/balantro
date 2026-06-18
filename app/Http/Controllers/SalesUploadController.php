@@ -1234,9 +1234,10 @@ class SalesUploadController extends Controller
 
             $slot = $this->applyGstMappingToCustomSlot($slot, $gstMapping);
             $taxable = (float) ($slot['taxable'] ?? 0);
-            $salesLedger = !empty($slot['sales_ledger_id']) && is_numeric($slot['sales_ledger_id'])
-                ? Ledger::getLedgerById($transaction->iPartyId, $slot['sales_ledger_id'])
-                : null;
+            // $salesLedger = !empty($slot['sales_ledger_id']) && is_numeric($slot['sales_ledger_id'])
+            //     ? Ledger::getLedgerById($transaction->iPartyId, $slot['sales_ledger_id'])
+            //     : null;
+
             $igstLedger = !empty($slot['igst_ledger_id']) ? Ledger::getLedgerById($transaction->iPartyId, $slot['igst_ledger_id']) : null;
             $cgstLedger = !empty($slot['cgst_ledger_id']) ? Ledger::getLedgerById($transaction->iPartyId, $slot['cgst_ledger_id']) : null;
             $sgstLedger = !empty($slot['sgst_ledger_id']) ? Ledger::getLedgerById($transaction->iPartyId, $slot['sgst_ledger_id']) : null;
@@ -1245,9 +1246,12 @@ class SalesUploadController extends Controller
                 'transaction_id' => $transaction->id,
                 'gst_rate' => $slot['rate'] ?? 0,
                 'taxable' => $taxable,
-                'ledger_id' => $salesLedger?->id ?? ($transaction->sales_ledger_id ?? null),
-                'ledger_name' => $salesLedger?->name ?? ($transaction->sales_ledger_name ?? null),
-                'amount' => $taxable,
+                // 'ledger_id' => $salesLedger?->id ?? ($transaction->sales_ledger_id ?? null),
+                // 'ledger_name' => $salesLedger?->name ?? ($transaction->sales_ledger_name ?? null),
+                // 'amount' => $taxable,
+                'ledger_id' => null,
+                'ledger_name' => null,
+                'amount' => null,
                 'igst_ledger_id' => $slot['igst_ledger_id'] ?? null,
                 'igst_ledger_name' => $igstLedger?->name ?? null,
                 'igst_amount' => $igstAmount,

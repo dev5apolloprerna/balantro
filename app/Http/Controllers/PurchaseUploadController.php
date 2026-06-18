@@ -1376,17 +1376,19 @@ class PurchaseUploadController extends Controller
             // ===============================
             // HEADER UPDATE
             // ===============================
-            // $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger" ? $request['purchase_ledger_name'] : $transaction->purchase_ledger;
-            $firstNoItemLedger = collect($request->noitem_rows ?? [])->firstWhere('ledger');
-            $purchaseLedgerId = $request->purchase_ledger_id ?: ($firstNoItemLedger['ledger'] ?? null);
-            $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger"
-                ? $request['purchase_ledger_name']
-                : $transaction->purchase_ledger;
-            $purchase_ledger_id = $purchaseLedgerId
-                ? Ledger::getLedgerById($transaction->iPartyId, $purchaseLedgerId)
-                : Ledger::getLedgerByName($transaction->iPartyId, $purchase_ledger);
-            $purchase_ledger = $purchase_ledger_id->name ?? $purchase_ledger;
+            $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger" ? $request['purchase_ledger_name'] : $transaction->purchase_ledger;
+            // $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
             $purchase_ledger_id = Ledger::getLedgerByName($transaction->iPartyId, $purchase_ledger);
+            // $firstNoItemLedger = collect($request->noitem_rows ?? [])->firstWhere('ledger');
+            // $purchaseLedgerId = $request->purchase_ledger_id ?: ($firstNoItemLedger['ledger'] ?? null);
+            // $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger"
+            //     ? $request['purchase_ledger_name']
+            //     : $transaction->purchase_ledger;
+            // $purchase_ledger_id = $purchaseLedgerId
+            //     ? Ledger::getLedgerById($transaction->iPartyId, $purchaseLedgerId)
+            //     : Ledger::getLedgerByName($transaction->iPartyId, $purchase_ledger);
+            // $purchase_ledger = $purchase_ledger_id->name ?? $purchase_ledger;
+            // $purchase_ledger_id = Ledger::getLedgerByName($transaction->iPartyId, $purchase_ledger);
             $transaction->update([
                 'invoice_no'      => $request['invoice_no'] ?? $transaction->invoice_no,
                 'date'            => $request['date'],
@@ -1406,10 +1408,10 @@ class PurchaseUploadController extends Controller
                 'gst_mode'        => $request->gst_mode ?? 'standard',
 
                 // ✅ Ledger store (without item case)
-                // 'purchase_ledger_id'   => $purchase_ledger_id->id ?? 0,
-                // 'purchase_ledger_name' => $purchase_ledger_id->name ?? '',
-                'purchase_ledger_id'   => $purchase_ledger_id->id ?? null,
-                'purchase_ledger_name' => $purchase_ledger,
+                'purchase_ledger_id'   => $purchase_ledger_id->id ?? 0,
+                'purchase_ledger_name' => $purchase_ledger_id->name ?? '',
+                // 'purchase_ledger_id'   => $purchase_ledger_id->id ?? null,
+                // 'purchase_ledger_name' => $purchase_ledger,
                 'strYear'       => session('year'),
                 'year_from_date' => session('year_from'),
                 'year_to_date'  => session('year_to'),
@@ -1718,18 +1720,19 @@ class PurchaseUploadController extends Controller
                     'saved'     => 0
                 ]);
             }
-            // $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
-            // $purcashe_ledger_id = Ledger::getLedgerByName($iPartyId, $purchase_ledger);
+            $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
+            $purcashe_ledger_id = Ledger::getLedgerByName($iPartyId, $purchase_ledger);
+            
             // $gstMapping = $this->getGstMapping($iPartyId, $purcashe_ledger_id->name ?? $purchase_ledger);
-            $firstNoItemLedger = collect($request->noitem_rows ?? [])->firstWhere('ledger');
-            $purchaseLedgerId = $request->purchase_ledger_id ?: ($firstNoItemLedger['ledger'] ?? null);
-            $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger"
-                ? $request['purchase_ledger']
-                : null;
-
-            $purcashe_ledger_id = $purchaseLedgerId
-                ? Ledger::getLedgerById($iPartyId, $purchaseLedgerId)
-                : Ledger::getLedgerByName($iPartyId, $purchase_ledger);
+            // $firstNoItemLedger = collect($request->noitem_rows ?? [])->firstWhere('ledger');
+            // $purchaseLedgerId = $request->purchase_ledger_id ?: ($firstNoItemLedger['ledger'] ?? null);
+            // $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger"
+            //     ? $request['purchase_ledger']
+            //     : null;
+            
+            // $purcashe_ledger_id = $purchaseLedgerId
+            //     ? Ledger::getLedgerById($iPartyId, $purchaseLedgerId)
+            //     : Ledger::getLedgerByName($iPartyId, $purchase_ledger);
 
             $purchase_ledger = $purcashe_ledger_id->name ?? $purchase_ledger;
             $gstMapping = $this->getGstMapping($iPartyId, $purchase_ledger);

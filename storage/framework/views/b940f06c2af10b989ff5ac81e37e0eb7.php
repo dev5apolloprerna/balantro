@@ -385,7 +385,6 @@
     <!-- CLIENT DRAWER -->
     <div
         x-cloak
-        style="display: none;"
         x-show="openClient"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="translate-x-full"
@@ -393,6 +392,7 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="translate-x-full"
+        style="display: none;"
         class="fixed inset-0 z-50 flex justify-end">
 
         <!-- Background -->
@@ -528,7 +528,7 @@
                     
                     <div class="receipt-meta-block">
                         <div class="receipt-block-title"><i class="fa-solid fa-file-invoice text-blue-400 mr-1"></i> Invoice Details</div>
-                        <div class="receipt-field-row">
+                        <div id="invoice_purcashe_ledger_wrap" class="receipt-field-row">
                             <label>Purcashe Ledger</label>
                             <select id="noitem_purcashe_ledger" class="receipt-input ledgerSelect">
                                 <option value="">Select Ledger</option>
@@ -3035,11 +3035,65 @@
                 }
             });
         });
-        $('input[name="entry_mode"]').on('change', function ()
-        {
-            const mode = $(this).val();
-            alert(mode);
-            //filterPurchaseLedgers(mode);
+        $('input[name="entry_mode"]').on('change', function () {
+
+            let mode = $(this).val();
+
+            if(mode === 'noitem')
+            {
+                // Force Custom GST
+                $('#gst_calc_mode')
+                    .val('custom')
+                    .trigger('change')
+                    .prop('disabled', true);
+
+                $('#igst_toggle_wrap').hide();
+
+                $('#standard_items_section').hide();
+                $('#no_item_section').show();
+
+                $('#addItemRow').hide();
+                $('#addNoItemRow').show();
+
+                $('#invoice_purcashe_ledger_wrap').hide();
+                $('#gst_calc_mode').closest('.receipt-field-row').hide();
+            }
+            else
+            {
+                $('#gst_calc_mode')
+                    .prop('disabled', false);
+
+                $('#igst_toggle_wrap').show();
+
+                $('#standard_items_section').show();
+                $('#no_item_section').hide();
+
+                $('#addItemRow').show();
+                $('#addNoItemRow').hide();
+
+                $('#invoice_purcashe_ledger_wrap').show();
+                $('#gst_calc_mode').closest('.receipt-field-row').show();
+            }
+
+            recalcTotals();
+        });
+
+        $(document).on('change','input[name="entry_mode"]',function(){
+            let mode = $(this).val();
+            if(mode === 'item')
+            {
+                $('#standard_items_section').show();
+                $('#addItemRow').show();
+                $('#no_item_section').hide();
+                $('#invoice_purcashe_ledger_wrap').show();
+            }
+            else
+            {
+                $('#standard_items_section').hide();
+                $('#addItemRow').hide();
+                $('#no_item_section').show();
+                $('#invoice_purcashe_ledger_wrap').hide();
+            }
         });
     </script>
     <?php $__env->stopSection(); ?>
