@@ -567,6 +567,7 @@ class DebitNoteController extends Controller
 
                 $groupKey = $noteNo.'|'.$partyName.'|'.$date;
                 $noteGroups[$groupKey][] = [
+                    'note_no' => $noteNo,
                     'date' => $this->parseDate($row[$headerMap['INVOICE DATE']] ?? null),
                     'gst_no' => $row[$headerMap['GST NO']] ?? '',
                     'party_name' => $row[$headerMap['PARTY A/C NAME']] ?? '',

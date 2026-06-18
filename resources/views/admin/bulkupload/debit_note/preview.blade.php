@@ -161,7 +161,7 @@
                                 <select name="voucher_type[{{$row->id}}]" class="inputCell voucherSelect">
                                     @foreach($vchTypes as $vchType)
                                     <option value="{{$vchType}}"
-                                        {{ strtolower(trim($vchType)) == strtolower(trim($row->vchType))  ? 'selected' : '' }}>{{$vchType}}</option>
+                                        {{ strtolower(trim($vchType)) == strtolower(trim($row->vch_type))  ? 'selected' : '' }}>{{$vchType}}</option>
                                     @endforeach
                                 </select>
                             </td>
@@ -177,7 +177,7 @@
                                     <option value="">Select Ledger</option>
                                     @foreach($ledgers as $ledger)
                                     <option value="{{$ledger->name}}"
-                                        {{ $row->sales_ledger==$ledger->name?'selected':'' }}>
+                                         {{ trim($row->purchase_ledger_name ?? $row->purchase_ledger) == trim($ledger->name)?'selected':'' }}>
                                         {{$ledger->name}}
                                     </option>
                                     @endforeach
@@ -225,7 +225,7 @@
                                     data-gst_rate = "{{ $row->gst_rate }}"
                                     data-party="{{ $row->party_name }}"
                                     data-place="{{ $row->place_of_supply }}"
-                                    data-ledger="{{ $row->sales_ledger }}"
+                                    data-ledger="{{ $row->purchase_ledger_name ?? $row->purchase_ledger }}"
                                     data-amount="{{ $row->total_amount }}"
                                     data-cgst="{{ $row->cgst }}"
                                     data-sgst="{{ $row->sgst }}"
@@ -268,7 +268,7 @@
             {{-- Left: Supplier --}}
             <div class="receipt-meta-block">
                 <div class="receipt-block-title"><i class="fa-solid fa-building text-blue-400 mr-1"></i> Supplier Details</div>
-                <div class="receipt-field-row">
+                <div class="receipt-field-row" id="header_purchase_ledger_row">
                     <label>Party Name</label>
                     <div style="display:flex; gap:6px; width:100%;">
                         <select id="edit_party" class="receipt-input party-select ledgerSelect" style="flex:1;">
@@ -365,6 +365,9 @@
                     <button type="button" id="addItemRow" class="receipt-add-btn">
                         <i class="fa-solid fa-plus mr-1"></i> Add Row
                     </button>
+                    <button type="button" id="addNoItemRow" class="receipt-add-btn" style="margin-top:8px;">
+                        <i class="fa-solid fa-plus mr-1"></i> Add More
+                    </button>
                 </div>
             </div>
 
@@ -410,9 +413,7 @@
                     </thead>
                     <tbody id="noItemBody"></tbody>
                 </table>
-                <button type="button" id="addNoItemRow" class="receipt-add-btn" style="margin-top:8px;">
-                    <i class="fa-solid fa-plus mr-1"></i> Add More
-                </button>
+                
                 <input type="hidden" id="noitem_gst_rate" value="0">
                 <input type="hidden" id="noitem_amount">
             </div>
@@ -1012,6 +1013,47 @@
         ) || null;
     }
 
+    function getPurchaseLedgerMapping(ledgerId = '', ledgerName = '') {
+        return findPurchaseLedgerMapping(ledgerId, ledgerName) || {};
+    }
+
+    function mappedGstLedgerId(mapping, key) {
+        return mapping && mapping[key] ? String(mapping[key]) : '';
+    }
+
+    function generateSlotsFromNoItemRows() {
+        const slots = [];
+        const isIgst = $('#edit_is_igst').is(':checked');
+
+        collectNoItemRows().forEach(row => {
+            const amount = parseFloat(row.amount) || 0;
+            const rate = parseFloat(row.gst) || 0;
+            const mapping = getPurchaseLedgerMapping(row.ledger, row.ledger_name);
+            const gstAmount = amount * rate / 100;
+
+            slots.push({
+                gst_rate: rate,
+                taxable: amount,
+                amount: amount,
+                ledger_id: row.ledger,
+                ledger_name: row.ledger_name,
+                igst_ledger_id: mappedGstLedgerId(mapping, 'igst_id'),
+                cgst_ledger_id: mappedGstLedgerId(mapping, 'cgst_id'),
+                sgst_ledger_id: mappedGstLedgerId(mapping, 'sgst_id'),
+                igst_amount: isIgst ? gstAmount : 0,
+                cgst_amount: isIgst ? 0 : gstAmount / 2,
+                sgst_amount: isIgst ? 0 : gstAmount / 2,
+            });
+        });
+
+        renderCustomSlots(slots);
+    }
+
+    function updateHeaderPurchaseLedgerVisibility() {
+        const shouldHide = $('#gst_calc_mode').val() === 'custom' && $('#no_item_section').is(':visible');
+        $('#header_purchase_ledger_row').toggle(!shouldHide);
+    }
+
     function addNoItemRow(data = {}) {
         const row = `
             <tr>
@@ -1039,6 +1081,7 @@
                 .css('pointer-events', readonly ? 'none' : 'auto');
             $('#noItemBody .removeNoItem').toggle(!readonly);
         }
+        updateHeaderPurchaseLedgerVisibility();
     }
 
     function collectNoItemRows() {
@@ -1309,8 +1352,12 @@
                     $('#noitem_gst_rate').val(noItemRows[0]?.gst || res.gst_rate || '');
                     $('#noitem_amount').val(noItemRows[0]?.amount || res.taxable_amount || 0);
                 }       
-                if (res.gst_mode === 'custom' && res.custom_gst && res.custom_gst.length) {
-                    renderCustomSlots(res.custom_gst);
+                if (res.gst_mode === 'custom') {
+                    if (res.custom_gst && res.custom_gst.length) {
+                        renderCustomSlots(res.custom_gst);
+                    } else if (!hasItems) {
+                        generateSlotsFromNoItemRows();
+                    }
                 }
                 syncEntryMode(hasItems, true);
 
@@ -1432,7 +1479,11 @@
                 }
 
                 if (res.gst_mode === 'custom') {
-                    renderCustomSlots(res.custom_gst);
+                    if (res.custom_gst && res.custom_gst.length) {
+                        renderCustomSlots(res.custom_gst);
+                    } else if (!hasItems) {
+                        generateSlotsFromNoItemRows();
+                    }
                 } 
                 syncEntryMode(hasItems, false);
                 // else {
@@ -1465,7 +1516,10 @@
         let totalCgst = 0, totalSgst = 0, totalIgst = 0;
 
         slots.forEach(function (slot) {
-
+            const slotMapping = getPurchaseLedgerMapping(slot.ledger_id || slot.purchase_ledger_id || '', slot.ledger_name || slot.purchase_ledger_name || '');
+            const selectedIgstLedger = slot.igst_ledger_id || slot.igst_id || mappedGstLedgerId(slotMapping, 'igst_id');
+            const selectedCgstLedger = slot.cgst_ledger_id || slot.cgst_id || mappedGstLedgerId(slotMapping, 'cgst_id');
+            const selectedSgstLedger = slot.sgst_ledger_id || slot.sgst_id || mappedGstLedgerId(slotMapping, 'sgst_id');
             // let taxable = parseFloat(slot.taxable);
             // if (!taxable || taxable === 0) {
             //     taxable = totalAmount;
@@ -1503,12 +1557,12 @@
             let row = `
                 <tr data-rate="${slot.gst_rate}">
                     <td><span class="rate-badge">${slot.gst_rate}%</span></td>
-                    <td style="color: black;" class="slot-taxable">${taxable.toFixed(2)}<input type="hidden" class="slot-purchase-ledger-id" value="${slot.ledger_id || ''}"></td>
+                    <td style="color: black;" class="slot-taxable">${taxable.toFixed(2)}<input type="hidden" class="slot-purchase-ledger-id" value="${slot.ledger_id || slot.purchase_ledger_id || ''}"></td>
 
                     <td style="color: black;">
                         <select class="slot-igst-ledger" data-rate="${slot.gst_rate}">
                             <option value="">Select</option>
-                            ${getLedgerOptions(IGST_LEDGERS, slot.igst_ledger_id || slot.igst_id)}
+                            ${getLedgerOptions(IGST_LEDGERS, selectedIgstLedger)}
                         </select>
                     </td>
                     <td style="color: black;"><input type="number" class="slot-igst-amt" data-rate="${slot.gst_rate}" value="${igst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
@@ -1516,7 +1570,7 @@
                     <td>
                         <select class="slot-cgst-ledger" data-rate="${slot.gst_rate}">
                             <option value="">Select</option>
-                            ${getLedgerOptions(CGST_LEDGERS, slot.cgst_ledger_id || slot.cgst_id)}
+                            ${getLedgerOptions(CGST_LEDGERS, selectedCgstLedger)}
                         </select>
                     </td>
                     <td style="color: black;"><input type="number" class="slot-cgst-amt" data-rate="${slot.gst_rate}" value="${cgst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
@@ -1524,7 +1578,7 @@
                     <td>
                         <select class="slot-sgst-ledger" data-rate="${slot.gst_rate}">
                             <option value="">Select</option>
-                            ${getLedgerOptions(SGST_LEDGERS, slot.sgst_ledger_id || slot.sgst_id)}
+                            ${getLedgerOptions(SGST_LEDGERS, selectedSgstLedger)}
                         </select>
                     </td>
                     <td style="color: black;"><input type="number" class="slot-sgst-amt" data-rate="${slot.gst_rate}" value="${sgst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
@@ -1581,6 +1635,7 @@
             generateSlotsFromItems();   // 🔥 ADD THIS
         }
         recalcTotals();
+        applyStandardItemGstLedgerMapping();
     });
 
     // ═══════ LIVE RECALC ON INPUT ═══════
@@ -1591,21 +1646,31 @@
             generateSlotsFromItems();   // 🔥 ADD THIS
         }
         recalcTotals();
+        applyStandardItemGstLedgerMapping();
     });
 
     // ═══════ REMOVE ROW ═══════
     $(document).on('click', '#addNoItemRow', function () {
         addNoItemRow();
+        if ($('#gst_calc_mode').val() === 'custom') {
+            generateSlotsFromNoItemRows();
+        }
         recalcTotals();
     });
 
     $(document).on('click', '.removeNoItem', function (e) {
         e.stopPropagation();
         $(this).closest('tr').remove();
+        if ($('#gst_calc_mode').val() === 'custom') {
+            generateSlotsFromNoItemRows();
+        }
         recalcTotals();
     });
 
     $(document).on('input change', '.noitem-ledger,.noitem-gst,.noitem-amount', function () {
+        if ($('#gst_calc_mode').val() === 'custom') {
+            generateSlotsFromNoItemRows();
+        }
         recalcTotals();
     });
 
@@ -1640,8 +1705,13 @@
             $('#custom_slots_section').show();
             $('#custom_tax_rows').show();
             $('#igst_toggle_wrap').hide();
+            if ($('#no_item_section').is(':visible')) {
+                generateSlotsFromNoItemRows();
+            }
         }
         recalcTotals();
+        updateHeaderPurchaseLedgerVisibility();
+        applyStandardItemGstLedgerMapping();
     });
 
     $('#edit_is_igst').on('change', function () {
@@ -1651,6 +1721,9 @@
             recalcItemRow($(this));
         });
         // 🔥 Then update totals
+        if ($('#gst_calc_mode').val() === 'custom' && $('#no_item_section').is(':visible')) {
+            generateSlotsFromNoItemRows();
+        }
         recalcTotals();
     });
 
@@ -1904,6 +1977,61 @@
         row.find('.item-sgst').val(sgst.toFixed(2));
         row.find('.item-igst').val(igst.toFixed(2));
         row.find('.item-total').val(total.toFixed(2));
+    }
+
+    function itemGstLedgerId(item, keys) {
+        for (const key of keys) {
+            if (item && item[key]) {
+                return String(item[key]);
+            }
+        }
+        return '';
+    }
+
+    function findItemMasterByName(itemName = '') {
+        const normalized = normalizeName(itemName);
+        return ITEM_MASTER.find(item => normalizeName(item.strItemName || item.name || item.item_name) === normalized) || null;
+    }
+
+    function getSelectedItemGstMapping() {
+        let mapping = null;
+        $('#editItemsBody tr').each(function () {
+            if (mapping) return;
+            const itemName = $(this).find('.item-name').val() || $(this).find('.item-name option:selected').text();
+            const item = findItemMasterByName(itemName);
+            if (!item) return;
+
+            const cgstId = itemGstLedgerId(item, ['cgst_id', 'CGSTLedgerId']);
+            const sgstId = itemGstLedgerId(item, ['sgst_id', 'SGSTLedgerId']);
+            const igstId = itemGstLedgerId(item, ['igst_id', 'IGSTLedgerId']);
+            if (cgstId || sgstId || igstId) {
+                mapping = { cgst_id: cgstId, sgst_id: sgstId, igst_id: igstId };
+            }
+        });
+        return mapping;
+    }
+
+    function getHeaderPurchaseLedgerGstMapping() {
+        const ledgerId = $('#noitem_purchase_ledger').val();
+        const ledgerName = $('#noitem_purchase_ledger option:selected').text();
+        return getPurchaseLedgerMapping(ledgerId, ledgerName);
+    }
+
+    function selectGstLedger(selector, ledgerId) {
+        if (ledgerId) {
+            $(selector).val(String(ledgerId)).trigger('change');
+        }
+    }
+
+    function applyStandardItemGstLedgerMapping() {
+        if ($('#gst_calc_mode').val() !== 'standard' || $('#no_item_section').is(':visible')) {
+            return;
+        }
+
+        const mapping = getSelectedItemGstMapping() || getHeaderPurchaseLedgerGstMapping();
+        selectGstLedger('#igst_ledger', mappedGstLedgerId(mapping, 'igst_id'));
+        selectGstLedger('#cgst_ledger', mappedGstLedgerId(mapping, 'cgst_id'));
+        selectGstLedger('#sgst_ledger', mappedGstLedgerId(mapping, 'sgst_id'));
     }
 
     function renderCustomTaxSummary(igst = 0, cgst = 0, sgst = 0) {
@@ -2223,6 +2351,7 @@
             $('#sum_sgst').text(fmt(sumSgst));
             $('#sum_cgst').text(fmt(sumCgst));
             $('#sum_igst').text(fmt(sumIgst));
+            applyStandardItemGstLedgerMapping();
         } else {
             // CUSTOM MODE: render rate-wise slots
             //renderCustomSlots(rateMap, sumTotal);

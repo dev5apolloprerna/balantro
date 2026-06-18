@@ -802,7 +802,7 @@ class TransactionProcessingController extends Controller
                     ?? $row->party_name,
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
                 'purchase_ledger' => $request->ledger[$id] ?? $row->purchase_ledger,
-                'vchType' => $request->voucher_type[$id] ?? $row->vch_type,
+                'vch_type' => $request->voucher_type[$id] ?? $row->vch_type,
                 'status' => 'submitted',
             ]);
         }

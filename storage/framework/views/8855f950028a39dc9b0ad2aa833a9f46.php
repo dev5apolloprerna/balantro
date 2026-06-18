@@ -1,11 +1,19 @@
 
 <?php $__env->startSection('content'); ?>
-
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
 <div class="container mx-auto">
     <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700">
         <!-- HEADER -->
         <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
+            <!-- <div class="flex items-center gap-3">
+                <h2 class="text-gray-900 dark:text-white text-lg font-semibold">
+                    Purchase Transactions
+                </h2>
+                <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                    <?php echo e($rows->count()); ?>
+
+                </span>
+            </div> -->
             <div class="flex items-center gap-3">
                 <button type="button"
                     onclick="window.history.back()"
@@ -22,6 +30,7 @@
 
                 </span>
             </div>
+
             <div class="flex gap-2">
                 <?php if(session('client_name')): ?>
                 <div class="text-sm text-green-600 font-semibold">
@@ -39,7 +48,7 @@
                 <button type="button"
                     id="saveBtn"
                     class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                    Save
+                    Sumbit
                 </button>
             </div>
         </div>
@@ -48,11 +57,11 @@
             <div>
                 <div class="flex gap-4 items-end">
                     <div>
-                        <label class="flex gap-4 mt-2 text-gray-700 dark:text-gray-300 block">
+                        <label class="text-gray-700 dark:text-gray-300 text-sm block">
                             Update Bulk Records
                         </label>
                         <select id="bulkColumn"
-                            class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-white">
+                            class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-800 dark:text-white rounded px-3 py-1 mt-1">
                             <option value="">Select Column</option>
                             <option value="party">Party Name</option>
                             <!-- <option value="ledger">Ledger</option> -->
@@ -61,11 +70,11 @@
                         </select>
                     </div>
                     <div>
-                        <label class="flex gap-4 mt-2 text-gray-700 dark:text-gray-300 block">
+                        <label class="text-gray-700 dark:text-gray-300 text-sm block">
                             Value
                         </label>
                         <select id="bulkValue"
-                            class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-white">
+                            class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-800 dark:text-white rounded px-3 py-1 mt-1">
                             <option value="">Select Value</option>
                         </select>
                     </div>
@@ -78,7 +87,7 @@
                 </div>
             </div>
             <div>
-                <label class="flex gap-4 mt-2 text-gray-700 dark:text-gray-300">General Filters</label>
+                <label class="text-gray-700 dark:text-gray-300 text-sm">General Filters</label>
                 <div class="flex gap-4 mt-2 text-gray-700 dark:text-gray-300">
                     <label>
                         <input type="checkbox" class="generalFilter" value="synced"> Hide Synced
@@ -95,12 +104,12 @@
                 </div>
             </div>
         </div>
-
-        <form id="salesForm">
+        <!-- <form id="purchaseForm" method="POST" action="<?php echo e(route('purchase.save')); ?>"> -->
+        <form id="purchaseForm">
             <?php echo csrf_field(); ?>
-            <div class="overflow-x-auto">
-                <table id="salesTable" class="min-w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
-                    <thead class="bg-gray-100 dark:bg-neutral-800 text-xs text-gray-600 dark:text-gray-400 uppercase">
+            <div class="w-full">
+                <table id="purchaseTable" class="min-w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
+                    <thead class="bg-gray-100 dark:bg-neutral-800 text-xs text-gray-700 dark:text-gray-400 uppercase">
                         <tr>
                             <th class="px-3 py-2 w-8">
                                 <input type="checkbox" id="selectAll">
@@ -175,12 +184,12 @@
                                     value="<?php echo e($row->party_name); ?>"
                                     class="inputCell mb-1">
                                 <!-- Ledger -->
-                                <select name="ledger[<?php echo e($row->id); ?>]"
+                                <select name="party_ledger[<?php echo e($row->id); ?>]"
                                     class="ledgerSelect inputCell">
                                     <option value="">Select Ledger</option>
                                     <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($ledger->name); ?>"
-                                         <?php echo e(trim($row->purchase_ledger_name ?? $row->purchase_ledger) == trim($ledger->name)?'selected':''); ?>>
+                                        <?php echo e(trim($row->party_name) == trim($ledger->name) ? 'selected' : ''); ?>>
                                         <?php echo e($ledger->name); ?>
 
                                     </option>
@@ -204,6 +213,15 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
+                            <!-- <td class="px-3 py-2">
+                                <select name="ledger[<?php echo e($row->id); ?>]" class="ledgerSelect inputCell">
+                                    <option>Select Ledger</option>
+                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->name); ?>"
+                                        <?php echo e(trim($ledger->name) == trim($row->purchase_ledger) ? 'selected':''); ?>><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                            </td> -->
                             <td class="px-3 py-2 text-right">
                                 <?php echo e(number_format($row->total_amount,2)); ?>
 
@@ -220,6 +238,28 @@
                                     title="View" data-id="<?php echo e($row->id); ?>">
                                     <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
+
+                                <!-- <button
+                                    type="button"
+                                    class="text-blue-400 editRow"
+                                    data-id="<?php echo e($row->id); ?>"
+                                    data-invoice="<?php echo e($row->invoice_no); ?>"
+                                    data-date="<?php echo e($row->date); ?>"
+                                    data-gst_no="<?php echo e($row->gst_no); ?>"
+                                    data-vchtype="<?php echo e($row->vchType); ?>"
+                                    data-party="<?php echo e($row->party_name); ?>"
+                                    data-place="<?php echo e($row->place_of_supply); ?>"
+                                    data-ledger="<?php echo e($row->purchase_ledger); ?>"
+                                    data-amount="<?php echo e($row->total_amount); ?>"
+                                    data-item="<?php echo e($row->item_name); ?>"
+                                    data-qty="<?php echo e($row->quantity); ?>"
+                                    data-rate="<?php echo e($row->rate); ?>"
+                                    data-cgst="<?php echo e($row->cgst); ?>"
+                                    data-sgst="<?php echo e($row->sgst); ?>"
+                                    data-igst="<?php echo e($row->igst); ?>">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button> -->
+                                
                                 <button type="button"
                                     class="text-blue-400 hover:text-blue-300 editRow"
                                     title="Edit"
@@ -228,18 +268,16 @@
                                     data-date="<?php echo e(\Carbon\Carbon::parse($row->note_date)->format('Y-m-d')); ?>"
                                     data-gst_no="<?php echo e($row->gst_no); ?>"
                                     data-vchtype="<?php echo e($row->vch_type); ?>"
-                                    data-against_invoice="<?php echo e($row->against_invoice); ?>"
-                                    data-purchase_ledger_name="<?php echo e($row->purchase_ledger_name); ?>"
-                                    data-gst_rate = "<?php echo e($row->gst_rate); ?>"
                                     data-party="<?php echo e($row->party_name); ?>"
                                     data-place="<?php echo e($row->place_of_supply); ?>"
-                                    data-ledger="<?php echo e($row->purchase_ledger_name ?? $row->purchase_ledger); ?>"
+                                    data-ledger="<?php echo e($row->purchase_ledger); ?>"
                                     data-amount="<?php echo e($row->total_amount); ?>"
                                     data-cgst="<?php echo e($row->cgst); ?>"
                                     data-sgst="<?php echo e($row->sgst); ?>"
                                     data-igst="<?php echo e($row->igst); ?>">
                                     <i class="fa-solid fa-pen action-icon"></i>
                                 </button>
+
                                 <button class="text-red-500 deleteRow" data-id="<?php echo e($row->id); ?>">
                                     <i class="fa-solid fa-trash action-icon"></i>
                                 </button>
@@ -252,6 +290,8 @@
         </form>
     </div>
 </div>
+
+
 
 
 <div id="editModal" class="modal">
@@ -274,7 +314,7 @@
             
             <div class="receipt-meta-block">
                 <div class="receipt-block-title"><i class="fa-solid fa-building text-blue-400 mr-1"></i> Supplier Details</div>
-                <div class="receipt-field-row" id="header_purchase_ledger_row">
+                <div class="receipt-field-row">
                     <label>Party Name</label>
                     <div style="display:flex; gap:6px; width:100%;">
                         <select id="edit_party" class="receipt-input party-select ledgerSelect" style="flex:1;">
@@ -314,7 +354,7 @@
                     <select id="noitem_purchase_ledger" class="receipt-input ledgerSelect">
                         <option value="">Select Ledger</option>
                         <?php $__currentLoopData = $purchaseLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <option value="<?php echo e($ledger->name); ?>"><?php echo e($ledger->name); ?></option>
+                            <option value="<?php echo e($ledger->id); ?>"><?php echo e($ledger->name); ?></option>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
@@ -371,8 +411,8 @@
                     <button type="button" id="addItemRow" class="receipt-add-btn">
                         <i class="fa-solid fa-plus mr-1"></i> Add Row
                     </button>
-                    <button type="button" id="addNoItemRow" class="receipt-add-btn" style="margin-top:8px;">
-                        <i class="fa-solid fa-plus mr-1"></i> Add More
+                    <button type="button" id="addNoItemRow" class="receipt-add-btn" style="display:none;">
+                        <i class="fa-solid fa-plus mr-1"></i> Add Row
                     </button>
                 </div>
             </div>
@@ -408,6 +448,8 @@
             </div>
 
             <div id="no_item_section" style="display:none; padding:10px;">
+                <input type="hidden" id="noitem_gst_rate" value="0">
+                <input type="hidden" id="noitem_amount">
                 <table class="receipt-table">
                     <thead>
                         <tr>
@@ -419,9 +461,6 @@
                     </thead>
                     <tbody id="noItemBody"></tbody>
                 </table>
-                
-                <input type="hidden" id="noitem_gst_rate" value="0">
-                <input type="hidden" id="noitem_amount">
             </div>
 
             
@@ -511,7 +550,6 @@
                 <div id="custom_tax_rows" style="display:none;">
                     
                 </div>
-                
                 <div class="tax-row">
                     <span class="tax-label">Round Off</span>
                     <input type="number" step="0.01" id="sum_roundoff" class="receipt-input tax-value" style="width:90px;text-align:right;" value="0.00">
@@ -654,7 +692,7 @@
                     <div><label>Party Name</label><p id="v_party"></p></div>
                     <div><label>GST No</label><p id="v_gst"></p></div>
                     <div><label>Place of Supply</label><p id="v_place"></p></div>
-                    <div><label>Debit Notes Ledger</label><p id="v_ledger"></p></div>
+                    <div><label>Purchase Ledger</label><p id="v_ledger"></p></div>
                     <div><label>Status</label><p id="v_status" class="status-badge"></p></div>
                 </div>
             </div>
@@ -718,8 +756,23 @@
     </div>
 </div>
 
-
 <style>
+    #purchaseTable {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    #purchaseTable th,
+    #purchaseTable td {
+        word-wrap: break-word;
+        white-space: normal;
+    }
+    #purchaseTable th:nth-child(1) { width: 40px; }   /* checkbox */
+    #purchaseTable th:nth-child(2) { width: 50px; }   /* SR */
+    #purchaseTable th:nth-child(3) { width: 120px; }  /* DATE */
+    #purchaseTable th:nth-child(5) { width: 120px; }  /* VOUCHER */
+    #purchaseTable th:nth-child(9) { width: 100px; }  /* AMOUNT */
+    #purchaseTable th:nth-child(11) { width: 120px; } /* ACTION */
     /* ── BASE ── */
     .inputCell { background:white; border:1px solid #d1d5db; color:#111827; padding:6px 8px; font-size:12px; width:100%; border-radius:4px; }
     .dark .inputCell { background:#020617; border:1px solid #374151; color:white; }
@@ -814,7 +867,6 @@
     .tax-row { display:flex; justify-content:space-between; align-items:center; padding:2px 0; border-bottom:1px solid #e2e8f0; font-size:12px; color:#000; gap:6px; }
     .tax-label { font-size:11px; flex:1; }
     .tax-value { font-weight:600; font-size:12px; font-variant-numeric:tabular-nums; white-space:nowrap; }
-    .gst-summary-title { margin-top:4px; padding:2px 0; font-size:11px; font-weight:700; color:#1e40af; text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid #c7d2fe; }
     .grand-total-row { background:#1e40af; border-radius:4px; padding:2px 8px!important; margin-top:4px; border-bottom:none!important; }
     .grand-total-row .tax-label,.grand-total-row .tax-value { color:#ffffff!important; font-size:13px!important; font-weight:700!important; }
     .receipt-footer { display:flex; justify-content:space-between; align-items:center; padding:5px 9px; border-top:1px solid #e2e8f0; background:#fff; position:sticky; bottom:0; z-index:10; }
@@ -853,31 +905,45 @@
     #no_item_section .receipt-field-row { max-width: 400px; }
 
     /* Select2 dropdown background fix */
-    .select2-container--default .select2-results__option {
-        background: #ffffff !important;
-        color: #000000 !important;
-    }
-
-    .select2-container--default .select2-results__option--highlighted {
-        background: #2563eb !important; /* blue highlight */
-        color: #ffffff !important;
-    }
-
-    /* Selected item (top input box) */
-    .select2-container--default .select2-selection--single {
-        background: #ffffff !important;
-        color: #000000 !important;
-        border: 1px solid #d1d5db !important;
-    }
-
-    /* Dropdown box */
+    .select2-container--default .select2-selection--single,
+    .select2-container--default .select2-results__option,
     .select2-dropdown {
         background: #ffffff !important;
         color: #000000 !important;
     }
+
+    .select2-container--default .select2-selection--single {
+        border: 1px solid #d1d5db !important;
+    }
+
+    .dark .select2-container--default .select2-selection--single,
+    .dark .select2-container--default .select2-results__option,
+    .dark .select2-dropdown,
+    .select2-dropdown.dark-theme,
+    .select2-dropdown.dark-theme .select2-results__option {
+        background: #020617 !important;
+        color: #ffffff !important;
+        transition: none !important;
+    }
+
+    /* Selected item (top input box) */
+    .dark .select2-container--default .select2-selection--single,
+    .dark .select2-dropdown,
+    .select2-dropdown.dark-theme {
+        border: 1px solid #374151 !important;
+    }
+
+    /* Dropdown box */
+    .select2-container--default .select2-results__option--highlighted,
+    .dark .select2-container--default .select2-results__option--highlighted,
+    .select2-dropdown.dark-theme .select2-results__option--highlighted {
+        background: #2563eb !important;
+        color: #ffffff !important;
+    }
 </style>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('scripts'); ?>
+
 <script>
     $(document).ready(function() {
         $('#selectAll').click(function() {
@@ -886,7 +952,7 @@
         $('.searchInput').on('keyup', function() {
             let column = $(this).closest('th').index();
             let value = $(this).val().toLowerCase();
-            $('#salesTable tbody tr').each(function() {
+            $('#purchaseTable tbody tr').each(function() {
                 let cell = $(this).find('td').eq(column);
                 let text = cell.text().toLowerCase();
                 let input = cell.find('input,select').val();
@@ -903,14 +969,16 @@
             allowClear: true,
             dropdownAutoWidth: true
         });
+
         $('.itemSelect').select2({
             width: '100%',
             placeholder: "Search Item...",
             allowClear: true,
             dropdownAutoWidth: true
         });
-        $(document).on('focus', '.ledgerSelect', function() {
-            $(this).select2('open');
+
+        $('.ledgerSelect').select2({
+            width: '100%'
         });
     });
 
@@ -933,41 +1001,23 @@
     // Optional: handle form submit
     $('#ledgerForm').on('submit', function(e) {
         e.preventDefault();
-
         let formData = $(this).serialize();
-
         $.ajax({
             url: "<?php echo e(route('purchase.ledger.store')); ?>",
             type: "POST",
             data: formData,
             success: function(response) {
+                alert(response.message);
+
                 closeLedgerModal();
-                let name = $('input[name="Name"]').val();
-
-                // ✅ Add into EDIT MODAL dropdown
-                let newOption = new Option(name, name, true, true);
-                $('#edit_party').append(newOption).trigger('change');
-
-                // ✅ ALSO update table dropdowns (VERY IMPORTANT)
-                $('.ledgerSelect').each(function () {
-                    $(this).append(new Option(name, name));
-                });
-
-                // ✅ Refresh Select2 UI
-                $('#edit_party').trigger('change');
-                $('.ledgerSelect').trigger('change');
-
-                // ✅ Clear form
-                $('#ledgerForm')[0].reset();
-
-                
-                // location.reload();
+                location.reload();
                 // OPTIONAL: add new ledger in dropdown
                 // let name = $('input[name="Name"]').val();
 
                 // $('.ledgerSelect').append(
                 //     `<option value="${name}" selected>${name}</option>`
                 // ).trigger('change');
+
             },
             error: function(xhr) {
                 alert('Error saving ledger');
@@ -976,6 +1026,7 @@
         });
     });
 
+
     const ledgers = <?php echo json_encode(collect($ledgers)->pluck('name'), 15, 512) ?>;
     const states = <?php echo json_encode($states, 15, 512) ?>;
     const vouchers = <?php echo json_encode($vchTypes, 15, 512) ?>;
@@ -983,123 +1034,166 @@
     let CGST_LEDGERS = <?php echo json_encode($cGstLedgers, 15, 512) ?>;
     let SGST_LEDGERS = <?php echo json_encode($sGstLedgers, 15, 512) ?>;
     const ITEM_MASTER = <?php echo json_encode($stockItems, 15, 512) ?>;
-    const PURCHASE_LEDGERS = <?php echo json_encode($purchaseLedgers ?? [], 15, 512) ?>;
     const PURCHASE_GST_MAPPINGS = <?php echo json_encode($purchaseGstMappings ?? [], 15, 512) ?>;
+    const PURCHASE_LEDGERS = <?php echo json_encode($purchaseLedgers ?? [], 15, 512) ?>;
 
-    function normalizeName(value) {
-        return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+    function normalizeLedgerName(name) {
+        return String(name || '').replace(/["']/g, '').trim().toLowerCase();
     }
 
-    function purchaseLedgerId(ledger) {
-        return ledger?.id || ledger?.iLedgerId || ledger?.name || ledger?.strCustomerName || '';
-    }
-
-    function purchaseLedgerName(ledger) {
-        return ledger?.name || ledger?.strCustomerName || ledger?.strLedgerName || '';
-    }
-
-    function buildPurchaseLedgerOptions(selected = '') {
-        let html = '<option value="">Select Ledger</option>';
-        PURCHASE_LEDGERS.forEach(ledger => {
-            const id = purchaseLedgerId(ledger);
-            const name = purchaseLedgerName(ledger);
-            const isSelected = String(selected || '') === String(id || '') || normalizeName(selected) === normalizeName(name);
-            html += `<option value="${id}" ${isSelected ? 'selected' : ''}>${name}</option>`;
-        });
-        return html;
-    }
-
-    function findPurchaseLedgerMapping(ledgerId = '', ledgerName = '') {
+    function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {
         return PURCHASE_GST_MAPPINGS.find(mapping =>
-            String(mapping.id || '') === String(ledgerId || '') ||
-            normalizeName(mapping.name) === normalizeName(ledgerId) ||
-            normalizeName(mapping.name) === normalizeName(ledgerName)
+            String(mapping.id) === String(ledgerValue) ||
+            normalizeLedgerName(mapping.name) === normalizeLedgerName(ledgerValue) ||
+            normalizeLedgerName(mapping.name) === normalizeLedgerName(ledgerText)
         ) || null;
     }
 
-    function getPurchaseLedgerMapping(ledgerId = '', ledgerName = '') {
-        return findPurchaseLedgerMapping(ledgerId, ledgerName) || {};
+    function getSelectedPurchaseLedgerMapping() {
+        const select = $('#noitem_purchase_ledger');
+        return findPurchaseLedgerMapping(select.val(), select.find('option:selected').text());
     }
 
-    function mappedGstLedgerId(mapping, key) {
-        return mapping && mapping[key] ? String(mapping[key]) : '';
+    function mappedGstLedgerId(type, existing = null, ledgerValue = '', ledgerText = '') {
+        if (existing) {
+            return existing;
+        }
+
+        const mapping = ledgerValue || ledgerText
+            ? findPurchaseLedgerMapping(ledgerValue, ledgerText)
+            : getSelectedPurchaseLedgerMapping();
+
+        return mapping ? mapping[`${type}_id`] : null;
     }
 
-    function generateSlotsFromNoItemRows() {
-        const slots = [];
-        const isIgst = $('#edit_is_igst').is(':checked');
+    function itemGstLedgerId(item, keys) {
+        for (const key of keys) {
+            if (item && item[key]) {
+                return String(item[key]);
+            }
+        }
+        return '';
+    }
 
-        collectNoItemRows().forEach(row => {
-            const amount = parseFloat(row.amount) || 0;
-            const rate = parseFloat(row.gst) || 0;
-            const mapping = getPurchaseLedgerMapping(row.ledger, row.ledger_name);
-            const gstAmount = amount * rate / 100;
+    function findItemMasterByName(itemName = '') {
+        const normalized = normalizeLedgerName(itemName);
+        return ITEM_MASTER.find(item => normalizeLedgerName(item.strItemName || item.name || item.item_name) === normalized) || null;
+    }
 
-            slots.push({
-                gst_rate: rate,
-                taxable: amount,
-                amount: amount,
-                ledger_id: row.ledger,
-                ledger_name: row.ledger_name,
-                igst_ledger_id: mappedGstLedgerId(mapping, 'igst_id'),
-                cgst_ledger_id: mappedGstLedgerId(mapping, 'cgst_id'),
-                sgst_ledger_id: mappedGstLedgerId(mapping, 'sgst_id'),
-                igst_amount: isIgst ? gstAmount : 0,
-                cgst_amount: isIgst ? 0 : gstAmount / 2,
-                sgst_amount: isIgst ? 0 : gstAmount / 2,
-            });
+    function getSelectedItemGstMapping() {
+        let mapping = null;
+        $('#editItemsBody tr').each(function () {
+            if (mapping) return;
+            const itemName = $(this).find('.item-name').val() || $(this).find('.item-name option:selected').text();
+            const item = findItemMasterByName(itemName);
+            if (!item) return;
+
+            const cgstId = itemGstLedgerId(item, ['cgst_id', 'CGSTLedgerId']);
+            const sgstId = itemGstLedgerId(item, ['sgst_id', 'SGSTLedgerId']);
+            const igstId = itemGstLedgerId(item, ['igst_id', 'IGSTLedgerId']);
+            if (cgstId || sgstId || igstId) {
+                mapping = { cgst_id: cgstId, sgst_id: sgstId, igst_id: igstId };
+            }
+        });
+        return mapping;
+    }
+
+
+
+    function getItemGstMappingForRow(row) {
+        const itemName = row.find('.item-name').val() || row.find('.item-name option:selected').text();
+        const item = findItemMasterByName(itemName);
+        if (!item) return null;
+
+        const cgstId = itemGstLedgerId(item, ['cgst_id', 'CGSTLedgerId']);
+        const sgstId = itemGstLedgerId(item, ['sgst_id', 'SGSTLedgerId']);
+        const igstId = itemGstLedgerId(item, ['igst_id', 'IGSTLedgerId']);
+        return (cgstId || sgstId || igstId) ? { cgst_id: cgstId, sgst_id: sgstId, igst_id: igstId } : null;
+    }
+
+    function selectGstLedger(selector, ledgerId) {
+        if (ledgerId) {
+            $(selector).val(String(ledgerId)).trigger('change');
+        }
+    }
+
+    function applyStandardItemGstLedgerMapping() {
+        if ($('#gst_calc_mode').val() !== 'standard' || $('#no_item_section').is(':visible')) {
+            return;
+        }
+
+        const itemMapping = getSelectedItemGstMapping();
+        const purchaseMapping = getSelectedPurchaseLedgerMapping() || {};
+        const mapping = itemMapping || purchaseMapping;
+
+        selectGstLedger('#igst_ledger', mapping.igst_id);
+        selectGstLedger('#cgst_ledger', mapping.cgst_id);
+        selectGstLedger('#sgst_ledger', mapping.sgst_id);
+    }
+
+    $(document).on('change', '#noitem_purchase_ledger', function() {
+        $('#igst_ledger').val(mappedGstLedgerId('igst')).trigger('change');
+        $('#cgst_ledger').val(mappedGstLedgerId('cgst')).trigger('change');
+        $('#sgst_ledger').val(mappedGstLedgerId('sgst')).trigger('change');
+        recalcTotals();
+        applyStandardItemGstLedgerMapping();    
+    });
+
+    function buildNoItemLedgerOptions(selected = '') {
+        let html = '<option value="">Select Ledger</option>';
+
+        PURCHASE_LEDGERS.forEach(ledger => {
+            const selectedMatch =
+                String(ledger.id) === String(selected) ||
+                normalizeLedgerName(ledger.name) === normalizeLedgerName(selected);
+
+            html += `<option value="${ledger.id}" ${selectedMatch ? 'selected' : ''}>${ledger.name}</option>`;
         });
 
-        renderCustomSlots(slots);
+        return html;
     }
 
-    function updateHeaderPurchaseLedgerVisibility() {
-        const shouldHide = $('#gst_calc_mode').val() === 'custom' && $('#no_item_section').is(':visible');
-        $('#header_purchase_ledger_row').toggle(!shouldHide);
-    }
-
-    function addNoItemRow(data = {}) {
-        const row = `
+    function addNoItemRow(row = {}) {
+        const selectedLedger = row.ledger || row.ledger_id || row.purchase_ledger_id || row.ledger_name || row.purchase_ledger_name || row.purchase_ledger || '';
+        const tr = `
             <tr>
-                <td><select class="receipt-input noitem-ledger">${buildPurchaseLedgerOptions(data.ledger || data.ledger_name || '')}</select></td>
-                <td><input type="number" class="receipt-input noitem-gst" value="${data.gst || 0}" step="any"></td>
-                <td><input type="number" class="receipt-input noitem-amount" value="${data.amount || ''}" step="any"></td>
-                <td><button type="button" class="receipt-del-btn removeNoItem">x</button></td>
+                <td>
+                    <select class="receipt-input noitem-ledger">
+                        ${buildNoItemLedgerOptions(selectedLedger)}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="receipt-input noitem-gst" value="${row.gst || row.gst_rate || 0}" step="any">
+                </td>
+                <td>
+                    <input type="number" class="receipt-input noitem-amount" value="${row.amount || row.taxable || row.taxable_amount || 0}" step="any">
+                </td>
+                <td>
+                    <button type="button" class="removeNoItem receipt-del-btn">&times;</button>
+                </td>
             </tr>
         `;
-        $('#noItemBody').append(row);
-    }
 
-    function syncEntryMode(hasItems, readonly = false) {
-        if (hasItems) {
-            $('#standard_items_section').show();
-            $('#no_item_section').hide();
-            $('#addItemRow').toggle(!readonly);
-        } else {
-            $('#standard_items_section').hide();
-            $('#no_item_section').show();
-            $('#addItemRow').hide();
-            $('#addNoItemRow').toggle(!readonly);
-            $('#noItemBody input, #noItemBody select, #noItemBody button')
-                .prop('disabled', readonly)
-                .css('pointer-events', readonly ? 'none' : 'auto');
-            $('#noItemBody .removeNoItem').toggle(!readonly);
-        }
-        updateHeaderPurchaseLedgerVisibility();
+        $('#noItemBody').append(tr);
+        $('#noItemBody tr:last .noitem-ledger').select2({
+            width: '100%',
+            placeholder: 'Search Ledger...',
+            dropdownParent: $('#editModal'),
+            allowClear: true
+        });
     }
 
     function collectNoItemRows() {
-        const rows = [];
-        $('#noItemBody tr').each(function () {
-            const row = $(this);
-            const ledger = row.find('.noitem-ledger').val();
-            const ledgerName = row.find('.noitem-ledger option:selected').text();
-            const gst = parseFloat(row.find('.noitem-gst').val()) || 0;
-            const amount = parseFloat(row.find('.noitem-amount').val()) || 0;
-            if (ledger && amount > 0) {
-                rows.push({ ledger, ledger_name: ledgerName, gst, amount });
-            }
+        let rows = [];
+
+        $('#noItemBody tr').each(function() {
+            rows.push({
+                ledger: $(this).find('.noitem-ledger').val(),
+                gst: $(this).find('.noitem-gst').val(),
+                amount: $(this).find('.noitem-amount').val()
+            });
         });
+
         return rows;
     }
 
@@ -1144,40 +1238,53 @@
         let rows = $('tbody input[type=checkbox]:checked').closest('tr');
         // if none selected -> apply to all rows
         if (rows.length === 0) {
-            rows = $('#salesTable tbody tr');
+            rows = $('#purchaseTable tbody tr');
         }
         rows.each(function() {
             let row = $(this);
+            // if (column === 'party') {
+            //     row.find('input[name^="party_name"]').val(value);
+            // }
+            // if (column === 'ledger') {
+            //     row.find('select[name^="ledger"]').val(value).trigger('change');
+            // }
             if (column === 'party') {
                 row.find('input[name^="party_name"]').val(value);
-                row.find('select[name^="ledger"]').val(value).trigger('change'); // sync
+                row.find('select[name^="party_ledger"]').val(value).trigger('change'); // sync dropdown
             }
 
             if (column === 'ledger') {
                 row.find('select[name^="ledger"]').val(value).trigger('change');
 
-                // 🔥 IMPORTANT: update party also
+                // 🔥 IMPORTANT: also update party_name
                 row.find('input[name^="party_name"]').val(value);
+                row.find('select[name^="party_ledger"]').val(value).trigger('change');
             }
 
             if (column === 'place') {
                 row.find('select[name^="place_of_supply"]').val(value);
             }
             if (column === 'voucher') {
-                //row.find('.voucherSelect').val(value);
-                row.find('.voucherSelect').val(value).trigger('change');
+                row.find('.voucherSelect').val(value);
             }
         });
     });
 
+    $(document).on('change', 'select[name^="ledger"], select[name^="party_ledger"]', function () {
+        let value = $(this).val();
+        let row = $(this).closest('tr');
+
+        row.find('input[name^="party_name"]').val(value);
+    });
+
     $('#saveBtn').click(function() {
-        let formData = $('#salesForm').serialize();
+        let formData = $('#purchaseForm').serialize();
         $.ajax({
-            url: "<?php echo e(route('dn.save')); ?>",
+            url: "<?php echo e(route('transaction_processing.debit_note_sumbit')); ?>",
             type: "POST",
             data: formData,
             success: function(response) {
-                alert('Saved Successfully');
+                alert('Sumbit Successfully');
                 location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
@@ -1207,14 +1314,15 @@
 
     $('#closeModal').click(function() {
         $('#editModal').addClass('hidden');
-    });   
+    });
 
+   
     $('.generalFilter').on('change', function () {
         let filters = [];
         $('.generalFilter:checked').each(function () {
             filters.push($(this).val());
         });
-        $('#salesTable tbody tr').each(function () {
+        $('#purchaseTable tbody tr').each(function () {
             let row = $(this);
             let status = row.find('td:eq(10)').text().trim().toLowerCase(); // STATUS column
             let show = true;
@@ -1242,16 +1350,72 @@
         });
     });
 
-    $(document).on('change', 'select[name^="ledger"]', function () {
-        let value = $(this).val();
-        let row = $(this).closest('tr');
-
-        row.find('input[name^="party_name"]').val(value);
-    });
-
     // ═══════════════════════════════════════════════════════════════════════
     // VIEW MODAL
     // ═══════════════════════════════════════════════════════════════════════
+    // $(document).on('click', '.viewRow', function () {
+    //     let id = $(this).data('id');
+
+    //     // Open same edit modal
+    //     openEditModal();
+
+    //     // Hide update button
+    //     $('#addItemRow').hide();
+    //     $('#updateRow').hide();
+    //     $(document).find('.receipt-del-btn').hide();
+
+    //     // Disable all inputs
+    //     $('#editModal input, #editModal select, #editModal textarea')
+    //         .prop('disabled', true)
+    //         .css('pointer-events', 'none');
+
+    //     // Load data
+    //     $.ajax({
+    //         url: "<?php echo e(route('dn.show', ':id')); ?>".replace(':id', id),
+    //         type: "GET",
+    //         success: function (res) {
+
+    //             $('#edit_id').val(res.id);
+    //             $('#edit_invoice').val(res.note_no);
+    //             $('#edit_date').val(res.note_date);
+    //             $('#edit_gst').val(res.gst_no);
+    //             // $('#edit_party').val(res.party_name);
+    //             $('#edit_party').val(res.party_name).trigger('change');
+    //             $('#edit_place').val(res.place_of_supply);
+    //             $('#edit_voucher_type').val(res.vchType);
+    //             $('#edit_address').val(res.address);
+    //             $('#edit_pincode').val(res.pincode);
+    //             $('#edit_city').val(res.city);
+    //             // $('#edit_is_igst').val(res.is_igst);
+    //             $('#edit_is_igst').prop('checked', res.is_igst == 1);
+    //             $('#edit_remarks').val(res.remarks);
+    //             $('#cgst_ledger').val(res.cgst_id).trigger('change');
+    //             $('#sgst_ledger').val(res.sgst_id).trigger('change');
+    //             $('#igst_ledger').val(res.igst_id).trigger('change');
+    //             // Items
+    //             let tbody = $('#editItemsBody').empty();
+    //             if (res.items && res.items.length > 0) {
+    //                 $('#standard_items_section').show();
+    //                 $('#no_item_section').hide();
+    //                 (res.items || []).forEach(item => {
+    //                     let row = $(buildItemRow(item));
+    //                     // hide delete button in each row
+    //                     row.find('.receipt-del-btn').hide();
+    //                     // disable inputs inside row
+    //                     row.find('input').prop('disabled', true);
+    //                     tbody.append(row);
+    //                 });
+    //             } else {
+    //                 $('#standard_items_section').hide(); 
+    //                 $('#no_item_section').show();
+    //                 $('#noitem_amount').val(res.total_amount);
+    //                 $('#noitem_sales_ledger').val(res.sales_ledger_id).trigger('change');
+    //             }
+    //             recalcTotals();
+    //         }
+    //     });
+    // });
+
     $(document).on('click', '.viewRow', function () {
         let id = $(this).data('id');
 
@@ -1278,8 +1442,8 @@
                 $('#edit_invoice').val(res.note_no);
                 $('#edit_date').val(res.note_date);
                 $('#edit_gst').val(res.gst_no);
-                // $('#edit_party').val(res.party_name);
-                $('#edit_party').val(res.party_name).trigger('change'); // 🔥 IMPORTANT
+                //$('#edit_party').val(res.party_name);
+                $('#edit_party').val(res.party_name).trigger('change');
                 $('#edit_place').val(res.place_of_supply);
                 $('#edit_voucher_type').val(res.vch_type);
                 $('#edit_address').val(res.address);
@@ -1287,15 +1451,20 @@
                 $('#edit_city').val(res.city);
                 // $('#edit_is_igst').val(res.is_igst);
                 $('#edit_is_igst').prop('checked', res.is_igst == 1);
+                toggleGSTLedger();
                 $('#gst_calc_mode').val(res.gst_mode || 'standard').trigger('change');
-                $('#edit_amount').val(res.taxable_amount);
-                
-                // 🔥 ADD THIS
-                
-                $('#edit_cgst').val(res.cgst);
-                $('#edit_sgst').val(res.sgst);
-                $('#edit_igst').val(res.igst);
-                $('#edit_total_amount').val(res.total_amount);
+                $('#edit_amount').val(parseFloat(res.taxable_amount || 0).toFixed(2));
+                $('#edit_cgst').val(parseFloat(res.cgst || 0).toFixed(2));
+                $('#edit_sgst').val(parseFloat(res.sgst || 0).toFixed(2));
+                $('#edit_igst').val(parseFloat(res.igst || 0).toFixed(2));
+                $('#edit_total_amount').val(parseFloat(res.total_amount || 0).toFixed(2));
+
+                $('#sum_amount').text(parseFloat(res.taxable_amount || 0).toFixed(2));
+                $('#sum_cgst').text(parseFloat(res.cgst || 0).toFixed(2));
+                $('#sum_sgst').text(parseFloat(res.sgst || 0).toFixed(2));
+                $('#sum_igst').text(parseFloat(res.igst || 0).toFixed(2));
+                // $('#sum_grand_total').text(parseFloat(res.total_amount || 0).toFixed(2));
+                setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
 
                 $('#cgst_ledger').val(res.cgst_id).trigger('change');
                 $('#sgst_ledger').val(res.sgst_id).trigger('change');
@@ -1303,30 +1472,34 @@
 
                 // UI update
                 $('#sum_amount').text(parseFloat(res.taxable_amount).toFixed(2));
-                $('#sum_cgst').text(parseFloat(res.cgst).toFixed(2));
-                $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
-                $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
+                // $('#sum_cgst').text(parseFloat(res.cgst).toFixed(2));
+                // $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
+                // $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
                 // $('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
-                setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+
+                if ($('#editModal input:disabled').length > 0) {
+                    // VIEW MODE → use API values
+                    $('#sum_amount').text(parseFloat(res.taxable_amount).toFixed(2));
+                    $('#sum_cgst').text(parseFloat(res.cgst).toFixed(2));
+                    $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
+                    $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
+                    //$('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
+                    setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                } else {
+                    recalcTotals(); // EDIT MODE
+                }
 
                 $('#edit_remarks').val(res.remarks);
-                $('#noitem_purchase_ledger').val(res.purchase_ledger_name).trigger('change');
+                setSelectValueByTextOrValue($('#noitem_purchase_ledger'), res.purchase_ledger_id || res.purchase_ledger_name || res.purchase_ledger);
                 $('#edit_against_invoice').val(res.against_invoice);
                 $('#noitem_gst_rate').val(res.gst_rate);
                 // Items
                 let tbody = $('#editItemsBody').empty();
-                const hasItems = res.items && res.items.length > 0;
-                if (hasItems) {
+                if (res.items && res.items.length > 0) {
 
-                    syncEntryMode(true, true);
-                    // (res.items || []).forEach(item => {
-                    //     let row = $(buildItemRow(item));
-                    //     // hide delete button in each row
-                    //     row.find('.receipt-del-btn').hide();
-                    //     // disable inputs inside row
-                    //     row.find('input').prop('disabled', true);
-                    //     tbody.append(row);
-                    // });
+                    $('#standard_items_section').show();
+                    $('#no_item_section').hide();
+                    $('#addNoItemRow').hide();
                     res.items.forEach(item => {
                         let row = $(buildItemRow(item));
                         tbody.append(row);
@@ -1340,35 +1513,148 @@
                             allowClear: true
                         });
                     });
-                } else {
-                    syncEntryMode(false, true);
-
-                    $('#noItemBody').empty();
-                    const noItemRows = (res.noitem_rows && res.noitem_rows.length)
-                        ? res.noitem_rows
-                        : [{
-                            ledger: res.purchase_ledger_id || res.purchase_ledger_name || '',
-                            ledger_name: res.purchase_ledger_name || '',
-                            gst: res.gst_rate || '',
-                            amount: res.taxable_amount || res.total_amount || 0
-                        }];
-                    noItemRows.forEach(row => addNoItemRow(row));
-                    $('#noitem_gst_rate').val(noItemRows[0]?.gst || res.gst_rate || '');
-                    $('#noitem_amount').val(noItemRows[0]?.amount || res.taxable_amount || 0);
-                }       
-                if (res.gst_mode === 'custom') {
-                    if (res.custom_gst && res.custom_gst.length) {
-                        renderCustomSlots(res.custom_gst);
-                    } else if (!hasItems) {
-                        generateSlotsFromNoItemRows();
+                    if (res.gst_mode === 'custom') {
+                        generateSlotsFromItems();
                     }
-                }
-                syncEntryMode(hasItems, true);
+                } else {
+                    $('#standard_items_section').hide(); 
+                    $('#no_item_section').show();
+                    $('#addNoItemRow').hide();
+                    $('#noItemBody').empty();
 
-                recalcTotals();
+                    // $('#noitem_amount').val(res.total_amount);
+                    if (res.custom_gst && res.custom_gst.length) {
+                        res.custom_gst.forEach(slot => addNoItemRow({
+                            ledger: slot.ledger_id || slot.purchase_ledger_id || slot.ledger_name || res.purchase_ledger_id || res.purchase_ledger_name || res.purchase_ledger,
+                            gst: slot.gst_rate,
+                            amount: slot.taxable || slot.amount || 0
+                        }));
+                    } else {
+                        addNoItemRow({
+                            ledger: res.purchase_ledger_id || res.purchase_ledger_name || res.purchase_ledger,
+                            gst: res.gst_rate || 0,
+                            amount: res.taxable_amount || res.total_amount || 0
+                        });
+                    }
+
+                    $('#noItemBody input, #noItemBody select').prop('disabled', true).css('pointer-events', 'none');
+                    $('#noItemBody .receipt-del-btn').hide();
+                    $('#noitem_amount').val(res.taxable_amount);
+                    recalcTotals();
+                }       
+                // if (res.gst_mode === 'custom' && res.custom_gst && res.custom_gst.length) {
+                //     //renderCustomSlots(res.custom_gst);
+                //     //renderCustomSlotsFromItems();
+                //     //renderCustomSlots(res.custom_gst);
+                //     generateSlotsFromItems();
+                //     // autoFillTaxableFromItems();
+                // }           
+
+                // recalcTotals();
             }
         });
     });
+
+    function openViewModal()  { document.getElementById('viewModal').classList.add('show'); }
+    function closeViewModal() { document.getElementById('viewModal').classList.remove('show'); }
+    function normalizeLedgerValue(value) {
+        return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+    }
+    function setSelectValueByTextOrValue($select, value) {
+        if (!value) {
+            $select.val('').trigger('change');
+            return;
+        }
+
+        if ($select.find(`option[value="${value}"]`).length) {
+            $select.val(value).trigger('change');
+            return;
+        }
+
+        const normalized = normalizeLedgerValue(value);
+        const match = $select.find('option').filter(function () {
+            return normalizeLedgerValue($(this).val()) === normalized || normalizeLedgerValue($(this).text()) === normalized;
+        }).first();
+
+        if (match.length) {
+            $select.val(match.val()).trigger('change');
+        } else {
+            $select.val(value).trigger('change');
+        }
+    }
+    function fmt(val) {
+        return parseFloat(val || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // VIEW MODAL
+    // ═══════════════════════════════════════════════════════════════════════
+    // $(document).on('click', '.viewRow', function () {
+    //     let id = $(this).data('id');
+
+    //     // Open same edit modal
+    //     openEditModal();
+
+    //     // Hide update button
+    //     $('#addItemRow').hide();
+    //     $('#updateRow').hide();
+    //     $(document).find('.receipt-del-btn').hide();
+
+    //     // Disable all inputs
+    //     $('#editModal input, #editModal select, #editModal textarea')
+    //         .prop('disabled', true)
+    //         .css('pointer-events', 'none');
+
+    //     // Load data
+    //     $.ajax({
+    //         url: "<?php echo e(route('dn.show', ':id')); ?>".replace(':id', id),
+    //         type: "GET",
+    //         success: function (res) {
+
+    //             // Fill header fields
+    //             $('#edit_id').val(res.id);
+    //             $('#edit_invoice').val(res.invoice_no);
+    //             $('#edit_date').val(res.date);
+    //             $('#edit_gst').val(res.gst_no);
+    //             $('#edit_party').val(res.party_name);
+    //             $('#edit_place').val(res.place_of_supply);
+    //             $('#edit_voucher_type').val(res.vchType);
+    //             $('#edit_address').val(res.address);
+    //             $('#edit_pincode').val(res.pincode);
+    //             $('#edit_city').val(res.city);
+    //             // $('#edit_is_igst').val(res.is_igst);
+    //             $('#edit_is_igst').prop('checked', res.is_igst == 1);
+    //             $('#edit_remarks').val(res.remarks);
+
+    //             // Items
+    //             let tbody = $('#editItemsBody').empty();
+    //             if (res.items && res.items.length > 0) {
+
+    //                 $('#standard_items_section').show();
+    //                 $('#no_item_section').hide();
+    //                 (res.items || []).forEach(item => {
+    //                     let row = $(buildItemRow(item));
+    //                     // hide delete button in each row
+    //                     row.find('.receipt-del-btn').hide();
+    //                     // disable inputs inside row
+    //                     row.find('input').prop('disabled', true);
+    //                     tbody.append(row);
+    //                 });
+    //             } else {
+
+    //                 $('#standard_items_section').hide(); 
+    //                 $('#no_item_section').show();
+
+    //                 $('#noitem_amount').val(res.total_amount);
+    //                 $('#noitem_purchase_ledger').val(res.purchase_ledger);
+    //             }
+                
+
+    //             recalcTotals();
+    //         }
+    //     });
+    // });
 
     function openViewModal()  { document.getElementById('viewModal').classList.add('show'); }
     function closeViewModal() { document.getElementById('viewModal').classList.remove('show'); }
@@ -1376,7 +1662,7 @@
     // ═══════════════════════════════════════════════════════════════════════
     // EDIT MODAL
     // ═══════════════════════════════════════════════════════════════════════
-   // ═══════ EDIT MODAL ═══════
+    // ═══════ EDIT MODAL ═══════
     $(document).on('click', '.editRow', function () {
         let btn = $(this), id = btn.data('id');
 
@@ -1392,14 +1678,15 @@
         // $('#gst_calc_mode').val('standard').trigger('change');
         $('#edit_id').val(id);
         $('#edit_invoice').val(btn.data('invoice'));
-        $('#edit_date').val(btn.data('date'));
+        
         $('#edit_gst').val(btn.data('gst_no'));
         $('#edit_against_invoice').val(btn.data('against_invoice'));
         // $('#edit_voucher_type').val(btn.data('vchtype'));
-        $('#edit_party').val(btn.data('party'));
+        // $('#edit_party').val(btn.data('party'));
+        $('#edit_party').val(btn.data('party')).trigger('change');
         // $('#edit_place').val(btn.data('place'));
         $('#edit_ledger').val(btn.data('ledger'));
-        $('#noitem_purchase_ledger').val(btn.data('purchase_ledger_name')).trigger('change');
+        
         $('#noitem_gst_rate').val(btn.data('gst_rate'));
         let party = btn.data('party');
         $('#edit_party').val(party).trigger('change'); // 🔥 IMPORTANT
@@ -1426,6 +1713,7 @@
             success: function (res) {
                 $('#edit_address').val(res.address || '');
                 $('#edit_pincode').val(res.pincode || '');
+                $('#edit_invoice').val(res.note_no || '');
                 $('#edit_city').val(res.city || '');
                 $('#edit_remarks').val(res.remarks || '');
                 $('#gst_calc_mode').val(res.gst_mode || 'standard').trigger('change');
@@ -1435,24 +1723,34 @@
                 $('#edit_igst').val(res.igst);
                 $('#edit_total_amount').val(res.total_amount);
                 $('#edit_is_igst').prop('checked', res.is_igst == 1);
+                toggleGSTLedger();
                 $('#noitem_gst_rate').val(res.gst_rate);
 
-               
                 $('#cgst_ledger').val(res.cgst_id).trigger('change');
                 $('#sgst_ledger').val(res.sgst_id).trigger('change');
                 $('#igst_ledger').val(res.igst_id).trigger('change');
                 // UI
                 $('#sum_amount').text(parseFloat(res.taxable_amount).toFixed(2));
+                // $('#sum_cgst').text(parseFloat(res.cgst).toFixed(2));
+                // $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
+                // $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
+                // $('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
+
                 $('#sum_cgst').text(parseFloat(res.cgst).toFixed(2));
                 $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
                 $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
                 // $('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
                 setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+
+                setSelectValueByTextOrValue($('#noitem_purchase_ledger'), res.purchase_ledger_id || res.purchase_ledger_name || res.purchase_ledger);
+                $("#edit_against_invoice").val(res.against_invoice);
+                $('#edit_date').val(res.note_date);
                 let tbody = $('#editItemsBody').empty();
-                const hasItems = res.items && res.items.length > 0;
                 // (res.items || []).forEach(item => tbody.append(buildItemRow(item)));
-                if (hasItems) {
-                    syncEntryMode(true, false);
+                if (res.items && res.items.length > 0) {
+                    $('#standard_items_section').show();
+                    $('#no_item_section').hide();
+                    $('#addNoItemRow').hide();
                     // res.items.forEach(item => tbody.append(buildItemRow(item)));
                     res.items.forEach(item => {
                         let row = $(buildItemRow(item));
@@ -1464,35 +1762,76 @@
                             allowClear: true
                         });
                     });
+                    if (res.gst_mode === 'custom') {
+                        generateSlotsFromItems();
+                    }
                 } else {
-                    syncEntryMode(false, false);
+                    $('#standard_items_section').hide();
+                    $('#no_item_section').show();
+                    $('#addNoItemRow').show();
                     $('#noItemBody').empty();
-                    const noItemRows = (res.noitem_rows && res.noitem_rows.length)
-                        ? res.noitem_rows
-                        : [{
-                            ledger: res.purchase_ledger_id || res.purchase_ledger_name || '',
-                            ledger_name: res.purchase_ledger_name || '',
-                            gst: res.gst_rate || '',
+                    // $('#noitem_amount').val(res.total_amount);
+                    if (res.custom_gst && res.custom_gst.length) {
+                        res.custom_gst.forEach(slot => addNoItemRow({
+                            ledger: slot.ledger_id || slot.purchase_ledger_id || slot.ledger_name || res.purchase_ledger_id || res.purchase_ledger_name || res.purchase_ledger,
+                            gst: slot.gst_rate,
+                            amount: slot.taxable || slot.amount || 0
+                        }));
+                    } else {
+                        addNoItemRow({
+                            ledger: res.purchase_ledger_id || res.purchase_ledger_name || res.purchase_ledger,
+                            gst: res.gst_rate || 0,
                             amount: res.taxable_amount || res.total_amount || 0
-                        }];
-                    noItemRows.forEach(row => addNoItemRow(row));
-                    $('#noitem_gst_rate').val(noItemRows[0]?.gst || res.gst_rate || '');
-                    $('#noitem_amount').val(noItemRows[0]?.amount || res.taxable_amount || 0);
-                    $('#noitem_purchase_ledger').val(res.purchase_ledger_name);
+                        });
+                    }
+
+                    $('#noitem_amount').val(res.taxable_amount);
+                    setSelectValueByTextOrValue($('#noitem_purchase_ledger'), res.purchase_ledger_id || res.purchase_ledger_name || res.purchase_ledger);
                     tbody.html(''); // clear table
                 }
 
                 if (res.gst_mode === 'custom') {
-                    if (res.custom_gst && res.custom_gst.length) {
-                        renderCustomSlots(res.custom_gst);
-                    } else if (!hasItems) {
-                        generateSlotsFromNoItemRows();
-                    }
-                } 
-                syncEntryMode(hasItems, false);
-                // else {
-                    recalcTotals();
-                //}
+
+                    // renderCustomSlots(res.custom_gst);
+                    // renderCustomSlots(res.custom_gst);
+
+                    setTimeout(() => {
+                        recalcTotals();   // 🔥 MUST CALL
+                    }, 100);
+
+                    // if (res.custom_gst && res.custom_gst.length) {
+                    //     renderCustomSlots(res.custom_gst);   // ✅ correct
+                    // } else {
+                    //     setTimeout(() => {
+                    //         renderCustomSlotsFromItems();    // fallback after DOM ready
+                    //     }, 100);
+                    // }
+                    //autoFillTaxableFromItems();
+
+                    // ✅ DO NOT CALL recalc
+                    // $('#sum_amount').text(parseFloat(res.taxable_amount).toFixed(2));
+                    // $('#sum_cgst').text(parseFloat(res.cgst).toFixed(2));
+                    // $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
+                    // $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
+                    // $('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
+                    $('#sum_amount').text(parseFloat(res.taxable_amount).toFixed(2));
+                    $('#sum_cgst').text(parseFloat(res.cgst).toFixed(2));
+                    $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
+                    $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
+                    // $('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
+                    setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+
+                } else {
+                    recalcTotals(); // only for standard mode
+                }
+
+
+                $('#sum_amount').text(parseFloat(res.taxable_amount || 0).toFixed(2));
+                $('#sum_cgst').text(parseFloat(res.cgst || 0).toFixed(2));
+                $('#sum_sgst').text(parseFloat(res.sgst || 0).toFixed(2));
+                $('#sum_igst').text(parseFloat(res.igst || 0).toFixed(2));
+                //$('#sum_grand_total').text(parseFloat(res.total_amount || 0).toFixed(2));
+                setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
 
                 // if (!res.items || !res.items.length) {
                 //     tbody.html('<tr><td colspan="9" class="text-center py-4" style="color:#94a3b8;font-size:12px;">No items — click Add Row</td></tr>');
@@ -1503,123 +1842,21 @@
         });
     });
 
-    function renderCustomSlots(slots) {
-        let tbody = $('#customSlotsBody');
-        tbody.empty();
-
-        //let totalAmount = parseFloat($('#noitem_amount').val()) || 0;
-        let totalAmount = 0;
+    function autoFillTaxableFromItems() {
+        let map = {};
 
         $('#editItemsBody tr').each(function () {
-            let qty  = parseFloat($(this).find('.item-qty').val()) || 0;
-            let rate = parseFloat($(this).find('.item-rate').val()) || 0;
+            let rate = parseFloat($(this).find('.gst').val()) || 0;
+            let amount = parseFloat($(this).find('.amount').val()) || 0;
 
-            totalAmount += qty * rate;
+            if (!map[rate]) map[rate] = 0;
+            map[rate] += amount;
         });
 
-        let totalCgst = 0, totalSgst = 0, totalIgst = 0;
-
-        slots.forEach(function (slot) {
-            const slotMapping = getPurchaseLedgerMapping(slot.ledger_id || slot.purchase_ledger_id || '', slot.ledger_name || slot.purchase_ledger_name || '');
-            const selectedIgstLedger = slot.igst_ledger_id || slot.igst_id || mappedGstLedgerId(slotMapping, 'igst_id');
-            const selectedCgstLedger = slot.cgst_ledger_id || slot.cgst_id || mappedGstLedgerId(slotMapping, 'cgst_id');
-            const selectedSgstLedger = slot.sgst_ledger_id || slot.sgst_id || mappedGstLedgerId(slotMapping, 'sgst_id');
-            // let taxable = parseFloat(slot.taxable);
-            // if (!taxable || taxable === 0) {
-            //     taxable = totalAmount;
-            // }
-
-            let taxable = 0;
-
-            $('#editItemsBody tr').each(function () {
-                let rate = parseFloat($(this).find('.item-gst_rate').val()) || 0;
-
-                if (rate == slot.gst_rate) {
-                    let qty  = parseFloat($(this).find('.item-qty').val()) || 0;
-                    let price = parseFloat($(this).find('.item-rate').val()) || 0;
-
-                    taxable += qty * price;
-                }
-            });
-
-            if (!taxable && $('#no_item_section').is(':visible')) {
-                taxable = parseFloat(slot.taxable || slot.amount || 0) || 0;
-            }
-            if ($('#no_item_section').is(':visible')) {
-                totalAmount += taxable;
-            }
-
-            let cgst = parseFloat(slot.cgst_amount) || 0;
-            let sgst = parseFloat(slot.sgst_amount) || 0;
-            let igst = parseFloat(slot.igst_amount) || 0;
-
-            totalCgst += cgst;
-            totalSgst += sgst;
-            totalIgst += igst;
-
-            // 🔥 CREATE ROW
-            let row = `
-                <tr data-rate="${slot.gst_rate}">
-                    <td><span class="rate-badge">${slot.gst_rate}%</span></td>
-                    <td style="color: black;" class="slot-taxable">${taxable.toFixed(2)}<input type="hidden" class="slot-purchase-ledger-id" value="${slot.ledger_id || slot.purchase_ledger_id || ''}"></td>
-
-                    <td style="color: black;">
-                        <select class="slot-igst-ledger" data-rate="${slot.gst_rate}">
-                            <option value="">Select</option>
-                            ${getLedgerOptions(IGST_LEDGERS, selectedIgstLedger)}
-                        </select>
-                    </td>
-                    <td style="color: black;"><input type="number" class="slot-igst-amt" data-rate="${slot.gst_rate}" value="${igst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
-
-                    <td>
-                        <select class="slot-cgst-ledger" data-rate="${slot.gst_rate}">
-                            <option value="">Select</option>
-                            ${getLedgerOptions(CGST_LEDGERS, selectedCgstLedger)}
-                        </select>
-                    </td>
-                    <td style="color: black;"><input type="number" class="slot-cgst-amt" data-rate="${slot.gst_rate}" value="${cgst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
-
-                    <td>
-                        <select class="slot-sgst-ledger" data-rate="${slot.gst_rate}">
-                            <option value="">Select</option>
-                            ${getLedgerOptions(SGST_LEDGERS, selectedSgstLedger)}
-                        </select>
-                    </td>
-                    <td style="color: black;"><input type="number" class="slot-sgst-amt" data-rate="${slot.gst_rate}" value="${sgst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
-                </tr>
-                `;
-
-            // 🔥 APPEND (MOST IMPORTANT)
-            tbody.append(row);
+        $('#customSlotsBody tr').each(function () {
+            let rate = parseFloat($(this).data('rate'));
+            $(this).find('.taxable').val(map[rate] || 0);
         });
-
-        // totals
-        $('#sum_amount').text(totalAmount.toFixed(2));
-        $('#sum_cgst').text(totalCgst.toFixed(2));
-        $('#sum_sgst').text(totalSgst.toFixed(2));
-        $('#sum_igst').text(totalIgst.toFixed(2));
-        let grand = totalAmount + totalCgst + totalSgst + totalIgst;
-        // $('#sum_grand_total').text(grand.toFixed(2));
-        setRoundOffSummary(grand);
-        $('#edit_amount').val(totalAmount.toFixed(2));
-        $('#edit_cgst').val(totalCgst.toFixed(2));
-        $('#edit_sgst').val(totalSgst.toFixed(2));
-        $('#edit_igst').val(totalIgst.toFixed(2));
-        // $('#edit_total_amount').val(grand.toFixed(2));
-        // $('#sum_grand_total').text(grand.toFixed(2));
-        setRoundOffSummary(grand);
-    }
-
-    function getLedgerOptions(list, selectedId = '') {
-        return list.map(l => 
-            `<option value="${l.id}" ${l.id == selectedId ? 'selected' : ''}>${l.name}</option>`
-        ).join('');
-    }
-
-    function buildLedgerOptions(list, selectedId) {
-        return list.map(l => 
-            `<option value="${l.id}" ${l.id == selectedId ? 'selected' : ''}>${l.name}</option>`
-        ).join('');
     }
 
     // ═══════ ADD ITEM ROW ═══════
@@ -1629,105 +1866,112 @@
         //$('#editItemsBody').append(buildItemRow({}));
         let row = $(buildItemRow({}));
         $('#editItemsBody').append(row);
-
         row.find('.itemSelect').select2({
             width: '100%',
             placeholder: "Search Item...",
             allowClear: true
         });
-        if ($('#gst_calc_mode').val() === 'custom') {
-            generateSlotsFromItems();   // 🔥 ADD THIS
-        }
-        recalcTotals();
-        applyStandardItemGstLedgerMapping();
+        setTimeout(() => {
+            if ($('#gst_calc_mode').val() === 'custom') {
+                setTimeout(() => {
+                    renderCustomSlotsFromItems();
+                    recalcTotals();
+                }, 50);
+            }
+        }, 100);
     });
 
     // ═══════ LIVE RECALC ON INPUT ═══════
     // $(document).on('input', '#editItemsBody input', function () {
+    //     recalcItemRow($(this).closest('tr'));
+    //     recalcTotals(); // calculate amount
+        
+    //     if ($('#gst_calc_mode').val() === 'custom') {
+    //         renderCustomSlotsFromItems(); // rebuild GST table
+    //     }
+    // });
+
     $(document).on('input change', '#editItemsBody input, #editItemsBody select', function () {
-        recalcItemRow($(this).closest('tr'));
-        if ($('#gst_calc_mode').val() === 'custom') {
-            generateSlotsFromItems();   // 🔥 ADD THIS
-        }
         recalcTotals();
         applyStandardItemGstLedgerMapping();
+        if ($('#gst_calc_mode').val() === 'custom') {
+            renderCustomSlotsFromItems();
+            setTimeout(() => {
+                recalcTotals();   // 🔥 second pass for GST
+            }, 50);
+        }
+    });
+
+    $('#addNoItemRow').click(function () {
+        addNoItemRow({
+            ledger: $('#noitem_purchase_ledger').val(),
+            gst: 18
+        });
+        recalcTotals();
+    });
+
+    $(document).on('click', '.removeNoItem', function() {
+        $(this).closest('tr').remove();
+
+        if (!$('#noItemBody tr').length) {
+            addNoItemRow({
+                ledger: $('#noitem_purchase_ledger').val(),
+                gst: 18
+            });
+        }
+
+        recalcTotals();
+    });
+
+    $(document).on('input change', '.noitem-gst, .noitem-amount, .noitem-ledger', function () {
+        recalcTotals();
     });
 
     // ═══════ REMOVE ROW ═══════
-    $(document).on('click', '#addNoItemRow', function () {
-        addNoItemRow();
-        if ($('#gst_calc_mode').val() === 'custom') {
-            generateSlotsFromNoItemRows();
-        }
-        recalcTotals();
-    });
-
-    $(document).on('click', '.removeNoItem', function (e) {
-        e.stopPropagation();
-        $(this).closest('tr').remove();
-        if ($('#gst_calc_mode').val() === 'custom') {
-            generateSlotsFromNoItemRows();
-        }
-        recalcTotals();
-    });
-
-    $(document).on('input change', '.noitem-ledger,.noitem-gst,.noitem-amount', function () {
-        if ($('#gst_calc_mode').val() === 'custom') {
-            generateSlotsFromNoItemRows();
-        }
-        recalcTotals();
-    });
-
     $(document).on('click', '.removeItemRow', function () {
         $(this).closest('tr').remove();
-        if ($('#gst_calc_mode').val() === 'custom') {
-            generateSlotsFromItems();   // 🔥 ADD THIS
-        }
         recalcTotals();
     });
 
     // ═══════ GST MODE SWITCH ═══════
     $('#gst_calc_mode').on('change', function () {
+        // let mode = $(this).val();
+        // if (mode === 'standard') {
+        //     $('#standard_items_section').show();
+        //     $('#standard_tax_rows').show();
+        //     $('#custom_slots_section').hide();
+        //     $('#custom_tax_rows').hide();
+        //     $('#igst_toggle_wrap').show();
+        // } else {
+        //     $('#standard_items_section').show(); // items table stays visible always
+        //     $('#standard_tax_rows').hide();
+        //     $('#custom_slots_section').show();
+        //     $('#custom_tax_rows').show();
+        //     $('#igst_toggle_wrap').hide();
+        // }
+        // recalcTotals();
         let mode = $(this).val();
-        if (mode === 'standard') {
-            if ($('#no_item_section').is(':visible')) {
-                $('#standard_items_section').hide();
-            } else {
-                $('#standard_items_section').show();
-            }
-            $('#standard_tax_rows').show();
-            $('#custom_slots_section').hide();
-            $('#custom_tax_rows').hide();
-            $('#igst_toggle_wrap').show();
-        } else {
-            if ($('#no_item_section').is(':visible')) {
-                $('#standard_items_section').hide();
-            } else {
-                $('#standard_items_section').show();
-            }
-            $('#standard_tax_rows').hide();
+        if (mode === 'custom') {
             $('#custom_slots_section').show();
+            $('#standard_tax_rows').hide();
             $('#custom_tax_rows').show();
-            $('#igst_toggle_wrap').hide();
-            if ($('#no_item_section').is(':visible')) {
-                generateSlotsFromNoItemRows();
-            }
+            generateSlotsFromItems(); // 🔥 IMPORTANT
+        } else {
+            $('#custom_slots_section').hide();
+            $('#standard_tax_rows').show();
+            $('#custom_tax_rows').hide();
+            recalcTotals();
+            applyStandardItemGstLedgerMapping();
         }
-        recalcTotals();
-        updateHeaderPurchaseLedgerVisibility();
-        applyStandardItemGstLedgerMapping();
     });
 
     $('#edit_is_igst').on('change', function () {
-
+        toggleGSTLedger();
         // 🔥 Recalculate each row GST
         $('#editItemsBody tr').each(function () {
             recalcItemRow($(this));
         });
         // 🔥 Then update totals
-        if ($('#gst_calc_mode').val() === 'custom' && $('#no_item_section').is(':visible')) {
-            generateSlotsFromNoItemRows();
-        }
         recalcTotals();
     });
 
@@ -1737,55 +1981,29 @@
 
         if ($('#no_item_section').is(':visible')) {
             items = []; // no items case
-            // let amount = parseFloat($('#noitem_amount').val()) || 0;
-            // let isIGST = $('#edit_is_igst').is(':checked');
 
-            //let cgst = 0, sgst = 0, igst = 0;
-
-            // Default GST % (you can make dynamic later)
-            // let gstRate = 18;
-
-            // if (isIGST) {
-            //     igst = amount * gstRate / 100;
-            // } else {
-            //     cgst = amount * (gstRate / 2) / 100;
-            //     sgst = amount * (gstRate / 2) / 100;
-            // }
-            
-            // let total = amount + cgst + sgst + igst;
-            // let cgst = parseFloat($('#edit_cgst').val()) || 0;
-            // let sgst = parseFloat($('#edit_sgst').val()) || 0;
-            // let igst = parseFloat($('#edit_igst').val()) || 0;
             let amount = parseFloat($('#noitem_amount').val()) || 0;
+            let gstRate = parseFloat($('#noitem_gst_rate').val()) || 0;
             let isIGST = $('#edit_is_igst').is(':checked');
 
-            let gstRate = 18; // 🔥 or dynamic later
-
             let cgst = 0, sgst = 0, igst = 0;
+            let gstAmount = (amount * gstRate) / 100;
 
             if (isIGST) {
-                igst = (amount * gstRate) / 100;
+                igst = gstAmount;
             } else {
-                cgst = (amount * (gstRate / 2)) / 100;
-                sgst = (amount * (gstRate / 2)) / 100;
+                cgst = gstAmount / 2;
+                sgst = gstAmount / 2;
             }
 
             let total = amount + cgst + sgst + igst;
-            // Update UI
-            // $('#sum_amount').text(amount.toFixed(2));
-            // $('#sum_cgst').text(cgst.toFixed(2));
-            // $('#sum_sgst').text(sgst.toFixed(2));
-            // $('#sum_igst').text(igst.toFixed(2));
-            // $('#sum_grand_total').text(total.toFixed(2));
-            // setRoundOffSummary(total);
 
-            // // Hidden fields (VERY IMPORTANT)
-            // $('#edit_amount').val(amount);
-            // $('#edit_cgst').val(cgst);
-            // $('#edit_sgst').val(sgst);
-            // $('#edit_igst').val(igst);
-            // $('#edit_total_amount').val(total);
-            // setRoundOffSummary(total);
+            $('#edit_amount').val(amount.toFixed(2));
+            $('#edit_cgst').val(cgst.toFixed(2));
+            $('#edit_sgst').val(sgst.toFixed(2));
+            $('#edit_igst').val(igst.toFixed(2));
+            // $('#edit_total_amount').val(total.toFixed(2));
+            setRoundOffSummary(total);
         } else {
             $('#editItemsBody tr').each(function () {
                 let row = $(this);
@@ -1811,10 +2029,6 @@
             custom_slots: collectCustomSlots(),
             noitem_amount: $('#noitem_amount').val()
         });
-        const noitemRows = collectNoItemRows();
-        const selectedPurchaseLedger = $('#no_item_section').is(':visible') && noitemRows.length
-            ? noitemRows[0].ledger_name
-            : $('#noitem_purchase_ledger option:selected').text();
  
         $.ajax({
             url: "<?php echo e(route('dn.update')); ?>",
@@ -1829,20 +2043,18 @@
                 party_name: $('#edit_party').val(),
                 gst_no: $('#edit_gst').val(),
                 place_of_supply: $('#edit_place').val(),
-                sales_ledger: $('#edit_ledger').val(),
                 vchType: $('#edit_voucher_type').val(),
                 address: $('#edit_address').val(),
                 pincode: $('#edit_pincode').val(),
                 city: $('#edit_city').val(),
                 is_igst: $('#edit_is_igst').is(':checked') ? 1 : 0,
-
+                
                 amount: $('#edit_amount').val(),
                 cgst: $('#edit_cgst').val(),
                 sgst: $('#edit_sgst').val(),
                 igst: $('#edit_igst').val(),
                 total_amount: $('#edit_total_amount').val(),
                 roundoff: $('#edit_roundoff').val(),
-
                 Remarks: $('#edit_remarks').val(),
 
                 gst_mode: $('#gst_calc_mode').val(),
@@ -1852,13 +2064,15 @@
                 sgst_ledger: $('#sgst_ledger').val(),
 
                 noitem_amount: $('#noitem_amount').val(),
+                noitem_rows: collectNoItemRows(),
+                purchase_ledger_id: $('#noitem_purchase_ledger').val(),
                 against_invoice: $('#edit_against_invoice').val(),
-                purchase_ledger: selectedPurchaseLedger,
-                
-                items: items,
+                purchase_ledger: $('#noitem_purchase_ledger option:selected').text(),
+                purchase_ledger_name: $('#noitem_purchase_ledger option:selected').text(),
                 entry_mode: $('#no_item_section').is(':visible') ? 'noitem' : 'item',
-                custom_slots: collectCustomSlots(),
-                noitem_rows: noitemRows
+                gst_rate: $('#noitem_gst_rate').val(),
+                items: items,
+                custom_slots: collectCustomSlots()
             },
             success: (res) => { 
                     if (res.status) {
@@ -1875,9 +2089,11 @@
              },
             // error:   (xhr) => { 
             //         let msg = 'Server error';
+
             //         if (xhr.responseJSON && xhr.responseJSON.message) {
             //             msg = xhr.responseJSON.message;
             //         }
+
             //         showToast(msg, 'error');
             //     }
             error: (xhr) => {
@@ -1886,7 +2102,6 @@
             }
         });
     });
-
 
     function collectCustomSlots() {
         let slots = [];
@@ -1897,12 +2112,12 @@
             let rateText = row.find('.slot-rate').text();
 
             slots.push({
-                rate: parseFloat(rateText.replace('%','')) || parseFloat(row.data('rate')) || 0,
+                rate: parseFloat(rateText.replace('%','')) || 0,
 
                 taxable: parseFloat(
                     row.find('.slot-taxable').text().replace(/[^0-9.]/g, '')
                 ) || 0,
-                purchase_ledger_id: row.find('.slot-purchase-ledger-id').val() || null,
+                purchase_ledger_id: row.find('.slot_purchase_ledger_id').val() || null,
 
                 igst_ledger_id: row.find('.slot-igst-ledger').val() || null,
                 igst_amount: parseFloat(row.find('.slot-igst-amt').val()) || 0,
@@ -1924,6 +2139,56 @@
 
     function fmt(v) {
         return parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    function renderNoItemCustomSlots(rateMap) {
+        let slotHtml = '';
+        let customIgst = 0;
+        let customCgst = 0;
+        let customSgst = 0;
+
+        Object.keys(rateMap).forEach(function(mapKey) {
+            let data = rateMap[mapKey] || { amt: 0, igst: 0, cgst: 0, sgst: 0 };
+            let rate = (parseFloat(data.rate ?? mapKey) || 0).toString();
+            let igstAmt = parseFloat(data.igst) || 0;
+            let cgstAmt = parseFloat(data.cgst) || 0;
+            let sgstAmt = parseFloat(data.sgst) || 0;
+
+            customIgst += igstAmt;
+            customCgst += cgstAmt;
+            customSgst += sgstAmt;
+
+            let iOpts = IGST_LEDGERS.map(l => {
+                let sel = String(l.id) === String(mappedGstLedgerId('igst', null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
+                return `<option value="${l.id}" ${sel}>${l.name}</option>`;
+            }).join('');
+            let cOpts = CGST_LEDGERS.map(l => {
+                let sel = String(l.id) === String(mappedGstLedgerId('cgst', null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
+                return `<option value="${l.id}" ${sel}>${l.name}</option>`;
+            }).join('');
+            let sOpts = SGST_LEDGERS.map(l => {
+                let sel = String(l.id) === String(mappedGstLedgerId('sgst', null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
+                return `<option value="${l.id}" ${sel}>${l.name}</option>`;
+            }).join('');
+
+            slotHtml += `<tr data-slot-key="${data.slotKey || mapKey}" data-rate="${rate}">
+                <td><span class="rate-badge"><span class="slot-rate">${rate}%</span></span><br><small class="slot-taxable" style="font-size:9px;color:#6b7280;">Taxable: ${fmt(data.amt)}</small></td>
+                <td><strong>${fmt(data.amt)}</strong><input type="hidden" class="slot_purchase_ledger_id" value="${data.ledgerId || ''}"></td>
+                <td><select class="slot-igst-ledger" data-rate="${rate}"><option value="">-- Ledger --</option>${iOpts}</select></td>
+                <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${igstAmt.toFixed(2)}" step="any"></td>
+                <td><select class="slot-cgst-ledger" data-rate="${rate}"><option value="">-- Ledger --</option>${cOpts}</select></td>
+                <td><input type="number" class="slot-cgst-amt" data-rate="${rate}" value="${cgstAmt.toFixed(2)}" step="any"></td>
+                <td><select class="slot-sgst-ledger" data-rate="${rate}"><option value="">-- Ledger --</option>${sOpts}</select></td>
+                <td><input type="number" class="slot-sgst-amt" data-rate="${rate}" value="${sgstAmt.toFixed(2)}" step="any"></td>
+            </tr>`;
+        });
+
+        $('#customSlotsBody').html(slotHtml);
+        $('#custom_tax_rows').html(`
+            <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${fmt(customIgst)}</span></div>
+            <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${fmt(customCgst)}</span></div>
+            <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${fmt(customSgst)}</span></div>
+        `);
     }
 
     function buildItemRow(item) {
@@ -1983,70 +2248,315 @@
         row.find('.item-total').val(total.toFixed(2));
     }
 
-    function itemGstLedgerId(item, keys) {
-        for (const key of keys) {
-            if (item && item[key]) {
-                return String(item[key]);
-            }
-        }
-        return '';
-    }
-
-    function findItemMasterByName(itemName = '') {
-        const normalized = normalizeName(itemName);
-        return ITEM_MASTER.find(item => normalizeName(item.strItemName || item.name || item.item_name) === normalized) || null;
-    }
-
-    function getSelectedItemGstMapping() {
-        let mapping = null;
-        $('#editItemsBody tr').each(function () {
-            if (mapping) return;
-            const itemName = $(this).find('.item-name').val() || $(this).find('.item-name option:selected').text();
-            const item = findItemMasterByName(itemName);
-            if (!item) return;
-
-            const cgstId = itemGstLedgerId(item, ['cgst_id', 'CGSTLedgerId']);
-            const sgstId = itemGstLedgerId(item, ['sgst_id', 'SGSTLedgerId']);
-            const igstId = itemGstLedgerId(item, ['igst_id', 'IGSTLedgerId']);
-            if (cgstId || sgstId || igstId) {
-                mapping = { cgst_id: cgstId, sgst_id: sgstId, igst_id: igstId };
-            }
-        });
-        return mapping;
-    }
-
-    function getHeaderPurchaseLedgerGstMapping() {
-        const ledgerId = $('#noitem_purchase_ledger').val();
-        const ledgerName = $('#noitem_purchase_ledger option:selected').text();
-        return getPurchaseLedgerMapping(ledgerId, ledgerName);
-    }
-
-    function selectGstLedger(selector, ledgerId) {
-        if (ledgerId) {
-            $(selector).val(String(ledgerId)).trigger('change');
-        }
-    }
-
-    function applyStandardItemGstLedgerMapping() {
-        if ($('#gst_calc_mode').val() !== 'standard' || $('#no_item_section').is(':visible')) {
-            return;
-        }
-
-        const mapping = getSelectedItemGstMapping() || getHeaderPurchaseLedgerGstMapping();
-        selectGstLedger('#igst_ledger', mappedGstLedgerId(mapping, 'igst_id'));
-        selectGstLedger('#cgst_ledger', mappedGstLedgerId(mapping, 'cgst_id'));
-        selectGstLedger('#sgst_ledger', mappedGstLedgerId(mapping, 'sgst_id'));
-    }
-
-    function renderCustomTaxSummary(igst = 0, cgst = 0, sgst = 0) {
-        $('#custom_tax_rows').html(`
-            <div class="gst-summary-title">GST Summary</div>
-            <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${fmt(igst)}</span></div>
-            <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${fmt(cgst)}</span></div>
-            <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${fmt(sgst)}</span></div>`);
-    }
-
     // Master recalc — updates summary, footer, and custom slots
+    // function recalcTotals() {
+    //     let mode = $('#gst_calc_mode').val();
+    //     let sumAmt=0, sumSgst=0, sumCgst=0, sumIgst=0, sumTotal=0;
+        
+    //     // ✅ NO ITEM MODE
+    //     if ($('#no_item_section').is(':visible')) {
+
+    //         let amount = parseFloat($('#noitem_amount').val()) || 0;
+    //         let isIGST = $('#edit_is_igst').is(':checked');
+
+    //         let cgst = 0, sgst = 0, igst = 0;
+
+    //         let gstRate = parseFloat($('#noitem_gst_rate').val()) || 0;
+
+    //         if (mode === 'standard') {
+    //             if (isIGST) {
+    //                 igst = (amount * gstRate) / 100;
+    //             } else {
+    //                 cgst = (amount * gstRate / 2) / 100;
+    //                 sgst = (amount * gstRate / 2) / 100;
+    //             }
+    //         } else if (mode === 'custom') {
+    //             // 🔥 CUSTOM MODE: Recalculate GST for each slot based on new amount
+    //             let totalCgst = 0, totalSgst = 0, totalIgst = 0;
+
+    //             $('#customSlotsBody tr').each(function () {
+    //                 let rate = parseFloat($(this).data('rate')) || 0;
+                    
+    //                 // Calculate GST amounts based on new amount and rate
+    //                 let slotIgst = 0, slotCgst = 0, slotSgst = 0;
+    //                 if (isIGST) {
+    //                     slotIgst = (amount * rate) / 100;
+    //                 } else {
+    //                     slotCgst = (amount * (rate / 2)) / 100;
+    //                     slotSgst = (amount * (rate / 2)) / 100;
+    //                 }
+                    
+    //                 // Update the slot input fields
+    //                 $(this).find('.slot-igst-amt').val(slotIgst.toFixed(2));
+    //                 $(this).find('.slot-cgst-amt').val(slotCgst.toFixed(2));
+    //                 $(this).find('.slot-sgst-amt').val(slotSgst.toFixed(2));
+                    
+    //                 // Update taxable amount display
+    //                 $(this).find('.slot-taxable').text(amount.toFixed(2));
+                    
+    //                 totalIgst += slotIgst;
+    //                 totalCgst += slotCgst;
+    //                 totalSgst += slotSgst;
+    //             });
+
+    //             cgst = totalCgst;
+    //             sgst = totalSgst;
+    //             igst = totalIgst;
+    //         }
+
+    //         // ✅ UPDATE UI
+    //         $('#sum_amount').text(amount.toFixed(2));
+    //         $('#sum_cgst').text(cgst.toFixed(2));
+    //         $('#sum_sgst').text(sgst.toFixed(2));
+    //         $('#sum_igst').text(igst.toFixed(2));
+
+    //         let total = amount + cgst + sgst + igst;
+    //         $('#sum_grand_total').text(total.toFixed(2));
+
+    //         // 🔥 UPDATE CUSTOM TAX ROWS SUMMARY (if in custom mode)
+    //         if (mode === 'custom') {
+    //             let customSummaryHtml = `
+    //                 <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${igst.toFixed(2)}</span></div>
+    //                 <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${cgst.toFixed(2)}</span></div>
+    //                 <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${sgst.toFixed(2)}</span></div>`;
+    //             $('#custom_tax_rows').html(customSummaryHtml);
+    //         }
+
+    //         // ✅ IMPORTANT (for save)
+    //         $('#edit_amount').val(amount);
+    //         $('#edit_cgst').val(cgst);
+    //         $('#edit_sgst').val(sgst);
+    //         $('#edit_igst').val(igst);
+    //         $('#edit_total_amount').val(total);
+
+    //         return; // 🔥 STOP HERE
+    //     }
+
+    //     if ($('#gst_calc_mode').val() === 'custom') {
+
+    //         let totalTaxable = 0;
+    //         let totalCgst = 0;
+    //         let totalSgst = 0;
+    //         let totalIgst = 0;
+
+    //         $('#customSlotsBody tr').each(function () {
+
+    //             let taxable = parseFloat($(this).find('.slot-taxable').text()) || 0;
+    //             let cgst = parseFloat($(this).find('.slot-cgst-amt').val()) || 0;
+    //             let sgst = parseFloat($(this).find('.slot-sgst-amt').val()) || 0;
+    //             let igst = parseFloat($(this).find('.slot-igst-amt').val()) || 0;
+
+    //             totalTaxable += taxable;
+    //             totalCgst += cgst;
+    //             totalSgst += sgst;
+    //             totalIgst += igst;
+    //         });
+
+    //         let grandTotal = totalTaxable + totalCgst + totalSgst + totalIgst;
+
+    //         $('#sum_amount').text(totalTaxable.toFixed(2));
+    //         $('#sum_cgst').text(totalCgst.toFixed(2));
+    //         $('#sum_sgst').text(totalSgst.toFixed(2));
+    //         $('#sum_igst').text(totalIgst.toFixed(2));
+    //         $('#sum_grand_total').text(grandTotal.toFixed(2));
+
+    //         $('#edit_amount').val(totalTaxable);
+    //         $('#edit_cgst').val(totalCgst);
+    //         $('#edit_sgst').val(totalSgst);
+    //         $('#edit_igst').val(totalIgst);
+    //         $('#edit_total_amount').val(grandTotal);
+
+    //         return;
+    //     }
+    //     // Collect per-rate data for custom mode
+    //     let rateMap = {}; // { '5': {amt,igst,cgst,sgst}, '18': {...}, ... }
+
+    //     $('#editItemsBody tr').each(function () {
+    //         let row     = $(this);
+    //         let amt     = parseFloat(row.find('.item-amount').val()) || 0;
+    //         let sgst    = parseFloat(row.find('.item-sgst').val())   || 0;
+    //         let cgst    = parseFloat(row.find('.item-cgst').val())   || 0;
+    //         let igst    = parseFloat(row.find('.item-igst').val())   || 0;
+    //         let total   = parseFloat(row.find('.item-total').val())  || 0;
+    //         let gstRate = row.find('.item-gst_rate').val() || '0';
+
+    //         sumAmt   += amt;
+    //         sumSgst  += sgst;
+    //         sumCgst  += cgst;
+    //         sumIgst  += igst;
+    //         sumTotal += total;
+
+    //         // Accumulate into rate bucket for custom mode
+    //         if (!rateMap[gstRate]) rateMap[gstRate] = { amt:0, igst:0, cgst:0, sgst:0 };
+    //         rateMap[gstRate].amt  += amt;
+    //         rateMap[gstRate].igst += igst;
+    //         rateMap[gstRate].cgst += cgst;
+    //         rateMap[gstRate].sgst += sgst;
+    //     });
+
+    //     // Update hidden inputs (keep existing save working)
+    //     $('#edit_amount').val(sumAmt.toFixed(2));
+    //     $('#edit_sgst').val(sumSgst.toFixed(2));
+    //     $('#edit_cgst').val(sumCgst.toFixed(2));
+    //     $('#edit_igst').val(sumIgst.toFixed(2));
+    //     $('#edit_total_amount').val(sumTotal.toFixed(2));
+
+    //     // Update visible summary
+    //     $('#sum_amount').text(fmt(sumAmt));
+    //     $('#foot_amount').text(fmt(sumAmt));
+    //     $('#foot_total').text(fmt(sumTotal));
+    //     $('#sum_grand_total').text(fmt(sumTotal));
+        
+    //     if ($('#no_item_section').is(':visible')) {
+
+    //         let amount = parseFloat($('#noitem_amount').val()) || 0;
+    //         let isIGST = $('#edit_is_igst').is(':checked');
+
+    //         let gstRate = 18;
+
+    //         let cgst = 0, sgst = 0, igst = 0;
+
+    //         if (isIGST) {
+    //             igst = amount * gstRate / 100;
+    //         } else {
+    //             cgst = amount * (gstRate / 2) / 100;
+    //             sgst = amount * (gstRate / 2) / 100;
+    //         }
+
+    //         let total = amount + cgst + sgst + igst;
+
+    //         $('#sum_amount').text(amount.toFixed(2));
+    //         $('#sum_cgst').text(cgst.toFixed(2));
+    //         $('#sum_sgst').text(sgst.toFixed(2));
+    //         $('#sum_igst').text(igst.toFixed(2));
+    //         $('#sum_grand_total').text(total.toFixed(2));
+
+    //         // hidden
+    //         $('#edit_amount').val(amount);
+    //         $('#edit_cgst').val(cgst);
+    //         $('#edit_sgst').val(sgst);
+    //         $('#edit_igst').val(igst);
+    //         $('#edit_total_amount').val(total);
+
+    //         return;
+    //     }
+    //     // Renumber rows
+    //     $('#editItemsBody tr').each(function(i) { $(this).find('.td-sr').text(i+1); });
+
+    //     if (mode === 'standard') {
+    //         $('#sum_sgst').text(fmt(sumSgst));
+    //         $('#sum_cgst').text(fmt(sumCgst));
+    //         $('#sum_igst').text(fmt(sumIgst));
+    //     } else {
+    //         // CUSTOM MODE: render rate-wise slots
+    //         //renderCustomSlots(rateMap, sumTotal);
+            
+    //     }
+    // }
+
+    // function recalcTotals() {
+
+    //     let isIGST = $('#edit_is_igst').is(':checked');
+    //     let gstMode = $('#gst_calc_mode').val();
+
+    //     let sumAmount = 0;
+    //     let sumCgst = 0;
+    //     let sumSgst = 0;
+    //     let sumIgst = 0;
+
+    //     // =========================
+    //     // 🟢 WITH ITEM
+    //     // =========================
+    //     $('#editItemsBody tr').each(function () {
+
+    //         let qty = parseFloat($(this).find('.item-qty').val()) || 0;
+    //         let rate = parseFloat($(this).find('.item-rate').val()) || 0;
+    //         let gstRate = parseFloat($(this).find('.item-gst_rate').val()) || 0;
+
+    //         let amount = qty * rate;
+    //         $(this).find('.amount').val(amount.toFixed(2));
+
+    //         let gstAmount = (amount * gstRate) / 100;
+
+    //         if (isIGST) {
+    //             $(this).find('.slot-igst-amt').val(gstAmount.toFixed(2));
+    //             $(this).find('.slot-cgst-amt').val(0);
+    //             $(this).find('.slot-sgst-amt').val(0);
+
+    //             sumIgst += gstAmount;
+    //         } else {
+    //             let half = gstAmount / 2;
+
+    //             $(this).find('.slot-cgst-amt').val(half.toFixed(2));
+    //             $(this).find('.slot-sgst-amt').val(half.toFixed(2));
+    //             $(this).find('.slot-igst-amt').val(0);
+
+    //             sumCgst += half;
+    //             sumSgst += half;
+    //         }
+
+    //         sumAmount += amount;
+    //     });
+
+    //     // =========================
+    //     // 🟡 NO ITEM
+    //     // =========================
+    //     if ($('#no_item_section').is(':visible')) {
+
+    //         let amount = parseFloat($('#noitem_amount').val()) || 0;
+    //         let gstRate = parseFloat($('#noitem_gst_rate').val()) || 0;
+
+    //         let gstAmount = (amount * gstRate) / 100;
+
+    //         sumAmount = amount;
+
+    //         if (isIGST) {
+    //             sumIgst = gstAmount;
+    //             sumCgst = 0;
+    //             sumSgst = 0;
+    //         } else {
+    //             sumCgst = gstAmount / 2;
+    //             sumSgst = gstAmount / 2;
+    //             sumIgst = 0;
+    //         }
+    //     }
+
+    //     // =========================
+    //     // 🔵 CUSTOM MODE (OVERRIDE)
+    //     // =========================
+    //     if (gstMode === 'custom') {
+
+    //         sumCgst = 0;
+    //         sumSgst = 0;
+    //         sumIgst = 0;
+
+    //         $('#customSlotsBody tr').each(function () {
+    //             sumCgst += parseFloat($(this).find('.cgst_amount').val()) || 0;
+    //             sumSgst += parseFloat($(this).find('.sgst_amount').val()) || 0;
+    //             sumIgst += parseFloat($(this).find('.igst_amount').val()) || 0;
+    //         });
+    //     }
+
+    //     // =========================
+    //     // FINAL UI UPDATE
+    //     // =========================
+    //     $('#sum_amount').text(sumAmount.toFixed(2));
+    //     $('#sum_cgst').text(sumCgst.toFixed(2));
+    //     $('#sum_sgst').text(sumSgst.toFixed(2));
+    //     $('#sum_igst').text(sumIgst.toFixed(2));
+
+    //     let grand = sumAmount + sumCgst + sumSgst + sumIgst;
+    //     $('#sum_grand_total').text(grand.toFixed(2));
+
+    //     // hidden fields
+    //     $('#edit_amount').val(sumAmount);
+    //     $('#edit_cgst').val(sumCgst);
+    //     $('#edit_sgst').val(sumSgst);
+    //     $('#edit_igst').val(sumIgst);
+    //     $('#edit_total_amount').val(grand);
+
+    // }
+
     function getSummaryBaseTotal() {
         return (parseFloat($('#edit_amount').val()) || 0)
             + (parseFloat($('#edit_cgst').val()) || 0)
@@ -2054,6 +2564,7 @@
             + (parseFloat($('#edit_igst').val()) || 0);
     }
     const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
+
     function calculateRoundOffAmountForSummary(total) {
         total = parseFloat(total) || 0;
         let roundedTotal;
@@ -2072,295 +2583,226 @@
     }
 
     function applyRoundOffSummary(total, roundOff) {
-            total = parseFloat(total) || 0;
-            roundOff = parseFloat(roundOff) || 0;
-            let roundedTotal = total + roundOff;
+        total = parseFloat(total) || 0;
+        roundOff = parseFloat(roundOff) || 0;
+        let roundedTotal = total + roundOff;
 
-            $('#sum_roundoff').val(roundOff.toFixed(2));
-            $('#edit_roundoff').val(roundOff.toFixed(2));
-            $('#sum_grand_total').text(roundedTotal.toFixed(2));
-            $('#edit_total_amount').val(roundedTotal.toFixed(2));
+        $('#sum_roundoff').val(roundOff.toFixed(2));
+        $('#edit_roundoff').val(roundOff.toFixed(2));
+        $('#sum_grand_total').text(roundedTotal.toFixed(2));
+        $('#edit_total_amount').val(roundedTotal.toFixed(2));
 
-            return roundedTotal;
-        }
+        return roundedTotal;
+    }
 
     function setRoundOffSummary(total, roundOffAmount = null) {
-            total = parseFloat(total) || 0;
-            if (roundOffAmount !== null && roundOffAmount !== undefined) {
-                let roundOff = parseFloat(roundOffAmount) || 0;
-                return applyRoundOffSummary(total - roundOff, roundOff);
-            }
-
-            let roundOff = calculateRoundOffAmountForSummary(total);
-            return applyRoundOffSummary(total, roundOff);
+        total = parseFloat(total) || 0;
+        if (roundOffAmount !== null && roundOffAmount !== undefined) {
+            let roundOff = parseFloat(roundOffAmount) || 0;
+            return applyRoundOffSummary(total - roundOff, roundOff);
         }
+
+        let roundOff = calculateRoundOffAmountForSummary(total);
+        return applyRoundOffSummary(total, roundOff);
+    }
 
     $(document).on('input change', '#sum_roundoff', function() {
-            applyRoundOffSummary(getSummaryBaseTotal(), $(this).val());
-        });
+        applyRoundOffSummary(getSummaryBaseTotal(), $(this).val());
+    });
 
     function recalcTotals() {
-        let mode = $('#gst_calc_mode').val();
-        let sumAmt=0, sumSgst=0, sumCgst=0, sumIgst=0, sumTotal=0;
-        const recalcNoItemRows = () => {
-            let rowAmount = 0, rowCgst = 0, rowSgst = 0, rowIgst = 0;
-            const rowIsIGST = $('#edit_is_igst').is(':checked');
+        let isIGST = $('#edit_is_igst').is(':checked');
 
-            collectNoItemRows().forEach(row => {
-                const amount = parseFloat(row.amount) || 0;
-                const gstRate = parseFloat(row.gst) || 0;
-                const gstAmount = amount * gstRate / 100;
-                rowAmount += amount;
-                if (rowIsIGST) {
-                    rowIgst += gstAmount;
+        if ($('#no_item_section').is(':visible')) {
+            let amount = 0;
+            let cgst = 0;
+            let sgst = 0;
+            let igst = 0;
+            let rateMap = {};
+
+            $('#noItemBody tr').each(function(index) {
+                let rowAmount = parseFloat($(this).find('.noitem-amount').val()) || 0;
+                let gstRate = parseFloat($(this).find('.noitem-gst').val()) || 0;
+                let gstAmount = (rowAmount * gstRate) / 100;
+                let ledgerSelect = $(this).find('.noitem-ledger');
+                let ledgerId = ledgerSelect.val() || '';
+                let ledgerName = ledgerSelect.find('option:selected').text() || '';
+                let rateKey = `row:${index}|${gstRate || 0}|${ledgerId}`;
+
+                amount += rowAmount;
+
+                if (!rateMap[rateKey]) {
+                    rateMap[rateKey] = {
+                        amt: 0,
+                        igst: 0,
+                        cgst: 0,
+                        sgst: 0,
+                        rate: gstRate,
+                        ledgerId: ledgerId,
+                        ledgerName: ledgerName,
+                        slotKey: rateKey
+                    };
+                }
+
+                rateMap[rateKey].amt += rowAmount;
+
+                if (isIGST) {
+                    igst += gstAmount;
+                    rateMap[rateKey].igst += gstAmount;
                 } else {
-                    rowCgst += gstAmount / 2;
-                    rowSgst += gstAmount / 2;
+                    cgst += gstAmount / 2;
+                    sgst += gstAmount / 2;
+                    rateMap[rateKey].cgst += gstAmount / 2;
+                    rateMap[rateKey].sgst += gstAmount / 2;
                 }
             });
 
-            if (mode === 'custom') {
-                rowCgst = rowSgst = rowIgst = 0;
-                $('#customSlotsBody tr').each(function () {
-                    rowIgst += parseFloat($(this).find('.slot-igst-amt').val()) || 0;
-                    rowCgst += parseFloat($(this).find('.slot-cgst-amt').val()) || 0;
-                    rowSgst += parseFloat($(this).find('.slot-sgst-amt').val()) || 0;
-                });
-            }
+            let total = amount + cgst + sgst + igst;
 
-            const rowTotal = rowAmount + rowCgst + rowSgst + rowIgst;
-            $('#sum_amount').text(rowAmount.toFixed(2));
-            $('#sum_cgst').text(rowCgst.toFixed(2));
-            $('#sum_sgst').text(rowSgst.toFixed(2));
-            $('#sum_igst').text(rowIgst.toFixed(2));
-            // $('#sum_grand_total').text(rowTotal.toFixed(2));
-            setRoundOffSummary(rowTotal);
-            $('#edit_amount').val(rowAmount);
-            $('#edit_cgst').val(rowCgst);
-            $('#edit_sgst').val(rowSgst);
-            $('#edit_igst').val(rowIgst);
-            // $('#edit_total_amount').val(rowTotal);
-            setRoundOffSummary(rowTotal);
-            if (mode === 'custom') {
-                // $('#custom_tax_rows').html(`
-                //     <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${rowIgst.toFixed(2)}</span></div>
-                //     <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${rowCgst.toFixed(2)}</span></div>
-                //     <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${rowSgst.toFixed(2)}</span></div>`);
-                renderCustomTaxSummary(rowIgst, rowCgst, rowSgst);
-            }
-        };
-        
-        // ✅ NO ITEM MODE
-        if ($('#no_item_section').is(':visible')) {
-            recalcNoItemRows();
-            return;
+            $('#edit_amount').val(amount.toFixed(2));
+            $('#edit_cgst').val(cgst.toFixed(2));
+            $('#edit_sgst').val(sgst.toFixed(2));
+            $('#edit_igst').val(igst.toFixed(2));
+            // $('#edit_total_amount').val(total.toFixed(2));
+            setRoundOffSummary(total);
 
-            let amount = parseFloat($('#noitem_amount').val()) || 0;
-            let isIGST = $('#edit_is_igst').is(':checked');
-
-            let cgst = 0, sgst = 0, igst = 0;
-
-            let gstRate = parseFloat($('#noitem_gst_rate').val()) || 0;
-
-            if (mode === 'standard') {
-                if (isIGST) {
-                    igst = (amount * gstRate) / 100;
-                } else {
-                    cgst = (amount * gstRate / 2) / 100;
-                    sgst = (amount * gstRate / 2) / 100;
-                }
-            } else if (mode === 'custom') {
-                // 🔥 CUSTOM MODE: Recalculate GST for each slot based on new amount
-                let totalCgst = 0, totalSgst = 0, totalIgst = 0;
-
-                $('#customSlotsBody tr').each(function () {
-                    let rate = parseFloat($(this).data('rate')) || 0;
-                    
-                    // Calculate GST amounts based on new amount and rate
-                    let slotIgst = 0, slotCgst = 0, slotSgst = 0;
-                    if (isIGST) {
-                        slotIgst = (amount * rate) / 100;
-                    } else {
-                        slotCgst = (amount * (rate / 2)) / 100;
-                        slotSgst = (amount * (rate / 2)) / 100;
-                    }
-                    
-                    // Update the slot input fields
-                    $(this).find('.slot-igst-amt').val(slotIgst.toFixed(2));
-                    $(this).find('.slot-cgst-amt').val(slotCgst.toFixed(2));
-                    $(this).find('.slot-sgst-amt').val(slotSgst.toFixed(2));
-                    
-                    // Update taxable amount display
-                    $(this).find('.slot-taxable').text(amount.toFixed(2));
-                    
-                    totalIgst += slotIgst;
-                    totalCgst += slotCgst;
-                    totalSgst += slotSgst;
-                });
-
-                cgst = totalCgst;
-                sgst = totalSgst;
-                igst = totalIgst;
-            }
-
-            // ✅ UPDATE UI
             $('#sum_amount').text(amount.toFixed(2));
             $('#sum_cgst').text(cgst.toFixed(2));
             $('#sum_sgst').text(sgst.toFixed(2));
             $('#sum_igst').text(igst.toFixed(2));
-
-            let total = amount + cgst + sgst + igst;
             // $('#sum_grand_total').text(total.toFixed(2));
             setRoundOffSummary(total);
+            $('#noitem_amount').val(amount.toFixed(2));
+            $('#noitem_gst_rate').val($('#noItemBody tr:first .noitem-gst').val() || 0);
 
-            // 🔥 UPDATE CUSTOM TAX ROWS SUMMARY (if in custom mode)
-            if (mode === 'custom') {
-                let customSummaryHtml = `
-                    <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${igst.toFixed(2)}</span></div>
-                    <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${cgst.toFixed(2)}</span></div>
-                    <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${sgst.toFixed(2)}</span></div>`;
-                $('#custom_tax_rows').html(customSummaryHtml);
+            if ($('#gst_calc_mode').val() === 'custom') {
+                renderNoItemCustomSlots(rateMap);
             }
-
-            // ✅ IMPORTANT (for save)
-            $('#edit_amount').val(amount);
-            $('#edit_cgst').val(cgst);
-            $('#edit_sgst').val(sgst);
-            $('#edit_igst').val(igst);
-            // $('#edit_total_amount').val(total);
-            setRoundOffSummary(total);
-
-            return; // 🔥 STOP HERE
-        }
-
-        if ($('#gst_calc_mode').val() === 'custom') {
-
-            let totalTaxable = 0;
-            let totalCgst = 0;
-            let totalSgst = 0;
-            let totalIgst = 0;
-
-            $('#customSlotsBody tr').each(function () {
-
-                let taxable = parseFloat($(this).find('.slot-taxable').text()) || 0;
-                let cgst = parseFloat($(this).find('.slot-cgst-amt').val()) || 0;
-                let sgst = parseFloat($(this).find('.slot-sgst-amt').val()) || 0;
-                let igst = parseFloat($(this).find('.slot-igst-amt').val()) || 0;
-
-                totalTaxable += taxable;
-                totalCgst += cgst;
-                totalSgst += sgst;
-                totalIgst += igst;
-            });
-
-            let grandTotal = totalTaxable + totalCgst + totalSgst + totalIgst;
-
-            $('#sum_amount').text(totalTaxable.toFixed(2));
-            $('#sum_cgst').text(totalCgst.toFixed(2));
-            $('#sum_sgst').text(totalSgst.toFixed(2));
-            $('#sum_igst').text(totalIgst.toFixed(2));
-            // $('#sum_grand_total').text(grandTotal.toFixed(2));
-            setRoundOffSummary(grandTotal);
-
-            $('#edit_amount').val(totalTaxable);
-            $('#edit_cgst').val(totalCgst);
-            $('#edit_sgst').val(totalSgst);
-            $('#edit_igst').val(totalIgst);
-            // $('#edit_total_amount').val(grandTotal);
-            setRoundOffSummary(grandTotal);
-            renderCustomTaxSummary(totalIgst, totalCgst, totalSgst);
-
             return;
         }
-        // Collect per-rate data for custom mode
-        let rateMap = {}; // { '5': {amt,igst,cgst,sgst}, '18': {...}, ... }
+
+        let sumAmount = 0;
+        let sumCgst = 0;
+        let sumSgst = 0;
+        let sumIgst = 0;
 
         $('#editItemsBody tr').each(function () {
-            let row     = $(this);
-            let amt     = parseFloat(row.find('.item-amount').val()) || 0;
-            let sgst    = parseFloat(row.find('.item-sgst').val())   || 0;
-            let cgst    = parseFloat(row.find('.item-cgst').val())   || 0;
-            let igst    = parseFloat(row.find('.item-igst').val())   || 0;
-            let total   = parseFloat(row.find('.item-total').val())  || 0;
-            let gstRate = row.find('.item-gst_rate').val() || '0';
 
-            sumAmt   += amt;
-            sumSgst  += sgst;
-            sumCgst  += cgst;
-            sumIgst  += igst;
-            sumTotal += total;
+            let qty  = parseFloat($(this).find('.item-qty').val()) || 0;
+            let rate = parseFloat($(this).find('.item-rate').val()) || 0;
+            let gst  = parseFloat($(this).find('.item-gst_rate').val()) || 0;
 
-            // Accumulate into rate bucket for custom mode
-            if (!rateMap[gstRate]) rateMap[gstRate] = { amt:0, igst:0, cgst:0, sgst:0 };
-            rateMap[gstRate].amt  += amt;
-            rateMap[gstRate].igst += igst;
-            rateMap[gstRate].cgst += cgst;
-            rateMap[gstRate].sgst += sgst;
-        });
+            if (!qty || !rate) return;
 
-        // Update hidden inputs (keep existing save working)
-        $('#edit_amount').val(sumAmt.toFixed(2));
-        $('#edit_sgst').val(sumSgst.toFixed(2));
-        $('#edit_cgst').val(sumCgst.toFixed(2));
-        $('#edit_igst').val(sumIgst.toFixed(2));
-        // $('#edit_total_amount').val(sumTotal.toFixed(2));
-        setRoundOffSummary(sumTotal);
+            let amount = qty * rate;
+            $(this).find('.item-amount').val(amount.toFixed(2));
 
-        // Update visible summary
-        $('#sum_amount').text(fmt(sumAmt));
-        $('#foot_amount').text(fmt(sumAmt));
-        $('#foot_total').text(fmt(sumTotal));
-        // $('#sum_grand_total').text(fmt(sumTotal));
-        setRoundOffSummary(sumTotal);
-        
-        if ($('#no_item_section').is(':visible')) {
-
-            let amount = parseFloat($('#noitem_amount').val()) || 0;
-            let isIGST = $('#edit_is_igst').is(':checked');
-
-            let gstRate = 18;
-
-            let cgst = 0, sgst = 0, igst = 0;
+            let gstAmount = (amount * gst) / 100;
 
             if (isIGST) {
-                igst = amount * gstRate / 100;
+                sumIgst += gstAmount;
             } else {
-                cgst = amount * (gstRate / 2) / 100;
-                sgst = amount * (gstRate / 2) / 100;
+                sumCgst += gstAmount / 2;
+                sumSgst += gstAmount / 2;
             }
 
-            let total = amount + cgst + sgst + igst;
+            sumAmount += amount;
+        });
 
-            $('#sum_amount').text(amount.toFixed(2));
-            $('#sum_cgst').text(cgst.toFixed(2));
-            $('#sum_sgst').text(sgst.toFixed(2));
-            $('#sum_igst').text(igst.toFixed(2));
-            // $('#sum_grand_total').text(total.toFixed(2));
-            setRoundOffSummary(total);
+        $('#sum_amount').text(sumAmount.toFixed(2));
+        $('#sum_cgst').text(sumCgst.toFixed(2));
+        $('#sum_sgst').text(sumSgst.toFixed(2));
+        $('#sum_igst').text(sumIgst.toFixed(2));
+        applyStandardItemGstLedgerMapping();
 
-            // hidden
-            $('#edit_amount').val(amount);
-            $('#edit_cgst').val(cgst);
-            $('#edit_sgst').val(sgst);
-            $('#edit_igst').val(igst);
-            // $('#edit_total_amount').val(total);
-            setRoundOffSummary(total);
+        let grand = sumAmount + sumCgst + sumSgst + sumIgst;
 
-            return;
-        }
-        // Renumber rows
-        $('#editItemsBody tr').each(function(i) { $(this).find('.td-sr').text(i+1); });
+        // $('#sum_grand_total').text(grand.toFixed(2));
+        setRoundOffSummary(grand);
 
-        if (mode === 'standard') {
-            $('#sum_sgst').text(fmt(sumSgst));
-            $('#sum_cgst').text(fmt(sumCgst));
-            $('#sum_igst').text(fmt(sumIgst));
-            applyStandardItemGstLedgerMapping();
-        } else {
-            // CUSTOM MODE: render rate-wise slots
-            //renderCustomSlots(rateMap, sumTotal);
-            
-        }
+        // let isIGST = $('#edit_is_igst').is(':checked');
+        // let gstMode = $('#gst_calc_mode').val();
+
+        // let sumAmount = 0;
+        // let sumCgst = 0;
+        // let sumSgst = 0;
+        // let sumIgst = 0;
+
+        // // =========================
+        // // 🟢 ITEM CALCULATION
+        // // =========================
+        // $('#editItemsBody tr').each(function () {
+
+        //     let qty = parseFloat($(this).find('.qty').val()) || 0;
+        //     let rate = parseFloat($(this).find('.rate').val()) || 0;
+        //     let gstRate = parseFloat($(this).find('.gst').val()) || 0;
+
+        //     let amount = qty * rate;
+
+        //     // IMPORTANT: set correct class
+        //     $(this).find('.amount').val(amount.toFixed(2));
+        //     // let amount = qty * rate;
+
+        //     // $(this).find('.item-amount').val(amount.toFixed(2));
+
+        //     sumAmount += amount;
+
+        //     // ❌ ONLY calculate GST if NOT custom
+        //     if (gstMode !== 'custom') {
+
+        //         let gstAmount = (amount * gstRate) / 100;
+
+        //         if (isIGST) {
+        //             sumIgst += gstAmount;
+        //         } else {
+        //             sumCgst += gstAmount / 2;
+        //             sumSgst += gstAmount / 2;
+        //         }
+        //     }
+        // });
+
+        // // =========================
+        // // 🔵 CUSTOM MODE (ONLY TAX FROM TABLE)
+        // // =========================
+        // if (gstMode === 'custom') {
+
+        //     let totalTaxable = 0;
+        //     let totalGST = 0;
+
+        //     $('#customSlotsBody tr').each(function () {
+        //         let taxable = parseFloat($(this).find('.taxable').val()) || 0;
+        //         let igst = parseFloat($(this).find('.igst').val()) || 0;
+        //         let cgst = parseFloat($(this).find('.cgst').val()) || 0;
+        //         let sgst = parseFloat($(this).find('.sgst').val()) || 0;
+
+        //         totalTaxable += taxable;
+        //         totalGST += (igst + cgst + sgst);
+        //     });
+
+        //     $('#sum_amount').text(totalTaxable.toFixed(2));
+        //     $('#sum_grand_total').text((totalTaxable + totalGST).toFixed(2));
+
+        //     return; // 🚨 STOP HERE (IMPORTANT)
+        // }
+
+        // // =========================
+        // // FINAL UI
+        // // =========================
+        // $('#sum_amount').text(sumAmount.toFixed(2));
+        // $('#sum_cgst').text(sumCgst.toFixed(2));
+        // $('#sum_sgst').text(sumSgst.toFixed(2));
+        // $('#sum_igst').text(sumIgst.toFixed(2));
+
+        // let grand = sumAmount + sumCgst + sumSgst + sumIgst;
+
+        // $('#sum_grand_total').text(grand.toFixed(2));
+
+        // // hidden
+        // $('#edit_amount').val(sumAmount);
+        // $('#edit_cgst').val(sumCgst);
+        // $('#edit_sgst').val(sumSgst);
+        // $('#edit_igst').val(sumIgst);
+        // $('#edit_total_amount').val(grand);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -2368,71 +2810,125 @@
     // Each unique GST% from items gets one row with IGST/CGST/SGST
     // ledger dropdowns and auto-computed tax amounts.
     // ═══════════════════════════════════════════════════════════════
-    // function renderCustomSlots(rateMap, grandTotal) {
-    //     let sGstLedgers = <?php echo json_encode($sGstLedgers ?? [], 15, 512) ?>;
-    //     let cGstLedgers = <?php echo json_encode($cGstLedgers ?? [], 15, 512) ?>;
-    //     let iGstLedgers = <?php echo json_encode($iGstLedgers ?? [], 15, 512) ?>;
+    // function renderCustomSlots(slots) {
+    //     let tbody = $('#customSlotsBody');
+    //     tbody.empty();
 
-    //     let cgst = slot.cgst_amount ?? ($('#edit_cgst').val() || 0);
-    //     let sgst = slot.sgst_amount ?? ($('#edit_sgst').val() || 0);
-    //     let igst = slot.igst_amount ?? ($('#edit_igst').val() || 0);
-    //     // Always show these rates as rows; highlight non-zero ones
-    //     let allRates = ['5', '12', '18', '28'];
+    //     let totalAmount = parseFloat($('#noitem_amount').val()) || 0;
 
-    //     // Also include any other rates found in items
-    //     Object.keys(rateMap).forEach(r => { if (r && !allRates.includes(r)) allRates.push(r); });
+    //     let totalCgst = 0, totalSgst = 0, totalIgst = 0;
 
-    //     // Build the slot table body
-    //     let slotHtml = '';
-    //     let customSgst=0, customCgst=0, customIgst=0;
+    //     slots.forEach(function (slot) {
 
-    //     allRates.forEach(function(rate) {
-    //         let data   = rateMap[rate] || { amt:0, igst:0, cgst:0, sgst:0 };
-    //         let halfR  = parseFloat(rate) / 2;
-    //         // Auto-compute: use sum from item recalc (standard) or allow manual override
-    //         let igstAmt = data.igst;
-    //         let cgstAmt = data.cgst;
-    //         let sgstAmt = data.sgst;
-    //         customIgst += igstAmt;
-    //         customCgst += cgstAmt;
-    //         customSgst += sgstAmt;
+    //         let taxable = parseFloat(slot.taxable);
+    //         if (!taxable || taxable === 0) {
+    //             taxable = totalAmount;
+    //         }
 
-    //         let isZero = data.amt === 0;
+    //         let cgst = parseFloat(slot.cgst_amount) || 0;
+    //         let sgst = parseFloat(slot.sgst_amount) || 0;
+    //         let igst = parseFloat(slot.igst_amount) || 0;
 
-    //         // Build ledger options
-    //         let iOpts = iGstLedgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
-    //         let cOpts = cGstLedgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
-    //         let sOpts = sGstLedgers.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+    //         totalCgst += cgst;
+    //         totalSgst += sgst;
+    //         totalIgst += igst;
 
-    //         slotHtml += `<tr class="${isZero ? 'zero-row' : ''}" data-rate="${rate}">
-    //             <td><span class="rate-badge"><span class="slot-rate"></span>${rate}%</span><br><small style="font-size:9px;color:#6b7280;">Taxable: ${fmt(data.amt)}</small></td>
-    //             <td><strong>${fmt(data.amt)}</strong></td>
-    //             <td><select class="slot-igst-ledger" data-rate="${rate}""><option value="">— Ledger —</option>${iOpts}</select></td>
-    //             <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${parseFloat(igstAmt).toFixed(2)}" step="any"></td>
-    //             <td><select class="slot-cgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${cOpts}</select></td>
-    //             <td><input type="number" class="slot-cgst-amt" data-rate="${rate}" value="${parseFloat(cgstAmt).toFixed(2)}" step="any"></td>
-    //             <td><select class="slot-sgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${sOpts}</select></td>
-    //             <td><input type="number" class="slot-sgst-amt" data-rate="${rate}" value="${parseFloat(sgstAmt).toFixed(2)}" step="any"></td>
-    //         </tr>`;
+    //         // 🔥 CREATE ROW
+    //         let row = `
+    //             <tr data-rate="${slot.gst_rate}">
+    //                 <td><span class="rate-badge">${slot.gst_rate}%</span></td>
+    //                 <td style="color: black;" class="slot-taxable">${taxable.toFixed(2)}</td>
+
+    //                 <td style="color: black;">
+    //                     <select class="slot-igst-ledger" data-rate="${slot.gst_rate}">
+    //                         <option value="">Select</option>
+    //                         ${getLedgerOptions(IGST_LEDGERS, slot.igst_id)}
+    //                     </select>
+    //                 </td>
+    //                 <td style="color: black;"><input type="number" class="slot-igst-amt" data-rate="${slot.gst_rate}" value="${igst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
+
+    //                 <td>
+    //                     <select class="slot-cgst-ledger" data-rate="${slot.gst_rate}">
+    //                         <option value="">Select</option>
+    //                         ${getLedgerOptions(CGST_LEDGERS, slot.cgst_id)}
+    //                     </select>
+    //                 </td>
+    //                 <td style="color: black;"><input type="number" class="slot-cgst-amt" data-rate="${slot.gst_rate}" value="${cgst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
+
+    //                 <td>
+    //                     <select class="slot-sgst-ledger" data-rate="${slot.gst_rate}">
+    //                         <option value="">Select</option>
+    //                         ${getLedgerOptions(SGST_LEDGERS, slot.sgst_id)}
+    //                     </select>
+    //                 </td>
+    //                 <td style="color: black;"><input type="number" class="slot-sgst-amt" data-rate="${slot.gst_rate}" value="${sgst.toFixed(2)}" step="any" style="width:100%; padding:2px 4px; border:1px solid #d1d5db; border-radius:3px;"></td>
+    //             </tr>
+    //             `;
+
+    //         // 🔥 APPEND (MOST IMPORTANT)
+    //         tbody.append(row);
     //     });
 
-    //     $('#customSlotsBody').html(slotHtml);
+    //     // totals
+    //     $('#sum_amount').text(totalAmount.toFixed(2));
+    //     $('#sum_cgst').text(totalCgst.toFixed(2));
+    //     $('#sum_sgst').text(totalSgst.toFixed(2));
+    //     $('#sum_igst').text(totalIgst.toFixed(2));
 
-    //     // Render custom mode summary
-    //     let customSummaryHtml = `
-    //         <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${fmt(customIgst)}</span></div>
-    //         <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${fmt(customCgst)}</span></div>
-    //         <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${fmt(customSgst)}</span></div>`;
-    //     $('#custom_tax_rows').html(customSummaryHtml);
+    //     let grand = totalAmount + totalCgst + totalSgst + totalIgst;
 
-    //     // Update hidden fields for save
-    //     $('#edit_igst').val(customIgst.toFixed(2));
-    //     $('#edit_cgst').val(customCgst.toFixed(2));
-    //     $('#edit_sgst').val(customSgst.toFixed(2));
-    //     let total = parseFloat($('#edit_amount').val()) + customIgst + customCgst + customSgst;
-    //     $('#edit_total_amount').val(total.toFixed(2));
-    //     $('#sum_grand_total').text(fmt(total));
+    //     $('#edit_amount').val(totalAmount.toFixed(2));
+    //     $('#edit_cgst').val(totalCgst.toFixed(2));
+    //     $('#edit_sgst').val(totalSgst.toFixed(2));
+    //     $('#edit_igst').val(totalIgst.toFixed(2));
+    //     $('#edit_total_amount').val(grand.toFixed(2));
+    //     $('#sum_grand_total').text(grand.toFixed(2));
     // }
+
+    $(document).on('keyup change', '.item-qty, .item-rate, .item-gst_rate', function () {
+        recalcTotals();
+    });
+
+    function renderCustomSlots(data) {
+        let tbody = $('#customSlotsBody');
+        tbody.empty();
+        data.forEach(row => {
+            let tr = `
+            <tr>
+                <td><span class="rate-badge">${row.gst_rate}%</span></td>
+                <td><input type="number" class="slot-taxable" value="${row.taxable}" readonly></td>
+                <td>
+                    <select class="igst_ledger">
+                        <option value="">Select</option>
+                        ${IGST_LEDGERS.map(l =>
+                            `<option value="${l.id}" ${l.id == row.igst_ledger_id ? 'selected' : ''}>${l.name}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+                <td><input type="number" class="slot-igst-amt" value="${row.igst_amount}" readonly></td>
+                <td>
+                    <select class="cgst_ledger">
+                        <option value="">Select</option>
+                        ${CGST_LEDGERS.map(l =>
+                            `<option value="${l.id}" ${l.id == row.cgst_ledger_id ? 'selected' : ''}>${l.name}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+                <td><input type="number" class="slot-cgst-amt" value="${row.cgst_amount}" readonly></td>
+                <td>
+                    <select class="sgst_ledger">
+                        <option value="">Select</option>
+                        ${SGST_LEDGERS.map(l =>
+                            `<option value="${l.id}" ${l.id == row.sgst_ledger_id ? 'selected' : ''}>${l.name}</option>`
+                        ).join('')}
+                    </select>
+                </td>
+                <td><input type="number" class="slot-sgst-amt" value="${row.sgst_amount}" readonly></td>
+            </tr>
+            `;
+            tbody.append(tr);
+        });
+    }
 
     // When user manually edits a slot amount → recalc grand total
     $(document).on('input', '.slot-igst-amt, .slot-cgst-amt, .slot-sgst-amt', function () {
@@ -2449,12 +2945,11 @@
         // $('#sum_grand_total').text(fmt(total));
         setRoundOffSummary(total);
         setRoundOffSummary(total);
-        // let customSummaryHtml = `
-        //     <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${fmt(igst)}</span></div>
-        //     <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${fmt(cgst)}</span></div>
-        //     <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${fmt(sgst)}</span></div>`;
-        // $('#custom_tax_rows').html(customSummaryHtml);
-        renderCustomTaxSummary(igst, cgst, sgst);
+        let customSummaryHtml = `
+            <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${fmt(igst)}</span></div>
+            <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${fmt(cgst)}</span></div>
+            <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${fmt(sgst)}</span></div>`;
+        $('#custom_tax_rows').html(customSummaryHtml);
     });
 
     // Get slot ledger selections for save payload
@@ -2475,7 +2970,19 @@
         return slots;
     }
 
-    function openEditModal()    { document.getElementById('editModal').classList.add('show'); }
+    function getLedgerOptions(list, selectedId = '') {
+        return list.map(l => 
+            `<option value="${l.id}" ${l.id == selectedId ? 'selected' : ''}>${l.name}</option>`
+        ).join('');
+    }
+
+    function openEditModal()    { 
+        document.getElementById('editModal').classList.add('show'); 
+        setTimeout(() => {
+            recalcTotals(); // 🔥 MUST
+        }, 100);
+    }
+
     function closeEditModal()   { 
         document.getElementById('editModal').classList.remove('show');  // 🔥 RESET STATE
         $('#updateRow').show();
@@ -2487,6 +2994,7 @@
 
         $('.receipt-del-btn').show();
     }
+
     function openViewModal()    { document.getElementById('viewModal').classList.add('show'); }
     function closeViewModal()   { document.getElementById('viewModal').classList.remove('show'); }
     function openLedgerModal()  { document.getElementById('ledgerModal').classList.add('show'); }
@@ -2509,10 +3017,10 @@
         }
     }
 
-    $('#edit_is_igst').on('change', function () {
-        toggleGSTLedger();
-        recalcTotals();
-    });
+    // $('#edit_is_igst').on('change', function () {
+    //     toggleGSTLedger();
+    //     recalcTotals();
+    // });
 
     $('.party-select').select2({
         dropdownParent: $('#editModal'),
@@ -2570,7 +3078,152 @@
         recalcTotals();
     });
 
-    function generateSlotsFromItems() {
+    $(document).on('input', '.item-qty, .item-rate, .item-gst_rate', function () {
+        recalcTotals(); // 1️⃣ always calculate amount first
+        if ($('#gst_calc_mode').val() === 'custom') {
+            renderCustomSlotsFromItems(); // 2️⃣ rebuild GST table
+        }
+    });
+
+    // no item inputs
+    $('#noitem_amount, #noitem_gst_rate').on('input', function () {
+        recalcTotals();
+    });
+
+    // custom slot inputs
+    $(document).on('input', '.cgst_amount, .sgst_amount, .igst_amount', function () {
+        recalcTotals();
+    });
+
+    function generateCustomSlotsFromItems() {
+
+        let gstMap = {};
+
+        $('#editItemsBody tr').each(function () {
+
+            // let gstRate = parseFloat($(this).find('.item-gst_rate').val()) || 0;
+            // let qty = parseFloat($(this).find('.item-qty').val()) || 0;
+            // let rate = parseFloat($(this).find('.item-rate').val()) || 0;
+            let inputs = $(this).find('input');
+
+            let qty = parseFloat(inputs.eq(3).val()) || 0;   // Qty column
+            let rate = parseFloat(inputs.eq(5).val()) || 0;  // Rate column
+            let gstRate = parseFloat(inputs.eq(2).val()) || 0; // GST column
+            let amount = qty * rate;
+
+            inputs.eq(6).val(amount.toFixed(2)); // Amount column
+
+            //let amount = qty * rate;
+
+            if (!gstRate || gstRate <= 0 || !amount || amount <= 0) return;
+
+            if (!gstMap[gstRate]) {
+                const mapping = getItemGstMappingForRow($(this)) || getSelectedPurchaseLedgerMapping() || {};
+                gstMap[gstRate] = {
+                    taxable: 0,
+                    igst_id: mapping.igst_id || '',
+                    cgst_id: mapping.cgst_id || '',
+                    sgst_id: mapping.sgst_id || ''
+                };
+            }
+
+            gstMap[gstRate].taxable += amount;
+        });
+
+        return gstMap;
+    }
+
+    function renderCustomSlotsFromItems() {
+
+        let gstMap = generateCustomSlotsFromItems();
+        let tbody = $('#customSlotsBody');
+        tbody.empty();
+
+        Object.keys(gstMap).forEach(rate => {
+
+            let slot = gstMap[rate];
+            let taxable = parseFloat(slot.taxable) || 0;
+
+            let cgstAmt = (taxable * rate / 2) / 100;
+            let sgstAmt = (taxable * rate / 2) / 100;
+            let igstAmt = (taxable * rate) / 100;
+            let row = `
+            <tr>
+                <td><span class="rate-badge">${rate}%</span></td>
+                <td><input type="number" class="taxable" value="${taxable.toFixed(2)}"></td>
+
+                <td>
+                    <select class="igst_ledger">
+                        <option value="">Select</option>
+                        ${buildLedgerOptions(IGST_LEDGERS, slot.igst_id)}
+                    </select>
+                </td>
+                <td><input type="number" class="igst_amount" value="${igstAmt.toFixed(2)}"></td>
+
+                <td>
+                    <select class="cgst_ledger">
+                        ${buildLedgerOptions(CGST_LEDGERS, slot.cgst_id)}
+                    </select>
+                </td>
+                <td><input type="number" class="cgst_amount" value="${cgstAmt.toFixed(2)}"></td>
+
+                <td>
+                    <select class="sgst_ledger">
+                        ${buildLedgerOptions(CGST_LEDGERS, slot.cgst_id)}
+                    </select>
+                </td>
+                <td><input type="number" class="sgst_amount" value="${sgstAmt.toFixed(2)}"></td>
+            </tr>`;
+
+            tbody.append(row);
+        });
+
+        recalcTotals(); // 🔥 important
+    }
+
+    function buildLedgerOptions(ledgers, selectedId = '') {
+        let html = '<option value="">Select</option>';
+
+        (ledgers || []).forEach(l => {
+            const selected = String(l.id) === String(selectedId || '') ? 'selected' : '';
+            html += `<option value="${l.id}" ${selected}>${l.name}</option>`;
+        });
+
+        return html;
+    }
+
+    $('#gst_calc_mode').change(function () {
+        let mode = $(this).val();
+        if (mode === 'custom') {
+            $('#custom_slots_section').show();
+            $('#standard_tax_rows').hide();
+            renderCustomSlotsFromItems();
+        } else {
+            $('#custom_slots_section').hide();
+            $('#standard_tax_rows').show();
+            recalcTotals();
+        }
+    });
+
+    $(document).on('input', '.item-qty, .item-rate, .item-gst_rate', function () {
+        updateRowAmount($(this).closest('tr'));
+        renderCustomSlotsFromItems();
+        recalcTotals();
+    });
+
+    function updateRowAmount(row) {
+        let qty = parseFloat(row.find('.item-qty').val()) || 0;
+        let rate = parseFloat(row.find('.item-rate').val()) || 0;
+        let amount = qty * rate;
+        row.find('.item-amount').val(amount.toFixed(2));
+    }
+
+     function generateSlotsFromItems() {
+        if ($('#no_item_section').is(':visible')) {
+            recalcTotals();
+            return;
+        }
+
         let map = {};
 
         $('#editItemsBody tr').each(function () {
@@ -2581,15 +3234,16 @@
             let amount = qty * price;
 
             if (!map[rate]) {
+                const mapping = getItemGstMappingForRow($(this)) || getSelectedPurchaseLedgerMapping() || {};
                 map[rate] = {
                     gst_rate: rate,
                     taxable: 0,
                     cgst_amount: 0,
                     sgst_amount: 0,
                     igst_amount: 0,
-                    cgst_id: '',
-                    sgst_id: '',
-                    igst_id: ''
+                    cgst_ledger_id: mapping.cgst_id || '',
+                    sgst_ledger_id: mapping.sgst_id || '',
+                    igst_ledger_id: mapping.igst_id || ''
                 };
             }
 
@@ -2613,20 +3267,7 @@
 
         renderCustomSlots(slots);
     }
-    $(document).on('change','.item_name',function(){
-        let itemId = $(this).val();
-        let item = ITEM_MASTER.find(
-            x => String(x.strItemName) === String(itemId)
-        );
-        if(item)
-        {
-            $(this)
-                .closest('tr')
-                .find('.unit')
-                .val(item.strBaseUnits ?? '');
-        }
-    });
 </script>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/bulkupload/debit_note/preview.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/debit_note/preview.blade.php ENDPATH**/ ?>
