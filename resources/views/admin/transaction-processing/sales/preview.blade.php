@@ -1180,11 +1180,17 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert('Saved Successfully');
+                if (response && response.status === false) {
+                    alert(response.message || 'Unable to save selected records.');
+                    return;
+                }
+
+                alert(response.message || 'Saved Successfully');
                 location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
-                alert('Error saving data');
+                let message = xhr.responseJSON?.message || 'Error saving data';
+                alert(message);
             }
         });
     });
@@ -1724,6 +1730,30 @@
     // ═══════ LIVE RECALC ON INPUT ═══════
     $(document).on('input', '#editItemsBody input', function () {
         recalcItemRow($(this).closest('tr'));
+        recalcTotals();
+    });
+
+    function findItemMasterForSelect(select) {
+        let selected = select.find('option:selected');
+        let selectedId = String(select.val() || '');
+        let selectedName = String(selected.data('name') || selected.text() || '').trim().toLowerCase();
+
+        return ITEM_MASTER.find(item =>
+            String(item.iStockIdtemId) === selectedId ||
+            String(item.strItemName || '').trim().toLowerCase() === selectedName
+        );
+    }
+
+    // Match bulk-upload sales behavior: selecting an item should auto-fill its unit.
+    $(document).on('change', '.item-name', function () {
+        let row = $(this).closest('tr');
+        let item = findItemMasterForSelect($(this));
+
+        if (item) {
+            row.find('.item-unit').val(item.strBaseUnits || '');
+        }
+
+        recalcItemRow(row);
         recalcTotals();
     });
 

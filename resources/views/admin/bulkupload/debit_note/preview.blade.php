@@ -1173,11 +1173,16 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert('Saved Successfully');
+                 if (response.status === false) {
+                    alert(response.message || 'Unable to save selected rows.');
+                    return;
+                }
+
+                alert(response.message || 'Saved Successfully');
                 location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
-                alert('Error saving data');
+                alert(xhr.responseJSON?.message || 'Error saving data');    
             }
         });
     });

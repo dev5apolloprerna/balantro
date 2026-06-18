@@ -2009,6 +2009,7 @@ class CreditNoteController extends Controller
             ->whereRaw('LOWER(TRIM(note_no)) = ?', [strtolower(trim($vchNo))])
             ->whereRaw('LOWER(TRIM(strYear)) = ?', [strtolower(trim($year))])
             ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->where('status','=','saved')
             ->exists();
 
         if ($transactionExists) {

@@ -1169,11 +1169,16 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert('Saved Successfully');
+                if (response.status === false) {
+                    showToast(response.message || 'Unable to save selected records', 'error');
+                    return;
+                }
+                showToast(response.message || 'Saved Successfully', 'success');
                 location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
-                alert('Error saving data');
+                const message = xhr.responseJSON?.message || 'Error saving data';
+                showToast(message, 'error');
             }
         });
     });

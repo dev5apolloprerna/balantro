@@ -751,11 +751,16 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert('Saved Successfully');
+                if (response && response.status === false) {
+                    alert(response.message || 'Unable to save selected records.');
+                    return;
+                }
+                alert(response.message || 'Saved Successfully');
                 location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
-                alert('Error saving data');
+                let message = xhr.responseJSON?.message || 'Error saving data';
+                alert(message);
             }
         });
     });

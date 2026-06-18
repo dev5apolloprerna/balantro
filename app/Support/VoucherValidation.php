@@ -70,6 +70,7 @@ trait VoucherValidation
     {
         $query = DB::table($table)
             ->where('iPartyId', $columns['iPartyId'])
+            ->where('status','=','saved')
             ->where($columns['voucher_column'], $columns['voucher_value'])
             ->where($columns['number_column'], $columns['number_value'])
             ->where($columns['party_column'], $columns['party_value'])

@@ -934,7 +934,14 @@ $('#applyBulk').click(function () {
 $('#saveBtn').click(function () {
     $.ajax({
         url: "{{ route('cn.save') }}", type:'POST', data:$('#salesForm').serialize(),
-        success: () => { showToast('Saved Successfully'); location.reload(); },
+        success: (response) => {
+            if (response.status === false) {
+                showToast(response.message || 'Unable to save selected records', 'error');
+                return;
+            }
+            showToast(response.message || 'Saved Successfully', 'success');
+            location.reload();
+        },
         error: xhr => showToast(xhr.responseJSON?.message || 'Server error', 'error')
     });
 });
