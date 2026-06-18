@@ -2,7 +2,8 @@
 <?php $__env->startSection('content'); ?>
 
 <div data-controller="confirm-delete"
-    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }">
+    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }"
+    x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
             <h6 class="font-semibold mb-0 dark:text-white"><?php echo e(__("Debit Notes Notes")); ?></h6>
@@ -228,13 +229,13 @@
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
                                         <a href="<?php echo e(route('dn.preview',$upload->id)); ?>">
-                                            <i class="fa-regular fa-eye text-gray-500 cursor-pointer"></i>
+                                            <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
                                         <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i> -->
                                         <div class="relative inline-block">
                                             <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                                 class="text-gray-500 hover:text-gray-700 px-2">
-                                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                                                <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                             </button>
                                             <div id="globalDropdown"
                                                 class="hidden fixed bg-white dark:bg-neutral-800 border rounded-xl shadow-xl w-48 z-[99999]">
@@ -268,9 +269,10 @@
     <!-- Upload Sales Modal -->
     <div
         x-cloak
-        style="display: none;"
         x-show="openUpload"
         x-transition
+        style="display: none;"
+        data-upload-modal
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
         <div class="bg-white dark:bg-neutral-800 w-[720px] rounded-lg shadow-xl">
             <!-- Header -->
@@ -685,6 +687,11 @@
                             
                         </div>
 
+                        <div class="tax-row">
+                            <span class="tax-label">Round Off</span>
+                            <input type="number" step="0.01" id="sum_roundoff" class="receipt-input tax-value" style="width:90px;text-align:right;" value="0.00">
+                        </div>
+
                         <div class="tax-row grand-total-row">
                             <span class="tax-label">GRAND TOTAL</span>
                             <span class="tax-value" id="sum_grand_total">0.00</span>
@@ -697,6 +704,7 @@
                 <input type="hidden" id="edit_sgst">
                 <input type="hidden" id="edit_cgst">
                 <input type="hidden" id="edit_igst">
+                <input type="hidden" id="edit_roundoff">
                 <input type="hidden" id="edit_total_amount">
             </div>
             
@@ -2292,6 +2300,7 @@
                 sgst: $('#edit_sgst').val(),
                 igst: $('#edit_igst').val(),
                 total: $('#edit_total_amount').val(),
+                roundoff: $('#edit_roundoff').val(),
                 city: $('#edit_city').val(),
                 pincode: $('#edit_pincode').val(),
                 address: $('#edit_address').val(),
@@ -2430,6 +2439,58 @@
             recalcTotals(); // 🔥 important
         });
 
+        function getSummaryBaseTotal() {
+            return (parseFloat($('#edit_amount').val()) || 0)
+                + (parseFloat($('#edit_cgst').val()) || 0)
+                + (parseFloat($('#edit_sgst').val()) || 0)
+                + (parseFloat($('#edit_igst').val()) || 0);
+        }
+
+        const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
+        function calculateRoundOffAmountForSummary(total) {
+            total = parseFloat(total) || 0;
+            let roundedTotal;
+            switch (ROUND_OFF_SIDE) {
+                case 'upper_side':
+                    roundedTotal = Math.ceil(total);
+                    break;
+                case 'lower_side':
+                    roundedTotal = Math.floor(total);
+                    break;
+                default:
+                    roundedTotal = Math.round(total);
+                    break;
+            }
+            return Math.round((roundedTotal - total) * 100) / 100;
+        }
+
+        function applyRoundOffSummary(total, roundOff) {
+            total = parseFloat(total) || 0;
+            roundOff = parseFloat(roundOff) || 0;
+            let roundedTotal = total + roundOff;
+
+            $('#sum_roundoff').val(roundOff.toFixed(2));
+            $('#edit_roundoff').val(roundOff.toFixed(2));
+            $('#sum_grand_total').text(roundedTotal.toFixed(2));
+            $('#edit_total_amount').val(roundedTotal.toFixed(2));
+
+            return roundedTotal;
+        }
+
+        function setRoundOffSummary(total, roundOffAmount = null) {
+            total = parseFloat(total) || 0;
+            if (roundOffAmount !== null && roundOffAmount !== undefined) {
+                let roundOff = parseFloat(roundOffAmount) || 0;
+                return applyRoundOffSummary(total - roundOff, roundOff);
+            }
+
+            let roundOff = calculateRoundOffAmountForSummary(total);
+            return applyRoundOffSummary(total, roundOff);
+        }
+
+        $(document).on('input change', '#sum_roundoff', function() {
+            applyRoundOffSummary(getSummaryBaseTotal(), $(this).val());
+        });
 
         function recalcTotals() {
 
@@ -2524,8 +2585,10 @@
 
             let grandTotal = taxable + cgst + sgst + igst;
 
-            $('#sum_grand_total').text(grandTotal.toFixed(2));
-            $('#edit_total_amount').val(grandTotal);
+            // $('#sum_grand_total').text(grandTotal.toFixed(2));
+            // $('#edit_total_amount').val(grandTotal);
+            setRoundOffSummary(grandTotal);
+            // setRoundOffSummary(grandTotal);
 
             // ===============================
             // ✅ CUSTOM GST TABLE RENDER
@@ -2947,8 +3010,10 @@
             $('#manual_igst').val(igst.toFixed(2));
 
             let grandTotal = taxable + cgst + sgst + igst;
-            $('#sum_grand_total').text(grandTotal.toFixed(2));
-            $('#edit_total_amount').val(grandTotal.toFixed(2));
+            // $('#sum_grand_total').text(grandTotal.toFixed(2));
+            // $('#edit_total_amount').val(grandTotal.toFixed(2));
+            setRoundOffSummary(grandTotal);
+            // setRoundOffSummary(grandTotal);
             $('#foot_amount').text(taxable.toFixed(2));
             $('#foot_total').text(grandTotal.toFixed(2));
 

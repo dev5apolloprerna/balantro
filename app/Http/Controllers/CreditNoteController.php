@@ -1468,7 +1468,7 @@ class CreditNoteController extends Controller
 
             $uploadId = $row->upload_id;
             $voucherType = $request->voucher_type[$id] ?? $row->vch_type;
-            $voucherNo = $request->note_no[$id] ?? $row->note_no;
+            $voucherNo = $request->note_no[$id] ?? $request->invoice_no[$id] ?? $row->note_no;
             if ($this->creditNoteVoucherExists($row->iPartyId, $voucherType, $voucherNo, $row->strYear ?? session('year'), $row->id)) {
                 return response()->json([
                     'status' => false,
@@ -1476,8 +1476,8 @@ class CreditNoteController extends Controller
                 ], 422);
             }
             $row->update([
-                'note_no'         => $request->note_no[$id] ?? $row->note_no,
-                'note_date'       => $request->note_date[$id] ?? $row->note_date,
+                'note_no'         => $request->note_no[$id] ?? $request->invoice_no[$id] ?? $row->note_no,
+                'note_date'       => $request->note_date[$id] ?? $request->date[$id] ?? $row->note_date,
                 'party_name'      => $request->party_name[$id] ?: ($request->ledger[$id] ?? $row->party_name),
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
 
@@ -1527,6 +1527,13 @@ class CreditNoteController extends Controller
 
     public function update(Request $request)
     {
+        $request->merge([
+            'note_no' => $request->input('note_no', $request->input('invoice_no')),
+            'note_date' => $request->input('note_date', $request->input('date')),
+            'vch_type' => $request->input('vch_type', $request->input('vchType')),
+            'remarks' => $request->input('remarks', $request->input('Remarks')),
+            'sales_ledger_name' => $request->input('sales_ledger_name', $request->input('sales_ledger')),
+        ]);
         $data = $request->validate([
             'id' => 'required|integer',
             'note_no' => 'nullable|string',
@@ -1568,9 +1575,9 @@ class CreditNoteController extends Controller
             'noitem_rows.*.gst' => 'nullable|numeric',
             'noitem_rows.*.amount' => 'nullable|numeric',
         ]);
-        $invoiceDate = $request->date;
-        
-        if ($invoiceDate < session('year_from') || $invoiceDate > session('year_to')) {
+        $invoiceDate = $request->note_date;
+
+        if ($invoiceDate && ($invoiceDate < session('year_from') || $invoiceDate > session('year_to'))) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invoice date must be within selected financial year'
@@ -1611,7 +1618,7 @@ class CreditNoteController extends Controller
                 'address'    => $request->address ?: $transaction->address,
                 'pincode'    => $request->pincode ?: $transaction->pincode,
                 'city'  => $request->city ?: $transaction->city,
-                'remarks' => $request->Remarks ?? $transaction->remarks,
+                'remarks' => $request->remarks ?? $transaction->remarks,
                 'vch_type' => $request->vch_type ?? $transaction->vch_type,
 
                 'is_igst' => $request->is_igst ?? $transaction->is_igst,

@@ -1927,8 +1927,14 @@ window.addEventListener('load', function () {
         row.find('.item-total').val(parseFloat(total).toFixed(2));
     }
 
+    function toggleNoItemHeaderPurchaseLedger() {
+        const hideHeaderLedger = $('#no_item_section').is(':visible') && $('#gst_calc_mode').val() === 'custom';
+        $('#noitem_purchase_ledger').closest('.receipt-field-row').toggle(!hideHeaderLedger);
+    }
+
     // Master recalc — updates summary, footer, and custom slots
     function recalcTotals() {
+        toggleNoItemHeaderPurchaseLedger();
         // let mode = $('#gst_calc_mode').val();
         //let mode = $('#standard_items_section').is(':visible') ? 'item' : 'noitem';
         let mode = $('#no_item_section').is(':visible') ? 'noitem' : 'item';

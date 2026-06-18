@@ -155,7 +155,7 @@
                             <td class="px-3 py-2">
                                 <input type="date"
                                     name="date[{{$row->id}}]"
-                                    value="{{ \Carbon\Carbon::parse($row->date)->format('Y-m-d') }}"
+                                    value="{{ \Carbon\Carbon::parse($row->note_date)->format('Y-m-d') }}"
                                     class="inputCell">
                             </td>
                             <td class="px-3 py-2">
@@ -254,8 +254,8 @@
                                     class="text-blue-400 hover:text-blue-300 editRow"
                                     title="Edit"
                                     data-id="{{ $row->id }}"
-                                    data-invoice="{{ $row->invoice_no }}"
-                                    data-date="{{ \Carbon\Carbon::parse($row->date)->format('Y-m-d') }}"
+                                    data-invoice="{{ $row->note_no }}"
+                                    data-date="{{ \Carbon\Carbon::parse($row->note_date)->format('Y-m-d') }}"
                                     data-gst_no="{{ $row->gst_no }}"
                                     data-vchtype="{{ $row->vchType }}"
                                     data-party="{{ $row->party_name }}"
@@ -1165,7 +1165,7 @@
     $('#saveBtn').click(function() {
         let formData = $('#salesForm').serialize();
         $.ajax({
-            url: "{{ route('transaction_processing.debit_note_sumbit') }}",
+            url: "{{ route('transaction_processing.credit_note_sumbit') }}",
             type: "POST",
             data: formData,
             success: function(response) {
@@ -2262,8 +2262,8 @@
             }).join('');
 
             slotHtml += `<tr class="${isZero ? 'zero-row' : ''}" data-slot-key="${data.slotKey || mapKey}" data-rate="${rate}">
-                <td><span class="rate-badge"><span class="slot-rate">${rate}%</span></span><br><small class="slot-taxable" style="font-size:9px;color:#6b7280;">Taxable: ${fmt(data.amt)}</small></td>
-                <td><strong>${fmt(data.amt)}</strong><input type="hidden" class="slot_sales_ledger_id" value="${data.ledgerId || ''}"></td>
+                <td><span class="rate-badge"><span class="slot-rate">${rate}%</span></span></td>
+                <td style="color: black;"><strong>${fmt(data.amt)}</strong><input type="hidden" class="slot_sales_ledger_id" value="${data.ledgerId || ''}"></td>
                 <td><select class="slot-igst-ledger" data-rate="${rate}""><option value="">— Ledger —</option>${iOpts}</select></td>
                 <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${igstAmt.toFixed(2)}" step="any"></td>
                 <td><select class="slot-cgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${cOpts}</select></td>
