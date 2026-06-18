@@ -18,49 +18,50 @@ class BankUploadController extends Controller
     use VoucherValidation;
 
 
-    private function bankVoucherNumber($chequeNo, $refNo): ?string
+    private function bankTransactionsHaveYearColumn(): bool
     {
-        $number = trim((string) ($chequeNo ?: $refNo));
-        return $number !== '' ? $number : null;
+        return DB::getSchemaBuilder()->hasColumn('bank_transactions', 'strYear');
     }
 
-    private function bankVoucherCombinationExists($voucherType, $voucherNumber, $partyName, $txnDate, ?int $ignoreId = null): bool
+    private function bankVoucherCombinationExists($voucherType, $partyName, $txnDate, ?int $ignoreId = null): bool
     {
         $iPartyId = session('iPartyId');
+        $year = session('year');
         $voucherType = trim((string) $voucherType);
-        $voucherNumber = trim((string) $voucherNumber);
+        //$voucherNumber = trim((string) $voucherNumber);
         $partyName = trim((string) $partyName);
 
-        if (!$iPartyId || $voucherType === '' || !$voucherNumber || $partyName === '' || !$txnDate) {
+        if (!$iPartyId || !$year || $voucherType === '' || $partyName === '' || !$txnDate) {
             return false;
         }
 
         $query = DB::table('bank_transactions')
             ->where('iPartyId', $iPartyId)
+            ->where('status', 'saved')
             ->where('vch_type', $voucherType)
             ->where('ledger_name', $partyName)
-            ->where('txn_date', $txnDate)
-            ->where(function ($query) use ($voucherNumber) {
-                $query->where('cheque_no', $voucherNumber)
-                    ->orWhere('ref_no', $voucherNumber);
-            });
+            ->where('txn_date', $txnDate);
 
-        if ($ignoreId) {
-            $query->where('id', '!=', $ignoreId);
+        if ($this->bankTransactionsHaveYearColumn()) {
+            $query->where('strYear', $year);
         }
 
         if ($query->exists()) {
             return true;
         }
 
-        return $this->vchHistoryCombinationExists([
-            'iPartyId' => $iPartyId,
-            'voucher_value' => $voucherType,
-            'number_value' => $voucherNumber,
-            'party_value' => $partyName,
-            'history_date_value' => $this->historyDate($txnDate),
-            'year_value' => session('year'),
-        ]);
+        $yearId = DB::table('YearMaster')
+            ->where('iPartyId', $iPartyId)
+            ->where('strYear', $year)
+            ->value('iYearId');
+
+        return DB::table('VchHistory')
+            ->where('iPartyId', $iPartyId)
+            ->where('vchType', $voucherType)
+            ->where('trnAccount', $partyName)
+            ->where('strVchDate', $this->historyDate($txnDate))
+            ->where('iYearId', $yearId)
+            ->exists();
     }
 
     public function index()
@@ -322,7 +323,7 @@ class BankUploadController extends Controller
                 continue; // skip invalid rows
             }
 
-            BankTransaction::create([
+            $transactionData = [
                 'iPartyId'        => $iPartyId,
                 'upload_id'       => $upload->id,
                 'bank_name'       => $request->bank_name,
@@ -340,7 +341,12 @@ class BankUploadController extends Controller
                 'is_reconciled'   => 0,
                 'source'          => 'upload',
                 'status'          => 'pending'
-            ]);
+            ];
+            if ($this->bankTransactionsHaveYearColumn()) {
+                $transactionData['strYear'] = session('year');
+            }
+
+            BankTransaction::create($transactionData);
             $total++;
         }
 
@@ -510,9 +516,8 @@ class BankUploadController extends Controller
             $chequeNo = $request->cheque_no[$id] ?? $row->cheque_no;
             $refNo = $request->ref_no[$id] ?? $row->ref_no;
             $voucherType = $request->type[$id] ?? $row->vch_type;
-            $voucherNumber = $this->bankVoucherNumber($chequeNo, $refNo);
 
-            if ($this->bankVoucherCombinationExists($voucherType, $voucherNumber, $ledgerName, $txnDate, $row->id)) {
+            if ($this->bankVoucherCombinationExists($voucherType, $ledgerName, $txnDate, $row->id)) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Duplicate voucher combination is not allowed.'
@@ -528,6 +533,9 @@ class BankUploadController extends Controller
             $row->ref_no      = $refNo;
             $row->cost_center = $request->cost_center[$id] ?? null;
             $row->vch_type    = $voucherType;
+            if ($this->bankTransactionsHaveYearColumn()) {
+                $row->strYear = session('year');
+            }
             $row->status      = 'saved';
 
             $row->save();
@@ -634,8 +642,7 @@ class BankUploadController extends Controller
             ]);
         }
         $uploadId = $row->upload_id;
-        $voucherNumber = $this->bankVoucherNumber($request->cheque_no, $request->reference ?? $row->ref_no);
-        if ($this->bankVoucherCombinationExists($request->type, $voucherNumber, $request->ledger, $request->txn_date, $row->id)) {
+        if ($this->bankVoucherCombinationExists($request->type, $request->ledger, $request->txn_date, $row->id)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Duplicate voucher combination is not allowed.'
@@ -711,7 +718,7 @@ class BankUploadController extends Controller
         // }
 
         // 🔥 NORMAL UPDATE
-        $row->update([
+        $updateData = [
             'txn_date' => $request->txn_date,
             'value_date' => $request->value_date,
             'narration' => $request->narration,
@@ -724,7 +731,12 @@ class BankUploadController extends Controller
             'ref_no'      => $request->reference ?? $row->ref_no,
             'cost_center' => $request->cost_center,
             'status' => 'saved'
-        ]);
+        ];
+
+        if ($this->bankTransactionsHaveYearColumn()) {
+            $updateData['strYear'] = session('year');
+        }
+        $row->update($updateData);
 
         $saved = BankTransaction::where('upload_id', $uploadId)
             ->where('status', 'saved')

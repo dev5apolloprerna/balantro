@@ -32,6 +32,7 @@ class BankTransaction extends Model
         'cheque_no',
         'cost_center',
         'vch_type',
+        'strYear',
         'is_suspense',
         'suspense_reason',
         'resolution_remark',
