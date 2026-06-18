@@ -1573,6 +1573,12 @@ class PurchaseUploadController extends Controller
                 }
             }
 
+            if ($gstMode === 'custom' && !empty($request->custom_slots)) {
+                $sumIgst = collect($request->custom_slots)->sum(fn ($slot) => (float) ($slot['igst_amount'] ?? 0));
+                $sumCgst = collect($request->custom_slots)->sum(fn ($slot) => (float) ($slot['cgst_amount'] ?? 0));
+                $sumSgst = collect($request->custom_slots)->sum(fn ($slot) => (float) ($slot['sgst_amount'] ?? 0));
+            }
+            
             // =========================================================
             // FINAL TOTAL UPDATE
             // =========================================================

@@ -1753,7 +1753,7 @@
         // Show update button and hide view-specific buttons
         $('#updateRow').show();
         $('#addItemRow').show();
-        $('#addNoItemRow').hide();
+        $('#addNoItemRowBtn').hide();
 
         // Enable all inputs
         $('#editModal input, #editModal select, #editModal textarea')
@@ -1819,7 +1819,7 @@
                     // WITH ITEMS - Show items table
                     $('#standard_items_section').show();
                     $('#no_item_section').hide();
-                    $('#addNoItemRow').hide();
+                    $('#addNoItemRowBtn').hide();
                     $('#addItemRow').show();
                     
                     res.items.forEach(item => {
@@ -1834,7 +1834,7 @@
                     $('#standard_items_section').hide();
                     $('#no_item_section').show();
                     $('#addItemRow').hide();
-                    $('#addNoItemRow').show();
+                    $('#addNoItemRowBtn').show();
                     
                     // Clear existing no-item rows
                     $('#noItemBody').empty();
@@ -2184,14 +2184,14 @@
         }
     }
 
-    $('#addNoItemRowBtn').click(function() {
-        addNoItemRow({
-            ledger: $('#noitem_purchase_ledger').val(),
-            gst: 18,
-            amount: 0
-        });
-        recalcNoItemGST();
-    });
+    // $('#addNoItemRowBtn').click(function() {
+    //     addNoItemRow({
+    //         ledger: $('#noitem_purchase_ledger').val(),
+    //         gst: 18,
+    //         amount: 0
+    //     });
+    //     recalcNoItemGST();
+    // });
 
     function collectNoItemRows() {
         let rows = [];
@@ -2319,7 +2319,7 @@
                 
                 if (rowAmount > 0) {
                     let gstAmount = (rowAmount * rowGstRate) / 100;
-                    let key = `${rowGstRate}|${ledgerId}`;
+                    let key = String(rowGstRate);
                     
                     if (!rateMap[key]) {
                         rateMap[key] = { 
@@ -2389,7 +2389,7 @@
     });
 
     // Add No Item Row button click
-    $('#addNoItemRow').click(function() {
+    $('#addNoItemRowBtn').click(function() {
         addNoItemRow({
             ledger: $('#noitem_purchase_ledger').val(),
             gst: 18,
@@ -2408,6 +2408,10 @@
                 amount: 0
             });
         }
+        recalcNoItemGST();
+    });
+
+    $(document).on('input change', '#noItemBody .noitem-gst, #noItemBody .noitem-amount, #noItemBody .noitem-ledger, #edit_is_igst, #gst_calc_mode', function() {
         recalcNoItemGST();
     });
 
@@ -2473,16 +2477,34 @@
     // ── Save (Update) ────────────────────────────────────────────────────
     $('#updateRow').click(function () {
         let items = [];
-
+            
         if ($('#no_item_section').is(':visible')) {
             items = []; // no items case
+            let noitemRows = collectNoItemRows();
+            let amount = noitemRows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0);
+            let cgst = parseFloat($('#edit_cgst').val()) || 0;
+            let sgst = parseFloat($('#edit_sgst').val()) || 0;
+            let igst = parseFloat($('#edit_igst').val()) || 0;
+            let total = amount + cgst + sgst + igst;
+
+            $('#sum_amount').text(amount.toFixed(2));
+            $('#sum_cgst').text(cgst.toFixed(2));
+            $('#sum_sgst').text(sgst.toFixed(2));
+            $('#sum_igst').text(igst.toFixed(2));
+            setRoundOffSummary(total);
+
+            $('#edit_amount').val(amount);
+            $('#edit_cgst').val(cgst);
+            $('#edit_sgst').val(sgst);
+            $('#edit_igst').val(igst);
+            $('#edit_total_amount').val(total);
         } else {
             $('#editItemsBody tr').each(function () {
                 let row = $(this);
                 items.push({
                     id:           row.find('.item-id').val(),
                     hsn:          row.find('.item-hsn').val(),
-                    item_name:    row.find('.item-name').val(),
+                    item_name:    row.find('.item-name option:selected').text(),
                     gst_rate:     row.find('.item-gst_rate').val(),
                     quantity:     row.find('.item-qty').val(),
                     unit:         row.find('.item-unit').val(),
@@ -2498,7 +2520,7 @@
         console.log({
             gst_mode: $('#gst_calc_mode').val(),
             custom_slots: collectCustomSlots(),
-            noitem_amount: $('#noitem_amount').val()
+            noitem_rows: collectNoItemRows()
         });
  
         $.ajax({
@@ -2535,13 +2557,16 @@
                 cgst_ledger: $('#cgst_ledger').val(),
                 sgst_ledger: $('#sgst_ledger').val(),
 
-                noitem_amount: $('#noitem_amount').val(),
+                noitem_amount: $('#edit_amount').val(),
                 purchase_ledger_id: $('#noitem_purchase_ledger').val(),
                 purchase_ledger_name: $('#noitem_purchase_ledger option:selected').text(),
                 gst_rate: $('#noitem_gst_rate').val(),
 
                 items: items,
-                custom_slots: collectCustomSlots()
+                // custom_slots: collectCustomSlots(),
+                entry_mode: $('#no_item_section').is(':visible') ? 'noitem' : 'item',
+                custom_slots: collectCustomSlots(),
+                noitem_rows: collectNoItemRows()
             },
             success:  (res) => {
                 // alert('Updated Successfully');
@@ -2573,10 +2598,10 @@
         $('#customSlotsBody tr').each(function () {
             let row = $(this);
 
-            let rateText = row.find('.slot-rate').text();
+            let rateValue = row.data('rate') ?? row.find('.slot-rate').text();
 
             slots.push({
-                rate: parseFloat(rateText.replace('%','')) || 0,
+                rate: parseFloat(String(rateValue).replace('%','')) || 0,
 
                 taxable: parseFloat(
                     row.find('.slot-taxable').text().replace(/[^0-9.]/g, '')
@@ -3176,66 +3201,57 @@
 
     function recalcNoItemGST() {
 
-        let amount = parseFloat($('#noitem_amount').val()) || 0;
-        let gstRate = parseFloat($('#noitem_gst_rate').val()) || 0;
+        let amount = 0;
+        let totalCgst = 0, totalSgst = 0, totalIgst = 0;
         let isIgst = $('#edit_is_igst').is(':checked');
         let mode = $('#gst_calc_mode').val();
+        let rateMap = {};
 
-        let cgst = 0, sgst = 0, igst = 0;
+        $('#noItemBody tr').each(function () {
+            let rowAmount = parseFloat($(this).find('.noitem-amount').val()) || 0;
+            let rowGstRate = parseFloat($(this).find('.noitem-gst').val()) || 0;
+            let ledgerId = $(this).find('.noitem-ledger').val() || '';
+            let gstAmount = (rowAmount * rowGstRate) / 100;
+            amount += rowAmount;
+            let key = String(rowGstRate);
+            if (!rateMap[key]) {
+                rateMap[key] = {
+                    amt: 0,
+                    igst: 0,
+                    cgst: 0,
+                    sgst: 0,
+                    rate: rowGstRate,
+                    ledgerId: ledgerId
+                };
+            }
+            rateMap[key].amt += rowAmount;
+            if (isIgst) {
+                totalIgst += gstAmount;
+                rateMap[key].igst += gstAmount;
+            } else {
+                totalCgst += gstAmount / 2;
+                totalSgst += gstAmount / 2;
+                rateMap[key].cgst += gstAmount / 2;
+                rateMap[key].sgst += gstAmount / 2;
+            }
+        });
+        let total = amount + totalCgst + totalSgst + totalIgst;
 
-        if (isIgst) {
-            igst = amount * gstRate / 100;
-        } else {
-            cgst = amount * (gstRate / 2) / 100;
-            sgst = amount * (gstRate / 2) / 100;
-        }
-
-        let total = amount + cgst + sgst + igst;
-
-        // ✅ UI update
         $('#sum_amount').text(amount.toFixed(2));
-        // $('#sum_cgst').text(cgst.toFixed(2));
-        // $('#sum_sgst').text(sgst.toFixed(2));
-        // $('#sum_igst').text(igst.toFixed(2));
-        // $('#sum_grand_total').text(total.toFixed(2));
-
-        // ✅ hidden fields (IMPORTANT for save + custom total base)
-        $('#edit_amount').val(amount);
-        $('#edit_cgst').val(cgst);
-        $('#edit_sgst').val(sgst);
-        $('#edit_igst').val(igst);
-        // $('#edit_total_amount').val(total);
-        setRoundOffSummary(total);
+        $('#edit_amount').val(amount.toFixed(2));
 
         if (mode === 'custom') {
-            let key = gstRate > 0 ? gstRate.toString() : '0';
-            let rateMap = {};
-            rateMap[key] = { amt: amount, igst: igst, cgst: cgst, sgst: sgst };
             renderCustomSlots(rateMap, total);
-
-            // Enable + highlight only selected GST row in no-item custom mode
-            $('#customSlotsBody tr').each(function () {
-                let row = $(this);
-                let rowRate = parseFloat(row.data('rate')) || 0;
-                let isActiveRate = Math.abs(rowRate - gstRate) < 0.0001 && amount > 0 && gstRate > 0;
-
-                row.toggleClass('zero-row', !isActiveRate);
-                row.find('input, select').prop('disabled', !isActiveRate);
-            });
         } else {
-            $('#sum_cgst').text(cgst.toFixed(2));
-            $('#sum_sgst').text(sgst.toFixed(2));
-            $('#sum_igst').text(igst.toFixed(2));
-            // $('#sum_grand_total').text(total.toFixed(2));
+            $('#sum_cgst').text(totalCgst.toFixed(2));
+            $('#sum_sgst').text(totalSgst.toFixed(2));
+            $('#sum_igst').text(totalIgst.toFixed(2));
+            $('#edit_cgst').val(totalCgst.toFixed(2));
+            $('#edit_sgst').val(totalSgst.toFixed(2));
+            $('#edit_igst').val(totalIgst.toFixed(2));
             setRoundOffSummary(total);
         }
 
-        // ✅ hidden fields (IMPORTANT for save)
-        // $('#edit_amount').val(amount);
-        // $('#edit_cgst').val(cgst);
-        // $('#edit_sgst').val(sgst);
-        // $('#edit_igst').val(igst);
-        // $('#edit_total_amount').val(total);
     }
 </script>
 <?php $__env->stopSection(); ?>
