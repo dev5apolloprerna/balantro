@@ -263,7 +263,7 @@
     </div>
 
     <!-- ================= JOURNAL Add MODAL ================= -->
-    <div id="journalModal" class="modal">
+    <div id="journalModal" class="modal" style="display: none;">
         <div class="receipt-wrapper">
             <!-- HEADER -->
             <div class="receipt-head">

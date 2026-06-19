@@ -2,9 +2,7 @@ import "./bootstrap";
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
-document.addEventListener("DOMContentLoaded", function () {
-    // Your existing initApp function code here
-    function initApp() {
+function initApp() {
         // 1. Dropdown menu functionality
         document
             .querySelectorAll(".sidebar-menu .dropdown")
@@ -168,7 +166,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Initialize on different events
-    initApp();
+    document.addEventListener("DOMContentLoaded", initApp);
 
     // For Livewire/Turbo
     // document.addEventListener('turbo:load', initApp);
@@ -179,12 +177,38 @@ document.addEventListener("DOMContentLoaded", function () {
     // window.addEventListener('livewire:load', initApp);
     // window.addEventListener('livewire:navigated', initApp);
 
-    document.addEventListener("DOMContentLoaded", initApp);
     document.addEventListener("turbo:load", initApp); // For Turbo Drive
     document.addEventListener("turbo:render", initApp); // For Turbo Frames
     document.addEventListener("turbo:frame-render", initApp); // For Turbo Frame updates
     window.addEventListener("livewire:load", initApp); // For Livewire
     window.addEventListener("livewire:navigated", initApp); // For Livewire page navigation
+
+    window.showToast = window.showToast || function showToast(message, type = "success") {
+    const palette = {
+        success: "#16a34a",
+        error: "#dc2626",
+        warning: "#d97706",
+        info: "#2563eb",
+    };
+    const toast = document.createElement("div");
+    toast.className = "balantro-toast";
+    toast.textContent = message || "";
+    toast.style.background = palette[type] || palette.info;
+    document.body.appendChild(toast);
+    window.setTimeout(() => toast.classList.add("is-visible"), 10);
+    window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => toast.remove(), 180);
+    }, 3000);
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('[id$="-modal"], .modal').forEach((modal) => {
+        if (!modal.classList.contains("show") && !modal.classList.contains("flex")) {
+            modal.classList.add("hidden");
+            modal.setAttribute("aria-hidden", "true");
+        }
+    });
 });
 
 window.Pusher = Pusher;

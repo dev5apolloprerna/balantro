@@ -347,6 +347,13 @@
         color: #94a3b8 !important;
         fill: #94a3b8 !important;
     }
+
+     /* Shared modal/toast/table polish */
+    .balantro-toast{position:fixed;right:1.25rem;bottom:1.25rem;z-index:99999;max-width:min(28rem,calc(100vw - 2rem));border-radius:.75rem;padding:.75rem 1rem;color:#fff;font-size:.875rem;font-weight:600;line-height:1.35;box-shadow:0 18px 40px rgba(15,23,42,.24);opacity:0;transform:translateY(.5rem);transition:opacity .18s ease,transform .18s ease}.balantro-toast.is-visible{opacity:1;transform:translateY(0)}
+    .modal:not(.show),[id$="-modal"].hidden,[data-modal-target].hidden,[data-permissions-modal-target="modal"].hidden,[data-groups-modal-target="modal"].hidden{display:none!important}.modal.show{display:flex!important}
+    .modal-content,[data-permissions-modal-target="modal"]>div>div,[data-groups-modal-target="modal"]>div>div{border:1px solid rgb(226 232 240 / .95);box-shadow:0 24px 80px rgb(15 23 42 / .28)}
+    .dark .modal-content,.dark [data-permissions-modal-target="modal"]>div>div,.dark [data-groups-modal-target="modal"]>div>div{border-color:rgb(51 65 85 / .95);box-shadow:0 24px 80px rgb(0 0 0 / .55)}
+    .table-responsive,.table-wrapper,.overflow-x-auto:has(.dropdown-menu),.overflow-x-auto:has([data-dropdown-toggle]){overflow-x:auto;overflow-y:visible}table td .dropdown-menu,table td [role="menu"],.table-wrapper .dropdown-menu{z-index:60}
 </style>
 <script>
     window.BALANTRO_MAX_UPLOAD_MB = 30;

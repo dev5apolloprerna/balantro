@@ -286,7 +286,7 @@
 {{-- ══════════════════════════════════════════════════════
      EDIT MODAL
 ══════════════════════════════════════════════════════ --}}
-<div id="editModal" class="modal">
+<div id="editModal" class="modal" style="display: none;">
     <div class="receipt-wrapper">
         <input type="hidden" id="edit_id">
 
@@ -572,7 +572,7 @@
     </div>
 </div>
 
-<div id="ledgerModal" class="modal">
+<div id="ledgerModal" class="modal" style="display: none;">
     <div class="modal-content">
         <!-- HEADER -->
         <div class="modal-header">
@@ -665,7 +665,7 @@
 {{-- ══════════════════════════════════════════════════════
      VIEW MODAL  (read-only)
 ══════════════════════════════════════════════════════ --}}
-<div id="viewModal" class="modal">
+<div id="viewModal" class="modal" style="display: none;">
     <div class="modal-content" style="width:780px;">
         <div class="modal-header">
             <h3>View Purchase</h3>

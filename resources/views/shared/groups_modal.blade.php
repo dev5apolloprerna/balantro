@@ -1,15 +1,15 @@
 <div id="groups-modal"
      data-groups-modal-target="modal"
-     class="hidden fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full overflow-x-hidden overflow-y-auto md:inset-0 h-screen bg-black/50 dark:bg-white/30"
+     class="hidden fixed inset-0 z-50 items-center justify-center w-full overflow-x-hidden overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-sm dark:bg-black/70"
      tabindex="-1"
      aria-hidden="true">
-  <div class="relative p-4 w-full max-w-4xl max-h-full">
-    <div class="relative bg-white dark:bg-dark-2 rounded-2xl shadow-lg">
+  <div class="relative w-full max-w-4xl max-h-[92vh]">
+    <div class="relative overflow-hidden bg-white dark:bg-dark-2 rounded-2xl shadow-2xl ring-1 ring-slate-200/80 dark:ring-slate-700/80">
       <!-- Modal Header -->
-      <div class="flex items-center justify-between p-4 md:p-5 border-b border-gray-200 dark:border-gray-600 rounded-t">
-        <h6 class="font-semibold text-gray-900 dark:text-white">{{ __('admin.assign_groups.modal.title') }}</h6>
+      <div class="flex items-center justify-between gap-4 bg-slate-50 px-5 py-4 border-b border-gray-200 dark:bg-slate-900/70 dark:border-gray-700">
+        <h6 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('admin.assign_groups.modal.title') }}</h6>
         <button type="button"
-                class="text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white w-8 h-8 inline-flex justify-center items-center rounded-lg cursor-pointer"
+                class="text-gray-500 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white w-9 h-9 inline-flex justify-center items-center rounded-full cursor-pointer transition"
                 data-action="groups-modal#close">
           <svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -20,22 +20,22 @@
       </div>
       <!-- Modal Body -->
       <form method="POST" action="#" 
-            class="p-4 md:p-5 space-y-4"
+            class="p-5 space-y-5"
             data-action="submit->groups-modal#save"
             data-groups-modal-target="form">
         @csrf
-        <div data-groups-modal-target="content">
+        <div data-groups-modal-target="content" class="max-h-[60vh] overflow-y-auto pr-2">
           <!-- Group checkboxes will be dynamically inserted here -->
         </div>
         <!-- Modal Footer -->
-        <div class="flex items-center justify-end gap-4 pt-4 mt-4 border-t border-gray-200 dark:border-gray-600 rounded-b">
+        <div class="flex flex-wrap items-center justify-end gap-3 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
           <button type="button"
-                  class="w-24 py-2 px-4 rounded-lg cursor-pointer border border-danger-600 bg-hover-danger-200 !text-danger-600 text-center"
+                  class="min-w-24 py-2 px-4 rounded-lg cursor-pointer border border-danger-200 bg-danger-50 hover:bg-danger-100 !text-danger-700 text-center transition"
                   data-action="click->groups-modal#close">
             {{ __('admin.assign_groups.modal.close_btn') }}
           </button>
           <button type="submit"
-                  class="w-24 py-2 px-4 rounded-lg cursor-pointer border border-primary-600 bg-primary-600 hover:bg-primary-700 text-white text-center">
+                  class="min-w-24 py-2 px-4 rounded-lg cursor-pointer border border-primary-600 bg-primary-600 hover:bg-primary-700 text-white text-center shadow-sm transition">
             {{ __('admin.assign_groups.modal.save_btn') }}
           </button>
         </div>

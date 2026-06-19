@@ -482,95 +482,8 @@
 
 </div>
 
-<!-- <div id="ledgerModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Create Ledger</h3>
-            <button type="button" class="close-btn" onclick="closeLedgerModal()">✕</button>
-        </div>
-        <div class="modal-body">
-            <form id="ledgerForm">
-                @csrf
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Name</label>
-                        <input type="text" name="Name">
-                    </div>
-                    <div class="form-group">
-                        <label>Parent</label>
-                        <select name="Parent">
-                            <option>Select Parent</option>
-                            @foreach($parents as $parent)
-                            <option value="{{ $parent->strParents }}">{{ $parent->strParents }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Mailing Name</label>
-                        <input type="text" name="MailingName">
-                    </div>
-                    <div class="form-group">
-                        <label>Address Line 1</label>
-                        <input type="text" name="AddressLine1">
-                    </div>
-                    <div class="form-group">
-                        <label>Address Line 2</label>
-                        <input type="text" name="AddressLine2">
-                    </div>
-                    <div class="form-group">
-                        <label>City</label>
-                        <input type="text" name="City">
-                    </div>
-                    <div class="form-group">
-                        <label>Pincode</label>
-                        <input type="text" name="Pincode">
-                    </div>
-                    <div class="form-group">
-                        <label>State</label>
-                        <select id="State" class="inputCell">
-                            <option value="">Select State</option>
-                            @foreach($states as $state)
-                            <option value="{{$state}}">{{$state}}</option>
-                            @endforeach
-                        </select>
 
-                    </div>
-                    <div class="form-group">
-                        <label>Country</label>
-                        <input type="text" name="Country">
-                    </div>
-                    <div class="form-group">
-                        <label>GST No</label>
-                        <input type="text" name="GstNo">
-                    </div>
-                    <div class="form-group">
-                        <label>GST Registration Type</label>
-                        <select name="GstRegistrationType">
-                            <option value="">Select</option>
-                            <option value="Regular">Regular</option>
-                            <option value="Composition">Composition</option>
-                            <option value="Unregistered">Unregistered</option>
-                            <option value="Casual Taxable">Casual Taxable</option>
-                            <option value="Non-resident Taxable">Non-resident Taxable</option>
-                            <option value="Input Service Distributor">Input Service Distributor</option>
-                            <option value="Special Economic Zone">Special Economic Zone</option>
-                            <option value="E-commerce Operators">E-commerce Operators</option>
-                            <option value="Tax Deduction at Source">Tax Deduction at Source</option>
-                            <option value="TCS Collector">TCS Collector</option>
-                            <option value="Voluntary Registration">Voluntary Registration</option>
-                        </select>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button onclick="closeLedgerModal()" class="btn-cancel">Cancel</button>
-            <button type="submit" form="ledgerForm" class="submit-btn">Save Ledger</button>
-        </div>
-    </div>
-</div> -->
-
-<div id="configModal" class="modal">
+<div id="configModal" class="modal" style="display: none;">
     <div class="config-box">
 
         <!-- HEADER -->
@@ -1289,7 +1202,7 @@
             type: "POST",
             data: data,
             success: function(res) {
-                showToast(res.message || (res.status ? 'Saved successfully' : 'Unable to save row','success'));
+                showToast(res.message || (res.status ? 'Saved successfully' : 'Unable to save row'), res.status !== false ? 'success' : 'error');
                 if (!res.status) {
                     return;
                 }

@@ -313,7 +313,7 @@
     </div>
 </div>
 
-<div id="ledgerModal" class="modal">
+<div id="ledgerModal" class="modal" style="display: none;">
     <div class="modal-content">
         <!-- HEADER -->
         <div class="modal-header">
@@ -403,7 +403,7 @@
     </div>
 </div>
 
-<div id="configModal" class="modal">
+<div id="configModal" class="modal" style="display: none;">
     <div class="config-box">
 
         <!-- HEADER -->

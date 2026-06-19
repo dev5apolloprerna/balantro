@@ -1,4 +1,4 @@
-<div id="editModal" class="modal">
+<div id="editModal" class="modal" style="display: none;">
     <div class="receipt-wrapper">
 
         <input type="hidden" id="edit_id">

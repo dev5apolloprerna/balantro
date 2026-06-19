@@ -154,7 +154,7 @@
 </div>
 
 {{-- ══════════════════════ EDIT / VIEW MODAL ══════════════════════ --}}
-<div id="editModal" class="modal">
+<div id="editModal" class="modal" style="display: none;">
     <div class="receipt-wrapper">
         <input type="hidden" id="edit_id">
 
@@ -394,7 +394,7 @@
 </div>
 
 {{-- LEDGER MODAL --}}
-<div id="ledgerModal" class="modal">
+<div id="ledgerModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <h3>Create Ledger</h3>
@@ -443,7 +443,7 @@
 </div>
 
 {{-- VIEW MODAL --}}
-<div id="viewModal" class="modal">
+<div id="viewModal" class="modal" style="display: none;">
     <div class="modal-content" style="width:780px;">
         <div class="modal-header">
             <h3>View Credit Notes</h3>

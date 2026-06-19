@@ -715,7 +715,7 @@
     </div>
 
     {{-- LEDGER MODAL --}}
-<div id="ledgerModal" class="modal">
+<div id="ledgerModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <h3>Create Ledger</h3>

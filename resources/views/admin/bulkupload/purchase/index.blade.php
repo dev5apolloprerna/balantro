@@ -800,7 +800,7 @@
         </div>
     </div>
 
-    <div id="ledgerModal" class="modal">
+    <div id="ledgerModal" class="modal" style="display: none;">
         <div class="modal-content">
             <!-- HEADER -->
             <div class="modal-header">
