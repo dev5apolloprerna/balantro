@@ -45,7 +45,7 @@
                 <button type="button"
                     id="saveBtn"
                     class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                    Sumbit
+                    Submit
                 </button>
             </div>
         </div>
@@ -1273,17 +1273,38 @@
     });
 
     $('#saveBtn').click(function() {
+        let missingLedgerRows = [];
+
+        $('#purchaseForm input[name="selected[]"]:checked').each(function() {
+            let row = $(this).closest('tr');
+            let ledgerSelect = row.find('select[name^="party_ledger"]');
+
+            if (!ledgerSelect.val()) {
+                missingLedgerRows.push(row.find('td:eq(1)').text().trim() || $(this).val());
+                ledgerSelect.css('border', '1px solid red');
+            } else {
+                ledgerSelect.css('border', '');
+            }
+        });
+
+        if (missingLedgerRows.length) {
+            alert('Please select party ledger for all selected debit note rows before submitting. Missing ledger on row(s): ' + missingLedgerRows.join(', '));
+            return;
+        }
         let formData = $('#purchaseForm').serialize();
         $.ajax({
             url: "{{ route('transaction_processing.debit_note_sumbit') }}",
             type: "POST",
             data: formData,
             success: function(response) {
-                alert('Sumbit Successfully');
-                location.reload(); // reload page and refresh table
+                alert(response.message || (response.status ? 'Submitted successfully' : 'Unable to submit selected debit note rows'));
+
+                if (response.status) {
+                    location.reload(); // reload page and refresh table
+                }
             },
             error: function(xhr) {
-                alert('Error saving data');
+                alert(xhr.responseJSON?.message || 'Error submitting debit note data');
             }
         });
     });

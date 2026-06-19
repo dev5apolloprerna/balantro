@@ -501,9 +501,36 @@ class BankUploadController extends Controller
             ]);
         }
 
-        $uploadId = null;
+        $selectedIds = array_values(array_filter((array) $request->selected));
 
-        foreach ($request->selected as $id) {
+        if (empty($selectedIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No rows selected'
+            ]);
+        }
+
+        $missingLedgerIds = [];
+
+        foreach ($selectedIds as $id) {
+            $ledgerName = trim((string) ($request->ledger[$id] ?? ''));
+
+            if ($ledgerName === '') {
+                $missingLedgerIds[] = $id;
+            }
+        }
+
+        if (!empty($missingLedgerIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => count($missingLedgerIds) . ' selected row(s) are missing a ledger. Please select a ledger for every selected row before saving.'
+            ]);
+        }
+
+        $uploadId = null;
+        $savedCount = 0;
+
+        foreach ($selectedIds as $id) {
 
             $row = BankTransaction::find($id);
             if (!$row) continue;
@@ -512,7 +539,7 @@ class BankUploadController extends Controller
             $uploadId = $row->upload_id;
 
             $txnDate = $request->txn_date[$id] ?? $row->txn_date;
-            $ledgerName = $request->ledger[$id] ?? $row->ledger_name;
+            $ledgerName = trim((string) ($request->ledger[$id] ?? $row->ledger_name));
             $chequeNo = $request->cheque_no[$id] ?? $row->cheque_no;
             $refNo = $request->ref_no[$id] ?? $row->ref_no;
             $voucherType = $request->type[$id] ?? $row->vch_type;
@@ -539,6 +566,7 @@ class BankUploadController extends Controller
             $row->status      = 'saved';
 
             $row->save();
+            $savedCount++;
         }
 
         /*
@@ -570,7 +598,7 @@ class BankUploadController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Saved Successfully'
+            'message' => $savedCount . ' bank transaction row(s) saved successfully with selected ledger(s).'
         ]);
     }
 

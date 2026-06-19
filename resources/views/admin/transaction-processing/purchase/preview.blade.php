@@ -3067,7 +3067,7 @@
         let mode = $('#gst_calc_mode').val();
         let rateMap = {};
 
-         $('#noItemBody tr').each(function (index) {
+        $('#noItemBody tr').each(function (index) {
             let rowAmount = parseFloat($(this).find('.noitem-amount').val()) || 0;
             let rowGstRate = parseFloat($(this).find('.noitem-gst').val()) || 0;
             let ledgerId = $(this).find('.noitem-ledger').val() || '';
@@ -3101,7 +3101,7 @@
         $('#sum_amount').text(amount.toFixed(2));
         $('#edit_amount').val(amount.toFixed(2));
 
-         if (mode === 'custom') {
+        if (mode === 'custom') {
             renderCustomSlots(rateMap, total);
         } else {
             $('#sum_cgst').text(totalCgst.toFixed(2));
@@ -3113,5 +3113,21 @@
             setRoundOffSummary(total);
         }
     }
+    function applySelectedItemDetails($select) {
+        let itemName = $select.find('option:selected').text() || $select.val();
+        let item = ITEM_MASTER.find(
+            x => String(x.strItemName || '').trim() === String(itemName || '').trim()
+        );
+        if (!item) return;
+
+        $select.closest('tr').find('.item-unit').val(item.strBaseUnits || 'NOS');
+    }
+
+    $(document).on('change', '.item-name', function () {
+        let row = $(this).closest('tr');
+        applySelectedItemDetails($(this));
+        recalcItemRow(row);
+        recalcTotals();
+    });
 </script>
 @endsection

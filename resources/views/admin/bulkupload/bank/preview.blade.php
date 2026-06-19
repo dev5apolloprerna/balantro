@@ -220,7 +220,7 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2">
-                                <select name="ledger[{{$row->id}}]" class="ledgerSelect inputCell" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
+                                <select name="ledger[{{$row->id}}]" class="ledgerSelect inputCell" data-selected="{{ $row->ledger_name }}" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
                                     <option value="">Select Ledger</option>
                                     @foreach($ledgers as $ledger)
                                     <option value="{{$ledger->name}}" {{ isset($row->ledger_name) && $row->ledger_name == $ledger->name ? 'selected' : '' }}>
@@ -1289,7 +1289,10 @@
             type: "POST",
             data: data,
             success: function(res) {
-                alert('Saved Successfully');
+                alert(res.message || (res.status ? 'Saved successfully' : 'Unable to save row'));
+                if (!res.status) {
+                    return;
+                }
                 // location.reload();
                 if (res.data) {
                     let d = res.data;
@@ -1365,10 +1368,29 @@
     });
 
     $('#saveBtn').click(function() {
+        let missingLedgerRows = [];
 
+        $('#bankForm input[name="selected[]"]:checked').each(function() {
+            let row = $(this).closest('tr');
+            let ledgerSelect = row.find('select[name^="ledger"]');
+
+            if (!ledgerSelect.val()) {
+                missingLedgerRows.push(row.find('td:eq(1)').text().trim() || $(this).val());
+                ledgerSelect.css('border', '1px solid red');
+            } else {
+                ledgerSelect.css('border', '');
+            }
+        });
+
+        if (missingLedgerRows.length) {
+            alert('Please select ledger for all selected rows before saving. Missing ledger on row(s): ' + missingLedgerRows.join(', '));
+            return;
+        }
         //let formData = $('#bankForm').serialize();
-        $('#bankTable tbody tr:hidden').find('input,select').prop('disabled', true);
+        let hiddenFields = $('#bankTable tbody tr:hidden').find('input,select');
+        hiddenFields.prop('disabled', true);
         let formData = $('#bankForm').serialize();
+        hiddenFields.prop('disabled', false);
 
         $.ajax({
             url: "{{ route('bank.save') }}",
@@ -1378,9 +1400,9 @@
                 'X-CSRF-TOKEN': $('input[name="_token"]').val()
             },
             success: function(response) {
-
+                alert(response.message || (response.status ? 'Saved successfully' : 'Unable to save selected rows'));
                 if (response.status) {
-                    alert(response.message);
+                    // alert(response.message);
                     location.reload();
                 }
 

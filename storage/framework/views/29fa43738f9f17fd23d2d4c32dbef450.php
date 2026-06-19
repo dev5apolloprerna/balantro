@@ -1,18 +1,16 @@
 
 <?php $__env->startSection('content'); ?>
-
 <?php if(session('success')): ?>
-<div class="bg-green-100 text-green-800 px-4 py-3 rounded mb-4">
-    <?php echo e(session('success')); ?>
+    <div class="bg-green-100 text-green-800 px-4 py-3 rounded mb-4">
+        <?php echo e(session('success')); ?>
 
-</div>
+    </div>
 <?php endif; ?>
-
 <?php if(session('error')): ?>
-<div class="bg-red-100 text-red-800 px-4 py-3 rounded mb-4">
-    <?php echo e(session('error')); ?>
+    <div class="bg-red-100 text-red-800 px-4 py-3 rounded mb-4">
+        <?php echo e(session('error')); ?>
 
-</div>
+    </div>
 <?php endif; ?>
 <div class="w-full px-4">
     <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700">
@@ -47,14 +45,9 @@
                 <button onclick="openConfigModal()" class="border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded text-sm">
                     Settings
                 </button>
-                <button onclick="openLedgerModal()"
+                <button  onclick="openLedgerModal()"
                     class="border border-blue-500 text-blue-400 px-3 py-1 rounded text-sm">
                     + Create Ledger
-                </button>
-                <button type="button"
-                    id="bulkSuspenseBtn"
-                    class="bg-yellow-500 text-white px-4 py-1 rounded text-sm">
-                    Suspense Submit
                 </button>
                 <button type="button"
                     id="saveBtn"
@@ -71,7 +64,7 @@
                     <select id="typeFilter" class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-800 dark:text-white rounded px-3 py-1 mt-1">
                         <option value="">Select Type</option>
                         <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <option value="<?php echo e($vchType); ?>"><?php echo e($vchType); ?></option>
+                            <option value="<?php echo e($vchType); ?>"><?php echo e($vchType); ?></option>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
 
@@ -84,8 +77,8 @@
                 </div> -->
                 <div>
                     <label class="text-sm">Description</label>
-                    <input type="text" id="descFilter"
-                        class="border px-2 py-1 rounded mt-1"
+                    <input type="text" id="descFilter" 
+                        class="border px-2 py-1 rounded mt-1" 
                         placeholder="Search Description">
                 </div>
                 <div>
@@ -122,8 +115,8 @@
 
         <form id="bankForm">
             <?php echo csrf_field(); ?>
-
-            <div class="table-container">
+            
+            <div class="overflow-auto max-h-[70vh]">
                 <table id="bankTable" class="min-w-full text-sm text-gray-700 dark:text-gray-200">
                     <thead class="bg-gray-100 dark:bg-neutral-800 text-xs uppercase text-gray-700 dark:text-gray-400">
                         <tr>
@@ -157,7 +150,7 @@
                             </th>
                             <th>
                                 <!-- <input class="searchInput"> -->
-                                <div class="amount-filter">
+                                <div class="flex gap-1">
                                     <input type="number" class="amountFrom searchInput" placeholder="From">
                                     <input type="number" class="amountTo searchInput" placeholder="To">
                                 </div>
@@ -170,7 +163,6 @@
                     </thead>
                     <tbody>
                         <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        
                         <tr data-cheque="<?php echo e($row->cheque_no); ?>"
                             data-ref="<?php echo e($row->ref_no); ?>"
                             data-cost="<?php echo e($row->cost_center); ?>" class="border-b border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 <?php echo e($row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : ''); ?>">
@@ -185,7 +177,7 @@
                             </td>
                             <td class="px-3 py-2">
                                 <input type="date"
-                                    name="txn_date[<?php echo e($row->id); ?>]" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+                                    name="txn_date[<?php echo e($row->id); ?>]"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
 
                                     value="<?php echo e(\Carbon\Carbon::parse($row->txn_date)->format('Y-m-d')); ?>">
                             </td>
@@ -205,13 +197,13 @@
                             <td class="px-3 py-2">
                                 <select name="type[<?php echo e($row->id); ?>]" class="inputCell" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>>
                                     <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($vchType); ?>"
-                                        <?php echo e(($row->credit > 0 && $vchType == 'Receipt') ||
+                                        <option value="<?php echo e($vchType); ?>"
+                                            <?php echo e(($row->credit > 0 && $vchType == 'Receipt') ||
                                                 ($row->debit > 0 && $vchType == 'Payment') 
                                                 ? 'selected' : ''); ?>>
-                                        <?php echo e($vchType); ?>
+                                            <?php echo e($vchType); ?>
 
-                                    </option>
+                                        </option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
@@ -230,7 +222,7 @@
                                 <?php endif; ?>
                             </td>
                             <td class="px-3 py-2">
-                                <select name="ledger[<?php echo e($row->id); ?>]" class="ledgerSelect inputCell" data-selected="<?php echo e($row->ledger_name); ?>" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>>
+                                <select name="ledger[<?php echo e($row->id); ?>]"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?> class="ledgerSelect inputCell" data-selected="<?php echo e($row->ledger_name); ?>">
                                     <option value="">Select Ledger</option>
                                     <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($ledger->name); ?>" <?php echo e(isset($row->ledger_name) && $row->ledger_name == $ledger->name ? 'selected' : ''); ?>>
@@ -242,269 +234,109 @@
                             </td>
                             <td class="px-3 py-2">
                                 <div class="flex items-center gap-2">
-                                <?php if($row->is_suspense == 1): ?>
-                                    <span class="text-yellow-400 text-xs">Suspense</span>
-                                <?php else: ?>
-                                    <button type="button"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+                                    <?php if($row->is_suspense == 1): ?>
+                                        <span class="text-yellow-400 text-xs">Suspense</span>
+                                    <?php else: ?>
+                                        <button type="button"
+                                            class="text-yellow-400 suspenseBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
 
-                                        class="text-yellow-400 suspenseBtn"
+                                            data-id="<?php echo e($row->id); ?>">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if($row->resolution_remark): ?>
+                                        <button type="button"
+                                            class="text-blue-400 viewRemarkBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
+                                            data-remark="<?php echo e($row->resolution_remark); ?>">
+                                            <i class="fas fa-eye action-icon"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    <button type="button"
+                                        class="text-green-500 saveRowBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
                                         data-id="<?php echo e($row->id); ?>">
-                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <i class="fa-solid fa-check action-icon"></i>
                                     </button>
-                                <?php endif; ?>
-                                <?php if($row->resolution_remark): ?>
-                                    <button type="button"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+                                    <button type="button"
+                                        class="text-red-400 deleteBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
 
-                                        class="text-blue-400 viewRemarkBtn"
-                                        data-remark="<?php echo e($row->resolution_remark); ?>">
-                                        <i class="fas fa-eye action-icon"></i>
+                                        data-id="<?php echo e($row->id); ?>">
+                                        <i class="fa-solid fa-trash action-icon"></i>
                                     </button>
-                                <?php endif; ?>
-                                <button type="button"
-                                    class="text-green-500 saveRowBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
-
-                                    data-id="<?php echo e($row->id); ?>">
-                                    <i class="fa-solid fa-check action-icon "></i>
-                                </button>
-                                <button type="button"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
-
-                                    class="text-red-400 deleteBtn"
-                                    data-id="<?php echo e($row->id); ?>">
-                                    <i class="fa-solid fa-trash action-icon "></i>
-                                </button>
                                 </div>
-                            </td> 
-                            
+                            </td>
                         </tr>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
+        
         </form>
     </div>
 </div>
 
-<?php echo $__env->make('admin.bulkupload.bank.edit_modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
-
-<div id="ledgerModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <!-- Backdrop -->
-    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <!-- Modal -->
-    <div class="relative flex items-center justify-center min-h-screen p-2">
-        <div class="w-full max-w-5xl rounded-2xl border border-cyan-500/20 bg-slate-900 shadow-2xl overflow-hidden">
-            <!-- Header -->
-            <div class="flex items-center justify-between px-3 py-2 border-b border-slate-700">
-                <h3 class="text-xl font-semibold text-white">
-                    Create Ledger
-                </h3>
-                <button type="button"
-                    onclick="closeLedgerModal()"
-                    class="text-gray-400 hover:text-white text-xl">
-                    ✕
-                </button>
+<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-neutral-900 w-[520px] rounded-lg shadow-lg p-6">
+        <h2 class="text-lg text-white mb-4">Edit Transaction</h2>
+        <form id="editForm">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" id="edit_id">
+            <div class="mb-3">
+                <label class="text-gray-300 text-sm">Transfer Date</label>
+                <input type="date" id="edit_txn_date" class="inputCell">
             </div>
-            <!-- Body -->
-            <div class="p-3">
-                <form id="ledgerForm">
-                    <?php echo csrf_field(); ?>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <!-- Name -->
-                        <div>
-                            <label class="block mb-2 text-sm text-gray-300">
-                                Ledger Name
-                            </label>
-                            <input type="text"
-                                name="Name"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-                        </div>
-                        <!-- Parent -->
-                        <div>
-                            <label class="block mb-2 text-sm text-gray-300">
-                                Parent Group
-                            </label>
-                            <select name="Parent"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-
-                                <option value="">
-                                    Select Parent
-                                </option>
-
-                                <?php $__currentLoopData = $parents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($parent->strParents); ?>">
-                                        <?php echo e($parent->strParents); ?>
-
-                                    </option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-
-                            </select>
-                        </div>
-
-                        <!-- Mailing Name -->
-                        <div>
-                            <label class="block mb-2 text-sm text-gray-300">
-                                Mailing Name
-                            </label>
-
-                            <input type="text"
-                                name="MailingName"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-                        </div>
-
-                        <!-- GST Number -->
-                        <div>
-                            <label class="block mb-2 text-sm text-gray-300">
-                                GST Number
-                            </label>
-
-                            <input type="text"
-                                name="GstNo"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-                        </div>
-
-                        <!-- Address 1 -->
-                        <div class="md:col-span-2">
-                            <label class="block mb-2 text-sm text-gray-300">
-                                Address Line 1
-                            </label>
-
-                            <input type="text"
-                                name="AddressLine1"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-                        </div>
-
-                        <!-- Address 2 -->
-                        <div class="md:col-span-2">
-                            <label class="block mb-2 text-sm text-gray-300">
-                                Address Line 2
-                            </label>
-
-                            <input type="text"
-                                name="AddressLine2"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-                        </div>
-
-                        <!-- City -->
-                        <div>
-                            <label class="block mb-2 text-sm text-gray-300">
-                                City
-                            </label>
-
-                            <input type="text"
-                                name="City"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-                        </div>
-
-                        <!-- Pincode -->
-                        <div>
-                            <label class="block mb-2 text-sm text-gray-300">
-                                Pincode
-                            </label>
-
-                            <input type="text"
-                                name="Pincode"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-                        </div>
-
-                        <!-- State -->
-                        <div>
-                            <label class="block mb-2 text-sm text-gray-300">
-                                State
-                            </label>
-
-                            <select id="State"
-                                name="State"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-
-                                <option value="">
-                                    Select State
-                                </option>
-
-                                <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($state); ?>">
-                                        <?php echo e($state); ?>
-
-                                    </option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-
-                            </select>
-                        </div>
-
-                        <!-- Country -->
-                        <div>
-                            <label class="block mb-2 text-sm text-gray-300">
-                                Country
-                            </label>
-
-                            <input type="text"
-                                name="Country"
-                                value="India"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-                        </div>
-
-                        <!-- GST Type -->
-                        <div class="md:col-span-2">
-                            <label class="block mb-2 text-sm text-gray-300">
-                                GST Registration Type
-                            </label>
-
-                            <select name="GstRegistrationType"
-                                class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
-
-                                <option value="">Select Registration Type</option>
-                                <option value="Regular">Regular</option>
-                                <option value="Composition">Composition</option>
-                                <option value="Unregistered">Unregistered</option>
-                                <option value="Casual Taxable">Casual Taxable</option>
-                                <option value="Non-resident Taxable">Non-resident Taxable</option>
-                                <option value="Input Service Distributor">Input Service Distributor</option>
-                                <option value="Special Economic Zone">Special Economic Zone</option>
-                                <option value="E-commerce Operators">E-commerce Operators</option>
-                                <option value="Tax Deduction at Source">Tax Deduction at Source</option>
-                                <option value="TCS Collector">TCS Collector</option>
-                                <option value="Voluntary Registration">Voluntary Registration</option>
-
-                            </select>
-                        </div>
-
-                    </div>
-
-                </form>
-
+            <div class="mb-3">
+                <label class="text-gray-300 text-sm">Value Date</label>
+                <input type="date" id="edit_value_date" class="inputCell">
             </div>
+            <div class="mb-3">
+                <label class="text-gray-300 text-sm">Description</label>
+                <input type="text" id="edit_narration" class="inputCell">
+            </div>
+            <div class="mb-3">
+                <label class="text-gray-300 text-sm">Type</label>
+                <select id="edit_type" class="inputCell">
+                    <option value="Payment">Payment</option>
+                    <option value="Receipt">Receipt</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="text-gray-300 text-sm">Amount</label>
+                <input type="number" id="edit_amount" class="inputCell">
+            </div>
+            <div class="mb-3">
+                <label class="text-gray-300 text-sm">Ledger</label>
+                <select id="edit_ledger" class="inputCell">
+                    <option value="">Select Ledger</option>
+                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($ledger->name); ?>">
+                        <?php echo e($ledger->name); ?>
 
-            <!-- Footer -->
-            <div class="flex justify-end gap-3 px-6 py-4 border-t border-slate-700">
-
-                <button type="button"
-                    onclick="closeLedgerModal()"
-                    class="px-5 py-2 rounded-lg border border-slate-600 text-gray-300 hover:bg-slate-800">
-
+                    </option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3 mt-4">
+                <button type="button" id="closeModal" class="px-4 py-1 bg-gray-600 text-white rounded">
                     Cancel
-
                 </button>
-
-                <button type="submit"
-                    form="ledgerForm"
-                    class="px-5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white">
-
-                    Save Ledger
-
+                <button type="button" id="updateBtn" class="px-4 py-1 bg-blue-600 text-white rounded">
+                    Update
                 </button>
-
             </div>
-
-        </div>
-
+        </form>
     </div>
-
 </div>
 
-<!-- <div id="ledgerModal" class="modal">
+<div id="ledgerModal" class="modal">
     <div class="modal-content">
+        <!-- HEADER -->
         <div class="modal-header">
             <h3>Create Ledger</h3>
             <button type="button" class="close-btn" onclick="closeLedgerModal()">✕</button>
         </div>
+        <!-- BODY -->
         <div class="modal-body">
             <form id="ledgerForm">
                 <?php echo csrf_field(); ?>
@@ -550,7 +382,7 @@
                             <option value="<?php echo e($state); ?>"><?php echo e($state); ?></option>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
-
+                        
                     </div>
                     <div class="form-group">
                         <label>Country</label>
@@ -585,7 +417,7 @@
             <button type="submit" form="ledgerForm" class="submit-btn">Save Ledger</button>
         </div>
     </div>
-</div> -->
+</div>
 
 <div id="configModal" class="modal">
     <div class="config-box">
@@ -598,27 +430,22 @@
 
         <!-- BODY -->
         <div class="config-body">
-
             <!-- <div class="config-item">
                 <input type="checkbox" class="configCheck" value="bank_allocation" id="bank_allocation">
                 <label for="bank_allocation">Bank Allocation</label>
             </div> -->
-
             <div class="config-item">
                 <input type="checkbox" class="configCheck" value="cheque_no" id="cheque_no">
                 <label for="cheque_no">Cheque / Instrument No</label>
             </div>
-
             <div class="config-item">
                 <input type="checkbox" class="configCheck" value="reference_no" id="reference_no">
                 <label for="reference_no">Supplier Reference</label>
             </div>
-
             <div class="config-item">
                 <input type="checkbox" class="configCheck" value="cost_center" id="cost_center">
                 <label for="cost_center">Cost Centre</label>
             </div>
-
         </div>
 
         <!-- FOOTER -->
@@ -626,15 +453,13 @@
             <button class="btn-cancel" onclick="closeConfigModal()">Cancel</button>
             <button class="btn-ok" onclick="applyConfig()">OK</button>
         </div>
-
     </div>
 </div>
 
-<?php echo $__env->make('admin.bulkupload.bank.suspense_modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('admin.transaction-processing.bank.suspense_modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 
 <style>
-    
     /* =========================
     GLOBAL RESET
     ========================= */
@@ -647,8 +472,8 @@
     }
 
     /* =========================
-   PAGE LAYOUT
-========================= */
+    PAGE LAYOUT
+    ========================= */
     .page-wrapper {
         height: 100vh;
         display: flex;
@@ -663,8 +488,8 @@
     }
 
     /* =========================
-   FIXED HEADER + FILTER
-========================= */
+    FIXED HEADER + FILTER
+    ========================= */
     .header-fixed {
         flex-shrink: 0;
     }
@@ -674,8 +499,8 @@
     }
 
     /* =========================
-   TABLE CONTAINER (ONLY SCROLL)
-========================= */
+    TABLE CONTAINER (ONLY SCROLL)
+    ========================= */
     .table-container {
         height: calc(100vh - 180px);
         /* 🔥 adjust if needed */
@@ -684,8 +509,8 @@
     }
 
     /* =========================
-   TABLE STYLE
-========================= */
+    TABLE STYLE
+    ========================= */
     #bankTable {
         width: 100%;
         border-collapse: collapse;
@@ -729,9 +554,9 @@
     }
 
     /* #bankTable th,
-#bankTable td {
-    max-width: 150px;
-} */
+    #bankTable td {
+        max-width: 150px;
+    } */
 
     #bankTable td input,
     #bankTable td select {
@@ -757,8 +582,8 @@
     }
 
     /* =========================
-   DYNAMIC COLUMN FIX
-========================= */
+    DYNAMIC COLUMN FIX
+    ========================= */
     .dynamic-col {
         max-width: 150px;
     }
@@ -768,8 +593,8 @@
     }
 
     /* =========================
-   COLUMN WIDTH (OPTIMIZED)
-========================= */
+    COLUMN WIDTH (OPTIMIZED)
+    ========================= */
     /* CHECKBOX */
     #bankTable th:nth-child(1),
     #bankTable td:nth-child(1) {
@@ -821,8 +646,8 @@
     }
 
     /* =========================
-   SCROLLBAR CLEAN
-========================= */
+    SCROLLBAR CLEAN
+    ========================= */
     .table-container::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -865,8 +690,8 @@
     }
 
     /* =========================
-   CONFIG MODAL DESIGN
-========================= */
+    CONFIG MODAL DESIGN
+    ========================= */
 
     .config-box {
         background: #111827;
@@ -1005,41 +830,93 @@
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('scripts'); ?>
 <script>
-    // function openLedgerModal() {
-    //     document.getElementById('ledgerModal').classList.add('show');
-    // }
+let ALL_LEDGERS = <?php echo json_encode($allLedgers, 15, 512) ?>;
+let BANK_LEDGERS = <?php echo json_encode($bankLedgers, 15, 512) ?>;
 
-    // function closeLedgerModal() {
-    //     document.getElementById('ledgerModal').classList.remove('show');
-    // }
+function getLedgerOptions(type) {
+    let list = [];
+    if (type === 'contra') {
+        list = BANK_LEDGERS; // only bank + cash
+    } else {
+        list = ALL_LEDGERS; // all ledgers
+    }
+    let html = '<option value="">Select Ledger</option>';
+    list.forEach(l => {
+        html += `<option value="${l.name}">${l.name}</option>`;
+    });
+    return html;
+}
 
-    let ALL_LEDGERS = <?php echo json_encode($allLedgers, 15, 512) ?>;
-    let BANK_LEDGERS = <?php echo json_encode($bankLedgers, 15, 512) ?>;
+$('#bankTable').on('change', 'select[name^="type"]', function () {
+    let type = $(this).val().toLowerCase();
+    let row = $(this).closest('tr');
+    let ledgerDropdown = row.find('select[name^="ledger"]');
+    ledgerDropdown.html(getLedgerOptions(type));
 
-    function getLedgerOptions(type) {
-        let list = [];
-        if (type === 'contra') {
-            list = BANK_LEDGERS; // only bank + cash
-        } else {
-            list = ALL_LEDGERS; // all ledgers
-        }
-        let html = '<option value="">Select Ledger</option>';
-        list.forEach(l => {
-            html += `<option value="${l.name}">${l.name}</option>`;
-        });
-        return html;
+    // 🔥 clear old value
+    // ledgerDropdown.val('').trigger('change');
+
+    // 🔥 reinitialize select2 properly
+    if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
+        ledgerDropdown.select2('destroy');
     }
 
-    $('#bankTable').on('change', 'select[name^="type"]', function() {
-        let type = $(this).val().toLowerCase();
-        let row = $(this).closest('tr');
+    ledgerDropdown.select2({
+        width: '100%',
+        placeholder: "Search Ledger...",
+        allowClear: true
+    });
+});
+
+$(document).ready(function () {
+
+    if (!$.fn.select2) {
+        console.error('Select2 not loaded');
+        return;
+    }
+
+    let type = $('#typeFilter').val()?.toLowerCase() || '';
+    let bulkLedger = $('#bulkLedger');
+    bulkLedger.html(getLedgerOptions(type));
+    bulkLedger.select2({
+        width: '200px',
+        placeholder: "Search Ledger...",
+        allowClear: true
+    });
+
+
+    $('#bulkLedger').select2({
+        width: '200px',
+        placeholder: "Search Ledger...",
+        allowClear: true
+    });
+
+    // 🔥 INITIAL LOAD FIX (MAIN SOLUTION)
+    $('#bankTable tbody tr').each(function () {
+
+        let row = $(this);
+        let type = row.find('select[name^="type"]').val().toLowerCase();
         let ledgerDropdown = row.find('select[name^="ledger"]');
+
+        // set options based on type
         ledgerDropdown.html(getLedgerOptions(type));
 
-        // 🔥 clear old value
-        ledgerDropdown.val('').trigger('change');
+        // 🔥 set selected value again (IMPORTANT)
+        // let selectedLedger = ledgerDropdown.data('selected');
 
-        // 🔥 reinitialize select2 properly
+        // if (selectedLedger) {
+        //     ledgerDropdown.val(selectedLedger);
+        // } else {
+        //     ledgerDropdown.val('');
+        // }
+
+        let selectedLedger = ledgerDropdown.data('selected') || ledgerDropdown.val();
+
+        if (selectedLedger) {
+            ledgerDropdown.val(selectedLedger).trigger('change');
+        }
+
+        // reinit select2
         if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
             ledgerDropdown.select2('destroy');
         }
@@ -1049,231 +926,158 @@
             placeholder: "Search Ledger...",
             allowClear: true
         });
+
     });
 
-    $(document).ready(function() {
+});
 
-        if (!$.fn.select2) {
-            console.error('Select2 not loaded');
-            return;
+
+$('#descFilter').on('keyup', function () {
+    let value = $(this).val().toLowerCase();
+    $('#bankTable tbody tr').each(function () {
+        let text = $(this).find('input[name^="narration"]').val().toLowerCase();
+        $(this).toggle(text.includes(value));
+    });
+});
+
+function applyFilters() {
+    let type = $('#typeFilter').val().toLowerCase();
+    //let amount = $('#amountFilter').val().toLowerCase();
+    let desc = $('#descFilter').val().toLowerCase();
+    $('#bankTable tbody tr').each(function () {
+        let row = $(this);
+        let rowType = row.find('select[name^="type"]').val().toLowerCase();
+        let rowAmount = row.find('td:eq(6)').text().toLowerCase();
+        let rowDesc = row.find('input[name^="narration"]').val().toLowerCase();
+        let show = true;
+        if (type && rowType !== type) show = false;
+        // if (amount && !rowAmount.includes(amount)) show = false;
+        if (desc && !rowDesc.includes(desc)) show = false;
+        row.toggle(show);
+    });
+}
+// $('#typeFilter, #amountFilter, #descFilter').on('change keyup', applyFilters);
+
+function openConfigModal() {
+    $('#configModal').addClass('show');
+}
+function closeConfigModal() {
+    $('#configModal').removeClass('show');
+}
+
+function applyConfig() {
+
+    $('.dynamic-col').remove();
+
+    let selected = [];
+
+    $('.configCheck:checked').each(function () {
+        selected.push($(this).val());
+    });
+
+    let insertIndex = 2; // after Transfer Date
+
+    let headerRow = $('#bankTable thead tr').eq(0);
+    let searchRow = $('#bankTable thead tr').eq(1);
+
+    selected.forEach(col => {
+
+        let header = '';
+        let searchField = '';
+
+        if (col === 'cheque_no') {
+            header = 'Cheque No';
+            searchField = `<input class="searchInput">`;
         }
 
-        let type = $('#typeFilter').val()?.toLowerCase() || '';
-        let bulkLedger = $('#bulkLedger');
-        bulkLedger.html(getLedgerOptions(type));
-        bulkLedger.select2({
-            width: '200px',
-            placeholder: "Search Ledger...",
-            allowClear: true
-        });
+        if (col === 'reference_no') {
+            header = 'Reference';
+            searchField = `<input class="searchInput">`;
+        }
 
+        if (col === 'cost_center') {
+            header = 'Cost Center';
+            searchField = `<input class="searchInput">`;
+        }
 
-        $('#bulkLedger').select2({
-            width: '200px',
-            placeholder: "Search Ledger...",
-            allowClear: true
-        });
+        // 🔥 HEADER INSERT
+        headerRow.find('th').eq(insertIndex).after(
+            `<th class="px-3 py-2 dynamic-col">${header}</th>`
+        );
 
-        // 🔥 INITIAL LOAD FIX (MAIN SOLUTION)
-        $('#bankTable tbody tr').each(function() {
+        // 🔥 SEARCH ROW INSERT (IMPORTANT 🔥)
+        searchRow.find('th').eq(insertIndex).after(
+            `<th class="dynamic-col">${searchField}</th>`
+        );
+
+        // 🔥 BODY INSERT
+        $('#bankTable tbody tr').each(function () {
 
             let row = $(this);
-            let type = row.find('select[name^="type"]').val().toLowerCase();
-            let ledgerDropdown = row.find('select[name^="ledger"]');
+            let rowId = row.find('input[name="selected[]"]').val();
 
-            // set options based on type
-            ledgerDropdown.html(getLedgerOptions(type));
+            let chequeVal = row.data('cheque') || '';
+            let refVal = row.data('ref') || '';
+            let costVal = row.data('cost') || '';
 
-            // 🔥 set selected value again (IMPORTANT)
-            let selectedLedger = ledgerDropdown.data('selected');
-
-            if (selectedLedger) {
-                ledgerDropdown.val(selectedLedger);
-            } else {
-                ledgerDropdown.val('');
-            }
-
-            // reinit select2
-            if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
-                ledgerDropdown.select2('destroy');
-            }
-
-            ledgerDropdown.select2({
-                width: '100%',
-                placeholder: "Search Ledger...",
-                allowClear: true
-            });
-
-        });
-
-    });
-
-
-    $('#descFilter').on('keyup', function() {
-        let value = $(this).val().toLowerCase();
-        $('#bankTable tbody tr').each(function() {
-            let text = $(this).find('input[name^="narration"]').val().toLowerCase();
-            $(this).toggle(text.includes(value));
-        });
-    });
-
-    function applyFilters() {
-        let type = $('#typeFilter').val().toLowerCase();
-        //let amount = $('#amountFilter').val().toLowerCase();
-        let desc = $('#descFilter').val().toLowerCase();
-        $('#bankTable tbody tr').each(function() {
-            let row = $(this);
-            let rowType = row.find('select[name^="type"]').val().toLowerCase();
-            let rowAmount = row.find('td:eq(6)').text().toLowerCase();
-            let rowDesc = row.find('input[name^="narration"]').val().toLowerCase();
-            let show = true;
-            if (type && rowType !== type) show = false;
-            // if (amount && !rowAmount.includes(amount)) show = false;
-            if (desc && !rowDesc.includes(desc)) show = false;
-            row.toggle(show);
-        });
-    }
-    // $('#typeFilter, #amountFilter, #descFilter').on('change keyup', applyFilters);
-
-    function openConfigModal() {
-        $('#configModal').addClass('show');
-    }
-
-    function closeConfigModal() {
-        $('#configModal').removeClass('show');
-    }
-
-    function applyConfig() {
-
-        $('.dynamic-col').remove();
-
-        let selected = [];
-
-        $('.configCheck:checked').each(function() {
-            selected.push($(this).val());
-        });
-
-        let insertIndex = 2; // after Transfer Date
-
-        let headerRow = $('#bankTable thead tr').eq(0);
-        let searchRow = $('#bankTable thead tr').eq(1);
-
-        selected.forEach(col => {
-
-            let header = '';
-            let searchField = '';
+            let field = '';
 
             if (col === 'cheque_no') {
-                header = 'Cheque No';
-                searchField = `<input class="searchInput">`;
+                field = `<input type="text" class="inputCell" name="cheque_no[${rowId}]" value="${chequeVal}">`;
             }
 
             if (col === 'reference_no') {
-                header = 'Reference';
-                searchField = `<input class="searchInput">`;
+                field = `<input type="text" class="inputCell" name="ref_no[${rowId}]" value="${refVal}">`;
             }
 
             if (col === 'cost_center') {
-                header = 'Cost Center';
-                searchField = `<input class="searchInput">`;
+                field = `<input type="text" class="inputCell" name="cost_center[${rowId}]" value="${costVal}">`;
             }
 
-            // 🔥 HEADER INSERT
-            headerRow.find('th').eq(insertIndex).after(
-                `<th class="px-3 py-2 dynamic-col">${header}</th>`
+            row.find('td').eq(insertIndex).after(
+                `<td class="dynamic-col">${field}</td>`
             );
-
-            // 🔥 SEARCH ROW INSERT (IMPORTANT 🔥)
-            searchRow.find('th').eq(insertIndex).after(
-                `<th class="dynamic-col">${searchField}</th>`
-            );
-
-            // 🔥 BODY INSERT
-            $('#bankTable tbody tr').each(function() {
-
-                let row = $(this);
-                let rowId = row.find('input[name="selected[]"]').val();
-
-                let chequeVal = row.data('cheque') || '';
-                let refVal = row.data('ref') || '';
-                let costVal = row.data('cost') || '';
-
-                let field = '';
-
-                if (col === 'cheque_no') {
-                    field = `<input type="text" class="inputCell" name="cheque_no[${rowId}]" value="${chequeVal}">`;
-                }
-
-                if (col === 'reference_no') {
-                    field = `<input type="text" class="inputCell" name="ref_no[${rowId}]" value="${refVal}">`;
-                }
-
-                if (col === 'cost_center') {
-                    field = `<input type="text" class="inputCell" name="cost_center[${rowId}]" value="${costVal}">`;
-                }
-
-                row.find('td').eq(insertIndex).after(
-                    `<td class="dynamic-col">${field}</td>`
-                );
-            });
-
-            insertIndex++;
         });
 
-        closeConfigModal();
-    }
-
-    $(document).on('keyup change', '.searchInput', function() {
-
-        let input = $(this);
-        let value = input.val().toLowerCase();
-
-        let columnIndex = input.closest('th').index();
-
-        $('#bankTable tbody tr').each(function() {
-
-            let row = $(this);
-            let cell = row.find('td').eq(columnIndex);
-
-            let text = '';
-
-            // text
-            text += cell.text().toLowerCase();
-
-            // input value
-            let inputVal = cell.find('input').val();
-            if (inputVal) text += inputVal.toLowerCase();
-
-            // select
-            let selectVal = cell.find('select option:selected').text();
-            if (selectVal) text += selectVal.toLowerCase();
-
-            row.toggle(text.includes(value));
-        });
+        insertIndex++;
     });
+
+    closeConfigModal();
+}
+
+$(document).on('keyup change', '.searchInput', function () {
+
+    let input = $(this);
+    let value = input.val().toLowerCase();
+
+    let columnIndex = input.closest('th').index();
+
+    $('#bankTable tbody tr').each(function () {
+
+        let row = $(this);
+        let cell = row.find('td').eq(columnIndex);
+
+        let text = '';
+
+        // text
+        text += cell.text().toLowerCase();
+
+        // input value
+        let inputVal = cell.find('input').val();
+        if (inputVal) text += inputVal.toLowerCase();
+
+        // select
+        let selectVal = cell.find('select option:selected').text();
+        if (selectVal) text += selectVal.toLowerCase();
+
+        row.toggle(text.includes(value));
+    });
+});
 </script>
 <script>
-    $('#bankTable').on('click', '.saveRowBtn', function() {
+    $('#bankTable').on('click', '.saveRowBtn', function () {
 
         let row = $(this).closest('tr');
-
-        // ✅ GET LEDGER
-        let ledger = row.find('select[name^="ledger"]').val();
-
-        // 🔥 VALIDATION
-        if (!ledger) {
-            row.find('select[name^="ledger"]').focus();
-
-            // highlight error
-            row.find('select[name^="ledger"]').css('border', '1px solid red');
-
-            alert('Please select ledger before saving');
-
-            return; // ❌ STOP SAVE
-        } else {
-            // remove error style
-            row.find('select[name^="ledger"]').css('border', '');
-        }
         let debit = row.find('.text-red-400').text().replace(/,/g, '').trim();
         let credit = row.find('.text-green-400').text().replace(/,/g, '').trim();
 
@@ -1293,9 +1097,9 @@
             type: row.find('select[name^="type"]').val(),
             ledger: row.find('select[name^="ledger"]').val(),
             amount: amount,
-            cheque_no: row.find('input[name^="cheque_no"]').val(),
-            reference: row.find('input[name^="ref_no"]').val(),
-            cost_center: row.find('input[name^="cost_center"]').val(),
+            cheque_no : row.find('input[name^="cheque_no"]').val(),
+            reference : row.find('input[name^="ref_no"]').val(),
+            cost_center : row.find('input[name^="cost_center"]').val(),
         };
         console.log('DEBIT:', debit);
         console.log('CREDIT:', credit);
@@ -1305,109 +1109,19 @@
             url: "<?php echo e(route('bank.update')); ?>",
             type: "POST",
             data: data,
-            success: function(res) {
-                alert(res.message || (res.status ? 'Saved successfully' : 'Unable to save row'));
-                if (!res.status) {
-                    return;
-                }
-                // location.reload();
-                if (res.data) {
-                    let d = res.data;
-
-                    // Update txn_date
-                    if (d.txn_date) {
-                        row.find('input[name^="txn_date"]').val(d.txn_date);
-                    }
-                    // Update value_date
-                    if (d.value_date) {
-                        row.find('input[name^="value_date"]').val(d.value_date);
-                    }
-                    // Update narration
-                    if (d.narration !== undefined) {
-                        row.find('input[name^="narration"]').val(d.narration);
-                    }
-                    // Update type & rebuild ledger dropdown
-                    if (d.type) {
-                        let typeSelect = row.find('select[name^="type"]');
-                        typeSelect.val(d.type);
-
-                        let ledgerDropdown = row.find('select[name^="ledger"]');
-                        let currentLedger = d.ledger_name || ledger;
-
-                        // Rebuild ledger options based on new type
-                        ledgerDropdown.html(getLedgerOptions(d.type.toLowerCase()));
-
-                        // Restore selected ledger if it exists in new options
-                        if (ledgerDropdown.find('option[value="' + currentLedger + '"]').length) {
-                            ledgerDropdown.val(currentLedger);
-                        } else {
-                            ledgerDropdown.val('');
-                        }
-
-                        // Re-init select2
-                        if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
-                            ledgerDropdown.select2('destroy');
-                        }
-                        ledgerDropdown.select2({
-                            width: '100%',
-                            placeholder: "Search Ledger...",
-                            allowClear: true
-                        });
-                    }
-                    // Update amount display
-                    if (d.debit > 0) {
-                        row.find('td:eq(6)').html('<span class="text-red-400">' + parseFloat(d.debit).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>');
-                    } else if (d.credit > 0) {
-                        row.find('td:eq(6)').html('<span class="text-green-400">' + parseFloat(d.credit).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>');
-                    }
-                    // Update cheque_no
-                    if (d.cheque_no !== undefined) {
-                        let chequeInput = row.find('input[name^="cheque_no"]');
-                        if (chequeInput.length) chequeInput.val(d.cheque_no);
-                        row.attr('data-cheque', d.cheque_no || '');
-                    }
-                    // Update ref_no
-                    if (d.ref_no !== undefined) {
-                        let refInput = row.find('input[name^="ref_no"]');
-                        if (refInput.length) refInput.val(d.ref_no);
-                        row.attr('data-ref', d.ref_no || '');
-                    }
-                    // Update cost_center
-                    if (d.cost_center !== undefined) {
-                        let costInput = row.find('input[name^="cost_center"]');
-                        if (costInput.length) costInput.val(d.cost_center);
-                        row.attr('data-cost', d.cost_center || '');
-                    }
-                }
+            success: function (res) {
+                alert('Saved Successfully');
+                location.reload();
 
             }
         });
     });
 
     $('#saveBtn').click(function() {
-        let missingLedgerRows = [];
 
-        $('#bankForm input[name="selected[]"]:checked').each(function() {
-            let row = $(this).closest('tr');
-            let ledgerSelect = row.find('select[name^="ledger"]');
-
-            if (!ledgerSelect.val()) {
-                missingLedgerRows.push(row.find('td:eq(1)').text().trim() || $(this).val());
-                ledgerSelect.css('border', '1px solid red');
-            } else {
-                ledgerSelect.css('border', '');
-            }
-        });
-
-        if (missingLedgerRows.length) {
-            alert('Please select ledger for all selected rows before saving. Missing ledger on row(s): ' + missingLedgerRows.join(', '));
-            return;
-        }
         //let formData = $('#bankForm').serialize();
-        let hiddenFields = $('#bankTable tbody tr:hidden').find('input,select');
-        hiddenFields.prop('disabled', true);
+        $('#bankTable tbody tr:hidden').find('input,select').prop('disabled', true);
         let formData = $('#bankForm').serialize();
-        hiddenFields.prop('disabled', false);
 
         $.ajax({
             url: "<?php echo e(route('bank.save')); ?>",
@@ -1417,9 +1131,9 @@
                 'X-CSRF-TOKEN': $('input[name="_token"]').val()
             },
             success: function(response) {
-                alert(response.message || (response.status ? 'Saved successfully' : 'Unable to save selected rows'));
+
                 if (response.status) {
-                    // alert(response.message);
+                    alert(response.message);
                     location.reload();
                 }
 
@@ -1434,11 +1148,11 @@
     });
 
     function openLedgerModal() {
-        $('#ledgerModal').removeClass('hidden');
+        document.getElementById('ledgerModal').classList.add('show');
     }
 
     function closeLedgerModal() {
-        $('#ledgerModal').addClass('hidden');
+        document.getElementById('ledgerModal').classList.remove('show');
     }
 
     // Close when clicking outside
@@ -1483,12 +1197,34 @@
         $('tbody input[type=checkbox]').prop('checked', this.checked);
     });
 
+    
+    $(document).on('keyup change', '.amountFrom, .amountTo', function () {
+
+        let from = parseFloat($('.amountFrom').val()) || 0;
+        let to = parseFloat($('.amountTo').val()) || Infinity;
+
+        $('#bankTable tbody tr').each(function () {
+
+            let row = $(this);
+
+            let amountText = row.find('td:eq(6)').text().replace(/,/g, '').trim();
+            let amount = parseFloat(amountText) || 0;
+
+            if (amount >= from && amount <= to) {
+                row.show();
+            } else {
+                row.hide();
+            }
+
+        });
+    });
+
     function applyColumnFilters() {
 
         let from = parseFloat($('.amountFrom').val()) || 0;
         let to = parseFloat($('.amountTo').val()) || Infinity;
 
-        $('#bankTable tbody tr').each(function() {
+        $('#bankTable tbody tr').each(function () {
 
             let row = $(this);
 
@@ -1511,10 +1247,11 @@
 
     $('.searchInput, .amountFrom, .amountTo').on('keyup change', applyColumnFilters);
 
-    $('.searchInput').on('keyup change', function() {
+    
+    $('.searchInput').on('keyup change', function () {
         let column = $(this).closest('th').index();
         let value = $(this).val().toLowerCase();
-        $('#bankTable tbody tr').each(function() {
+        $('#bankTable tbody tr').each(function () {
             let cell = $(this).find('td').eq(column);
             let text = '';
             text += cell.text().toLowerCase();
@@ -1589,74 +1326,6 @@
                 ledger: $('#edit_ledger').val()
             },
             success: function(response) {
-                // if (res.data) {
-                //     let d = res.data;
-
-                //     // Update txn_date
-                //     if (d.txn_date) {
-                //         row.find('input[name^="txn_date"]').val(d.txn_date);
-                //     }
-                //     // Update value_date
-                //     if (d.value_date) {
-                //         row.find('input[name^="value_date"]').val(d.value_date);
-                //     }
-                //     // Update narration
-                //     if (d.narration !== undefined) {
-                //         row.find('input[name^="narration"]').val(d.narration);
-                //     }
-                //     // Update type & rebuild ledger dropdown
-                //     if (d.type) {
-                //         let typeSelect = row.find('select[name^="type"]');
-                //         typeSelect.val(d.type);
-
-                //         let ledgerDropdown = row.find('select[name^="ledger"]');
-                //         let currentLedger = d.ledger_name || ledger;
-
-                //         // Rebuild ledger options based on new type
-                //         ledgerDropdown.html(getLedgerOptions(d.type.toLowerCase()));
-
-                //         // Restore selected ledger if it exists in new options
-                //         if (ledgerDropdown.find('option[value="' + currentLedger + '"]').length) {
-                //             ledgerDropdown.val(currentLedger);
-                //         } else {
-                //             ledgerDropdown.val('');
-                //         }
-
-                //         // Re-init select2
-                //         if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
-                //             ledgerDropdown.select2('destroy');
-                //         }
-                //         ledgerDropdown.select2({
-                //             width: '100%',
-                //             placeholder: "Search Ledger...",
-                //             allowClear: true
-                //         });
-                //     }
-                //     // Update amount display
-                //     if (d.debit > 0) {
-                //         row.find('td:eq(6)').html('<span class="text-red-400">' + parseFloat(d.debit).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>');
-                //     } else if (d.credit > 0) {
-                //         row.find('td:eq(6)').html('<span class="text-green-400">' + parseFloat(d.credit).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>');
-                //     }
-                //     // Update cheque_no
-                //     if (d.cheque_no !== undefined) {
-                //         let chequeInput = row.find('input[name^="cheque_no"]');
-                //         if (chequeInput.length) chequeInput.val(d.cheque_no);
-                //         row.attr('data-cheque', d.cheque_no || '');
-                //     }
-                //     // Update ref_no
-                //     if (d.ref_no !== undefined) {
-                //         let refInput = row.find('input[name^="ref_no"]');
-                //         if (refInput.length) refInput.val(d.ref_no);
-                //         row.attr('data-ref', d.ref_no || '');
-                //     }
-                //     // Update cost_center
-                //     if (d.cost_center !== undefined) {
-                //         let costInput = row.find('input[name^="cost_center"]');
-                //         if (costInput.length) costInput.val(d.cost_center);
-                //         row.attr('data-cost', d.cost_center || '');
-                //     }
-                // }
                 if (response.status) {
                     alert('Updated Successfully');
                     location.reload();
@@ -1666,7 +1335,7 @@
     });
 
     // BULK TYPE UPDATE
-    $('#typeFilter').on('change', function() {
+    $('#typeFilter').on('change', function () {
         let type = $(this).val().toLowerCase();
         let bulkLedger = $('#bulkLedger');
 
@@ -1686,9 +1355,9 @@
         });
     });
 
-    $('#bulkLedger').change(function() {
+    $('#bulkLedger').change(function () {
         let ledger = $(this).val();
-        $('#bankTable tbody tr:visible').each(function() {
+        $('#bankTable tbody tr:visible').each(function () {
             let checkbox = $(this).find('input[type="checkbox"]');
             if (checkbox.is(':checked')) {
                 let row = $(this);
@@ -1716,12 +1385,12 @@
         });
     });
 
-    $('.generalFilter').on('change', function() {
+    $('.generalFilter').on('change', function () {
         let filters = [];
-        $('.generalFilter:checked').each(function() {
+        $('.generalFilter:checked').each(function () {
             filters.push($(this).val());
         });
-        $('#bankTable tbody tr').each(function() {
+        $('#bankTable tbody tr').each(function () {
             let row = $(this);
             let status = row.find('td:eq(10)').text().trim().toLowerCase(); // STATUS column
             let show = true;
@@ -1749,7 +1418,7 @@
         });
     });
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         if (!$.fn.select2) {
             console.error('Select2 not loaded');
             return;
@@ -1758,7 +1427,7 @@
     });
 
     function applySelect2() {
-        $('.ledgerSelect').each(function() {
+        $('.ledgerSelect').each(function () {
             if ($(this).hasClass("select2-hidden-accessible")) {
                 $(this).select2('destroy'); // destroy old
             }
@@ -1770,57 +1439,13 @@
         });
     }
 
-    $(document).on('keyup change', '.amountFrom, .amountTo, #descFilter', function() {
-        applyAllFilters();
-    });
-
-    function applyAllFilters() {
-
-        let from = parseFloat($('.amountFrom').val()) || 0;
-        let to = parseFloat($('.amountTo').val()) || Infinity;
-        let descFilter = $('#descFilter').val()?.toLowerCase() || '';
-        $('#bankTable tbody tr').each(function() {
-            let row = $(this);
-            // ✅ GET AMOUNT PROPERLY
-            let debit = row.find('.text-red-400').text().replace(/,/g, '').trim();
-            let credit = row.find('.text-green-400').text().replace(/,/g, '').trim();
-            let amount = 0;
-            if (debit) amount = parseFloat(debit);
-            else if (credit) amount = parseFloat(credit);
-            // ✅ DESCRIPTION
-            let desc = row.find('input[name^="narration"]').val().toLowerCase();
-            let show = true;
-            // 🔥 Amount filter
-            if (amount < from || amount > to) show = false;
-            // 🔥 Description filter
-            if (descFilter && !desc.includes(descFilter)) show = false;
-            row.toggle(show);
-        });
-    }
-
+    
     $(document).on('click', '.suspenseBtn', function() {
         let id = $(this).data('id');
 
         $('#suspense_id').val(id);
         $('#suspense_remark').val('');
-        // $('#suspenseModal').removeClass('hidden').addClass('flex');
-        $('#suspenseModal').data('bulk', false);
-        $('#suspenseModal').removeClass('hidden').addClass('flex');
-    });
 
-    $('#bulkSuspenseBtn').click(function() {
-        let selected = $('#bankForm input[name="selected[]"]:checked').map(function() {
-            return $(this).val();
-        }).get();
-
-        if (!selected.length) {
-            alert('Please select at least one row');
-            return;
-        }
-
-        $('#suspense_id').val(selected.join(','));
-        $('#suspense_remark').val('');
-        $('#suspenseModal').data('bulk', true);
         $('#suspenseModal').removeClass('hidden').addClass('flex');
     });
     function closeSuspenseModal() {
@@ -1837,35 +1462,17 @@
             return;
         }
 
-        let isBulk = $('#suspenseModal').data('bulk') === true;
-        let data = {
-            _token: "<?php echo e(csrf_token()); ?>",
-            remark: remark
-        };
-
-        if (isBulk) {
-            data.selected = id.split(',').filter(Boolean);
-        } else {
-            data.id = id;
-        }
-
         $.ajax({
             url: "<?php echo e(route('bank.markSuspense')); ?>",
             type: "POST",
-            // data: {
-            //     _token: "<?php echo e(csrf_token()); ?>",
-            //     id: id,
-            //     remark: remark
-            // },
-            data: data,
-            success: function(res) {
-                // alert('Marked as Suspense');
-                alert(res.message || 'Marked as Suspense');
-                location.reload();
+            data: {
+                _token: "<?php echo e(csrf_token()); ?>",
+                id: id,
+                remark: remark
             },
-            error: function(xhr) {
-                console.log(xhr.responseText);
-                alert('Error marking suspense');
+            success: function(res) {
+                alert('Marked as Suspense');
+                location.reload();
             }
         });
     });
@@ -1884,4 +1491,4 @@
     }
 </script>
 <?php $__env->stopSection(); ?>
-<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/bulkupload/bank/preview.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/bank/preview.blade.php ENDPATH**/ ?>

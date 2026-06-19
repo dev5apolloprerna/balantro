@@ -783,28 +783,54 @@ class TransactionProcessingController extends Controller
                 ->with('error', 'Please select company first');
         }
 
+        $selectedIds = array_values(array_filter((array) $request->selected));
+
+        if (empty($selectedIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No debit note rows selected.'
+            ]);
+        }
+
+        $missingLedgerIds = [];
+
+        foreach ($selectedIds as $id) {
+            $ledgerName = trim((string) ($request->party_ledger[$id] ?? ''));
+
+            if ($ledgerName === '') {
+                $missingLedgerIds[] = $id;
+            }
+        }
+
+        if (!empty($missingLedgerIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => count($missingLedgerIds) . ' selected debit note row(s) are missing a party ledger. Please select a ledger for every selected row before submitting.'
+            ]);
+        }
+
         $uploadId = null;
-        foreach ($request->selected as $key => $id) {
+        $submittedCount = 0;
+
+        foreach ($selectedIds as $key => $id) {
             $row = DebitNoteTransaction::find($id);
             if (!$row) continue;
             $voucherType = $request->voucher_type[$id] ?? $row->vch_type;
             $number = $request->invoice_no[$id] ?? $row->note_no;
-            $party = $request->party_name[$id] ?? $request->party_ledger[$id] ?? $request->ledger[$id] ?? $row->party_name;
+            $party = trim((string) ($request->party_ledger[$id] ?? $request->party_name[$id] ?? $request->ledger[$id] ?? $row->party_name));
             $date = $request->date[$id] ?? $row->note_date;
             if ($this->voucherCombinationExists('debit_note_transactions', ['iPartyId'=>$iPartyId,'voucher_column'=>'vch_type','voucher_value'=>$voucherType,'number_column'=>'note_no','number_value'=>$number,'party_column'=>'party_name','party_value'=>$party,'date_column'=>'note_date','date_value'=>$date,'year_column'=>'strYear','year_value'=>session('year')], $row->id) || $this->vchHistoryCombinationExists(['iPartyId'=>$iPartyId,'voucher_value'=>$voucherType,'number_value'=>$number,'party_value'=>$party,'history_date_value'=>$this->historyDate($date),'year_value'=>session('year')])) { return response()->json(['status'=>false,'message'=>'Duplicate voucher combination is not allowed.']); }
             $uploadId = $row->upload_id;
             $row->update([
                 'note_no' => $request->invoice_no[$id] ?? $row->note_no,
                 'note_date' => $request->date[$id] ?? $row->note_date,
-                'party_name' => $request->party_name[$id]
-                    ?? $request->party_ledger[$id]
-                    ?? $request->ledger[$id]
-                    ?? $row->party_name,
+                'party_name' => $party,
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
                 'purchase_ledger' => $request->ledger[$id] ?? $row->purchase_ledger,
                 'vch_type' => $request->voucher_type[$id] ?? $row->vch_type,
                 'status' => 'submitted',
             ]);
+            $submittedCount++;
         }
 
         if ($uploadId) {
@@ -825,7 +851,7 @@ class TransactionProcessingController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Sumbit Successfully'
+            'message' => $submittedCount . ' debit note row(s) submitted successfully with selected ledger(s).'
         ]);
     }
 

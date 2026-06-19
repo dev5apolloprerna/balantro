@@ -392,7 +392,7 @@
         </div>
 
         <!-- Drawer -->
-        <div class="relative w-[420px] h-full bg-white dark:bg-neutral-800 shadow-xl">
+        <div class="relative w-[420px] h-full bg-white dark:bg-neutral-800 shadow-xl flex flex-col">
 
             <!-- Header -->
             <div class="flex justify-between items-center px-5 py-4 border-b">
@@ -419,7 +419,7 @@
             </div>
 
             <!-- Client List -->
-            <div class="overflow-y-auto h-[calc(100%-120px)]">
+            <div class="flex-1 min-h-0 overflow-y-auto">
 
                 @foreach($clients as $client)
 

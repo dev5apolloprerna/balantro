@@ -487,7 +487,7 @@
         </div>
 
         <!-- Drawer -->
-        <div class="relative w-[420px] h-full bg-white dark:bg-neutral-800 shadow-xl">
+        <div class="relative w-[420px] h-full bg-white dark:bg-neutral-800 shadow-xl flex flex-col">
 
             <!-- Header -->
             <div class="flex justify-between items-center px-5 py-4 border-b">
@@ -515,7 +515,7 @@
 
             <!-- Client List -->
             <!-- <div class="overflow-y-auto h-[calc(100%-120px)]"> -->
-            <div class="h-auto">
+            <div class="flex-1 min-h-0 overflow-y-auto">
 
                 <?php $__currentLoopData = $clients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 

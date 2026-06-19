@@ -42,7 +42,9 @@
                                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                         <?php endif; ?>
+                                        <!-- Divider -->
                                         <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
+
                                         <!-- Select Client -->
                                         <button
                                             @click="openClient=true"
@@ -103,7 +105,7 @@
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                        <table id="bankTable" class="min-w-full text-sm text-left text-gray-600 dark:text-gray-200">
                             <!-- Table Header -->
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
@@ -111,8 +113,8 @@
                                         <input type="checkbox">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
-                                    <th class="px-4 py-3">File Name</th>
-                                    <th class="px-4 py-3">Type</th>
+                                    <th class="px-4 py-3 w-[250px]">File Name</th>
+                                    <!-- <th class="px-4 py-3">Type</th> -->
                                     <th class="px-4 py-3">Statement Date</th>
                                     <th class="px-4 py-3">Synced Date</th>
                                     <th class="px-4 py-3">Total</th>
@@ -120,7 +122,7 @@
                                     <th class="px-4 py-3">Saved</th>
                                     <th class="px-4 py-3">Synced</th>
                                     <th class="px-4 py-3">Status</th>
-                                    <th class="px-4 py-3 text-right">Action</th>
+                                    <th class="px-4 py-3 text-right w-[120px]">Action</th>
                                 </tr>
                             </thead>
                             <!-- Table Body -->
@@ -131,14 +133,14 @@
                                         <input type="checkbox">
                                     </td>
                                     <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
-                                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
+                                    <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200 w-[250px] truncate">
                                         <?php echo e($upload->file_name); ?>
 
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <!-- <td class="px-4 py-3">
                                         <?php echo e(ucfirst(str_replace('_',' ',$upload->type))); ?>
 
-                                    </td>
+                                    </td> -->
                                     <td class="px-4 py-3">
                                         <?php echo e($upload->statement_date ?? '-'); ?>
 
@@ -165,29 +167,29 @@
                                     </td>
                                     <td class="px-4 py-3">
                                         <?php if($upload->status == 'Completed'): ?>
-                                        <a href="<?php echo e(route('transaction_processing.preview_processing_purchase',$upload->id)); ?>"
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>"
                                             class="text-green-500 font-semibold hover:underline">
                                             Completed
                                         </a>
                                         <?php elseif($upload->status == 'Processing'): ?>
-                                        <a href="<?php echo e(route('transaction_processing.preview_processing_purchase',$upload->id)); ?>"
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Processing
                                         </a>
                                         <?php elseif($upload->status == 'Pending'): ?>
-                                        <a href="<?php echo e(route('transaction_processing.preview_processing_purchase',$upload->id)); ?>"
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Pending
                                         </a>
                                         <?php else: ?>
-                                        <a href="<?php echo e(route('transaction_processing.preview_processing_purchase',$upload->id)); ?>"
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>"
                                             class="text-red-500 font-semibold hover:underline">
                                             Failed
                                         </a>
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
-                                        <a href="<?php echo e(route('transaction_processing.preview_processing_purchase',$upload->id)); ?>">
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>">
                                             <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
                                         <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i>
@@ -219,7 +221,6 @@
                                                 </button>
                                             </div>
                                         </div>
-
                                     </td>
                                 </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -239,75 +240,107 @@
         style="display: none;"
         data-upload-modal
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-        <div class="bg-white dark:bg-neutral-800 w-[720px] rounded-lg shadow-xl">
-            <!-- Header -->
-            <div class="flex justify-between items-center border-b px-5 py-3">
-                <h2 class="text-lg font-semibold">Upload Purchase</h2>
-                <button @click="openUpload=false" class="text-gray-500 hover:text-gray-700">
-                    <i class="fa-solid fa-xmark"></i>
+        <div class="bg-white dark:bg-neutral-800 w-[650px] rounded-lg shadow-xl">
+            <!-- HEADER -->
+            <div class="flex justify-between items-center border-b px-5 py-4">
+                <h2 class="text-lg font-semibold">
+                    Upload Banking
+                </h2>
+                <button @click="openUpload=false">
+                    <i class="fa-solid fa-xmark text-gray-500"></i>
                 </button>
             </div>
-            <form method="POST" action="<?php echo e(route('purchase.upload')); ?>" enctype="multipart/form-data">
+            <form method="POST" action="<?php echo e(route('bank.upload')); ?>" enctype="multipart/form-data">
                 <?php echo csrf_field(); ?>
-                <!-- Body -->
-                <div class="p-6">
-                    <!-- Upload Area -->
-                    <div class="border-2 border-dashed border-blue-400 dark:border-blue-500 rounded-lg p-10 text-center">
-                        <i class="fa-regular fa-file text-3xl text-blue-500 mb-3"></i>
+                <div class="p-6 space-y-5">
+                    <!-- SELECT BANK -->
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">
+                            Select Bank
+                        </label>
+                        <select
+                            name="bank_name"
+                            class="w-full mt-1 border rounded-md px-3 py-2 text-sm">
+                            <option value="">Search to Select</option>
+                            <?php $__currentLoopData = $banks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $bank): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($bank->name); ?>">
+                                <?php echo e($bank->name); ?>
+
+                            </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                    </div>
+                    <!-- DRAG DROP AREA -->
+                    <div
+                        class="border-2 border-dashed border-blue-400 rounded-lg p-10 text-center bg-gray-50 dark:bg-neutral-900">
                         <p class="text-gray-600 mb-3">
                             Drag and drop a file here or
                         </p>
-                        <div class="text-center">
-                            <!-- Hidden File Input -->
-                            <input
-                                type="file"
-                                name="purchase_file"
-                                id="purchaseFileUpload"
-                                class="hidden"
-                                accept=".xlsx,.xls"
-                                onchange="showFileName(this)">
-                            <!-- Styled Button -->
-                            <button
-                                type="button"
-                                onclick="document.getElementById('purchaseFileUpload').click()"
-                                class="border border-blue-500 text-blue-600 px-4 py-2 rounded-md text-sm flex items-center gap-2 mx-auto">
-                                <i class="fa-solid fa-upload"></i>
-                                Click to upload
-                            </button>
-                        </div>
+                        <input
+                            type="file"
+                            name="bank_file"
+                            id="bankFileUpload"
+                            class="hidden"
+                            accept=".xlsx,.xls,.csv"
+                            onchange="showFileName(this)">
+                        <button
+                            type="button"
+                            onclick="document.getElementById('bankFileUpload').click()"
+                            class="border border-blue-500 text-blue-600 px-4 py-2 rounded-md text-sm">
+                            Click to upload
+                        </button>
                     </div>
-                    <!-- File name -->
-                    <div id="uploadedFileName" class="text-sm text-gray-500 dark:text-gray-300 mt-3">
+                    <!-- FILE NAME -->
+                    <div id="uploadedFileName" class="text-sm text-gray-500 hidden">
                         <i class="fa-solid fa-paperclip"></i>
                         <span id="fileNameText"></span>
                     </div>
-                    <!-- Notes -->
-                    <div class="mt-6 text-sm text-gray-600 dark:text-gray-300">
-                        <p class="font-semibold mb-2">Notes:</p>
-                        <ul class="list-disc ml-5 space-y-1">
-                            <li>Please make sure the uploaded excel file does not contain the dot(.) and dollar($) symbol in the column header and other then purchase/purchase field do not add anything above header.</li>
-                            <li>Please make sure the file size must not exceed 30MB.</li>
-                            <li>Sync the ledger before uploading the file.</li>
-                            <li>Please don't upload password protected excel files.</li>
-                            <li>Date format should be DD/MM/YYYY.</li>
-                        </ul>
+                    <!-- NOTES -->
+                    <div class="mt-6 text-sm">
+                        <p class="font-semibold mb-2 text-gray-300">
+                            Notes:
+                        </p>
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div class="border border-neutral-600 rounded-md p-3 bg-gray-100 text-gray-700 dark:bg-neutral-700 dark:text-gray-200">
+                                ❌ Please don't upload Passbook, Share Market statement and Loan statement.
+                            </div>
+                            <div class="border border-neutral-600 rounded-md p-3 bg-gray-100 text-gray-700 dark:bg-neutral-700 dark:text-gray-200">
+                                ❌ Please don't upload password protected, RTP or TEXT format files.
+                            </div>
+                        </div>
+                    </div>
+                    <!-- FILE TYPES -->
+                    <div class="grid grid-cols-3 gap-3 text-center text-sm">
+                        <div class="border rounded-md p-3">
+                            📊 Excel
+                            <br>
+                            <span class="text-xs text-gray-500">Upto 30 min</span>
+                        </div>
+                        <!-- <div class="border rounded-md p-3">
+                            📄 Original PDF
+                            <br>
+                            <span class="text-xs text-gray-500">Upto 1 Hour</span>
+                        </div>
+                        <div class="border rounded-md p-3">
+                            🖨 Scanned PDF
+                            <br>
+                            <span class="text-xs text-gray-500">Upto 12 Hours</span>
+                        </div> -->
                     </div>
                 </div>
-                <!-- Footer -->
-                <div class="flex justify-end gap-3 border-t px-5 py-3">
+                <!-- FOOTER -->
+                <div class="flex justify-end gap-3 border-t px-5 py-4">
                     <button
+                        type="button"
                         @click="openUpload=false"
-                        class="px-4 py-2 border rounded-md text-gray-600">
+                        class="px-4 py-2 border rounded-md">
                         Cancel
                     </button>
                     <button
+                        type="submit"
                         class="px-4 py-2 bg-blue-600 text-white rounded-md">
                         Upload
                     </button>
-                    <!-- <button type="submit"
-                        class="px-4 py-2 bg-blue-800 text-white rounded-md">
-                        Upload & Preview
-                    </button> -->
                 </div>
             </form>
         </div>
@@ -334,7 +367,6 @@
         <div class="relative w-[420px] h-full bg-white dark:bg-neutral-800 shadow-xl flex flex-col">
             <!-- Header -->
             <div class="flex justify-between items-center px-5 py-4 border-b">
-
                 <h2 class="text-lg font-semibold">
                     My Company
                 </h2>
@@ -344,7 +376,6 @@
             </div>
             <!-- Search -->
             <div class="p-4 border-b">
-
                 <input
                     type="text"
                     id="clientSearch"
@@ -377,7 +408,14 @@
             </div>
         </div>
     </div>
+
     <style>
+        #bankTable {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed; /* 🔥 IMPORTANT */
+            font-size: 11px;
+        }
         .dropdown-item {
             width: 100%;
             text-align: left;
@@ -459,10 +497,8 @@
         function openDropdown(e, id) {
             e.stopPropagation();
             currentId = id;
-
             let dropdown = document.getElementById('globalDropdown');
             dropdown.classList.remove('hidden');
-
             let rect = e.target.getBoundingClientRect();
             dropdown.style.top = rect.bottom + "px";
             dropdown.style.left = (rect.left - 150) + "px";
@@ -472,9 +508,9 @@
             document.getElementById('globalDropdown').classList.add('hidden');
         });
 
-        // STATUS
+        // STATUS CHANGE
         function handleStatus(status) {
-            $.post("<?php echo e(route('purchase.upload.status')); ?>", {
+            $.post("<?php echo e(route('bank.upload.status')); ?>", {
                 _token: "<?php echo e(csrf_token()); ?>",
                 id: currentId,
                 status: status
@@ -486,10 +522,8 @@
 
         // DELETE
         function handleDelete() {
-
             if (!confirm('Delete full upload?')) return;
-
-            $.post("<?php echo e(route('purchase.bulk.delete')); ?>", {
+            $.post("<?php echo e(route('bank.bulk.delete')); ?>", {
                 _token: "<?php echo e(csrf_token()); ?>",
                 ids: [currentId]
             }, function(res) {
@@ -500,4 +534,4 @@
     </script>
     <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/purchase/index.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/bank/index.blade.php ENDPATH**/ ?>
