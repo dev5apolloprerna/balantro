@@ -786,7 +786,7 @@
                 // validation
                 if (!toCustom) {
                     e.preventDefault();
-                    alert('Please select To Date');
+                    showToast('Please select To Date','error');
                     return;
                 }
 

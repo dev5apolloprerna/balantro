@@ -620,7 +620,7 @@
             narration: $('#edit_narration').val(),
             items: items
         }, function(res) {
-            alert(res.message || 'Updated Successfully');
+            showToast(res.message || 'Updated Successfully','success');
             $('#editModal').removeClass('show');
             location.reload();
         });
@@ -641,7 +641,7 @@
             _token: '{{ csrf_token() }}',
             selected: selected
         }, function(res) {
-            alert(res.message);
+            showToast(res.message,'success');
             location.reload();
         });
     }
@@ -654,7 +654,7 @@
             _token: '{{ csrf_token() }}',
             selected: selected
         }, function(res) {
-            alert(res.message);
+            showToast(res.message,'success');
             location.reload();
         });
     }

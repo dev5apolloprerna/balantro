@@ -920,30 +920,6 @@
             const day = String(d.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
-
-        // document.getElementById('from').value = formatDate(r.from);
-        // document.getElementById('to').value   = formatDate(r.to);
-                
-        // document.getElementById('filterForm').addEventListener('submit', function (e) {
-        //     const range = document.querySelector('input[name="range"]').value;
-        //     const fromC = document.getElementById('from_custom').value;
-        //     const toC   = document.getElementById('to_custom').value;
-        //     const hidFrom = document.getElementById('from');
-        //     const hidTo   = document.getElementById('to');
-        //     if (range === 'custom') {
-        //         if (!toC) {
-        //             e.preventDefault();
-        //             alert('Please select To Date');
-        //             return;
-        //         }
-        //         // ✅ ONLY custom values
-        //         hidFrom.value = fromC;
-        //         hidTo.value   = toC;
-
-        //     } else {
-        //         // ❌ DO NOTHING HERE (already set in handleRangeChange)
-        //     }
-        // });
         
         document.getElementById('filterForm').addEventListener('submit', function (e) {
 
@@ -959,7 +935,7 @@
 
                 if (!fromC || !toC) {
                     e.preventDefault();
-                    alert('Please select both dates');
+                    showToast('Please select both dates','error');
                     return;
                 }
 

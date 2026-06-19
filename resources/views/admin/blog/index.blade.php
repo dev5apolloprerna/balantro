@@ -215,7 +215,7 @@
                     const checked = document.querySelectorAll('.row_checkbox:checked').length;
 
                     if (checked === 0) {
-                        alert('Please select at least one record.');
+                        showToast('Please select at least one record.','error');
                         return;
                     }
 

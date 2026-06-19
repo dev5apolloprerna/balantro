@@ -1094,18 +1094,42 @@ $(document).on('keyup change', '.searchInput', function () {
             type: "POST",
             data: data,
             success: function (res) {
-                alert('Saved Successfully');
-                location.reload();
+                showToast(res.message || (res.status ? 'Saved successfully' : 'Unable to save row'),(res.status !== false) ? 'success' : 'error');
+                if (res.status !== false) {
+                    location.reload();
+                }
 
+            },
+            error: function(xhr) {
+                showToast(xhr.responseJSON?.message || 'Error saving bank row','error');
             }
         });
     });
 
     $('#saveBtn').click(function() {
+        let missingLedgerRows = [];
 
+        $('#bankForm input[name="selected[]"]:checked').each(function() {
+            let row = $(this).closest('tr');
+            let ledgerSelect = row.find('select[name^="ledger"]');
+
+            if (!ledgerSelect.val()) {
+                missingLedgerRows.push(row.find('td:eq(1)').text().trim() || $(this).val());
+                ledgerSelect.css('border', '1px solid red');
+            } else {
+                ledgerSelect.css('border', '');
+            }
+        });
+
+        if (missingLedgerRows.length) {
+            showToast('Please select ledger for all selected bank rows before submitting. Missing ledger on row(s): ' + missingLedgerRows.join(', '),'error');
+            return;
+        }
         //let formData = $('#bankForm').serialize();
-        $('#bankTable tbody tr:hidden').find('input,select').prop('disabled', true);
+        let hiddenFields = $('#bankTable tbody tr:hidden').find('input,select');
+        hiddenFields.prop('disabled', true);
         let formData = $('#bankForm').serialize();
+        hiddenFields.prop('disabled', false);
 
         $.ajax({
             url: "{{ route('bank.save') }}",
@@ -1115,16 +1139,15 @@ $(document).on('keyup change', '.searchInput', function () {
                 'X-CSRF-TOKEN': $('input[name="_token"]').val()
             },
             success: function(response) {
-
+                showToast(response.message || (response.status ? 'Submitted successfully' : 'Unable to submit selected bank rows'),(response.status ? 'success' : 'error'));
                 if (response.status) {
-                    alert(response.message);
                     location.reload();
                 }
 
             },
             error: function(xhr) {
                 console.log(xhr.responseText);
-                alert('Error saving data');
+                showToast(xhr.responseJSON?.message || 'Error submitting bank data','error');
             }
 
         });
@@ -1158,20 +1181,12 @@ $(document).on('keyup change', '.searchInput', function () {
             type: "POST",
             data: formData,
             success: function(response) {
-                alert(response.message);
-
+                showToast(response.message,'success');
                 closeLedgerModal();
                 location.reload();
-                // OPTIONAL: add new ledger in dropdown
-                // let name = $('input[name="Name"]').val();
-
-                // $('.ledgerSelect').append(
-                //     `<option value="${name}" selected>${name}</option>`
-                // ).trigger('change');
-
             },
             error: function(xhr) {
-                alert('Error saving ledger');
+                showToast('Error saving ledger','error');
                 console.log(xhr.responseText);
             }
         });
@@ -1262,12 +1277,12 @@ $(document).on('keyup change', '.searchInput', function () {
             success: function(response) {
                 if (response.status) {
                     row.remove();
-                    alert(response.message);
+                    showToast(response.message,'success');
                     location.reload();
                 }
             },
             error: function() {
-                alert('Delete failed');
+                showToast('Delete failed','error');
             }
         });
     });
@@ -1311,7 +1326,7 @@ $(document).on('keyup change', '.searchInput', function () {
             },
             success: function(response) {
                 if (response.status) {
-                    alert('Updated Successfully');
+                    showToast('Updated Successfully','success');
                     location.reload();
                 }
             }
@@ -1442,7 +1457,7 @@ $(document).on('keyup change', '.searchInput', function () {
         let remark = $('#suspense_remark').val().trim();
 
         if (!remark) {
-            alert('Please enter reason');
+            showToast('Please enter reason','error');
             return;
         }
 
@@ -1455,7 +1470,7 @@ $(document).on('keyup change', '.searchInput', function () {
                 remark: remark
             },
             success: function(res) {
-                alert('Marked as Suspense');
+                showToast('Marked as Suspense','success');
                 location.reload();
             }
         });

@@ -1002,7 +1002,7 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert(response.message);
+                showToast(response.message,'success');
 
                 closeLedgerModal();
                 location.reload();
@@ -1015,7 +1015,7 @@
 
             },
             error: function(xhr) {
-                alert('Error saving ledger');
+                showToast('Error saving ledger','error');
                 console.log(xhr.responseText);
             }
         });
@@ -1226,7 +1226,7 @@
         let value = $('#bulkValue').val();
 
         if (column === '' || value === '') {
-            alert('Select column and value');
+            showToast('Select column and value','error');
             return;
         }
         // find selected rows
@@ -1288,7 +1288,7 @@
         });
 
         if (missingLedgerRows.length) {
-            alert('Please select party ledger for all selected debit note rows before submitting. Missing ledger on row(s): ' + missingLedgerRows.join(', '));
+            showToast('Please select party ledger for all selected debit note rows before submitting. Missing ledger on row(s): ' + missingLedgerRows.join(', '),'error');
             return;
         }
         let formData = $('#purchaseForm').serialize();
@@ -1297,14 +1297,14 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert(response.message || (response.status ? 'Submitted successfully' : 'Unable to submit selected debit note rows'));
+                showToast(response.message || (response.status ? 'Submitted successfully' : 'Unable to submit selected debit note rows'),'success');
 
                 if (response.status) {
                     location.reload(); // reload page and refresh table
                 }
             },
             error: function(xhr) {
-                alert(xhr.responseJSON?.message || 'Error submitting debit note data');
+                showToast(xhr.responseJSON?.message || 'Error submitting debit note data','error');
             }
         });
     });
@@ -1319,11 +1319,11 @@
                 _token: "{{ csrf_token() }}"
             },
             success: function(response) {
-                alert('Deleted Successfully');
+                showToast('Deleted Successfully','success');
                 location.reload();
             },
             error: function() {
-                alert('Delete failed');
+                showToast('Delete failed','error');
             }
         });
     });
@@ -3044,28 +3044,6 @@
         placeholder: "Search Party...",
         allowClear: true
     });
-
-    function showToast(message, type = 'success') {
-        let bg = type === 'success' ? '#16a34a' : '#dc2626';
-        let toast = document.createElement('div');
-
-        toast.innerText = message;
-        toast.style.position = 'fixed';
-        toast.style.bottom = '20px';
-        toast.style.right = '20px';
-        toast.style.background = bg;
-        toast.style.color = '#fff';
-        toast.style.padding = '10px 16px';
-        toast.style.borderRadius = '6px';
-        toast.style.fontSize = '13px';
-        toast.style.zIndex = '99999';
-        toast.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
-    }
 
     function buildItemOptions(selected = '') {
         let html = '<option value="">Select Item</option>';

@@ -2024,7 +2024,7 @@
                 id: currentId,
                 status: status
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
         }
@@ -2038,7 +2038,7 @@
                 _token: "{{ csrf_token() }}",
                 ids: [currentId]
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
         }
@@ -2128,13 +2128,13 @@
             let invoice = $('#edit_invoice').val();
 
             if (!party) {
-                alert('Please select Party');
+                showToast('Please select Party','error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
             }
             if (!invoice) {
-                alert('Please enter Invoice Number');
+                showToast('Please enter Invoice Number','error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
@@ -2148,7 +2148,7 @@
                 let ledgerRows = collectNoItemRows();
                 amount = ledgerRows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0);
                 if (!ledgerRows.length || amount <= 0) {
-                    alert('Please add at least one purchase ledger row');
+                    showToast('Please add at least one purchase ledger row','error');
                     btn.prop('disabled', false);
                     btn.html('Save');
                     return;
@@ -2271,24 +2271,6 @@
                 gst_mode: $('#gst_calc_mode').val(),
                 noitem_rows: noitemRows
             };
-
-            // $.post("{{ route('purchase.manual.create') }}", data)
-            //     .done(function(res) {
-            //         if (res.status) {
-            //             alert('Inserted successfully');
-            //             closeEditModal();
-            //             location.reload();
-            //         } else {
-            //             alert(res.message || 'Save failed');
-            //         }
-            //     })
-            //     .fail(function() {
-            //         alert('Server error');
-            //     })
-            //     .always(function() {
-            //         btn.prop('disabled', false);
-            //         btn.html('<i class="fa-solid fa-floppy-disk mr-1"></i> Save');
-            //     });
 
             $.ajax({
                 url: "{{ route('purchase.manual.create') }}",
@@ -2917,30 +2899,7 @@
             return html;
         }
 
-        function showToast(message, type = 'success') {
-
-            let bg = type === 'success' ? '#16a34a' : '#dc2626';
-
-            let toast = document.createElement('div');
-
-            toast.innerText = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.right = '20px';
-            toast.style.background = bg;
-            toast.style.color = '#fff';
-            toast.style.padding = '10px 16px';
-            toast.style.borderRadius = '6px';
-            toast.style.fontSize = '13px';
-            toast.style.zIndex = '99999';
-            toast.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
+        
 
         function buildItemOptions(selected = '') {
             let html = '<option value="">Select Item</option>';
@@ -2990,7 +2949,7 @@
                 type: "POST",
                 data: formData,
                 success: function(response) {
-                    alert(response.message);
+                    showToast(response.message, 'success');
                     let name = $('input[name="Name"]').val();
 
                     // ✅ Add into EDIT MODAL dropdown
@@ -3020,7 +2979,7 @@
 
                 },
                 error: function(xhr) {
-                    alert('Error saving ledger');
+                    showToast('Error saving ledger','error');
                     console.log(xhr.responseText);
                 }
             });

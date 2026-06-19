@@ -783,20 +783,13 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert(response.message);
+                showToast(response.message,'success');
 
                 closeLedgerModal();
                 location.reload();
-                // OPTIONAL: add new ledger in dropdown
-                // let name = $('input[name="Name"]').val();
-
-                // $('.ledgerSelect').append(
-                //     `<option value="${name}" selected>${name}</option>`
-                // ).trigger('change');
-
             },
             error: function(xhr) {
-                alert('Error saving ledger');
+                showToast('Error saving ledger','error');
                 console.log(xhr.responseText);
             }
         });
@@ -839,7 +832,7 @@
         let value = $('#bulkValue').val();
 
         if (column === '' || value === '') {
-            alert('Select column and value');
+            showToast('Select column and value','error');
             return;
         }
         // find selected rows
@@ -873,11 +866,11 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert('Saved Successfully');
+                showToast('Saved Successfully','success');
                 location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
-                alert('Error saving data');
+                showToast('Error saving data','error');
             }
         });
     });
@@ -892,11 +885,11 @@
                 _token: "{{ csrf_token() }}"
             },
             success: function(response) {
-                alert('Deleted Successfully');
+                showToast('Deleted Successfully','success');
                 location.reload();
             },
             error: function() {
-                alert('Delete failed');
+                showToast('Delete failed','error');
             }
         });
     });
@@ -949,7 +942,7 @@
                 total_amount: $('#edit_amount').val()
             },
             success: function() {
-                alert('Updated Successfully');
+                showToast('Updated Successfully','success');
                 location.reload();
             }
         });

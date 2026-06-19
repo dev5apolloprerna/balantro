@@ -674,7 +674,7 @@
                 id: currentId,
                 status: status
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
         }
@@ -686,7 +686,7 @@
                 _token: "{{ csrf_token() }}",
                 ids: [currentId]
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
         }

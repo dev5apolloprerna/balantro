@@ -1884,7 +1884,7 @@
                 id: currentId,
                 status: status
             }, function(res) {
-                alert(res.message);
+                showToast(res.message, 'success');
                 location.reload();
             });
         }
@@ -1898,7 +1898,7 @@
                 _token: "{{ csrf_token() }}",
                 ids: [currentId]
             }, function(res) {
-                alert(res.message);
+                showToast(res.message, 'success');
                 location.reload();
             });
         }
@@ -1911,7 +1911,7 @@
             }).get();
 
             if (ids.length == 0) {
-                alert('Select at least one');
+                showToast('Select at least one', 'error');
                 return;
             }
 
@@ -1921,7 +1921,7 @@
                 _token: "{{ csrf_token() }}",
                 ids: ids
             }, function(res) {
-                alert(res.message);
+                showToast(res.message, 'success');
                 location.reload();
             });
         }
@@ -1990,168 +1990,6 @@
             $('#purchaseTotal').text((total + cgst + sgst).toFixed(2));
         });
 
-        // function savePurchase() {
-        //     let btn = $('#saveRow'); // ✅ correct button select
-
-        //     // 🚫 Prevent multiple click
-        //     if (btn.prop('disabled')) return;
-
-        //     // 🔒 Disable button
-        //     btn.prop('disabled', true);
-
-        //     // 💡 Show loader
-        //     btn.html('<i class="fa fa-spinner fa-spin"></i> Saving...');
-
-        //     let party = $('#edit_party').val();
-        //     let invoice = $('#edit_invoice').val();
-
-        //     if (!party) {
-        //         alert('Please select Party');
-        //         btn.prop('disabled', false);
-        //         btn.html('Save');
-        //         return;
-        //     }
-        //     if (!invoice) {
-        //         alert('Please enter Invoice Number');
-        //         btn.prop('disabled', false);
-        //         btn.html('Save');
-        //         return;
-        //     }
-
-        //     let mode = $('input[name="entry_mode"]:checked').val();
-        //     let amount = 0;
-
-        //     // ✅ HANDLE MODE
-        //     if (mode === 'noitem') {
-        //         amount = $('#noitem_amount').val();
-        //         if (!amount) {
-        //             alert('Please enter amount');
-        //             btn.prop('disabled', false);
-        //             btn.html('Save');
-        //             return;
-        //         }
-
-        //         if (!$('#noitem_purcashe_ledger').val()) {
-        //             alert('Please select Purcashe Ledger');
-        //             btn.prop('disabled', false);
-        //             btn.html('Save');
-        //             return;
-        //         }
-
-        //     } else {
-        //         amount = $('#edit_amount').val();
-        //     }
-        //     let items = [];
-
-        //     $('#editItemsBody tr').each(function() {
-
-        //         let row = $(this);
-
-        //         let qty = parseFloat(row.find('.qty').val()) || 0;
-        //         let rate = parseFloat(row.find('.rate').val()) || 0;
-        //         let gst = parseFloat(row.find('.gst').val()) || 0;
-
-        //         let amount = qty * rate;
-        //         let gstAmt = (amount * gst) / 100;
-
-        //         let isIGST = $('#edit_is_igst').is(':checked');
-
-        //         let cgst = 0,
-        //             sgst = 0,
-        //             igst = 0;
-
-        //         if (isIGST) {
-        //             igst = gstAmt;
-        //         } else {
-        //             cgst = gstAmt / 2;
-        //             sgst = gstAmt / 2;
-        //         }
-
-        //         items.push({
-        //             item: row.find('.item_name').val(),
-        //             hsn: row.find('.hsn').val(),
-        //             gst: gst,
-        //             qty: qty,
-        //             unit: row.find('.unit').val(),
-        //             rate: rate,
-        //             amount: amount,
-
-        //             // ✅ ADD THESE (IMPORTANT)
-        //             cgst: cgst,
-        //             sgst: sgst,
-        //             igst: igst,
-        //             total_amount: amount + cgst + sgst + igst
-        //         });
-
-        //     });
-
-        //     let custom_gst = [];
-
-        //     $('#customSlotsBody tr').each(function() {
-
-        //         let row = $(this);
-
-        //         custom_gst.push({
-        //             rate: row.find('.gst_rate').text().replace('%', ''),
-
-        //             // ✅ match backend naming
-        //             igst_ledger_id: row.find('.igst_ledger').val(),
-        //             igst_amount: row.find('.igst_amt').val(),
-
-        //             cgst_ledger_id: row.find('.cgst_ledger').val(),
-        //             cgst_amount: row.find('.cgst_amt').val(),
-
-        //             sgst_ledger_id: row.find('.sgst_ledger').val(),
-        //             sgst_amount: row.find('.sgst_amt').val()
-        //         });
-
-        //     });
-
-        //     let data = {
-        //         _token: "{{ csrf_token() }}",
-        //         party: party,
-        //         invoice: invoice,
-        //         date: $('#edit_date').val(),
-        //         gst: $('#edit_gst').val(),
-        //         place: $('#edit_place').val(),
-        //         voucher_type: $('#edit_voucher_type').val(),
-        //         remarks: $('#edit_remarks').val(),
-        //         is_igst: $('#edit_is_igst').is(':checked') ? 1 : 0,
-        //         amount: amount,
-        //         cgst: $('#edit_cgst').val(),
-        //         sgst: $('#edit_sgst').val(),
-        //         igst: $('#edit_igst').val(),
-        //         total: $('#edit_total_amount').val(),
-        //         city: $('#edit_city').val(),
-        //         pincode: $('#edit_pincode').val(),
-        //         address: $('#edit_address').val(),
-
-        //         entry_mode: mode,
-        //         purchase_ledger: $('#noitem_purcashe_ledger').val(),
-        //         items: items,
-        //         custom_slots: custom_gst,
-        //         gst_mode: $('#gst_calc_mode').val()
-        //     };
-
-        //     $.post("{{ route('dn.manual.create') }}", data)
-        //         .done(function(res) {
-        //             if (res.status) {
-        //                 alert('Inserted successfully');
-        //                 closeEditModal();
-        //                 location.reload();
-        //             } else {
-        //                 alert(res.message || 'Save failed');
-        //             }
-        //         })
-        //         .fail(function() {
-        //             alert('Server error');
-        //         })
-        //         .always(function() {
-        //             btn.prop('disabled', false);
-        //             btn.html('<i class="fa-solid fa-floppy-disk mr-1"></i> Save');
-        //         });
-        // }
-
         function savePurchase() {
             let btn = $('#saveRow'); // ✅ correct button select
 
@@ -2168,13 +2006,13 @@
             let invoice = $('#edit_invoice').val();
 
             if (!party) {
-                alert('Please select Party');
+                showToast('Please select Party', 'error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
             }
             if (!invoice) {
-                alert('Please enter Invoice Number');
+                showToast('Please enter Invoice Number', 'error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
@@ -2188,7 +2026,7 @@
                 let ledgerRows = collectNoItemRows();
                 amount = ledgerRows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0);
                 if (!ledgerRows.length || amount <= 0) {
-                    alert('Please add at least one purchase ledger row');
+                    showToast('Please add at least one purchase ledger row', 'error');
                     btn.prop('disabled', false);
                     btn.html('Save');
                     return;
@@ -3061,30 +2899,6 @@
 
         toggleSectionsByMode();
 
-        function showToast(message, type = 'success') {
-
-            let bg = type === 'success' ? '#16a34a' : '#dc2626';
-
-            let toast = document.createElement('div');
-
-            toast.innerText = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.right = '20px';
-            toast.style.background = bg;
-            toast.style.color = '#fff';
-            toast.style.padding = '10px 16px';
-            toast.style.borderRadius = '6px';
-            toast.style.fontSize = '13px';
-            toast.style.zIndex = '99999';
-            toast.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
 
         function buildItemOptions(selected = '') {
             let html = '<option value="">Select Item</option>';
@@ -3171,7 +2985,7 @@
                 // ).trigger('change');
             },
             error: function(xhr) {
-                alert('Error saving ledger');
+                showToast('Error saving ledger','error');
                 console.log(xhr.responseText);
             }
         });

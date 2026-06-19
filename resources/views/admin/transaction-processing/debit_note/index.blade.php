@@ -467,7 +467,7 @@
                 id: currentId,
                 status: status
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
         }
@@ -481,7 +481,7 @@
                 _token: "{{ csrf_token() }}",
                 ids: [currentId]
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
         }
@@ -494,7 +494,7 @@
             }).get();
 
             if (ids.length == 0) {
-                alert('Select at least one');
+                showToast('Select at least one','error');
                 return;
             }
 
@@ -504,7 +504,7 @@
                 _token: "{{ csrf_token() }}",
                 ids: ids
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
         }

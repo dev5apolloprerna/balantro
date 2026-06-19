@@ -1017,7 +1017,7 @@ window.addEventListener('load', function () {
             type: "POST",
             data: formData,
             success: function(response) {
-                alert(response.message);
+                showToast(response.message,'success');
                 let name = $('input[name="Name"]').val();
 
                 // ✅ Add into EDIT MODAL dropdown
@@ -1047,7 +1047,7 @@ window.addEventListener('load', function () {
 
             },
             error: function(xhr) {
-                alert('Error saving ledger');
+                showToast('Error saving ledger','error');
                 console.log(xhr.responseText);
             }
         });
@@ -1090,7 +1090,7 @@ window.addEventListener('load', function () {
         let value = $('#bulkValue').val();
 
         if (column === '' || value === '') {
-            alert('Select column and value');
+            showToast('Select column and value','error');
             return;
         }
         // find selected rows
@@ -1144,15 +1144,15 @@ window.addEventListener('load', function () {
             data: formData,
             success: function(response) {
                 if (response.status === false) {
-                    alert(response.message || 'Unable to save data');
+                    showToast(response.message || 'Unable to save data','error');
                     return;
                 }
 
-                alert(response.message || 'Saved Successfully');
+                showToast(response.message || 'Saved Successfully','success');
                 location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
-                alert(xhr.responseJSON?.message || 'Error saving data');
+                showToast(xhr.responseJSON?.message || 'Error saving data','error');
             }
         });
     });
@@ -1167,11 +1167,11 @@ window.addEventListener('load', function () {
                 _token: "{{ csrf_token() }}"
             },
             success: function(response) {
-                alert('Deleted Successfully');
+                showToast('Deleted Successfully','success');
                 location.reload();
             },
             error: function() {
-                alert('Delete failed');
+                showToast('Delete failed','error');
             }
         });
     });
@@ -1795,8 +1795,6 @@ window.addEventListener('load', function () {
                 noitem_rows: collectNoItemRows()
             },
             success: (res) => {
-                // alert('Updated Successfully');
-                // location.reload();
                 if (res.status) {
                     showToast(res.message || 'Inserted successfully', 'success');
                     //closeEditModal();
@@ -1809,7 +1807,6 @@ window.addEventListener('load', function () {
                     // btn.html('Save');
                 }
             },
-            //error:   () => alert('Update failed')
             error: (xhr) => {
                 const message = xhr.responseJSON?.message || 'Update failed';
                 showToast(message, 'error');
@@ -2579,31 +2576,6 @@ window.addEventListener('load', function () {
                 allowClear: true
             });
         }
-    }
-
-    function showToast(message, type = 'success') {
-
-        let bg = type === 'success' ? '#16a34a' : '#dc2626';
-
-        let toast = document.createElement('div');
-
-        toast.innerText = message;
-        toast.style.position = 'fixed';
-        toast.style.bottom = '20px';
-        toast.style.right = '20px';
-        toast.style.background = bg;
-        toast.style.color = '#fff';
-        toast.style.padding = '10px 16px';
-        toast.style.borderRadius = '6px';
-        toast.style.fontSize = '13px';
-        toast.style.zIndex = '99999';
-        toast.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
     }
 
     $(document).on('change','.item_name',function(){

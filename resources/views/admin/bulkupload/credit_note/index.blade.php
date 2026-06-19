@@ -1908,7 +1908,7 @@
                 id: currentId,
                 status: status
             }, function(res) {
-                alert(res.message);
+                showToast(res.message, 'success');
                 location.reload();
             });
         }
@@ -1922,7 +1922,7 @@
                 _token: "{{ csrf_token() }}",
                 ids: [currentId]
             }, function(res) {
-                alert(res.message);
+                showToast(res.message, 'success');
                 location.reload();
             });
         }
@@ -2017,14 +2017,14 @@
             let invoice = $('#edit_invoice').val();
 
             if (!party) {
-                alert('Please select Party');
+                showToast('Please select Party','error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
             }
 
             if (!invoice) {
-                alert('Please enter Invoice Number');
+                showToast('Please enter Invoice Number','error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
@@ -2040,7 +2040,7 @@
                 amount = ledgerRows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0);
 
                 if (!ledgerRows.length || amount <= 0) {
-                    alert('Please add at least one sales ledger row');
+                    showToast('Please add at least one sales ledger row','error');
                     btn.prop('disabled', false);
                     btn.html('Save');
                     return;
@@ -2158,17 +2158,6 @@
                 sgst_ledger: $('#sgst_ledger').val(),
                 igst_ledger: $('#igst_ledger').val(),
             };
-
-            // $.post("{{ route('cn.manual.create') }}", data, function(res) {
-            //     if (res.status) {
-            //         alert('Inserted successfully');
-            //         // location.reload();
-            //         closeEditModal();
-            //     } else {
-            //         alert('Save failed');
-            //         // location.reload();
-            //     }
-            // });
             $.ajax({
                 url: "{{ route('cn.manual.create') }}",
                 type: "POST",
@@ -2987,30 +2976,7 @@
             return html;
         }
 
-        function showToast(message, type = 'success') {
-
-            let bg = type === 'success' ? '#16a34a' : '#dc2626';
-
-            let toast = document.createElement('div');
-
-            toast.innerText = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.right = '20px';
-            toast.style.background = bg;
-            toast.style.color = '#fff';
-            toast.style.padding = '10px 16px';
-            toast.style.borderRadius = '6px';
-            toast.style.fontSize = '13px';
-            toast.style.zIndex = '99999';
-            toast.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
+        
         $(document).on('change','.item_name',function(){
             let itemId = $(this).val();
             let item = ITEM_MASTER.find(

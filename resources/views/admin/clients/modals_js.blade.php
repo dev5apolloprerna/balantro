@@ -147,7 +147,7 @@
                     },
                     body: fd
                 });
-                if (!res.ok) return alert('Failed to assign users');
+                if (!res.ok) return showToast('Failed to assign users','error');
                 auDlg.close();
                 location.reload();
             });
@@ -193,7 +193,7 @@
                     },
                     body: fd
                 });
-                if (!res.ok) return alert('Failed to save groups');
+                if (!res.ok) return showToast('Failed to save groups','error');
                 $('#modal-assign-groups').close();
                 location.reload();
             });
@@ -281,7 +281,7 @@
                     },
                     body: fd
                 });
-                if (!res.ok) return alert('Failed to save permissions');
+                if (!res.ok) return showToast('Failed to save permissions','error');
                 $('#modal-assign-permissions').close();
                 location.reload();
             });
@@ -349,7 +349,7 @@
                     'Accept': 'application/json'
                 }
             });
-            if (!res.ok) return alert('Failed to load client');
+            if (!res.ok) return showToast('Failed to load client','error');
             const c = await res.json();
             cfId.value = c.id || '';
             cfName.value = c.name || '';
@@ -474,7 +474,6 @@
                         if (data.errors.whatsapp_no) document.getElementById('cf-whatsapp-error')
                             .textContent = data.errors.whatsapp_no[0];
                     }
-                    //alert('Save failed.\n\n' + data.message); // For overall message
                     return;
                 }
                 cfSave.disabled = false;
@@ -541,9 +540,7 @@
     //     else if (/Linux/i.test(navigator.userAgent)) osName = "Linux";
     //     else if (/Android/i.test(navigator.userAgent)) osName = "Android";
     //     else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) osName = "iOS";
-    //     // alert(deviceType);
-    //     // alert(browserName);
-    //     // alert(osName);
+    
     //     document.getElementById("c_device_type").value = deviceType;
     //     document.getElementById("c_browser_name").value = browserName;
     //     document.getElementById("c_os_name").value = osName;

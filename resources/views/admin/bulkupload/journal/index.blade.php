@@ -725,7 +725,7 @@
         e.preventDefault();
         let fileInput = $('#journalFile')[0];
         if (!fileInput.files.length) {
-            alert('Please select file');
+            showToast('Please select file','error');
             return;
         }
         if (!validateUploadFileSize(fileInput)) {
@@ -766,7 +766,7 @@
                 }, 800);
             },
             error: function() {
-                alert('Upload Failed');
+                showToast('Upload Failed','error');
                 // 🔥 ENABLE AGAIN
                 $('#uploadBtn').prop('disabled', false);
                 $('#uploadText').text('Upload');
@@ -800,7 +800,7 @@
             id: currentId,
             status: status
         }, function(res) {
-            alert(res.message);
+            showToast(res.message,'success');
             location.reload();
         });
     }
@@ -814,7 +814,7 @@
             _token: "{{ csrf_token() }}",
             ids: [currentId]
         }, function(res) {
-            alert(res.message);
+            showToast(res.message,'success');
             location.reload();
         });
     }
@@ -827,7 +827,7 @@
         }).get();
 
         if (ids.length == 0) {
-            alert('Select at least one');
+            showToast('Select at least one','error');
             return;
         }
 
@@ -837,7 +837,7 @@
             _token: "{{ csrf_token() }}",
             ids: ids
         }, function(res) {
-            alert(res.message);
+            showToast(res.message,'success');
             location.reload();
         });
     }
@@ -937,7 +937,7 @@
         let totalCr = parseFloat($('#totalCr').text());
 
         if (totalDr !== totalCr) {
-            alert('Debit & Credit must be equal');
+            showToast('Debit & Credit must be equal','error');
             return;
         }
 
@@ -961,7 +961,7 @@
             items: items
         }, function(res) {
 
-            alert(res.message || 'Saved');
+            showToast(res.message || 'Saved','success');
             location.reload();
 
         });

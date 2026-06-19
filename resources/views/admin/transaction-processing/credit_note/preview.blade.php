@@ -44,7 +44,7 @@
                 <button type="button"
                     id="saveBtn"
                     class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                    Sumbit
+                    Submit
                 </button>
             </div>
         </div>
@@ -977,15 +977,9 @@
             success: function(response) {
                 closeLedgerModal();
                 location.reload();
-                // OPTIONAL: add new ledger in dropdown
-                // let name = $('input[name="Name"]').val();
-
-                // $('.ledgerSelect').append(
-                //     `<option value="${name}" selected>${name}</option>`
-                // ).trigger('change');
             },
             error: function(xhr) {
-                alert('Error saving ledger');
+                showToast('Error saving ledger','error');
                 console.log(xhr.responseText);
             }
         });
@@ -1129,7 +1123,7 @@
         let value = $('#bulkValue').val();
 
         if (column === '' || value === '') {
-            alert('Select column and value');
+            showToast('Select column and value','error');
             return;
         }
         // find selected rows
@@ -1163,22 +1157,41 @@
     });
 
     $('#saveBtn').click(function() {
+        let missingLedgerRows = [];
+
+        $('#salesForm input[name="selected[]"]:checked').each(function() {
+            let row = $(this).closest('tr');
+            let ledgerSelect = row.find('select[name^="ledger"]');
+
+            if (!ledgerSelect.val()) {
+                missingLedgerRows.push(row.find('td:eq(1)').text().trim() || $(this).val());
+                ledgerSelect.css('border', '1px solid red');
+            } else {
+                ledgerSelect.css('border', '');
+            }
+        });
+
+        if (missingLedgerRows.length) {
+            showToast('Please select ledger for all selected credit note rows before submitting. Missing ledger on row(s): ' + missingLedgerRows.join(', '), 'error');
+            return;
+        }
         let formData = $('#salesForm').serialize();
         $.ajax({
             url: "{{ route('transaction_processing.credit_note_sumbit') }}",
             type: "POST",
             data: formData,
             success: function(response) {
-                if (response.status === false) {
-                    showToast(response.message || 'Unable to save selected records', 'error');
-                    return;
+                if (response.status) {
+                    showToast(response.message || 'Submitted successfully', 'success');
+                    location.reload(); // reload page and refresh table
+                } else {
+                    showToast(response.message || 'Unable to submit selected credit note rows', 'error');
                 }
-                showToast(response.message || 'Saved Successfully', 'success');
-                location.reload(); // reload page and refresh table
+                // showToast(response.message || 'Saved Successfully', 'success');
+                // location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
-                const message = xhr.responseJSON?.message || 'Error saving data';
-                showToast(message, 'error');
+                showToast(xhr.responseJSON?.message || 'Error submitting credit note data', 'error');
             }
         });
     });
@@ -1193,11 +1206,11 @@
                 _token: "{{ csrf_token() }}"
             },
             success: function(response) {
-                alert('Deleted Successfully');
+                showToast('Deleted Successfully','success');
                 location.reload();
             },
             error: function() {
-                alert('Delete failed');
+                showToast('Delete failed','error');
             }
         });
     });
@@ -1914,21 +1927,14 @@
                 custom_slots: collectCustomSlots()
             },
             success: (res) => {
-                // alert('Updated Successfully');
-                // location.reload();
                 if (res.status) {
                     showToast(res.message || 'Updated successfully', 'success');
                     //closeEditModal();
                     location.reload();
                 } else {
                     showToast(res.message || 'Something went wrong', 'error');
-
-                    // 🔥 Enable button again
-                    // btn.prop('disabled', false);
-                    // btn.html('Save');
                 }
             },
-            //error:   () => alert('Update failed')
             error: (xhr) => {
                 const message = xhr.responseJSON?.message || 'Update failed';
                 showToast(message, 'error');
@@ -2397,31 +2403,6 @@
             `;
         });
         return html;
-    }
-
-    function showToast(message, type = 'success') {
-
-        let bg = type === 'success' ? '#16a34a' : '#dc2626';
-
-        let toast = document.createElement('div');
-
-        toast.innerText = message;
-        toast.style.position = 'fixed';
-        toast.style.bottom = '20px';
-        toast.style.right = '20px';
-        toast.style.background = bg;
-        toast.style.color = '#fff';
-        toast.style.padding = '10px 16px';
-        toast.style.borderRadius = '6px';
-        toast.style.fontSize = '13px';
-        toast.style.zIndex = '99999';
-        toast.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
     }
 
     function initItemSelect2() {

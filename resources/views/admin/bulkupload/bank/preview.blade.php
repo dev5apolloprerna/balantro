@@ -1250,7 +1250,7 @@
             // highlight error
             row.find('select[name^="ledger"]').css('border', '1px solid red');
 
-            alert('Please select ledger before saving');
+            showToast('Please select ledger before saving','error');
 
             return; // ❌ STOP SAVE
         } else {
@@ -1289,7 +1289,7 @@
             type: "POST",
             data: data,
             success: function(res) {
-                alert(res.message || (res.status ? 'Saved successfully' : 'Unable to save row'));
+                showToast(res.message || (res.status ? 'Saved successfully' : 'Unable to save row','success'));
                 if (!res.status) {
                     return;
                 }
@@ -1383,7 +1383,7 @@
         });
 
         if (missingLedgerRows.length) {
-            alert('Please select ledger for all selected rows before saving. Missing ledger on row(s): ' + missingLedgerRows.join(', '));
+            showToast('Please select ledger for all selected rows before saving. Missing ledger on row(s): ' + missingLedgerRows.join(', '),'error');
             return;
         }
         //let formData = $('#bankForm').serialize();
@@ -1400,16 +1400,15 @@
                 'X-CSRF-TOKEN': $('input[name="_token"]').val()
             },
             success: function(response) {
-                alert(response.message || (response.status ? 'Saved successfully' : 'Unable to save selected rows'));
+                showToast(response.message || (response.status ? 'Saved successfully' : 'Unable to save selected rows'),'success');
                 if (response.status) {
-                    // alert(response.message);
                     location.reload();
                 }
 
             },
             error: function(xhr) {
                 console.log(xhr.responseText);
-                alert('Error saving data');
+                showToast('Error saving data','error');
             }
 
         });
@@ -1443,20 +1442,13 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                alert(response.message);
+                showToast(response.message,'success');
 
                 closeLedgerModal();
                 location.reload();
-                // OPTIONAL: add new ledger in dropdown
-                // let name = $('input[name="Name"]').val();
-
-                // $('.ledgerSelect').append(
-                //     `<option value="${name}" selected>${name}</option>`
-                // ).trigger('change');
-
             },
             error: function(xhr) {
-                alert('Error saving ledger');
+                showToast('Error saving ledger','error');
                 console.log(xhr.responseText);
             }
         });
@@ -1524,12 +1516,12 @@
             success: function(response) {
                 if (response.status) {
                     row.remove();
-                    alert(response.message);
+                    showToast(response.message,'success');
                     location.reload();
                 }
             },
             error: function() {
-                alert('Delete failed');
+                showToast('Delete failed','error');
             }
         });
     });
@@ -1641,7 +1633,7 @@
                 //     }
                 // }
                 if (response.status) {
-                    alert('Updated Successfully');
+                    showToast('Updated Successfully','success');
                     location.reload();
                 }
             }
@@ -1797,7 +1789,7 @@
         }).get();
 
         if (!selected.length) {
-            alert('Please select at least one row');
+            showToast('Please select at least one row','error');
             return;
         }
 
@@ -1816,7 +1808,7 @@
         let remark = $('#suspense_remark').val().trim();
 
         if (!remark) {
-            alert('Please enter reason');
+            showToast('Please enter reason','error');
             return;
         }
 
@@ -1835,20 +1827,14 @@
         $.ajax({
             url: "{{ route('bank.markSuspense') }}",
             type: "POST",
-            // data: {
-            //     _token: "{{ csrf_token() }}",
-            //     id: id,
-            //     remark: remark
-            // },
             data: data,
             success: function(res) {
-                // alert('Marked as Suspense');
-                alert(res.message || 'Marked as Suspense');
+                showToast(res.message || 'Marked as Suspense','success');
                 location.reload();
             },
             error: function(xhr) {
                 console.log(xhr.responseText);
-                alert('Error marking suspense');
+                showToast('Error marking suspense','error');
             }
         });
     });

@@ -1345,7 +1345,7 @@
 
                 if (!fromC.value || !toC.value) {
                     e.preventDefault();
-                    alert('Select both dates');
+                    showToast('Select both dates','error');
                     return;
                 }
 

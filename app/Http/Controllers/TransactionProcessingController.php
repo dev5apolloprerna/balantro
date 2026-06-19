@@ -418,13 +418,41 @@ class TransactionProcessingController extends Controller
                 ->with('error', 'Please select company first');
         }
 
+        $selectedIds = array_values(array_filter((array) $request->selected));
+
+        if (empty($selectedIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No purchase rows selected.'
+            ]);
+        }
+
+        $missingLedgerIds = [];
+
+        foreach ($selectedIds as $id) {
+            $ledgerName = trim((string) ($request->party_ledger[$id] ?? ''));
+
+            if ($ledgerName === '') {
+                $missingLedgerIds[] = $id;
+            }
+        }
+
+        if (!empty($missingLedgerIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => count($missingLedgerIds) . ' selected purchase row(s) are missing a party ledger. Please select a ledger for every selected row before submitting.'
+            ]);
+        }
+
         $uploadId = null;
-        foreach ($request->selected as $key => $id) {
+        $submittedCount = 0;
+
+        foreach ($selectedIds as $key => $id) {
             $row = PurchaseTransaction::find($id);
             if (!$row) continue;
             $voucherType = $request->voucher_type[$id] ?? $row->vchType;
             $number = $request->invoice_no[$id] ?? $row->invoice_no;
-            $party = $request->party_name[$id] ?: ($request->party_ledger[$id] ?? $request->ledger[$id] ?? $row->party_name);
+            $party = trim((string) ($request->party_ledger[$id] ?? $request->party_name[$id] ?? $request->ledger[$id] ?? $row->party_name));
             $date = $request->date[$id] ?? $row->date;
             if ($this->voucherCombinationExists('purchase_transactions', ['iPartyId'=>$iPartyId,'voucher_column'=>'vchType','voucher_value'=>$voucherType,'number_column'=>'invoice_no','number_value'=>$number,'party_column'=>'party_name','party_value'=>$party,'date_column'=>'date','date_value'=>$date,'year_column'=>'strYear','year_value'=>session('year')], $row->id) || $this->vchHistoryCombinationExists(['iPartyId'=>$iPartyId,'voucher_value'=>$voucherType,'number_value'=>$number,'party_value'=>$party,'history_date_value'=>$this->historyDate($date),'year_value'=>session('year')])) {
                 return response()->json(['status' => false, 'message' => 'Duplicate voucher combination is not allowed.']);
@@ -434,33 +462,25 @@ class TransactionProcessingController extends Controller
                 'invoice_no' => $request->invoice_no[$id],
                 'date' => $request->date[$id],
                 //'party_name' => $request->party_name[$id] ?? $request->ledger[$id],
-                'party_name' => $request->party_name[$id]  ?: ($request->party_ledger[$id] ?? $request->ledger[$id]),
+                'party_name' => $party,
                 'place_of_supply' => $request->place_of_supply[$id],
-                'purchase_ledger' => $request->ledger[$id],
+                'purchase_ledger' => $request->ledger[$id] ?? $row->purchase_ledger,
                 'status' => 'submitted',
                 'vchType' => $request->voucher_type[$id]
             ]);
+            $submittedCount++;
         }
 
         if ($uploadId) {
-            $saved = PurchaseTransaction::where('upload_id', $uploadId)
-                ->where('status', 'saved')
-                ->count();
-            $pending = PurchaseTransaction::where('upload_id', $uploadId)
-                ->where('status', 'pending')
-                ->count();
-            $total = PurchaseTransaction::where('upload_id', $uploadId)
-                ->count();
-            BulkPurchaseUpload::where('id', $uploadId)->update([
-                'total' => $total,
-                'saved' => $saved,
-                'pending' => $pending
-            ]);
+            $saved = PurchaseTransaction::where('upload_id', $uploadId)->where('status', 'saved')->count();
+            $pending = PurchaseTransaction::where('upload_id', $uploadId)->where('status', 'pending')->count();
+            $total = PurchaseTransaction::where('upload_id', $uploadId)->count();
+            BulkPurchaseUpload::where('id', $uploadId)->update(['total' => $total, 'saved' => $saved, 'pending' => $pending]);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'Sumbit Successfully'
+            'message' => $submittedCount . ' purchase row(s) submitted successfully with selected ledger(s).'
         ]);
     }
 
@@ -471,8 +491,30 @@ class TransactionProcessingController extends Controller
             return redirect()->route('transaction_processing.processing_sales')
                 ->with('error', 'Please select company first');
         }
+        $selectedIds = array_values(array_filter((array) $request->selected));
+
+        if (empty($selectedIds)) {
+            return response()->json(['status' => false, 'message' => 'No sales rows selected.']);
+        }
+
+        $missingLedgerIds = [];
+        foreach ($selectedIds as $id) {
+            if (trim((string) ($request->ledger[$id] ?? '')) === '') {
+                $missingLedgerIds[] = $id;
+            }
+        }
+
+        if (!empty($missingLedgerIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => count($missingLedgerIds) . ' selected sales row(s) are missing a ledger. Please select a ledger for every selected row before submitting.'
+            ]);
+        }
+
         $uploadId = null;
-        foreach ($request->selected as $key => $id) {
+        $submittedCount = 0;
+
+        foreach ($selectedIds as $key => $id) {
             $row = SalesTransaction::find($id);
             if (!$row) continue;
 
@@ -480,56 +522,59 @@ class TransactionProcessingController extends Controller
             $voucherType = $request->voucher_type[$id] ?? $row->vchType;
             $voucherNo = $request->invoice_no[$id] ?? $row->invoice_no;
             if ($this->salesVoucherExists($row->iPartyId, $voucherType, $voucherNo, $row->strYear ?? session('year'), $row->id)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'
-                ], 422);
+                return response()->json(['status' => false, 'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'], 422);
             }
+            
+            $ledgerName = trim((string) ($request->ledger[$id] ?? ''));
             $row->update([
                 'invoice_no' => $request->invoice_no[$id],
                 'date' => $request->date[$id],
                 //'party_name' => $request->party_name[$id] ?? $request->ledger[$id],
-                'party_name' => $request->party_name[$id] ?: ($request->ledger[$id] ?? null),
+                'party_name' => trim((string) ($request->party_name[$id] ?: $ledgerName)),
                 'place_of_supply' => $request->place_of_supply[$id],
-                'sales_ledger' => $request->ledger[$id],
+                'sales_ledger' => $ledgerName,
                 'status' => 'submitted',
                 'vchType' => $request->voucher_type[$id]
             ]);
+            $submittedCount++;
         }
         if ($uploadId) {
-            $saved = SalesTransaction::where('upload_id', $uploadId)
-                ->where('status', 'saved')
-                ->count();
-            $pending = SalesTransaction::where('upload_id', $uploadId)
-                ->where('status', 'pending')
-                ->count();
-            $total = SalesTransaction::where('upload_id', $uploadId)
-                ->count();
-            BulkSalesUpload::where('id', $uploadId)->update([
-                'total' => $total,
-                'saved' => $saved,
-                'pending' => $pending
-            ]);
+            $saved = SalesTransaction::where('upload_id', $uploadId)->where('status', 'saved')->count();
+            $pending = SalesTransaction::where('upload_id', $uploadId)->where('status', 'pending')->count();
+            $total = SalesTransaction::where('upload_id', $uploadId)->count();
+            BulkSalesUpload::where('id', $uploadId)->update(['total' => $total, 'saved' => $saved, 'pending' => $pending]);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'Saved Successfully'
+            'message' => $submittedCount . ' sales row(s) submitted successfully with selected ledger(s).'
         ]);
         // return back()->with('success', 'Records Updated');
     }
 
     public function bank_sumbit(Request $request)
     {
-        if (!$request->has('selected')) {
+        $selectedIds = array_values(array_filter((array) $request->selected));
+        if (empty($selectedIds)) {
+            return response()->json(['status' => false, 'message' => 'No bank rows selected.']);
+        }
+
+        $missingLedgerIds = [];
+        foreach ($selectedIds as $id) {
+            if (trim((string) ($request->ledger[$id] ?? '')) === '') {
+                $missingLedgerIds[] = $id;
+            }
+        }
+
+        if (!empty($missingLedgerIds)) {
             return response()->json([
                 'status' => false,
-                'message' => 'No rows selected'
+                'message' => count($missingLedgerIds) . ' selected bank row(s) are missing a ledger. Please select a ledger for every selected row before submitting.'
             ]);
         }
 
         $uploadId = null;
-
+        $submittedCount = 0;
         foreach ($request->selected as $id) {
 
             $row = BankTransaction::find($id);
@@ -544,6 +589,7 @@ class TransactionProcessingController extends Controller
             $row->ledger_name = $request->ledger[$id] ?? $row->ledger_name;
             $row->status      = 'submitted';
             $row->save();
+            $submittedCount++;
         }
 
         /*
@@ -554,27 +600,15 @@ class TransactionProcessingController extends Controller
 
         if ($uploadId) {
 
-            $saved = BankTransaction::where('upload_id', $uploadId)
-                ->where('status', 'saved')
-                ->count();
-
-            $pending = BankTransaction::where('upload_id', $uploadId)
-                ->where('status', 'pending')
-                ->count();
-
-            $total = BankTransaction::where('upload_id', $uploadId)
-                ->count();
-
-            BulkBankUpload::where('id', $uploadId)->update([
-                'total'   => $total,
-                'saved'   => $saved,
-                'pending' => $pending
-            ]);
+            $saved = BankTransaction::where('upload_id', $uploadId)->where('status', 'saved')->count();
+            $pending = BankTransaction::where('upload_id', $uploadId)->where('status', 'pending')->count();
+            $total = BankTransaction::where('upload_id', $uploadId)->count();
+            BulkBankUpload::where('id', $uploadId)->update(['total' => $total, 'saved' => $saved, 'pending' => $pending]);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'Saved Successfully'
+            'message' => $submittedCount . ' bank row(s) submitted successfully with selected ledger(s).'
         ]);
     }
 
@@ -646,8 +680,30 @@ class TransactionProcessingController extends Controller
             return redirect()->route('transaction_processing.processing_sales')
                 ->with('error', 'Please select company first');
         }
+        $selectedIds = array_values(array_filter((array) $request->selected));
+
+        if (empty($selectedIds)) {
+            return response()->json(['status' => false, 'message' => 'No credit note rows selected.']);
+        }
+
+        $missingLedgerIds = [];
+        foreach ($selectedIds as $id) {
+            if (trim((string) ($request->ledger[$id] ?? '')) === '') {
+                $missingLedgerIds[] = $id;
+            }
+        }
+
+        if (!empty($missingLedgerIds)) {
+            return response()->json([
+                'status' => false,
+                'message' => count($missingLedgerIds) . ' selected credit note row(s) are missing a ledger. Please select a ledger for every selected row before submitting.'
+            ]);
+        }
+
         $uploadId = null;
-        foreach ($request->selected as $key => $id) {
+        $submittedCount = 0;
+
+        foreach ($selectedIds as $key => $id) {
             $row = CreditNoteTransaction::find($id);
             if (!$row) continue;
 
@@ -655,45 +711,32 @@ class TransactionProcessingController extends Controller
             $voucherType = $request->voucher_type[$id] ?? $row->vch_type;
             $voucherNo = $request->invoice_no[$id] ?? $row->note_no;
             if ($this->creditNoteVoucherExists($row->iPartyId, $voucherType, $voucherNo, $row->strYear ?? session('year'), $row->id)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'
-                ], 422);
+                return response()->json(['status' => false, 'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'], 422);
             }
+            $ledgerName = trim((string) ($request->ledger[$id] ?? ''));
             $row->update([
                 'note_no' => $request->invoice_no[$id] ?? $row->note_no,
                 'note_date' => $request->date[$id] ?? $row->note_date,
                 //'party_name' => $request->party_name[$id] ?? $request->ledger[$id],
-                'party_name' => $request->party_name[$id]
-                    ?? $request->party_ledger[$id]
-                    ?? $request->ledger[$id]
-                    ?? $row->party_name,
+                'party_name' => trim((string) ($request->party_name[$id] ?? $ledgerName)),
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
-                'sales_ledger' => $request->ledger[$id]  ?? $row->sales_ledger,
+                'sales_ledger' => $ledgerName,
                 'status' => 'submitted',
                 'vch_type' => $request->voucher_type[$id] ?? $row->vch_type
             ]);
+            $submittedCount++;
         }
 
         if ($uploadId) {
-            $saved = CreditNoteTransaction::where('upload_id', $uploadId)
-                ->where('status', 'saved')
-                ->count();
-            $pending = CreditNoteTransaction::where('upload_id', $uploadId)
-                ->where('status', 'pending')
-                ->count();
-            $total = CreditNoteTransaction::where('upload_id', $uploadId)
-                ->count();
-            BulkCreditNoteUpload::where('id', $uploadId)->update([
-                'total' => $total,
-                'saved' => $saved,
-                'pending' => $pending
-            ]);
+            $saved = CreditNoteTransaction::where('upload_id', $uploadId)->where('status', 'saved')->count();
+            $pending = CreditNoteTransaction::where('upload_id', $uploadId)->where('status', 'pending')->count();
+            $total = CreditNoteTransaction::where('upload_id', $uploadId)->count();
+            BulkCreditNoteUpload::where('id', $uploadId)->update(['total' => $total, 'saved' => $saved, 'pending' => $pending]);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'Saved Successfully'
+            'message' => $submittedCount . ' credit note row(s) submitted successfully with selected ledger(s).'
         ]);
         // return back()->with('success', 'Records Updated');
     }
@@ -898,11 +941,24 @@ class TransactionProcessingController extends Controller
             return redirect()->route('transaction_processing.processing_purchase')
                 ->with('error', 'Please select company first');
         }
+        $selectedIds = array_values(array_filter((array) $request->selected));
+
+        if (empty($selectedIds)) {
+            return response()->json(['status' => false, 'message' => 'No journal rows selected.']);
+        }
 
         $uploadId = null;
-        foreach ($request->selected as $key => $id) {
-            $row = DebitNoteTransaction::find($id);
+        $submittedCount = 0;
+
+        foreach ($selectedIds as $id) {
+            $row = JournalTransaction::find($id);
             if (!$row) continue;
+            if ((float) $row->total_debit !== (float) $row->total_credit) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Journal {$row->journal_no} is not balanced. Debit and credit totals must match before submitting."
+                ]);
+            }
             $uploadId = $row->upload_id;
             $row->update([
                 'note_no' => $request->invoice_no[$id] ?? $row->note_no,
@@ -916,27 +972,20 @@ class TransactionProcessingController extends Controller
                 'vchType' => $request->voucher_type[$id] ?? $row->vch_type,
                 'status' => 'submitted',
             ]);
+            // $row->update(['status' => 'submitted']);
+            $submittedCount++;
         }
 
         if ($uploadId) {
-            $saved = DebitNoteTransaction::where('upload_id', $uploadId)
-                ->where('status', 'saved')
-                ->count();
-            $pending = DebitNoteTransaction::where('upload_id', $uploadId)
-                ->where('status', 'pending')
-                ->count();
-            $total = DebitNoteTransaction::where('upload_id', $uploadId)
-                ->count();
-            BulkDebitNoteUpload::where('id', $uploadId)->update([
-                'total' => $total,
-                'saved' => $saved,
-                'pending' => $pending
-            ]);
+            $saved = JournalTransaction::where('upload_id', $uploadId)->where('status', 'saved')->count();
+            $pending = JournalTransaction::where('upload_id', $uploadId)->where('status', 'pending')->count();
+            $total = JournalTransaction::where('upload_id', $uploadId)->count();
+            BulkJournalUpload::where('id', $uploadId)->update(['total' => $total, 'saved' => $saved, 'pending' => $pending]);
         }
 
         return response()->json([
             'status' => true,
-            'message' => 'Sumbit Successfully'
+            'message' => $submittedCount . ' journal row(s) submitted successfully.'
         ]);
     }
 

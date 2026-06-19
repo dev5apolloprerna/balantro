@@ -2201,7 +2201,7 @@
                 id: id,
                 status: status
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
         }
@@ -2218,7 +2218,7 @@
                 _token: "{{ csrf_token() }}",
                 ids: [id] // 🔥 important (array)
             }, function(res) {
-                alert(res.message);
+                showToast(res.message,'success');
                 location.reload();
             });
 
@@ -2328,14 +2328,14 @@
             let invoice = $('#edit_invoice').val();
 
             if (!party) {
-                alert('Please select Party');
+                showToast('Please select Party','error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
             }
 
             if (!invoice) {
-                alert('Please enter Invoice Number');
+                showToast('Please enter Invoice Number','error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
@@ -2350,7 +2350,7 @@
                 // amount = $('#noitem_amount').val();
                 amount = $('#edit_amount').val(); // calculated value
                 if (!amount) {
-                    alert('Please enter amount');
+                    showToast('Please enter amount','error');
                     btn.prop('disabled', false);
                     btn.html('Save');
                     return;
@@ -2377,16 +2377,9 @@
 
                 if(ledgerRows.length === 0)
                 {
-                    alert('Please add at least one ledger row');
+                    showToast('Please add at least one ledger row','error');
                     return;
                 }
-                // if (!$('#noitem_sales_ledger').val()) {
-                //     alert('Please select Sales Ledger');
-                //     btn.prop('disabled', false);
-                //     btn.html('Save');
-                //     return;
-                // }
-
             } else {
                 amount = $('#edit_amount').val();
             }
@@ -2509,16 +2502,6 @@
                 noitem_rows: ledgerRows,
             };
 
-            // $.post("{{ route('sales.manual.create') }}", data, function(res) {
-            //     if (res.status) {
-            //         alert('Inserted successfully');
-            //         closeEditModal();
-            //         location.reload();
-            //     } else {
-            //         alert('Save failed');
-            //     }
-            // });
-
             $.ajax({
                 url: "{{ route('sales.manual.create') }}",
                 type: "POST",
@@ -2556,31 +2539,6 @@
             });
 
         });
-
-        function showToast(message, type = 'success') {
-
-            let bg = type === 'success' ? '#16a34a' : '#dc2626';
-
-            let toast = document.createElement('div');
-
-            toast.innerText = message;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '20px';
-            toast.style.right = '20px';
-            toast.style.background = bg;
-            toast.style.color = '#fff';
-            toast.style.padding = '10px 16px';
-            toast.style.borderRadius = '6px';
-            toast.style.fontSize = '13px';
-            toast.style.zIndex = '99999';
-            toast.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
-
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
 
         $(document).on('change', 'input[name="entry_mode"]', function() {
 
@@ -3271,6 +3229,7 @@
             data: formData,
             success: function(response) {
                 closeLedgerModal();
+                showToast(response.message,'success');
                 let name = $('input[name="Name"]').val();
 
                 // ✅ Add into EDIT MODAL dropdown
@@ -3288,18 +3247,9 @@
 
                 // ✅ Clear form
                 $('#ledgerForm')[0].reset();
-
-
-                // location.reload();
-                // OPTIONAL: add new ledger in dropdown
-                // let name = $('input[name="Name"]').val();
-
-                // $('.ledgerSelect').append(
-                //     `<option value="${name}" selected>${name}</option>`
-                // ).trigger('change');
             },
             error: function(xhr) {
-                alert('Error saving ledger');
+                showToast('Error saving ledger','error');
                 console.log(xhr.responseText);
             }
         });

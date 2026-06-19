@@ -878,55 +878,7 @@
 
     {{-- JavaScript remains the same as your original code --}}
     <script>
-    // function showError(msg) {
-    //     const div = document.createElement('div');
-    //     div.className = "text-red-500 text-xs mt-1";
-    //     div.innerText = msg;
-
-    //     document.getElementById('dropArea').appendChild(div);
-
-    //     setTimeout(() => div.remove(), 3000);
-    // }
     
-    // function appendFiles(list) {
-
-    //     const allowedTypes = [
-    //         'image/jpeg',
-    //         'image/png',
-    //         'image/heic',
-    //         'image/heif',
-    //         'application/pdf',
-    //         'application/vnd.ms-excel',
-    //         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    //     ];
-
-    //     const maxSize = 30 * 1024 * 1024; // 30MB
-
-    //     for (const file of list) {
-
-    //         // 🔹 Validate size
-    //         if (file.size > maxSize) {
-    //             alert(`❌ ${file.name} exceeds 30MB limit`);
-    //             continue;
-    //         }
-
-    //         // 🔹 Validate type (fallback for HEIC issue)
-    //         const ext = file.name.split('.').pop().toLowerCase();
-
-    //         const allowedExt = ['jpg','jpeg','png','heic','heif','pdf','xls','xlsx'];
-
-    //         if (!allowedTypes.includes(file.type) && !allowedExt.includes(ext)) {
-    //             alert(`❌ Invalid file type: ${file.name}`);
-    //             continue;
-    //         }
-
-    //         // ✅ Add valid file
-    //         filesBuffer.push(file);
-    //     }
-
-    //     renderList();
-    // }
-
         (function() {
             const openBtn = document.getElementById('openUploadModal');
             const closeBtn = document.getElementById('closeUploadModal');
@@ -1010,13 +962,13 @@
             function appendFiles(list) {
                 for (const f of list) {
                     if (f.size > maxFileSize) {
-                        alert(`❌ ${f.name} exceeds 30MB limit.`);
+                        showToast(`❌ ${f.name} exceeds 30MB limit.`,'error');
                         continue;
                     }
 
                     const ext = (f.name.split('.').pop() || '').toLowerCase();
                     if (!allowedTypes.includes(f.type) && !allowedExt.includes(ext)) {
-                        alert(`❌ Invalid file type: ${f.name}`);
+                        showToast(`❌ Invalid file type: ${f.name}`,'error');
                         continue;
                     }
                     filesBuffer.push(f);
@@ -1063,13 +1015,13 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 if (filesBuffer.length === 0) {
-                    alert('Please select at least one file.');
+                    showToast('Please select at least one file.','error');
                     return;
                 }
 
                 const oversized = filesBuffer.find((f) => f.size > maxFileSize);
                 if (oversized) {
-                    alert(`❌ ${oversized.name} exceeds 30MB limit.`);
+                    showToast(`❌ ${oversized.name} exceeds 30MB limit.`,'error');
                     return;
                 }
                 
@@ -1100,7 +1052,7 @@
                             window.location.reload();
                         } else {
                             uploadBtn.disabled = false;
-                            alert('Upload failed. Please try again.');
+                            showToast('Upload failed. Please try again.','error');
                         }
                     }
                 };

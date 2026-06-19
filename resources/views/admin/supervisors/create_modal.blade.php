@@ -64,9 +64,7 @@
     //     else if (/Linux/i.test(navigator.userAgent)) osName = "Linux";
     //     else if (/Android/i.test(navigator.userAgent)) osName = "Android";
     //     else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) osName = "iOS";
-    //     // alert(deviceType);
-    //     // alert(browserName);
-    //     // alert(osName);
+    
     //     document.getElementById("c_device_type").value = deviceType;
     //     document.getElementById("c_browser_name").value = browserName;
     //     document.getElementById("c_os_name").value = osName;

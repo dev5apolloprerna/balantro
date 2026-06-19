@@ -447,53 +447,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js"></script>
 <script src="{{ asset('assets/firebase/firebase.js') }}"></script>
 <script>
-    // async function fillDeviceInfo() {
-    //     // Device type
-    //     let deviceType = /Mobi|Android/i.test(navigator.userAgent) ?
-    //         "mobile" :
-    //         "pc";
-
-    //     // Browser name (basic detection)
-    //     let browserName = "Unknown";
-    //     if (/Chrome/i.test(navigator.userAgent)) browserName = "Chrome";
-    //     else if (/Firefox/i.test(navigator.userAgent)) browserName = "Firefox";
-    //     else if (
-    //         /Safari/i.test(navigator.userAgent) &&
-    //         !/Chrome/i.test(navigator.userAgent)
-    //     )
-    //         browserName = "Safari";
-    //     else if (/Edge/i.test(navigator.userAgent)) browserName = "Edge";
-
-    //     // OS name
-    //     let osName = "Unknown";
-    //     if (/Win/i.test(navigator.userAgent)) osName = "Windows";
-    //     else if (/Mac/i.test(navigator.userAgent)) osName = "MacOS";
-    //     else if (/Linux/i.test(navigator.userAgent)) osName = "Linux";
-    //     else if (/Android/i.test(navigator.userAgent)) osName = "Android";
-    //     else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) osName = "iOS";
-    //     // alert(deviceType);
-    //     // alert(browserName);
-    //     // alert(osName);
-    //     document.getElementById("c_device_type").value = deviceType;
-    //     document.getElementById("c_browser_name").value = browserName;
-    //     document.getElementById("c_os_name").value = osName;
-
-    //     // Try to fetch FCM token
-    //     // try {
-    //     const perm = await Notification.requestPermission();
-
-    //     if (perm === "granted") {
-    //         const token = await messaging.getToken({
-    //             vapidKey: VAPID_PUBLIC_KEY,
-    //         });
-    //         if (token) {
-    //             document.getElementById("c_fcm_token").value = token;
-    //         }
-    //     }
-    //     // } catch (e) {
-    //     //     console.warn("FCM token skipped:", e);
-    //     // }
-    // }
+    
 
     document.getElementById("deoAddForm").addEventListener("submit", async function(e) {
         e.preventDefault();

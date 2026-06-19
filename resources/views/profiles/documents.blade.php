@@ -182,7 +182,7 @@ document.querySelector('form').addEventListener('submit', function(e) {
 
     if (hasInvalid) {
         e.preventDefault();
-        alert("Please fix invalid files before submitting.");
+        showToast("Please fix invalid files before submitting.",'error');
         return false;
     }
 });

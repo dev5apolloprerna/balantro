@@ -363,7 +363,7 @@
             return true;
         }
 
-        alert(`File size must not exceed ${maxMb}MB.`);
+        showToast(`File size must not exceed ${maxMb}MB.`,'error');
         input.value = '';
         return false;
     };

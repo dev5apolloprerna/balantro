@@ -1518,18 +1518,12 @@ $('#updateRow').click(function () {
             noitem_rows:       noitemRows,
         },
         success: (res) => {
-                // alert('Updated Successfully');
-                // location.reload();
                 if (res.status) {
                     showToast(res.message || 'Updated successfully', 'success');
                     //closeEditModal();
                     location.reload();
                 } else {
                     showToast(res.message || 'Something went wrong', 'error');
-
-                    // 🔥 Enable button again
-                    // btn.prop('disabled', false);
-                    // btn.html('Save');
                 }
              },
         //error:   () => showToast('Update failed', 'error')

@@ -549,11 +549,11 @@ $('#saveRoundoffSetting').click(function () {
         },
         success: function(res) {
             if (res.success) {
-                alert(res.message || 'Roundoff setting saved successfully.');
+                showToast(res.message || 'Roundoff setting saved successfully.','success');
             }
         },
         error: function(xhr) {
-            alert(xhr.responseJSON?.message || 'Unable to save roundoff setting.');
+            showToast(xhr.responseJSON?.message || 'Unable to save roundoff setting.','error');
         }
     });
 });
@@ -660,7 +660,7 @@ $(document).on('click','.deleteMapping',function(){
             }
         },
         error: function(xhr){
-            alert('Something went wrong.');
+            showToast('Something went wrong.','error');
         }
     });
 });
@@ -745,7 +745,7 @@ $(document).on('click','.deleteItemMapping',function(){
         },
         error: function(xhr){
             console.log(xhr.responseText);
-            alert('Delete failed.');
+            showToast('Delete failed.','error');
         }
     });
 });

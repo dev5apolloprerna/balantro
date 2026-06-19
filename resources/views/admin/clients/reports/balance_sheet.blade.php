@@ -1372,26 +1372,6 @@ $otherAssets = max(
             }
         }
 
-        // document.getElementById('filterForm').addEventListener('submit', function(e) {
-
-        //     const selected = document.querySelector('input[name="range"]').value;
-
-        //     if (selected === 'custom') {
-
-        //         const toC = document.getElementById('to_custom');
-
-        //         if (!toC.value) {
-        //             e.preventDefault();
-        //             alert('Select date');
-        //             return;
-        //         }
-
-        //         // ✅ Balance Sheet logic
-        //         document.getElementById('from').value = '';   // NOT needed
-        //         document.getElementById('to').value = toC.value;
-        //     }
-        // });
-
         document.getElementById('filterForm').addEventListener('submit', function(e) {
 
             const selected = document.querySelector('input[name="range"]').value;
@@ -1402,7 +1382,7 @@ $otherAssets = max(
 
                 if (!toC.value) {
                     e.preventDefault();
-                    alert('Select As on Date');
+                    showToast('Select As on Date','error');
                     return;
                 }
 

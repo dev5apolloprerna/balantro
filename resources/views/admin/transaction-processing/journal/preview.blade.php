@@ -602,9 +602,11 @@ function updateJournal() {
         narration: $('#edit_narration').val(),
         items: items
     }, function(res) {
-        alert(res.message || 'Updated Successfully');
-        $('#editModal').removeClass('show');
-        location.reload();
+        showToast(res.message || (res.status ? 'Updated successfully' : 'Unable to update journal'),(res.status ? 'success' : 'error'));
+        if (res.status !== false) {
+            $('#editModal').removeClass('show');
+            location.reload();
+        }
     });
 }
 
@@ -625,7 +627,7 @@ function saveSelected() {
         _token: '{{ csrf_token() }}',
         selected: selected
     }, function(res){
-        alert(res.message);
+        showToast(res.message,'success');
         location.reload();
     });
 }
@@ -634,12 +636,20 @@ function submitSelected() {
     let selected = $('.rowCheckbox:checked').map(function(){
         return this.value;
     }).get();
+    if (!selected.length) {
+        showToast('Please select at least one journal row before submitting.','success');
+        return;
+    }
     $.post("{{ route('journal.submit') }}", {
         _token: '{{ csrf_token() }}',
         selected: selected
     }, function(res){
-        alert(res.message);
-        location.reload();
+        showToast(res.message || (res.status ? 'Submitted successfully' : 'Unable to submit selected journal rows'),(res.status ? 'success' : 'error'));
+        if (res.status !== false) {
+            location.reload();
+        }
+    }).fail(function(xhr) {
+        showToast(xhr.responseJSON?.message || 'Error submitting journal data','error');
     });
 }
 

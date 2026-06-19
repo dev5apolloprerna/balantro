@@ -203,24 +203,6 @@
         $('#resolveModal').addClass('hidden').removeClass('flex');
     });
 
-    // Submit resolve
-    // $('#submitResolve').click(function() {
-    //     let id = $('#resolve_id').val();
-    //     let remark = $('#resolve_remark').val();
-    //     if (!remark) {
-    //         alert('Please enter remark');
-    //         return;
-    //     }
-    //     $.post("{{ route('clients.resolveSuspense') }}", {
-    //         _token: "{{ csrf_token() }}",
-    //         txn_id: id,
-    //         remark: remark
-    //     }, function(res) {
-    //         alert('Resolved successfully');
-    //         location.reload();
-    //     });
-    // });
-
     $(document).on('keyup change', '.searchInput, .amountFrom, .amountTo', function () {
         let from = parseFloat($('.amountFrom').val()) || 0;
         let to = parseFloat($('.amountTo').val()) || Infinity;
@@ -280,7 +262,7 @@
         });
 
         if (selectedIds.length === 0) {
-            alert('Please select at least one row');
+            showToast('Please select at least one row','error');
             return;
         }
 
@@ -296,7 +278,7 @@
         let remark = $('#resolve_remark').val();
 
         if (!remark) {
-            alert('Please enter remark');
+            showToast('Please enter remark','error');
             return;
         }
 
@@ -305,7 +287,7 @@
             txn_ids: selectedIds, // ✅ ALWAYS ARRAY
             remark: remark
         }, function (res) {
-            alert('Resolved successfully');
+            showToast('Resolved successfully','success');
             location.reload();
         });
     });

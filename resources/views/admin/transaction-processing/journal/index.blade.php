@@ -298,7 +298,7 @@
         let fileInput = $('#journalFile')[0];
 
         if (!fileInput.files.length) {
-            alert('Please select file');
+            showToast('Please select file','error');
             return;
         }
 
@@ -344,7 +344,7 @@
 
             error: function() {
 
-                alert('Upload Failed');
+                showToast('Upload Failed','error');
 
                 // 🔥 ENABLE AGAIN
                 $('#uploadBtn').prop('disabled', false);
@@ -354,27 +354,6 @@
         });
     });
 
-    // ✅ AJAX UPLOAD
-    // $('#uploadForm').submit(function(e){
-    //     e.preventDefault();
-
-    //     let formData = new FormData(this);
-
-    //     $.ajax({
-    //         url: "{{ route('journal.upload') }}",
-    //         type: "POST",
-    //         data: formData,
-    //         processData: false,
-    //         contentType: false,
-    //         success: function(res){
-    //             alert('Uploaded Successfully');
-    //             location.reload();
-    //         },
-    //         error: function(){
-    //             alert('Upload Failed');
-    //         }
-    //     });
-    // });
     let currentId = null;
 
     function openDropdown(e, id) {
@@ -400,7 +379,7 @@
             id: currentId,
             status: status
         }, function(res) {
-            alert(res.message);
+            showToast(res.message,'success');
             location.reload();
         });
     }
@@ -414,7 +393,7 @@
             _token: "{{ csrf_token() }}",
             ids: [currentId]
         }, function(res) {
-            alert(res.message);
+            showToast(res.message,'success');
             location.reload();
         });
     }
@@ -427,7 +406,7 @@
         }).get();
 
         if (ids.length == 0) {
-            alert('Select at least one');
+            showToast('Select at least one','error');
             return;
         }
 
@@ -437,7 +416,7 @@
             _token: "{{ csrf_token() }}",
             ids: ids
         }, function(res) {
-            alert(res.message);
+            showToast(res.message,'success');
             location.reload();
         });
     }
