@@ -1,8 +1,8 @@
-<div id="addManagerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-neutral-900">
-        <div class="flex items-center justify-between border-b pb-3">
+<div id="addManagerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+    <div class="balantro-modal-panel w-full max-w-md rounded-2xl bg-white p-6 text-slate-900 shadow-xl dark:bg-slate-900 dark:text-white">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-700">
             <h2 class="text-lg font-semibold">Add Manager</h2>
-            <button onclick="closeManagerModal()" class="text-neutral-400 hover:text-neutral-600">&times;</button>
+            <button onclick="closeManagerModal()" class="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white">&times;</button>
         </div>
 
         <form method="POST" action="{{ route('managers.store') }}" id="addManagerForm" class="mt-4 space-y-4">
@@ -39,52 +39,6 @@
 </div>
 
 <script>
-    // async function fillDeviceInfo() {
-    //     // Device type
-    //     let deviceType = /Mobi|Android/i.test(navigator.userAgent) ?
-    //         "mobile" :
-    //         "pc";
-
-    //     // Browser name (basic detection)
-    //     let browserName = "Unknown";
-    //     if (/Chrome/i.test(navigator.userAgent)) browserName = "Chrome";
-    //     else if (/Firefox/i.test(navigator.userAgent)) browserName = "Firefox";
-    //     else if (
-    //         /Safari/i.test(navigator.userAgent) &&
-    //         !/Chrome/i.test(navigator.userAgent)
-    //     )
-    //         browserName = "Safari";
-    //     else if (/Edge/i.test(navigator.userAgent)) browserName = "Edge";
-
-    //     // OS name
-    //     let osName = "Unknown";
-    //     if (/Win/i.test(navigator.userAgent)) osName = "Windows";
-    //     else if (/Mac/i.test(navigator.userAgent)) osName = "MacOS";
-    //     else if (/Linux/i.test(navigator.userAgent)) osName = "Linux";
-    //     else if (/Android/i.test(navigator.userAgent)) osName = "Android";
-    //     else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) osName = "iOS";
-  
-    //     document.getElementById("c_device_type").value = deviceType;
-    //     document.getElementById("c_browser_name").value = browserName;
-    //     document.getElementById("c_os_name").value = osName;
-
-    //     // Try to fetch FCM token
-    //     // try {
-    //     const perm = await Notification.requestPermission();
-
-    //     if (perm === "granted") {
-    //         const token = await messaging.getToken({
-    //             vapidKey: VAPID_PUBLIC_KEY,
-    //         });
-    //         if (token) {
-    //             document.getElementById("c_fcm_token").value = token;
-    //         }
-    //     }
-    //     // } catch (e) {
-    //     //     console.warn("FCM token skipped:", e);
-    //     // }
-    // }
-
     document.getElementById("addManagerForm").addEventListener("submit", async function(e) {
         e.preventDefault();
 

@@ -25,19 +25,27 @@
         transform: translateY(0);
     }
 
-    .modal:not(.show),
-    [id$="-modal"].hidden,
-    [data-modal-target].hidden,
-    [data-permissions-modal-target="modal"].hidden,
-    [data-groups-modal-target="modal"].hidden {
-        display: none !important;
+    /* Keep every legacy modal hidden until JS explicitly opens it.
+       Financial/transaction pages that use drawers or `style=display:none` still opt in normally. */
+    .modal {
+        display: none;
     }
 
     .modal.show {
         display: flex !important;
     }
 
+    .modal:not(.show),
+    [id$="-modal"].hidden,
+    [id$="Modal"].hidden,
+    [data-modal-target].hidden,
+    [data-permissions-modal-target="modal"].hidden,
+    [data-groups-modal-target="modal"].hidden {
+        display: none !important;
+    }
+
     .modal-content,
+    .balantro-modal-panel,
     [data-permissions-modal-target="modal"] > div > div,
     [data-groups-modal-target="modal"] > div > div {
         border: 1px solid rgb(226 232 240 / 0.95);
@@ -45,20 +53,37 @@
     }
 
     .dark .modal-content,
+    .dark .balantro-modal-panel,
     .dark [data-permissions-modal-target="modal"] > div > div,
     .dark [data-groups-modal-target="modal"] > div > div {
         border-color: rgb(51 65 85 / 0.95);
         box-shadow: 0 24px 80px rgb(0 0 0 / 0.55);
     }
 
+    .balantro-modal-list {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(148 163 184 / 0.75) transparent;
+    }
+
+    .balantro-modal-list::-webkit-scrollbar {
+        width: 0.45rem;
+    }
+
+    .balantro-modal-list::-webkit-scrollbar-thumb {
+        border-radius: 9999px;
+        background: rgb(148 163 184 / 0.75);
+    }
+
     .table-responsive,
     .table-wrapper,
+    .table-scroll-safe,
     .overflow-x-auto:has(.dropdown-menu),
     .overflow-x-auto:has([data-dropdown-toggle]) {
         overflow-x: auto;
         overflow-y: visible;
     }
 
+    .table-dropdown-portal,
     table td .dropdown-menu,
     table td [role="menu"],
     .table-wrapper .dropdown-menu {

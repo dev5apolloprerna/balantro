@@ -14,8 +14,8 @@
     </div> --}}
 
     <div
-        class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700">
-        <div class="overflow-x-auto">
+        class="rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700">
+        <div class="table-scroll-safe overflow-x-auto">
             <table class="min-w-full divide-y divide-neutral-200 dark:divide-neutral-700">
                 <thead class="bg-neutral-50/80 dark:bg-neutral-800/60">
                     <tr class="text-left text-sm font-semibold text-neutral-700 dark:text-neutral-200">

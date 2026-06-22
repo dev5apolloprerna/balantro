@@ -73,12 +73,14 @@
             const modal = document.getElementById('addManagerModal');
             if (!modal) return console.warn("Modal not found");
             modal.classList.remove('hidden');
+            document.documentElement.classList.add('overflow-hidden');
         }
 
         function closeManagerModal() {
             const modal = document.getElementById('addManagerModal');
             if (!modal) return;
             modal.classList.add('hidden');
+            document.documentElement.classList.remove('overflow-hidden');
         }
 
         function setAction(form, urlTemplate, id) {
@@ -87,12 +89,18 @@
 
         function show(id) {
             const el = document.getElementById(id);
-            if (el) el.classList.remove('hidden');
+            if (el) {
+                el.classList.remove('hidden');
+                document.documentElement.classList.add('overflow-hidden');
+            }
         }
 
         function hide(id) {
             const el = document.getElementById(id);
-            if (el) el.classList.add('hidden');
+            if (el) {
+                el.classList.add('hidden');
+                document.documentElement.classList.remove('overflow-hidden');
+            }
         }
 
         function openEditModal(id, name, email) {
@@ -113,7 +121,7 @@
             setAction(form, "{{ route('managers.assignGroups', ':id') }}", id);
 
             const list = document.getElementById('groupsList');
-            list.innerHTML = '<div class="text-sm text-neutral-300">Loading…</div>';
+            list.innerHTML = '<div class="text-sm text-slate-500 dark:text-slate-300">Loading…</div>'; 
 
             fetch("{{ route('managers.getGroups', ':id') }}".replace(':id', id), {
                     headers: {
@@ -129,18 +137,21 @@
                         const gid = Number(g.id);
                         const checked = assigned.has(gid) ? 'checked' : '';
                         return `
-        <label class="flex items-center gap-3 rounded-lg border border-neutral-700 p-3 hover:bg-neutral-800">
+        <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800">
           <input type="checkbox" name="group_ids[]" value="${gid}" ${checked}
-                 class="h-4 w-4 rounded border-neutral-500 text-blue-500 focus:ring-blue-500">
+                 class="h-4 w-4 rounded border-slate-400 text-blue-600 focus:ring-blue-500">
           <div>
             <div class="font-medium">${g.name}</div>
-            <div class="text-xs text-neutral-400">${g.permissions_count} permissions</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">${g.permissions_count} permissions</div>
           </div>
         </label>
       `;
                     }).join('');
                 })
-                .catch(() => list.innerHTML = '<div class="text-sm text-rose-400">Failed to load groups.</div>');
+                .catch(() => {
+                    list.innerHTML = '<div class="text-sm text-rose-500">Failed to load groups.</div>';
+                    (window.showToast || console.error)('Failed to load groups.', 'error');
+                });
 
             show('assignGroupsModal');
         }
@@ -155,7 +166,7 @@
             setAction(form, "{{ route('managers.assignPermissions', ':id') }}", id);
 
             const list = document.getElementById('permissionsList');
-            list.innerHTML = '<div class="text-sm text-neutral-300">Loading…</div>';
+            list.innerHTML = '<div class="text-sm text-slate-500 dark:text-slate-300">Loading…</div>'; 
 
             fetch("{{ route('managers.getPermissions', ':id') }}".replace(':id', id), {
                     headers: {
@@ -176,25 +187,25 @@
 
                         return `
         <div class="space-y-2">
-          <label class="flex items-center gap-3 rounded-lg border border-neutral-700 p-3 hover:bg-neutral-800">
+          <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800">
             <input type="checkbox" name="permission_ids[]" value="${pid}" ${allowChecked}
-                   class="h-4 w-4 rounded border-neutral-500 text-purple-500 focus:ring-purple-500">
-            <span class="text-sm">${p.name} <span class="text-neutral-400">(${p.action} ${p.subject})</span></span>
+                   class="h-4 w-4 rounded border-slate-400 text-purple-600 focus:ring-purple-500">
+            <span class="text-sm">${p.name} <span class="text-slate-500 dark:text-slate-400">(${p.action} ${p.subject})</span></span>
           </label>
         </div>
       `;
                     }).join('');
 
                     const denies = (data.permissions || [])
-                        .filter(p => new Set((data.group_permission_ids || []).map(Number)).has(Number(p.id)))
+                        .filter(p => groupSet.has(Number(p.id)))
                         .map(p => {
                             const pid = Number(p.id);
                             const denyChecked = denySet.has(pid) ? 'checked' : '';
                             return `
-          <label class="flex items-center gap-3 rounded-lg border border-neutral-700 p-3 hover:bg-neutral-800">
+          <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800">
             <input type="checkbox" name="denied_permission_ids[]" value="${pid}" ${denyChecked}
-                   class="h-4 w-4 rounded border-neutral-500 text-rose-500 focus:ring-rose-500">
-            <span class="text-sm">${p.name} <span class="text-neutral-400">(${p.action} ${p.subject})</span></span>
+                   class="h-4 w-4 rounded border-slate-400 text-rose-600 focus:ring-rose-500">
+            <span class="text-sm">${p.name} <span class="text-slate-500 dark:text-slate-400">(${p.action} ${p.subject})</span></span>
           </label>
         `;
                         }).join('');
@@ -207,7 +218,10 @@
 
     `;
                 })
-                .catch(() => list.innerHTML = '<div class="text-sm text-rose-400">Failed to load permissions.</div>');
+                .catch(() => {
+                    list.innerHTML = '<div class="text-sm text-rose-500">Failed to load permissions.</div>';
+                    (window.showToast || console.error)('Failed to load permissions.', 'error');
+                });
 
             show('permissionsModal');
         }
