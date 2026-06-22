@@ -63,7 +63,7 @@
                     <!-- Upload -->
                     <button
                         @click="{{ session('iPartyId') ? 'openUpload=true' : 'openClient=true' }}"
-                        class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded">
+                        class="px-3 py-2 text-xs border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 flex items-center gap-1">
                         <i class="fa-solid fa-upload"></i>
                         Upload
                     </button>
@@ -71,7 +71,7 @@
                     <!-- Add -->
                     <button
                         onclick="openJournalModal()"
-                        class="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded">
+                        class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
                         <i class="fa-solid fa-plus"></i>
                         Add
                     </button>

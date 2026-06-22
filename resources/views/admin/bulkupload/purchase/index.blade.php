@@ -81,13 +81,13 @@
 
                                             <!-- Bulk Delete -->
                                             <button type="button" onclick="bulkDelete()"
-                                                class="px-4 py-2 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                class="px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
                                                 <i class="fa-solid fa-trash-can text-xs"></i>
                                             </button>
 
                                             <!-- Primary Action -->
                                             <button id="addEntryBtn" onclick="openPurchaseModal()"
-                                                class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                class="px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
                                                 <i class="fa-solid fa-plus text-xs"></i>
                                                 Add
                                             </button>
