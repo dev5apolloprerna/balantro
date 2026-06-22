@@ -14,14 +14,14 @@
         <div class="card bg-white dark:bg-neutral-800 rounded-lg overflow-hidden">
 
             <!-- TOP BAR -->
-            <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-neutral-600">
+            <div class="p-3 bulk-toolbar-row border-b border-gray-200 dark:border-neutral-600">
 
                 @include('admin.bulkupload.bulk-upload-tabs')
 
-                <div class="flex items-center gap-2">
+                <div class="bulk-toolbar-actions">
                     <!-- Client Name -->
                     @if(session('client_name'))
-                    <span class="text-green-500 text-sm font-semibold whitespace-nowrap" style="font-size: 1.0rem;font-variant-caps: small-caps;">
+                     <span class="bulk-client-name text-green-500 text-sm font-semibold whitespace-nowrap" style="font-variant-caps: small-caps;">
                         {{ session('client_name') }}
                     </span>
                     @endif
@@ -55,7 +55,7 @@
                     <!-- Select Client -->
                     <button
                         @click="openClient=true"
-                        class="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-400 text-white rounded hover:bg-gray-700">
+                        class="bulk-text-btn flex items-center gap-1 text-xs border border-gray-400 text-white rounded hover:bg-gray-700">
                         <i class="fa-solid fa-building"></i>
                         Client
                     </button>
@@ -63,7 +63,7 @@
                     <!-- Upload -->
                     <button
                         @click="{{ session('iPartyId') ? 'openUpload=true' : 'openClient=true' }}"
-                        class="px-3 py-2 text-xs border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 flex items-center gap-1">
+                        class="bulk-text-btn flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded">
                         <i class="fa-solid fa-upload"></i>
                         Upload
                     </button>
@@ -71,7 +71,7 @@
                     <!-- Add -->
                     <button
                         onclick="openJournalModal()"
-                        class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                        class="bulk-text-btn flex items-center gap-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded">
                         <i class="fa-solid fa-plus"></i>
                         Add
                     </button>

@@ -1,11 +1,11 @@
-@extends('layouts.super_admin')
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div data-controller="confirm-delete"
-    x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
+    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }"
     x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold mb-0 dark:text-white">{{ __("Sales") }}</h6>
+            <h6 class="font-semibold mb-0 dark:text-white"><?php echo e(__("Sales")); ?></h6>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-12">
@@ -16,7 +16,7 @@
                             <div class="flex flex-col sm:flex-row gap-3 w-full">
                                 <div class="bulk-toolbar-row">
                                     <!-- Left Side Tabs -->
-                                    @include('admin.bulkupload.bulk-upload-tabs')
+                                    <?php echo $__env->make('admin.bulkupload.bulk-upload-tabs', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
                                     <!-- Right Side Actions -->
                                     <div class="bulk-toolbar-actions">
 
@@ -24,29 +24,31 @@
                                         <div class="bulk-meta-group bg-gray-100 dark:bg-neutral-700 rounded-md">
 
                                             <!-- Client Name -->
-                                            @if(session('client_name'))
+                                            <?php if(session('client_name')): ?>
                                             <span class="bulk-client-name text-xs font-semibold text-green-600 whitespace-nowrap" style="font-variant-caps: small-caps;">
-                                                {{ session('client_name') }}
+                                                <?php echo e(session('client_name')); ?>
+
                                             </span>
-                                            @endif
+                                            <?php endif; ?>
                                             <!-- Divider -->
                                             <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                                             <!-- Year Dropdown -->
-                                            @if(!empty($years) && count($years))
+                                            <?php if(!empty($years) && count($years)): ?>
                                             <select
                                                 onchange="window.location.href=this.value"
                                                 class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
                                                 <option value=""> Select </option>
-                                                @foreach($years as $key => $year)
+                                                <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $year): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                 <!-- || (!session('year') && $key == 0)  -->
                                                 <option
-                                                    value="{{ route('sales.select.year', $year->strYear) }}"
-                                                    {{ session('year') == $year->strYear ? 'selected' : '' }}>
-                                                    {{ $year->strYear }}
+                                                    value="<?php echo e(route('sales.select.year', $year->strYear)); ?>"
+                                                    <?php echo e(session('year') == $year->strYear ? 'selected' : ''); ?>>
+                                                    <?php echo e($year->strYear); ?>
+
                                                 </option>
-                                                @endforeach
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </select>
-                                            @endif
+                                            <?php endif; ?>
                                             <!-- Divider -->
                                             <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
 
@@ -73,7 +75,7 @@
 
                                             <!-- Upload -->
                                             <button
-                                                @click="{{ session('iPartyId') ? 'openUpload = true' : 'openClient = true' }}"
+                                                @click="<?php echo e(session('iPartyId') ? 'openUpload = true' : 'openClient = true'); ?>"
                                                 class="bulk-text-btn text-xs border rounded-md hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-1">
                                                 <i class="fa-solid fa-upload text-xs"></i>
                                                 Upload
@@ -91,8 +93,8 @@
                                                 <i class="fa-solid fa-plus text-xs"></i>
                                                 Add
                                             </button>
-                                            @if(session('guid'))
-                                            <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800"
+                                            <?php if(session('guid')): ?>
+                                            <a href="<?php echo e(route('clients.Gstindex', session('guid'))); ?>" class="bulk-settings-btn rounded-full bg-cyan-100 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800"
                                                 title="GST Settings">
 
                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -136,7 +138,7 @@
 
                                                 </svg>
                                             </a>
-                                            @endif
+                                            <?php endif; ?>
 
                                         </div>
 
@@ -169,68 +171,76 @@
                             </thead>
                             <!-- Table Body -->
                             <tbody class="divide-y">
-                                @foreach($uploads as $upload)
+                                <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}">
+                                        <input type="checkbox" class="rowCheckbox" value="<?php echo e($upload->id); ?>">
                                     </td>
-                                    <td class="px-4 py-3">{{ $loop->iteration }}</td>
+                                    <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
-                                        {{ $upload->file_name }}
+                                        <?php echo e($upload->file_name); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ ucfirst(str_replace('_',' ',$upload->type)) }}
+                                        <?php echo e(ucfirst(str_replace('_',' ',$upload->type))); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->statement_date ?? '-' }}
+                                        <?php echo e($upload->statement_date ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->synced_date ?? '-' }}
+                                        <?php echo e($upload->synced_date ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->total ?? '-' }}
+                                        <?php echo e($upload->total ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->pending ?? '-' }}
+                                        <?php echo e($upload->pending ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->saved ?? '-' }}
+                                        <?php echo e($upload->saved ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->synced ?? '-' }}
+                                        <?php echo e($upload->synced ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        @if($upload->status == 'Completed')
-                                        <a href="{{ route('sales.preview',$upload->id) }}"
+                                        <?php if($upload->status == 'Completed'): ?>
+                                        <a href="<?php echo e(route('sales.preview',$upload->id)); ?>"
                                             class="text-green-500 font-semibold hover:underline">
                                             Completed
                                         </a>
-                                        @elseif($upload->status == 'Processing')
-                                        <a href="{{ route('sales.preview',$upload->id) }}"
+                                        <?php elseif($upload->status == 'Processing'): ?>
+                                        <a href="<?php echo e(route('sales.preview',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Processing
                                         </a>
-                                        @elseif($upload->status == 'Pending')
-                                        <a href="{{ route('sales.preview',$upload->id) }}"
+                                        <?php elseif($upload->status == 'Pending'): ?>
+                                        <a href="<?php echo e(route('sales.preview',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Pending
                                         </a>
-                                        @else
-                                        <a href="{{ route('sales.preview',$upload->id) }}"
+                                        <?php else: ?>
+                                        <a href="<?php echo e(route('sales.preview',$upload->id)); ?>"
                                             class="text-red-500 font-semibold hover:underline">
                                             Failed
                                         </a>
-                                        @endif
+                                        <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
-                                        <a href="{{ route('sales.preview',$upload->id) }}">
+                                        <a href="<?php echo e(route('sales.preview',$upload->id)); ?>">
                                             <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
                                         <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i> -->
                                         <div x-data="{ open:false }" class="relative inline-block">
 
                                             <!-- Button -->
-                                            <button onclick="openDropdown(event, {{ $upload->id }})"
+                                            <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                                 class="text-gray-500 hover:text-gray-700 px-2">
                                                 <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                             </button>
@@ -256,7 +266,7 @@
                                         </div>
                                     </td>
                                 </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
@@ -281,8 +291,8 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <form method="POST" action="{{ route('sales.upload') }}" enctype="multipart/form-data">
-                @csrf
+            <form method="POST" action="<?php echo e(route('sales.upload')); ?>" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
                 <!-- Body -->
                 <div class="p-6">
                     <!-- Upload Area -->
@@ -385,9 +395,9 @@
             </div>
             <!-- Client List -->
             <div class="flex-1 min-h-0 overflow-y-auto">
-                @foreach($clients as $client)
+                <?php $__currentLoopData = $clients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <a
-                    href="{{ route('sales.select.company',$client->id) }}"
+                    href="<?php echo e(route('sales.select.company',$client->id)); ?>"
                     class="flex items-center justify-between px-4 py-3 border-b hover:bg-gray-100 dark:hover:bg-neutral-700 client-item">
                     <div class="flex items-center gap-3">
                         <div class="bg-gray-200 dark:bg-neutral-700 p-2 rounded">
@@ -395,27 +405,27 @@
                         </div>
                         <div>
                             <div class="font-medium">
-                                {{ $client->name }}
+                                <?php echo e($client->name); ?>
+
                             </div>
                             <div class="text-xs text-gray-500">
-                                {{ $client->code ?? '' }}
+                                <?php echo e($client->code ?? ''); ?>
+
                             </div>
                         </div>
                     </div>
                 </a>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
     </div>
 
-    {{-- ══════════════════════════════════════════════════════
-     EDIT MODAL
-    ══════════════════════════════════════════════════════ --}}
+    
     <div id="editModal" class="modal light-only">
         <div class="receipt-wrapper">
             <input type="hidden" id="edit_id">
 
-            {{-- RECEIPT HEADER --}}
+            
             <div class="receipt-head">
                 <div class="receipt-head-left">
                     <div class="receipt-company">Sales Bill</div>
@@ -427,9 +437,9 @@
             </div>
             <div class="receipt-body"> <!-- 🔥 ADD THIS -->
 
-                {{-- META GRID --}}
+                
                 <div class="receipt-meta-grid">
-                    {{-- Left: Supplier --}}
+                    
                     <div class="receipt-meta-block">
                         <div class="receipt-block-title"><i class="fa-solid fa-building text-blue-400 mr-1"></i> Supplier Details</div>
                         <div class="receipt-field-row">
@@ -437,14 +447,14 @@
                             <div style="display:flex; gap:6px; width:100%;">
                                 <select id="edit_party" class="receipt-input party-select ledgerSelect" style="flex:1;">
                                     <option value="">Select Party</option>    
-                                    @foreach($ledgers as $ledger)
-                                     <option value="{{ $ledger->name }}"
-                                        data-gst="{{ $ledger->gst_no ?? '' }}"
-                                        data-address="{{ $ledger->address ?? '' }}"
-                                        data-pincode="{{ $ledger->pincode ?? '' }}"
-                                        data-city="{{ $ledger->city ?? '' }}"
-                                        data-state="{{ $ledger->state ?? '' }}">{{ $ledger->name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                     <option value="<?php echo e($ledger->name); ?>"
+                                        data-gst="<?php echo e($ledger->gst_no ?? ''); ?>"
+                                        data-address="<?php echo e($ledger->address ?? ''); ?>"
+                                        data-pincode="<?php echo e($ledger->pincode ?? ''); ?>"
+                                        data-city="<?php echo e($ledger->city ?? ''); ?>"
+                                        data-state="<?php echo e($ledger->state ?? ''); ?>"><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <button type="button"
                                     onclick="openLedgerModal()"
@@ -470,16 +480,16 @@
                             <input type="text" id="edit_city" class="receipt-input" placeholder="City">
                         </div>
                     </div>
-                    {{-- Right: Invoice --}}
+                    
                     <div class="receipt-meta-block">
                         <div class="receipt-block-title"><i class="fa-solid fa-file-invoice text-blue-400 mr-1"></i> Invoice Details</div>
                         <div id="invoice_sales_ledger_wrap" class="receipt-field-row">
                             <label>Sales Ledger</label>
                             <select id="noitem_sales_ledger" class="receipt-input ledgerSelect" required>
                                 <option value="">Select Ledger</option>
-                                @foreach($salesLedgers as $ledger)
-                                <option value="{{ $ledger->name }}">{{ $ledger->name }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $salesLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($ledger->name); ?>"><?php echo e($ledger->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
                         <div class="receipt-field-row">
@@ -488,23 +498,23 @@
                         </div>
                         <div class="receipt-field-row">
                             <label>Date</label>
-                            <input type="date" id="edit_date" class="receipt-input" min="{{ session('year_from') }}" max="{{ session('year_to') }}">
+                            <input type="date" id="edit_date" class="receipt-input" min="<?php echo e(session('year_from')); ?>" max="<?php echo e(session('year_to')); ?>">
                         </div>
                         <div class="receipt-field-row">
                             <label>Voucher Type</label>
                             <select id="edit_voucher_type" class="receipt-input">
-                                @foreach($vchTypes as $vchType)
-                                <option value="{{ $vchType }}">{{ $vchType }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($vchType); ?>"><?php echo e($vchType); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
                         <div class="receipt-field-row">
                             <label>Place Of Supply</label>
                             <select id="edit_place" class="receipt-input">
                                 <option value="">Select State</option>
-                                @foreach($states as $state)
-                                <option value="{{ $state }}">{{ $state }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($state); ?>"><?php echo e($state); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
 
@@ -513,12 +523,12 @@
                     </div>
                 </div>
 
-                {{-- ITEMS SECTION --}}
+                
                 <div class="">
                     <!-- <div class="receipt-items-header">
                         <span><i class="fa-solid fa-list text-blue-400 mr-1"></i> Item Details</span>
                         <div style="display:flex;align-items:center;gap:10px;">
-                            {{-- GST Mode Toggle --}}
+                            
                             <div class="receipt-field-row" style="margin:0;">
                                 <label style="width:auto;padding-right:4px;">GST Mode</label>
                                 <select id="gst_calc_mode" name="gst_calc_mode" class="receipt-input" style="width:180px;">
@@ -526,7 +536,7 @@
                                     <option value="custom">Custom (Manual Slots)</option>
                                 </select>
                             </div>
-                            {{-- IGST toggle (only in standard mode) --}}
+                            
                             <div id="igst_toggle_wrap" class="receipt-field-row" style="margin:0;">
                                 <label style="width:auto;padding-right:4px;white-space:nowrap;">Use IGST</label>
                                 <input type="checkbox" id="edit_is_igst" style="width:auto;accent-color:#2563eb;">
@@ -578,7 +588,7 @@
                         </button>
 
                     </div>
-                    {{-- STANDARD MODE: items table --}}
+                    
                     <div id="standard_items_section">
                         <div class="receipt-table-wrap">
                             <table class="receipt-table" id="editItemsTable">
@@ -646,7 +656,7 @@
 
                     </div>
 
-                    {{-- CUSTOM MODE: rate-wise slots --}}
+                    
                     <div id="custom_slots_section" style="display:none;">
                         <div style="padding:8px 10px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
                             <div style="font-size:11px;color:#6b7280;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">
@@ -666,14 +676,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="customSlotsBody">
-                                    {{-- rendered by JS --}}
+                                    
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                {{-- TAX SUMMARY --}}
+                
                 <div class="receipt-tax-summary">
                     <div class="tax-summary-left">
                         <div class="receipt-field-row">
@@ -688,7 +698,7 @@
                             <span class="tax-value" id="sum_amount">0.00</span>
                         </div>
 
-                        {{-- Standard mode: single SGST/CGST/IGST row --}}
+                        
                         <div id="standard_tax_rows">
 
                             <!-- IGST -->
@@ -696,9 +706,9 @@
                                 <span class="tax-label">IGST</span>
                                 <select id="igst_ledger" class="receipt-input" style="width:140px;">
                                     <option value="">Select Ledger</option>
-                                    @foreach($iGstLedgers as $ledger)
-                                    <option value="{{ $ledger->id }}">{{ $ledger->name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $iGstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->id); ?>"><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <!-- <span class="tax-value" id="sum_igst">0.00</span> -->
                                 <input type="number" id="manual_igst" class="receipt-input" style="width:80px;" placeholder="Amt">
@@ -709,9 +719,9 @@
                                 <span class="tax-label">CGST</span>
                                 <select id="cgst_ledger" name="cgst_ledger" class="receipt-input" style="width:140px;">
                                     <option value="">Select Ledger</option>
-                                    @foreach($cGstLedgers as $ledger)
-                                    <option value="{{ $ledger->id }}">{{ $ledger->name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $cGstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->id); ?>"><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <!-- <span class="tax-value" id="sum_cgst">0.00</span> -->
                                 <input type="number" id="manual_cgst" class="receipt-input" style="width:80px;" placeholder="Amt">
@@ -722,9 +732,9 @@
                                 <span class="tax-label">SGST</span>
                                 <select id="sgst_ledger" name="sgst_ledger" class="receipt-input" style="width:140px;">
                                     <option value="">Select Ledger</option>
-                                    @foreach($sGstLedgers as $ledger)
-                                    <option value="{{ $ledger->id }}">{{ $ledger->name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $sGstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->id); ?>"><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <!-- <span class="tax-value" id="sum_sgst">0.00</span> -->
                                 <input type="number" id="manual_sgst" name="igst_ledger" class="receipt-input" style="width:80px;" placeholder="Amt">
@@ -732,9 +742,9 @@
 
                         </div>
 
-                        {{-- Custom mode: rate-wise tax summary rows --}}
+                        
                         <div id="custom_tax_rows" style="display:none;">
-                            {{-- rendered by recalcTotals() --}}
+                            
                         </div>
 
                         <div class="tax-row">
@@ -750,7 +760,7 @@
                     </div>
                 </div>
 
-                {{-- Hidden fields (keep existing save logic working) --}}
+                
                 <input type="hidden" id="edit_amount">
                 <input type="hidden" id="edit_sgst">
                 <input type="hidden" id="edit_cgst">
@@ -758,7 +768,7 @@
                 <input type="hidden" id="edit_roundoff">
                 <input type="hidden" id="edit_total_amount">
             </div>
-            {{-- RECEIPT FOOTER --}}
+            
             <div class="receipt-footer">
                 <div class="receipt-footer-note">This is a computer-generated Sales record.</div>
                 <div class="receipt-footer-actions">
@@ -782,7 +792,7 @@
             <!-- BODY -->
             <div class="modal-body">
                 <form id="ledgerForm">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Name</label>
@@ -792,9 +802,9 @@
                             <label>Parent</label>
                             <select name="Parent">
                                 <option>Select Parent</option>
-                                @foreach($parents as $parent)
-                                <option value="{{ $parent->strParents }}">{{ $parent->strParents }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $parents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($parent->strParents); ?>"><?php echo e($parent->strParents); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
                         <div class="form-group">
@@ -821,9 +831,9 @@
                             <label>State</label>
                             <select id="State" class="inputCell">
                                 <option value="">Select State</option>
-                                @foreach($states as $state)
-                                <option value="{{$state}}">{{$state}}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($state); ?>"><?php echo e($state); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
 
                         </div>
@@ -1898,14 +1908,14 @@
         }
     </style>
 
-    @endsection
-    @section('scripts')
+    <?php $__env->stopSection(); ?>
+    <?php $__env->startSection('scripts'); ?>
     <script>
-        let IGST_LEDGERS = @json($iGstLedgers);
-        let CGST_LEDGERS = @json($cGstLedgers);
-        let SGST_LEDGERS = @json($sGstLedgers);
-        const SALES_GST_MAPPINGS = @json($salesGstMappings ?? []);
-        const ITEM_MASTER = @json($stockItems);
+        let IGST_LEDGERS = <?php echo json_encode($iGstLedgers, 15, 512) ?>;
+        let CGST_LEDGERS = <?php echo json_encode($cGstLedgers, 15, 512) ?>;
+        let SGST_LEDGERS = <?php echo json_encode($sGstLedgers, 15, 512) ?>;
+        const SALES_GST_MAPPINGS = <?php echo json_encode($salesGstMappings ?? [], 15, 512) ?>;
+        const ITEM_MASTER = <?php echo json_encode($stockItems, 15, 512) ?>;
     </script>
     <script>
         function showFileName(input) {
@@ -2048,7 +2058,7 @@
             return mapping ? mapping[`${type}_id`] : null;
         }
 
-        const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
+        const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
         function calculateRoundOffAmountForSummary(total) {
             total = parseFloat(total) || 0;
             let roundedTotal;
@@ -2208,8 +2218,8 @@
         }
 
         function changeStatus(id, status) {
-            $.post("{{ route('sales.change.status') }}", {
-                _token: "{{ csrf_token() }}",
+            $.post("<?php echo e(route('sales.change.status')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
                 id: id,
                 status: status
             }, function(res) {
@@ -2250,8 +2260,8 @@
 
             if (!confirm(ids.length > 1 ? 'Delete selected uploads?' : 'Delete full upload?')) return;
 
-            $.post("{{ route('sales.bulk.delete') }}", {
-                _token: "{{ csrf_token() }}",
+            $.post("<?php echo e(route('sales.bulk.delete')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
                 ids: ids // 🔥 important (array)
             }, function(res) {
                 showToast(res.message,'success');
@@ -2263,8 +2273,8 @@
         function openCreateModal() {
             // 🔥 Clear ID → means NEW Add
             $('#edit_id').val('');
-            let fromDate = "{{ session('year_from') }}";
-            let toDate = "{{ session('year_to') }}";
+            let fromDate = "<?php echo e(session('year_from')); ?>";
+            let toDate = "<?php echo e(session('year_to')); ?>";
 
             let today = new Date().toISOString().split('T')[0];
 
@@ -2527,7 +2537,7 @@
                 $('#gst_calc_mode').val('custom');
             }
             let data = {
-                _token: "{{ csrf_token() }}",
+                _token: "<?php echo e(csrf_token()); ?>",
                 party: party,
                 invoice: invoice,
                 date: $('#edit_date').val(),
@@ -2564,7 +2574,7 @@
             };
 
             $.ajax({
-                url: "{{ route('sales.manual.create') }}",
+                url: "<?php echo e(route('sales.manual.create')); ?>",
                 type: "POST",
                 data: data,
 
@@ -3156,11 +3166,12 @@
                     <td>
                         <select class="receipt-input noitem-ledger">
                             <option value="">Select Ledger</option>
-                            @foreach($salesLedgers as $ledger)
-                                <option value="{{ $ledger->id }}">
-                                    {{ $ledger->name }}
+                            <?php $__currentLoopData = $salesLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($ledger->id); ?>">
+                                    <?php echo e($ledger->name); ?>
+
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </td>
                     <td>
@@ -3285,7 +3296,7 @@
         let formData = $(this).serialize();
 
         $.ajax({
-            url: "{{ route('sales.ledger.store') }}",
+            url: "<?php echo e(route('sales.ledger.store')); ?>",
             type: "POST",
             data: formData,
             success: function(response) {
@@ -3316,4 +3327,6 @@
         });
     });
     </script>
-    @endsection
+    <?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/bulkupload/sales/index.blade.php ENDPATH**/ ?>

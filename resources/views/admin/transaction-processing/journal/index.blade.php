@@ -14,7 +14,7 @@
         <div class="card bg-white dark:bg-neutral-800 rounded-lg overflow-hidden">
 
             <!-- TOP BAR -->
-            <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-neutral-600">
+            <div class="p-3 bulk-toolbar-row border-b border-gray-200 dark:border-neutral-600">
 
                 @include('admin.transaction-processing.bulk-upload-tabs')
 

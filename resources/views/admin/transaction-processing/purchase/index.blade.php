@@ -14,13 +14,13 @@
                     <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 p-2 sm:p-3">
                         <div class="flex flex-col gap-3">
                             <div class="flex flex-col sm:flex-row gap-3 w-full">
-                                <div class="flex flex-col sm:flex-row justify-between items-center w-full">
+                                 <div class="bulk-toolbar-row">
                                     <!-- Left Side Tabs -->
                                     @include('admin.transaction-processing.bulk-upload-tabs')
                                     <!-- Right Side Actions -->
-                                    <div class="flex items-center gap-3 mt-3 sm:mt-0">
+                                     <div class="bulk-toolbar-row">
                                         @if(session('client_name'))
-                                        <div class="text-sm text-green-600 font-semibold" style="font-size: 1.0rem;font-variant-caps: small-caps;">
+                                        <div class="bulk-client-name text-sm text-green-600 font-semibold" style="font-variant-caps: small-caps;">
                                             {{ session('client_name') }}
                                         </div>
                                         @endif
@@ -44,13 +44,13 @@
                                         <!-- Select Client -->
                                         <button
                                             @click="openClient=true"
-                                            class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md flex items-center gap-2 shadow-sm">
+                                            class="bulk-text-btn bg-green-600 hover:bg-green-700 text-white text-sm rounded-md flex items-center gap-2 shadow-sm">
                                             <i class="fa-solid fa-building"></i>
                                             Select Client
                                         </button>
 
                                         @if(session('guid'))
-                                            <a href="{{ route('clients.Gstindex', session('guid')) }}" class="rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800" 
+                                            <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800" 
                                                 title="GST Settings">
 
                                                 <svg xmlns="http://www.w3.org/2000/svg"

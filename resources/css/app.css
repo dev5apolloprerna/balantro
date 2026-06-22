@@ -83,6 +83,114 @@
         overflow-y: visible;
     }
 
+    .bulk-toolbar-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        width: 100%;
+        min-width: 0;
+        flex-wrap: nowrap;
+    }
+
+    .bulk-upload-tabs {
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .bulk-upload-tabs a {
+        padding: 0.45rem 0.65rem !important;
+        font-size: 0.75rem;
+        line-height: 1rem;
+    }
+
+    .bulk-toolbar-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.4rem;
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+    }
+
+    .bulk-meta-group {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        min-width: 0;
+        max-width: clamp(16rem, 32vw, 27rem);
+        flex: 0 1 auto;
+        padding: 0.45rem 0.55rem;
+    }
+
+    .bulk-client-name {
+        display: inline-block;
+        max-width: 7.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.78rem !important;
+    }
+
+    .bulk-toolbar-actions select {
+        max-width: 6rem;
+        min-width: 4.75rem;
+    }
+
+    .bulk-text-btn,
+    .bulk-icon-btn,
+    .bulk-settings-btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    .bulk-text-btn {
+        min-height: 2.125rem;
+        padding: 0.5rem 0.65rem !important;
+    }
+
+    .bulk-icon-btn,
+    .bulk-settings-btn {
+        width: 2.125rem;
+        height: 2.125rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 !important;
+    }
+
+    .bulk-settings-btn svg {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    @media (max-width: 1280px) {
+        .bulk-upload-tabs a {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            font-size: 0.7rem;
+        }
+
+        .bulk-meta-group {
+            max-width: 19rem;
+        }
+
+        .bulk-client-name {
+            max-width: 6rem;
+        }
+
+        .bulk-toolbar-actions select {
+            max-width: 5.5rem;
+        }
+
+        .bulk-text-btn {
+            padding-left: 0.55rem !important;
+            padding-right: 0.55rem !important;
+        }
+    }
+
     .table-dropdown-portal,
     table td .dropdown-menu,
     table td [role="menu"],
