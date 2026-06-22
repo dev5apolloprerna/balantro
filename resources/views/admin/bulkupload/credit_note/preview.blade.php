@@ -661,6 +661,7 @@
 <script>
 // ─── CONSTANTS (from server) ───────────────────────────────────────────────
 const LEDGER_NAMES    = @json(collect($ledgers)->pluck('name'));
+const PARTY_LEDGER_DETAILS = @json($ledgerDetails ?? []);
 const STATES_LIST     = @json($states);
 const VCH_TYPES       = @json($vchTypes);
 const ITEM_MASTER     = @json($stockItems);
@@ -673,6 +674,29 @@ const IGST_LEDGERS    = @json($iGstLedgers);
 function normalizeName(value) {
     return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
 }
+
+function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+    return PARTY_LEDGER_DETAILS.find(ledger =>
+        String(ledger.id) === String(ledgerValue || '') ||
+        normalizeName(ledger.name) === normalizeName(ledgerValue) ||
+        normalizeName(ledger.name) === normalizeName(ledgerText)
+    ) || null;
+}
+
+function fillPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+    const ledger = findPartyLedgerDetails(ledgerValue, ledgerText);
+    if (!ledger) return;
+
+    $('#edit_gst').val(ledger.gst_no || '');
+    $('#edit_address').val(ledger.address || '');
+    $('#edit_pincode').val(ledger.pincode || '');
+    $('#edit_city').val(ledger.city || '');
+    $('#edit_place').val(ledger.state || '').trigger('change');
+}
+
+$(document).on('change', '#edit_party', function () {
+    fillPartyLedgerDetails($(this).val(), $(this).find('option:selected').text());
+});
 
 function findSalesLedgerMapping(ledgerValue = '', ledgerText = '') {
     ledgerValue = String(ledgerValue || '').trim();

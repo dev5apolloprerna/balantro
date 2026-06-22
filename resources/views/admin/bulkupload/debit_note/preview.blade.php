@@ -303,7 +303,7 @@
             {{-- Right: Invoice --}}
             <div class="receipt-meta-block">
                 <div class="receipt-block-title"><i class="fa-solid fa-file-invoice text-blue-400 mr-1"></i> Invoice Details</div>
-                <div class="receipt-field-row">
+                <div class="receipt-field-row" id="header_purchase_ledger_row">
                     <label>Purchase Ledger</label>
                     <select id="noitem_purchase_ledger" class="receipt-input ledgerSelect">
                         <option value="">Select Ledger</option>
@@ -973,6 +973,7 @@
     });
 
     const ledgers = @json(collect($ledgers)->pluck('name'));
+    const PARTY_LEDGER_DETAILS = @json($partyLedgerDetails ?? []);
     const states = @json($states);
     const vouchers = @json($vchTypes);
     let IGST_LEDGERS = @json($iGstLedgers);
@@ -985,6 +986,31 @@
     function normalizeName(value) {
         return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
     }
+
+    function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+        return PARTY_LEDGER_DETAILS.find(ledger =>
+            String(ledger.id || '') === String(ledgerValue || '') ||
+            normalizeName(ledger.name) === normalizeName(ledgerValue) ||
+            normalizeName(ledger.name) === normalizeName(ledgerText)
+        ) || null;
+    }
+
+    function applyPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+        const details = findPartyLedgerDetails(ledgerValue, ledgerText);
+        if (!details) return;
+
+        $('#edit_gst').val(details.gst_no || '');
+        $('#edit_address').val(details.address || '');
+        $('#edit_pincode').val(details.pincode || '');
+        $('#edit_city').val(details.city || '');
+        if (details.state) {
+            $('#edit_place').val(details.state).trigger('change');
+        }
+    }
+
+    $(document).on('change', '#edit_party', function () {
+        applyPartyLedgerDetails($(this).val(), $(this).find('option:selected').text());
+    });
 
     function purchaseLedgerId(ledger) {
         return ledger?.id || ledger?.iLedgerId || ledger?.name || ledger?.strCustomerName || '';

@@ -79,9 +79,15 @@
                                                 Upload
                                             </button>
 
+                                            <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
+                                                class="px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                <i class="fa-solid fa-trash text-xs"></i>
+                                                
+                                            </button>
+
                                             <!-- Primary Action -->
                                             <button id="addEntryBtn"
-                                                class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                class="px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
                                                 <i class="fa-solid fa-plus text-xs"></i>
                                                 Add
                                             </button>
@@ -146,7 +152,7 @@
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
                                     <th class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" id="selectAllUploads">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3">File Name</th>
@@ -166,7 +172,7 @@
                                 @foreach($uploads as $upload)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}">
                                     </td>
                                     <td class="px-4 py-3">{{ $loop->iteration }}</td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
@@ -430,8 +436,14 @@
                             <label>Party Name</label>
                             <div style="display:flex; gap:6px; width:100%;">
                                 <select id="edit_party" class="receipt-input party-select ledgerSelect" style="flex:1;">
+                                    <option value="">Select Party</option>    
                                     @foreach($ledgers as $ledger)
-                                    <option value="{{ $ledger->name }}">{{ $ledger->name }}</option>
+                                     <option value="{{ $ledger->name }}"
+                                        data-gst="{{ $ledger->gst_no ?? '' }}"
+                                        data-address="{{ $ledger->address ?? '' }}"
+                                        data-pincode="{{ $ledger->pincode ?? '' }}"
+                                        data-city="{{ $ledger->city ?? '' }}"
+                                        data-state="{{ $ledger->state ?? '' }}">{{ $ledger->name }}</option>
                                     @endforeach
                                 </select>
                                 <button type="button"
@@ -2210,13 +2222,37 @@
             deleteUpload(currentId);
         }
 
-        function deleteUpload(id) {
+        $('#selectAllUploads').on('change', function() {
+            $('.rowCheckbox').prop('checked', $(this).is(':checked'));
+        });
 
-            if (!confirm('Delete full upload?')) return;
+        $(document).on('change', '.rowCheckbox', function() {
+            const totalRows = $('.rowCheckbox').length;
+            const checkedRows = $('.rowCheckbox:checked').length;
+            $('#selectAllUploads').prop('checked', totalRows > 0 && totalRows === checkedRows);
+        });
+
+        function bulkDeleteUploads() {
+            const ids = $('.rowCheckbox:checked').map(function() {
+                return this.value;
+            }).get();
+
+            if (!ids.length) {
+                alert('Select at least one upload');
+                return;
+            }
+
+            deleteUpload(ids);
+        }
+
+        function deleteUpload(ids) {
+            ids = Array.isArray(ids) ? ids : [ids];
+
+            if (!confirm(ids.length > 1 ? 'Delete selected uploads?' : 'Delete full upload?')) return;
 
             $.post("{{ route('sales.bulk.delete') }}", {
                 _token: "{{ csrf_token() }}",
-                ids: [id] // 🔥 important (array)
+                ids: ids // 🔥 important (array)
             }, function(res) {
                 showToast(res.message,'success');
                 location.reload();
@@ -2302,6 +2338,31 @@
 
         $('#addEntryBtn').click(function() {
             openCreateModal();
+        });
+
+        function fillPartyDetailsFromLedger() {
+            const selected = $('#edit_party option:selected');
+
+            $('#edit_gst').val(selected.data('gst') || '');
+            $('#edit_address').val(selected.data('address') || '');
+            $('#edit_pincode').val(selected.data('pincode') || '');
+            $('#edit_city').val(selected.data('city') || '');
+
+            const state = String(selected.data('state') || '').trim();
+            if (!state) {
+                $('#edit_place').val('').trigger('change');
+                return;
+            }
+
+            const matchingState = $('#edit_place option').filter(function() {
+                return String($(this).val()).trim().toLowerCase() === state.toLowerCase();
+            }).first();
+
+            $('#edit_place').val(matchingState.length ? matchingState.val() : state).trigger('change');
+        }
+
+        $(document).on('change', '#edit_party', function() {
+            fillPartyDetailsFromLedger();
         });
 
         function openEditModal() {

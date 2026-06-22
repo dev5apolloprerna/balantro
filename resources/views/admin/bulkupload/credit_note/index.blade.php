@@ -1805,6 +1805,34 @@
         const ITEM_MASTER = @json($stockItems);
         const SALES_LEDGERS = @json($salesLedgers ?? []);
         const SALES_GST_MAPPINGS = @json($salesGstMappings ?? []);
+        const PARTY_LEDGER_DETAILS = @json($ledgers ?? []);
+
+        function normalizePartyLedgerName(value) {
+            return String(value || '').replace(/["']/g, '').trim().toLowerCase();
+        }
+
+        function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+            return PARTY_LEDGER_DETAILS.find(ledger =>
+                String(ledger.id || '') === String(ledgerValue || '') ||
+                normalizePartyLedgerName(ledger.name) === normalizePartyLedgerName(ledgerValue) ||
+                normalizePartyLedgerName(ledger.name) === normalizePartyLedgerName(ledgerText)
+            ) || null;
+        }
+
+        function fillPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+            const ledger = findPartyLedgerDetails(ledgerValue, ledgerText);
+            if (!ledger) return;
+
+            $('#edit_gst').val(ledger.gst_no || '');
+            $('#edit_address').val(ledger.address || '');
+            $('#edit_pincode').val(ledger.pincode || '');
+            $('#edit_city').val(ledger.city || '');
+            $('#edit_place').val(ledger.state || '').trigger('change');
+        }
+
+        $(document).on('change', '#edit_party', function () {
+            fillPartyLedgerDetails($(this).val(), $(this).find('option:selected').text());
+        });
     </script>
     <script>
         // function showFileName(event) {
@@ -2999,6 +3027,15 @@ $('#ledgerForm').on('submit', function (e) {
         url: "{{ route('sales.ledger.store') }}", type:'POST', data:$(this).serialize(),
         success: () => {
             let name = $('input[name="Name"]').val();
+             PARTY_LEDGER_DETAILS.push({
+                id: name,
+                name: name,
+                gst_no: $('input[name="GstNo"]').val() || '',
+                address: [$('input[name="AddressLine1"]').val(), $('input[name="AddressLine2"]').val()].filter(Boolean).join(', '),
+                pincode: $('input[name="Pincode"]').val() || '',
+                city: $('input[name="City"]').val() || '',
+                state: $('select[name="State"]').val() || ''
+            });
             ['#edit_party','#noitem_sales_ledger'].forEach(sel => {
                 $(sel).append(new Option(name, name)).trigger('change');
             });

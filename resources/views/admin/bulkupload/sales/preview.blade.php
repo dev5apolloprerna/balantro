@@ -306,7 +306,7 @@
         });
     });
 
-     function resetSalesModalState() {
+    function resetSalesModalState() {
         $('#editItemsBody').empty();
         $('#noItemBody').empty();
         $('#customSlotsBody').empty();
@@ -329,6 +329,31 @@
         $('#gst_calc_mode').prop('disabled', false).val('standard');
         $('input[name="entry_mode"][value="item"]').prop('checked', true);
     }
+
+    function fillPartyDetailsFromLedger() {
+        const selected = $('#edit_party option:selected');
+
+        $('#edit_gst').val(selected.data('gst') || '');
+        $('#edit_address').val(selected.data('address') || '');
+        $('#edit_pincode').val(selected.data('pincode') || '');
+        $('#edit_city').val(selected.data('city') || '');
+
+        const state = String(selected.data('state') || '').trim();
+        if (!state) {
+            $('#edit_place').val('').trigger('change');
+            return;
+        }
+
+        const matchingState = $('#edit_place option').filter(function() {
+            return String($(this).val()).trim().toLowerCase() === state.toLowerCase();
+        }).first();
+
+        $('#edit_place').val(matchingState.length ? matchingState.val() : state).trigger('change');
+    }
+
+    $(document).on('change', '#edit_party', function() {
+        fillPartyDetailsFromLedger();
+    });
 
     function openLedgerModal() {
         document.getElementById('ledgerModal').classList.add('show');

@@ -81,9 +81,15 @@
                                                 Upload
                                             </button>
 
+                                            <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
+                                                class="px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                <i class="fa-solid fa-trash text-xs"></i>
+                                                
+                                            </button>
+
                                             <!-- Primary Action -->
                                             <button id="addEntryBtn"
-                                                class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                class="px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
                                                 <i class="fa-solid fa-plus text-xs"></i>
                                                 Add
                                             </button>
@@ -148,7 +154,7 @@
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
                                     <th class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" id="selectAllUploads">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3">File Name</th>
@@ -168,7 +174,7 @@
                                 <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" class="rowCheckbox" value="<?php echo e($upload->id); ?>">
                                     </td>
                                     <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
@@ -440,8 +446,14 @@
                             <label>Party Name</label>
                             <div style="display:flex; gap:6px; width:100%;">
                                 <select id="edit_party" class="receipt-input party-select ledgerSelect" style="flex:1;">
+                                    <option value="">Select Party</option>    
                                     <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($ledger->name); ?>"><?php echo e($ledger->name); ?></option>
+                                     <option value="<?php echo e($ledger->name); ?>"
+                                        data-gst="<?php echo e($ledger->gst_no ?? ''); ?>"
+                                        data-address="<?php echo e($ledger->address ?? ''); ?>"
+                                        data-pincode="<?php echo e($ledger->pincode ?? ''); ?>"
+                                        data-city="<?php echo e($ledger->city ?? ''); ?>"
+                                        data-state="<?php echo e($ledger->state ?? ''); ?>"><?php echo e($ledger->name); ?></option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <button type="button"
@@ -769,7 +781,7 @@
         </div>
     </div>
 
-    <div id="ledgerModal" class="modal">
+    <div id="ledgerModal" class="modal" style="display: none;">
         <div class="modal-content">
             <!-- HEADER -->
             <div class="modal-header">
@@ -2220,13 +2232,37 @@
             deleteUpload(currentId);
         }
 
-        function deleteUpload(id) {
+        $('#selectAllUploads').on('change', function() {
+            $('.rowCheckbox').prop('checked', $(this).is(':checked'));
+        });
 
-            if (!confirm('Delete full upload?')) return;
+        $(document).on('change', '.rowCheckbox', function() {
+            const totalRows = $('.rowCheckbox').length;
+            const checkedRows = $('.rowCheckbox:checked').length;
+            $('#selectAllUploads').prop('checked', totalRows > 0 && totalRows === checkedRows);
+        });
+
+        function bulkDeleteUploads() {
+            const ids = $('.rowCheckbox:checked').map(function() {
+                return this.value;
+            }).get();
+
+            if (!ids.length) {
+                alert('Select at least one upload');
+                return;
+            }
+
+            deleteUpload(ids);
+        }
+
+        function deleteUpload(ids) {
+            ids = Array.isArray(ids) ? ids : [ids];
+
+            if (!confirm(ids.length > 1 ? 'Delete selected uploads?' : 'Delete full upload?')) return;
 
             $.post("<?php echo e(route('sales.bulk.delete')); ?>", {
                 _token: "<?php echo e(csrf_token()); ?>",
-                ids: [id] // 🔥 important (array)
+                ids: ids // 🔥 important (array)
             }, function(res) {
                 showToast(res.message,'success');
                 location.reload();
@@ -2312,6 +2348,31 @@
 
         $('#addEntryBtn').click(function() {
             openCreateModal();
+        });
+
+        function fillPartyDetailsFromLedger() {
+            const selected = $('#edit_party option:selected');
+
+            $('#edit_gst').val(selected.data('gst') || '');
+            $('#edit_address').val(selected.data('address') || '');
+            $('#edit_pincode').val(selected.data('pincode') || '');
+            $('#edit_city').val(selected.data('city') || '');
+
+            const state = String(selected.data('state') || '').trim();
+            if (!state) {
+                $('#edit_place').val('').trigger('change');
+                return;
+            }
+
+            const matchingState = $('#edit_place option').filter(function() {
+                return String($(this).val()).trim().toLowerCase() === state.toLowerCase();
+            }).first();
+
+            $('#edit_place').val(matchingState.length ? matchingState.val() : state).trigger('change');
+        }
+
+        $(document).on('change', '#edit_party', function() {
+            fillPartyDetailsFromLedger();
         });
 
         function openEditModal() {

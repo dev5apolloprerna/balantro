@@ -89,6 +89,20 @@ class CreditNoteController extends Controller
         return back(); // ->with('success', 'Records Updated');
         //return redirect()->route('sales.upload.page');
     }
+
+    private function getLedgerDetailsForAutofill($partyId)
+    {
+        return DB::table('LedgerMaster')
+            ->selectRaw("iLedgerId AS id, strCustomerName AS name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
+            ->where('iPartyId', $partyId)
+            ->union(
+                DB::table('ledgers')
+                    ->selectRaw("id AS id, name AS name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state")
+                    ->where('iPartyId', $partyId)
+            )
+            ->get();
+    }
+    
     private function getSalesLedgerGstMappings($partyId): array
     {
         return DB::table('LedgerMaster')
@@ -1395,6 +1409,7 @@ class CreditNoteController extends Controller
             ->orderBy('strItemName', 'asc') // optional (recommended)
             ->get();
         $salesGstMappings = $this->getSalesLedgerGstMappings($iPartyId);
+        $ledgerDetails = $ledgers;
         $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
         return view('admin.bulkupload.credit_note.preview', compact(
             'rows',
@@ -1408,7 +1423,8 @@ class CreditNoteController extends Controller
             'sGstLedgers',
             'salesLedgers',
             'stockItems',
-            'salesGstMappings'
+            'salesGstMappings',
+            'ledgerDetails'
         ));
     }
 

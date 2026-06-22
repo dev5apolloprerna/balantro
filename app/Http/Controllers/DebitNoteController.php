@@ -65,6 +65,7 @@ class DebitNoteController extends Controller
             ->get();
 
         $ledgers = Ledger::getAllCreditorsLedgers($iPartyId);
+        $partyLedgerDetails = Ledger::getLedgerDetailsForAutofill($iPartyId);
 
         // ✅ GST Ledgers
         $iGstLedgers = Ledger::getAlliGstLedgers($iPartyId);
@@ -81,7 +82,7 @@ class DebitNoteController extends Controller
         $purchaseGstMappings = $this->getPurchaseLedgerGstMappings($iPartyId);
         $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
         return view('admin.bulkupload.debit_note.index', compact('uploads', 'clients','vchTypes','states','groups','parents'
-        ,'ledgers','iGstLedgers','cGstLedgers','sGstLedgers','purchaseLedgers','stockItems','roundOffSide','years','purchaseGstMappings'));
+        ,'ledgers','partyLedgerDetails','iGstLedgers','cGstLedgers','sGstLedgers','purchaseLedgers','stockItems','roundOffSide','years','purchaseGstMappings'));
     }
 
     public function selectCompany($id)
@@ -1105,6 +1106,7 @@ class DebitNoteController extends Controller
             ->get();
 
         $ledgers = Ledger::getAllCreditorsLedgers($iPartyId);
+        $partyLedgerDetails = Ledger::getLedgerDetailsForAutofill($iPartyId);
 
         // ✅ GST Ledgers
         $iGstLedgers = Ledger::getAlliGstLedgers($iPartyId);
@@ -1123,6 +1125,7 @@ class DebitNoteController extends Controller
         return view('admin.bulkupload.debit_note.preview', compact(
             'rows',
             'ledgers',
+            'partyLedgerDetails',
             'vchTypes',
             'groups',
             'states',

@@ -1981,9 +1981,39 @@
         const ITEM_MASTER = @json($stockItems);
         const PURCHASE_LEDGERS = @json($purcasheLedgers ?? []);
         const PURCHASE_GST_MAPPINGS = @json($purchaseGstMappings ?? []);
+        const PARTY_LEDGER_DETAILS = @json($ledgers ?? []);
         const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
     </script>
     <script>
+        function normalizedLedgerName(value) {
+            return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+        }
+
+        function findPartyLedgerDetails(value) {
+            const normalized = normalizedLedgerName(value);
+            return PARTY_LEDGER_DETAILS.find(ledger =>
+                String(ledger.id || '') === String(value || '') ||
+                normalizedLedgerName(ledger.name) === normalized
+            ) || null;
+        }
+
+        function applyPartyLedgerDetails(value) {
+            const ledger = findPartyLedgerDetails(value);
+
+            $('#edit_gst').val(ledger?.gst_no || '');
+            $('#edit_address').val(ledger?.address || '');
+            $('#edit_pincode').val(ledger?.pincode || '');
+            $('#edit_city').val(ledger?.city || '');
+
+            if (ledger?.state) {
+                $('#edit_place').val(ledger.state).trigger('change');
+            }
+        }
+
+        $(document).on('change', '#edit_party', function () {
+            applyPartyLedgerDetails($(this).val());
+        });
+        
         document.addEventListener("DOMContentLoaded", function() {
             let input = document.getElementById('clientSearch');
             if (input) {

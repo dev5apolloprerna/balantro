@@ -62,12 +62,26 @@ class Ledger extends Model
     public static function getAllDebtorsLedgers($companyId)
     {
         return DB::select("
-            SELECT iLedgerId AS id, strCustomerName AS name
+            SELECT 
+                iLedgerId AS id,
+                strCustomerName AS name,
+                GSTNo AS gst_no,
+                LedgerAddress AS address,
+                Pincode AS pincode,
+                '' AS city,
+                StateName AS state
             FROM LedgerMaster
             WHERE strParents like 'Sundry Debtors' and iPartyId = ?
             UNION
 
-            SELECT id, name
+            SELECT 
+                id,
+                name,
+                GstNo AS gst_no,
+                CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address,
+                Pincode AS pincode,
+                City AS city,
+                State AS state
             FROM ledgers
             WHERE Parent like 'Sundry Debtors' and  iPartyId = ?
             ORDER BY name
@@ -77,12 +91,26 @@ class Ledger extends Model
     public static function getAllCreditorsLedgers($companyId)
     {
         return DB::select("
-            SELECT iLedgerId AS id, strCustomerName AS name
+            SELECT
+                iLedgerId AS id,
+                strCustomerName AS name,
+                GSTNo AS gst_no,
+                LedgerAddress AS address,
+                Pincode AS pincode,
+                '' AS city,
+                StateName AS state
             FROM LedgerMaster
             WHERE (strParents='Sundry Creditors' or strParents='Creditor for Goods' or strParents='Creditor for Other') and iPartyId = ?
             UNION
 
-            SELECT id, name
+            SELECT
+                id,
+                name,
+                GstNo AS gst_no,
+                TRIM(CONCAT_WS(' ', AddressLine1, AddressLine2)) AS address,
+                Pincode AS pincode,
+                City AS city,
+                State AS state
             FROM ledgers
             WHERE Parent like 'Sundry Creditors' and iPartyId = ?
             ORDER BY name
@@ -303,5 +331,33 @@ class Ledger extends Model
     }
 
     // getSalesReturnLedgers
-    
+    public static function getLedgerDetailsForAutofill($companyId)
+    {
+        return DB::select("
+            SELECT
+                iLedgerId AS id,
+                strCustomerName AS name,
+                GSTNo AS gst_no,
+                LedgerAddress AS address,
+                Pincode AS pincode,
+                '' AS city,
+                StateName AS state
+            FROM LedgerMaster
+            WHERE iPartyId = ?
+
+            UNION
+
+            SELECT
+                id,
+                name,
+                GstNo AS gst_no,
+                TRIM(CONCAT(COALESCE(AddressLine1, ''), ' ', COALESCE(AddressLine2, ''))) AS address,
+                Pincode AS pincode,
+                City AS city,
+                State AS state
+            FROM ledgers
+            WHERE iPartyId = ?
+            ORDER BY name
+        ", [$companyId, $companyId]);
+    }
 }

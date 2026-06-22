@@ -27,8 +27,14 @@
                     <label>Party Name</label>
                     <div style="display:flex; gap:6px; width:100%;">
                         <select id="edit_party" class="receipt-input party-select ledgerSelect" style="flex:1;">
+                            <option value="">Select Party</option>
                             @foreach($ledgers as $ledger)
-                            <option value="{{ $ledger->name }}">{{ $ledger->name }}</option>
+                            <option value="{{ $ledger->name }}"
+                                data-gst="{{ $ledger->gst_no ?? '' }}"
+                                data-address="{{ $ledger->address ?? '' }}"
+                                data-pincode="{{ $ledger->pincode ?? '' }}"
+                                data-city="{{ $ledger->city ?? '' }}"
+                                data-state="{{ $ledger->state ?? '' }}">{{ $ledger->name }}</option>
                             @endforeach
                         </select>
                         <button type="button"

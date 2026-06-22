@@ -667,10 +667,11 @@ class TransactionProcessingController extends Controller
             ->get();
         $salesLedgers = Ledger::getSalesLedgers($iPartyId);
         $salesGstMappings = $this->getLedgerGstMappings($iPartyId, 'Sales Accounts');
+        $ledgerDetails = $ledgers;
         $roundOffSide = $this->getRoundOffSide($iPartyId);
         return view('admin.transaction-processing.credit_note.preview', compact('rows', 'ledgers', 'vchTypes', 'groups', 'states', 'parents','iGstLedgers',
             'cGstLedgers',
-            'sGstLedgers', 'stockItems','salesLedgers', 'salesGstMappings', 'roundOffSide'));
+            'sGstLedgers', 'stockItems','salesLedgers', 'salesGstMappings', 'ledgerDetails', 'roundOffSide'));
     }
 
     public function credit_note_sumbit(Request $request)
@@ -789,6 +790,7 @@ class TransactionProcessingController extends Controller
             ->distinct()
             ->get();
         $ledgers = Ledger::getAllCreditorsLedgers($iPartyId);
+        $partyLedgerDetails = Ledger::getLedgerDetailsForAutofill($iPartyId);
 
         $iGstLedgers = Ledger::getAlliGstLedgers($iPartyId);
         $cGstLedgers = Ledger::getAllcGstLedgers($iPartyId);
@@ -804,6 +806,7 @@ class TransactionProcessingController extends Controller
         return view('admin.transaction-processing.debit_note.preview', compact(
             'rows',
             'ledgers',
+            'partyLedgerDetails',
             'vchTypes',
             'groups',
             'states',

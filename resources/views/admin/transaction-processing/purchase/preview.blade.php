@@ -955,6 +955,37 @@
 
 <script>
     const ITEM_MASTER = @json($stockItems);
+    const PARTY_LEDGER_DETAILS = @json($ledgers ?? []);
+
+    function normalizedLedgerName(value) {
+        return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+    }
+
+    function findPartyLedgerDetails(value) {
+        const normalized = normalizedLedgerName(value);
+        return PARTY_LEDGER_DETAILS.find(ledger =>
+            String(ledger.id || '') === String(value || '') ||
+            normalizedLedgerName(ledger.name) === normalized
+        ) || null;
+    }
+
+    function applyPartyLedgerDetails(value) {
+        const ledger = findPartyLedgerDetails(value);
+
+        $('#edit_gst').val(ledger?.gst_no || '');
+        $('#edit_address').val(ledger?.address || '');
+        $('#edit_pincode').val(ledger?.pincode || '');
+        $('#edit_city').val(ledger?.city || '');
+
+        if (ledger?.state) {
+            $('#edit_place').val(ledger.state).trigger('change');
+        }
+    }
+
+    $(document).on('change', '#edit_party', function () {
+        applyPartyLedgerDetails($(this).val());
+    });
+    
     $(document).ready(function() {
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
@@ -2209,83 +2240,99 @@
         return rows;
     }
 
-    function recalcNoItemGST() {
-        toggleNoItemHeaderPurchaseLedger();
-        let amount = 0;
-        let totalCgst = 0, totalSgst = 0, totalIgst = 0;
-        let isIgst = $('#edit_is_igst').is(':checked');
-        let mode = $('#gst_calc_mode').val();
+    // function recalcNoItemGST() {
+    //     toggleNoItemHeaderPurchaseLedger();
+    //     let amount = 0;
+    //     let totalCgst = 0, totalSgst = 0, totalIgst = 0;
+    //     let isIgst = $('#edit_is_igst').is(':checked');
+    //     let mode = $('#gst_calc_mode').val();
+    //     let rateMap = {};
+
+       
+    //     // Calculate totals from all no-item rows
+    //     $('#noItemBody tr').each(function() {
+    //         let rowAmount = parseFloat($(this).find('.noitem-amount').val()) || 0;
+    //         let rowGstRate = parseFloat($(this).find('.noitem-gst').val()) || 0;
+            
+    //         amount += rowAmount;
+            
+    //         let key = `row:${index}|${rowGstRate}|${ledgerId}`;
+    //         if (!rateMap[key]) {
+    //             rateMap[key] = {
+    //                 amt: 0,
+    //                 igst: 0,
+    //                 cgst: 0,
+    //                 sgst: 0,
+    //                 rate: rowGstRate,
+    //                 ledgerId: ledgerId,
+    //                 slotKey: key
+    //             };
+    //         }
+    //         rateMap[key].amt += rowAmount;
+    //         if (isIgst) {
+    //             totalIgst += gstAmount;
+    //             rateMap[key].igst += gstAmount;
+    //         } else {
+    //             totalCgst += gstAmount / 2;
+    //             totalSgst += gstAmount / 2;
+    //             rateMap[key].cgst += gstAmount / 2;
+    //             rateMap[key].sgst += gstAmount / 2;
+    //         }
+    //     });
         
-        // Calculate totals from all no-item rows
-        $('#noItemBody tr').each(function() {
-            let rowAmount = parseFloat($(this).find('.noitem-amount').val()) || 0;
-            let rowGstRate = parseFloat($(this).find('.noitem-gst').val()) || 0;
-            
-            amount += rowAmount;
-            
-            let gstAmount = (rowAmount * rowGstRate) / 100;
-            
-            if (isIgst) {
-                totalIgst += gstAmount;
-            } else {
-                totalCgst += gstAmount / 2;
-                totalSgst += gstAmount / 2;
-            }
-        });
+    //     let total = amount + totalCgst + totalSgst + totalIgst;
         
-        let total = amount + totalCgst + totalSgst + totalIgst;
-        
-        // Update UI
-        $('#sum_amount').text(amount.toFixed(2));
-        $('#sum_cgst').text(totalCgst.toFixed(2));
-        $('#sum_sgst').text(totalSgst.toFixed(2));
-        $('#sum_igst').text(totalIgst.toFixed(2));
-        // $('#sum_grand_total').text(total.toFixed(2));
-        setRoundOffSummary(total);
-        // Update hidden fields
-        $('#edit_amount').val(amount);
-        $('#edit_cgst').val(totalCgst);
-        $('#edit_sgst').val(totalSgst);
-        $('#edit_igst').val(totalIgst);
-        // $('#edit_total_amount').val(total);
-        setRoundOffSummary(total);
-        // Render custom slots if in custom mode
-        if (mode === 'custom' && amount > 0) {
-            let rateMap = {};
+    //     // Update UI
+    //     $('#sum_amount').text(amount.toFixed(2));
+    //     $('#sum_cgst').text(totalCgst.toFixed(2));
+    //     $('#sum_sgst').text(totalSgst.toFixed(2));
+    //     $('#sum_igst').text(totalIgst.toFixed(2));
+    //     // $('#sum_grand_total').text(total.toFixed(2));
+    //     setRoundOffSummary(total);
+    //     // Update hidden fields
+    //     $('#edit_amount').val(amount);
+    //     $('#edit_cgst').val(totalCgst);
+    //     $('#edit_sgst').val(totalSgst);
+    //     $('#edit_igst').val(totalIgst);
+    //     // $('#edit_total_amount').val(total);
+    //     setRoundOffSummary(total);
+    //     // Render custom slots if in custom mode
+    //     if (mode === 'custom' && amount > 0) {
+    //         let rateMap = {};
             
-            $('#noItemBody tr').each(function(index) {
-                let rowAmount = parseFloat($(this).find('.noitem-amount').val()) || 0;
-                let rowGstRate = parseFloat($(this).find('.noitem-gst').val()) || 0;
-                let ledgerId = $(this).find('.noitem-ledger').val() || '';
+    //         $('#noItemBody tr').each(function(index) {
+    //             let rowAmount = parseFloat($(this).find('.noitem-amount').val()) || 0;
+    //             let rowGstRate = parseFloat($(this).find('.noitem-gst').val()) || 0;
+    //             let ledgerId = $(this).find('.noitem-ledger').val() || '';
                 
-                if (rowAmount > 0) {
-                    let gstAmount = (rowAmount * rowGstRate) / 100;
-                    let key = String(rowGstRate);
+    //             if (rowAmount > 0) {
+    //                 let gstAmount = (rowAmount * rowGstRate) / 100;
+    //                 let key = String(rowGstRate);
                     
-                    if (!rateMap[key]) {
-                        rateMap[key] = { 
-                            amt: 0, 
-                            igst: 0, 
-                            cgst: 0, 
-                            sgst: 0, 
-                            rate: rowGstRate,
-                            ledgerId: ledgerId
-                        };
-                    }
+    //                 if (!rateMap[key]) {
+    //                     rateMap[key] = { 
+    //                         amt: 0, 
+    //                         igst: 0, 
+    //                         cgst: 0, 
+    //                         sgst: 0, 
+    //                         rate: rowGstRate,
+    //                         ledgerId: ledgerId
+    //                     };
+    //                 }
                     
-                    rateMap[key].amt += rowAmount;
-                    if (isIgst) {
-                        rateMap[key].igst += gstAmount;
-                    } else {
-                        rateMap[key].cgst += gstAmount / 2;
-                        rateMap[key].sgst += gstAmount / 2;
-                    }
-                }
-            });
+    //                 rateMap[key].amt += rowAmount;
+    //                 if (isIgst) {
+    //                     rateMap[key].igst += gstAmount;
+    //                 } else {
+    //                     rateMap[key].cgst += gstAmount / 2;
+    //                     rateMap[key].sgst += gstAmount / 2;
+    //                 }
+    //             }
+    //         });
             
-            renderCustomSlots(rateMap, total);
-        }
-    }
+    //         renderCustomSlots(rateMap, total);
+    //     }
+    // }
 
     // Fix toggleGSTLedger function
     function toggleGSTLedger() {
@@ -3088,6 +3135,7 @@
             setRoundOffSummary(total);
         }
     }
+
     function applySelectedItemDetails($select) {
         let itemName = $select.find('option:selected').text() || $select.val();
         let item = ITEM_MASTER.find(

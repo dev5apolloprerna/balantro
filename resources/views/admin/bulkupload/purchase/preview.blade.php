@@ -923,6 +923,36 @@ const PURCHASE_GST_MAPPINGS = @json($purchaseGstMappings ?? []);
 const IGST_LEDGERS = @json($iGstLedgers ?? []);
 const CGST_LEDGERS = @json($cGstLedgers ?? []);
 const SGST_LEDGERS = @json($sGstLedgers ?? []);
+const PARTY_LEDGER_DETAILS = @json($ledgers ?? []);
+
+function normalizedLedgerName(value) {
+    return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+}
+
+function findPartyLedgerDetails(value) {
+    const normalized = normalizedLedgerName(value);
+    return PARTY_LEDGER_DETAILS.find(ledger =>
+        String(ledger.id || '') === String(value || '') ||
+        normalizedLedgerName(ledger.name) === normalized
+    ) || null;
+}
+
+function applyPartyLedgerDetails(value) {
+    const ledger = findPartyLedgerDetails(value);
+
+    $('#edit_gst').val(ledger?.gst_no || '');
+    $('#edit_address').val(ledger?.address || '');
+    $('#edit_pincode').val(ledger?.pincode || '');
+    $('#edit_city').val(ledger?.city || '');
+
+    if (ledger?.state) {
+        $('#edit_place').val(ledger.state).trigger('change');
+    }
+}
+
+$(document).on('change', '#edit_party', function () {
+    applyPartyLedgerDetails($(this).val());
+});
 
 window.addEventListener('load', function () {
     console.log('Final Select2:', typeof $.fn.select2);
@@ -1596,6 +1626,7 @@ window.addEventListener('load', function () {
 
         $(document).on('change', '.item-name', function () {
             let selectedValue = $(this).find('option:selected').text() || $(this).val();
+            applyItemUnit($(this));
             applyItemGstMapping(selectedValue, true);
             recalcTotals();
         });
@@ -2578,18 +2609,13 @@ window.addEventListener('load', function () {
         }
     }
 
-    $(document).on('change','.item_name',function(){
-        let itemId = $(this).val();
+   function applyItemUnit($select) {
+        let itemName = $select.find('option:selected').text() || $select.val();
         let item = ITEM_MASTER.find(
-            x => String(x.strItemName) === String(itemId)
+            x => String(x.strItemName || '').trim() === String(itemName || '').trim()
         );
-        if(item)
-        {
-            $(this)
-                .closest('tr')
-                .find('.unit')
-                .val(item.strBaseUnits ?? '');
-        }
-    });
+        if (!item) return;
+        $select.closest('tr').find('.item-unit').val(item.strBaseUnits || 'NOS');
+    }
 </script>
 @endsection

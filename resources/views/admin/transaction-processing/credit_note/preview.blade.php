@@ -986,6 +986,7 @@
     });
 
     const ledgers = @json(collect($ledgers)->pluck('name'));
+    const PARTY_LEDGER_DETAILS = @json($ledgerDetails ?? []);
     const states = @json($states);
     const vouchers = @json($vchTypes);
     const ITEM_MASTER     = @json($stockItems);
@@ -998,6 +999,29 @@
     function normalizeLedgerName(name) {
         return String(name || '').replace(/["']/g, '').trim().toLowerCase();
     }
+
+    function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+        return PARTY_LEDGER_DETAILS.find(ledger =>
+            String(ledger.id) === String(ledgerValue || '') ||
+            normalizeLedgerName(ledger.name) === normalizeLedgerName(ledgerValue) ||
+            normalizeLedgerName(ledger.name) === normalizeLedgerName(ledgerText)
+        ) || null;
+    }
+
+    function fillPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+        const ledger = findPartyLedgerDetails(ledgerValue, ledgerText);
+        if (!ledger) return;
+
+        $('#edit_gst').val(ledger.gst_no || '');
+        $('#edit_address').val(ledger.address || '');
+        $('#edit_pincode').val(ledger.pincode || '');
+        $('#edit_city').val(ledger.city || '');
+        $('#edit_place').val(ledger.state || '').trigger('change');
+    }
+
+    $(document).on('change', '#edit_party', function () {
+        fillPartyLedgerDetails($(this).val(), $(this).find('option:selected').text());
+    });
 
     function findSalesLedgerMapping(ledgerValue = '', ledgerText = '') {
         return SALES_GST_MAPPINGS.find(mapping =>
@@ -1181,17 +1205,18 @@
             type: "POST",
             data: formData,
             success: function(response) {
-                if (response.status) {
-                    showToast(response.message || 'Submitted successfully', 'success');
-                    location.reload(); // reload page and refresh table
-                } else {
-                    showToast(response.message || 'Unable to submit selected credit note rows', 'error');
+                if (response.status === false) {
+                    showToast(response.message || 'Unable to save selected records', 'error');
+                    return;
                 }
+                showToast(response.message || 'Saved Successfully', 'success');
+                location.reload(); // reload page and refresh table
                 // showToast(response.message || 'Saved Successfully', 'success');
                 // location.reload(); // reload page and refresh table
             },
             error: function(xhr) {
-                showToast(xhr.responseJSON?.message || 'Error submitting credit note data', 'error');
+                const message = xhr.responseJSON?.message || 'Error saving data';
+                showToast(message, 'error');
             }
         });
     });
