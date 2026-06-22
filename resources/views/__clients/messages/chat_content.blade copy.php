@@ -439,7 +439,7 @@
         // If still broken, show big warning
         if (!container || container.clientHeight === 0) {
             console.error('💀 CRITICAL FAILURE: Chat container not rendering properly');
-            alert('🚨 CHAT CRITICAL ERROR: Container has zero height. Check CSS conflicts.');
+            showToast('🚨 CHAT CRITICAL ERROR: Container has zero height. Check CSS conflicts.','error');
         }
     }, 3000);
 </script>

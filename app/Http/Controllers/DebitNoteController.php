@@ -1897,8 +1897,13 @@ class DebitNoteController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        $ids = $request->ids;
-        if (!$ids || count($ids) == 0) {
+        $ids = collect((array) $request->input('ids', []))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
             return response()->json([
                 'status' => false,
                 'message' => 'No records selected'

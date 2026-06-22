@@ -2238,7 +2238,7 @@
             }).get();
 
             if (!ids.length) {
-                alert('Select at least one upload');
+                showToast('Select at least one upload','error');
                 return;
             }
 

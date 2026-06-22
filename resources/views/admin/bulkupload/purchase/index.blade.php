@@ -79,6 +79,12 @@
                                                 Upload
                                             </button>
 
+                                            <!-- Bulk Delete -->
+                                            <button type="button" onclick="bulkDelete()"
+                                                class="px-4 py-2 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                <i class="fa-solid fa-trash-can text-xs"></i>
+                                            </button>
+
                                             <!-- Primary Action -->
                                             <button id="addEntryBtn" onclick="openPurchaseModal()"
                                                 class="px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
@@ -146,7 +152,7 @@
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
                                     <th class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" id="selectAllUploads">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3">File Name</th>
@@ -166,7 +172,7 @@
                                 @foreach($uploads as $upload)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}">
                                     </td>
                                     <td class="px-4 py-3">{{ $loop->iteration }}</td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
@@ -2072,6 +2078,40 @@
                 location.reload();
             });
         }
+
+        // BULK DELETE
+        function bulkDelete() {
+            let ids = $('.rowCheckbox:checked').map(function() {
+                return this.value;
+            }).get();
+
+            if (ids.length === 0) {
+                showToast('Select at least one', 'error');
+                return;
+            }
+
+            if (!confirm('Delete selected?')) return;
+
+            $.post("{{ route('purchase.bulk.delete') }}", {
+                _token: "{{ csrf_token() }}",
+                ids: ids
+            }, function(res) {
+                showToast(res.message,'success');
+                location.reload();
+            });
+        }
+
+        $(document).on('change', '#selectAllUploads', function() {
+            $('.rowCheckbox').prop('checked', this.checked);
+        });
+
+        $(document).on('change', '.rowCheckbox', function() {
+            $('#selectAllUploads').prop(
+                'checked',
+                $('.rowCheckbox').length > 0 && $('.rowCheckbox:checked').length === $('.rowCheckbox').length
+            );
+        });
+
 
         function openPurchaseModal() {
 

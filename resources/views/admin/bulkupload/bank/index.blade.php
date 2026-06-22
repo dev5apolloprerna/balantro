@@ -26,11 +26,11 @@
                     <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 p-2 sm:p-3">
                         <div class="flex flex-col gap-3">
                             <div class="flex flex-col sm:flex-row gap-3 w-full">
-                                <div class="flex flex-col sm:flex-row justify-between items-center w-full">
+                                <div class="flex flex-col sm:flex-row justify-between items-center w-full gap-3">
                                     <!-- Left Side Tabs -->
                                     @include('admin.bulkupload.bulk-upload-tabs')
                                     <!-- Right Side Actions -->
-                                    <div class="flex items-center justify-end gap-3 mt-3 sm:mt-0 w-full">
+                                    <div class="flex items-center justify-end gap-0 mt-3 sm:mt-0 w-full">
 
                                         <!-- LEFT GROUP (Client + Dropdown) -->
                                         <div class="flex items-center gap-2 bg-gray-100 dark:bg-neutral-700 px-3 py-2 rounded-md">
@@ -89,6 +89,10 @@
                                                 class="px-3 py-2 text-xs border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 flex items-center gap-1">
                                                 <i class="fa-solid fa-upload text-xs"></i>
                                                 Upload
+                                            </button>
+                                            <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
+                                                class="px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                <i class="fa-solid fa-trash text-xs"></i>
                                             </button>
 
                                             <!-- Primary Action -->
@@ -158,7 +162,7 @@
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
                                     <th class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" id="selectAllUploads">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3 w-[250px]">File Name</th>
@@ -178,7 +182,7 @@
                                 @foreach($uploads as $upload)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}">
                                     </td>
                                     <td class="px-4 py-3">{{ $loop->iteration }}</td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200 w-[250px] truncate">
@@ -681,10 +685,40 @@
 
         // DELETE
         function handleDelete() {
-            if (!confirm('Delete full upload?')) return;
+            deleteUpload(currentId);
+        }
+
+        $('#selectAllUploads').on('change', function() {
+            $('.rowCheckbox').prop('checked', $(this).is(':checked'));
+        });
+
+        $(document).on('change', '.rowCheckbox', function() {
+            const totalRows = $('.rowCheckbox').length;
+            const checkedRows = $('.rowCheckbox:checked').length;
+            $('#selectAllUploads').prop('checked', totalRows > 0 && totalRows === checkedRows);
+        });
+
+        function bulkDeleteUploads() {
+            const ids = $('.rowCheckbox:checked').map(function() {
+                return this.value;
+            }).get();
+
+            if (!ids.length) {
+                showToast('Select at least one upload','error');
+                return;
+            }
+
+            deleteUpload(ids);
+        }
+
+        function deleteUpload(ids) {
+            ids = Array.isArray(ids) ? ids : [ids];
+
+            if (!confirm(ids.length > 1 ? 'Delete selected uploads?' : 'Delete full upload?')) return;
+
             $.post("{{ route('bank.bulk.delete') }}", {
                 _token: "{{ csrf_token() }}",
-                ids: [currentId]
+                ids: ids
             }, function(res) {
                 showToast(res.message,'success');
                 location.reload();

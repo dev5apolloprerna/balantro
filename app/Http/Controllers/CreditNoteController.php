@@ -2145,8 +2145,11 @@ class CreditNoteController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        $ids = $request->ids;
-        if (!$ids || count($ids) == 0) {
+        $ids = $request->input('ids', []);
+        $ids = is_array($ids) ? $ids : [$ids];
+        $ids = array_values(array_filter($ids));
+
+        if (count($ids) === 0) {
             return response()->json([
                 'status' => false,
                 'message' => 'No records selected'
@@ -2168,7 +2171,7 @@ class CreditNoteController extends Controller
             DB::commit();
             return response()->json([
                 'status' => true,
-                'message' => 'Bulk delete successful'
+                'message' => count($ids) > 1 ? 'Selected uploads deleted successfully' : 'Upload deleted successfully'
             ]);
         } catch (\Exception $e) {
             DB::rollback();

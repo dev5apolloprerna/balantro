@@ -1650,30 +1650,46 @@ class PurchaseUploadController extends Controller
 
     public function bulkDelete(Request $request)
     {
-        $ids = $request->ids;
-        if (!$ids || count($ids) == 0) {
+        $ids = collect((array) $request->input('ids', []))
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
             return response()->json([
                 'status' => false,
                 'message' => 'No records selected'
             ]);
         }
+
+        $uploadsQuery = BulkPurchaseUpload::whereIn('id', $ids);
+
+        if (session('iPartyId')) {
+            $uploadsQuery->where('iPartyId', session('iPartyId'));
+        }
+
+        $uploadIds = $uploadsQuery->pluck('id');
+
+        if ($uploadIds->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No matching purchase uploads found'
+            ]);
+        }
+
         DB::beginTransaction();
         try {
-            foreach ($ids as $id) {
-                $transactions = PurchaseTransaction::where('upload_id', $id)->pluck('id');
-                // delete GST
-                PurchaseCustomGst::whereIn('transaction_id', $transactions)->delete();
-                // delete items
-                PurchaseTransactionItem::whereIn('transaction_id', $transactions)->delete();
-                // delete transactions
-                PurchaseTransaction::where('upload_id', $id)->delete();
-                // delete upload
-                BulkPurchaseUpload::where('id', $id)->delete();
-            }
+            $transactionIds = PurchaseTransaction::whereIn('upload_id', $uploadIds)->pluck('id');
+            PurchaseCustomGst::whereIn('transaction_id', $transactionIds)->delete();
+            PurchaseTransactionItem::whereIn('transaction_id', $transactionIds)->delete();
+            PurchaseTransaction::whereIn('upload_id', $uploadIds)->delete();
+            BulkPurchaseUpload::whereIn('id', $uploadIds)->delete();
+
             DB::commit();
             return response()->json([
                 'status' => true,
-                'message' => 'Bulk delete successful'
+                'message' => 'Selected purchase upload(s) deleted successfully'
             ]);
         } catch (\Exception $e) {
             DB::rollback();
