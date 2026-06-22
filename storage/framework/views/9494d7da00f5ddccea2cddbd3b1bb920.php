@@ -1,11 +1,12 @@
-@extends('layouts.super_admin')
-@section('content')
+
+<?php $__env->startSection('content'); ?>
+
 <div data-controller="confirm-delete"
-    x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
+    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }"
     x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold mb-0 dark:text-white">{{ __("Purchase") }}</h6>
+            <h6 class="font-semibold mb-0 dark:text-white"><?php echo e(__("Debit Notes Notes")); ?></h6>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-12">
             <div class="col-span-12">
@@ -15,7 +16,7 @@
                             <div class="flex flex-col sm:flex-row gap-3 w-full">
                                 <div class="bulk-toolbar-row">
                                     <!-- Left Side Tabs -->
-                                    @include('admin.bulkupload.bulk-upload-tabs')
+                                    <?php echo $__env->make('admin.bulkupload.bulk-upload-tabs', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
                                     <!-- Right Side Actions -->
                                     <div class="bulk-toolbar-actions">
 
@@ -23,29 +24,31 @@
                                         <div class="bulk-meta-group bg-gray-100 dark:bg-neutral-700 rounded-md">
 
                                             <!-- Client Name -->
-                                            @if(session('client_name'))
+                                            <?php if(session('client_name')): ?>
                                             <span class="bulk-client-name text-xs font-semibold text-green-600 whitespace-nowrap" style="font-variant-caps: small-caps;">
-                                                {{ session('client_name') }}
+                                                <?php echo e(session('client_name')); ?>
+
                                             </span>
-                                            @endif
+                                            <?php endif; ?>
 
                                             <!-- Divider -->
                                             <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                                             <!-- Year Dropdown -->
-                                            @if(!empty($years) && count($years))
+                                            <?php if(!empty($years) && count($years)): ?>
                                             <select
                                                 onchange="window.location.href=this.value"
                                                 class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
-                                                <option value="">Select Year</option>
-                                                @foreach($years as $year)
+                                                <option value="">Select Year </option>
+                                                <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $year): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                 <option
-                                                    value="{{ route('sales.select.year', $year->strYear) }}"
-                                                    {{ session('year') == $year->strYear ? 'selected' : '' }}>
-                                                    {{ $year->strYear }}
+                                                    value="<?php echo e(route('sales.select.year', $year->strYear)); ?>"
+                                                    <?php echo e(session('year') == $year->strYear ? 'selected' : ''); ?>>
+                                                    <?php echo e($year->strYear); ?>
+
                                                 </option>
-                                                @endforeach
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </select>
-                                            @endif
+                                            <?php endif; ?>
 
                                             <!-- Divider -->
                                             <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
@@ -73,27 +76,26 @@
 
                                             <!-- Upload -->
                                             <button
-                                                @click="{{ session('iPartyId') ? 'openUpload = true' : 'openClient = true' }}"
+                                                @click="<?php echo e(session('iPartyId') ? 'openUpload = true' : 'openClient = true'); ?>"
                                                 class="bulk-text-btn text-xs border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 flex items-center gap-1">
                                                 <i class="fa-solid fa-upload text-xs"></i>
                                                 Upload
                                             </button>
 
-                                            <!-- Bulk Delete -->
-                                            <button type="button" onclick="bulkDelete()"
+                                            <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
                                                 class="bulk-icon-btn text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
-                                                <i class="fa-solid fa-trash-can text-xs"></i>
+                                                <i class="fa-solid fa-trash text-xs"></i>
                                             </button>
 
                                             <!-- Primary Action -->
-                                            <button id="addEntryBtn" onclick="openPurchaseModal()"
+                                            <button id="addEntryBtn"  onclick="openPurchaseModal()"
                                                 class="bulk-text-btn text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
                                                 <i class="fa-solid fa-plus text-xs"></i>
                                                 Add
                                             </button>
 
-                                            @if(session('guid'))
-                                            <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800"
+                                            <?php if(session('guid')): ?>
+                                            <a href="<?php echo e(route('clients.Gstindex', session('guid'))); ?>" class="bulk-settings-btn rounded-full bg-cyan-100 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800"
                                                 title="GST Settings">
 
                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -137,7 +139,7 @@
 
                                                 </svg>
                                             </a>
-                                            @endif
+                                            <?php endif; ?>
 
                                         </div>
 
@@ -146,7 +148,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="overflow-y-auto h-[calc(100%-120px)]">
+                    <div class="overflow-x-auto">
                         <table class="min-w-full text-sm text-left text-gray-600 dark:text-gray-200">
                             <!-- Table Header -->
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
@@ -169,73 +171,77 @@
                             </thead>
                             <!-- Table Body -->
                             <tbody class="divide-y">
-                                @foreach($uploads as $upload)
+                                <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}">
+                                        <input type="checkbox" class="rowCheckbox" value="<?php echo e($upload->id); ?>">
                                     </td>
-                                    <td class="px-4 py-3">{{ $loop->iteration }}</td>
+                                    <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
-                                        {{ $upload->file_name }}
+                                        <?php echo e($upload->file_name); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ ucfirst(str_replace('_',' ',$upload->type)) }}
+                                        <?php echo e(ucfirst(str_replace('_',' ',$upload->type))); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->statement_date ?? '-' }}
+                                        <?php echo e($upload->statement_date ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->synced_date ?? '-' }}
+                                        <?php echo e($upload->synced_date ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->total ?? '-' }}
+                                        <?php echo e($upload->total ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->pending ?? '-' }}
+                                        <?php echo e($upload->pending ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->saved ?? '-' }}
+                                        <?php echo e($upload->saved ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->synced ?? '-' }}
+                                        <?php echo e($upload->synced ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        @if($upload->status == 'Complete')
-                                        <a href="{{ route('purchase.preview',$upload->id) }}"
+                                        <?php if($upload->status == 'Complete'): ?>
+                                        <a href="<?php echo e(route('dn.preview',$upload->id)); ?>"
                                             class="text-green-500 font-semibold hover:underline">
                                             Complete
                                         </a>
-                                        @elseif($upload->status == 'Processing')
-                                        <a href="{{ route('purchase.preview',$upload->id) }}"
+                                        <?php elseif($upload->status == 'Processing'): ?>
+                                        <a href="<?php echo e(route('dn.preview',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Processing
                                         </a>
-                                        @elseif($upload->status == 'Pending')
-                                        <a href="{{ route('purchase.preview',$upload->id) }}"
+                                        <?php elseif($upload->status == 'Pending'): ?>
+                                        <a href="<?php echo e(route('dn.preview',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Pending
                                         </a>
-                                        @else
-                                        <a href="{{ route('purchase.preview',$upload->id) }}"
+                                        <?php else: ?>
+                                        <a href="<?php echo e(route('dn.preview',$upload->id)); ?>"
                                             class="text-red-500 font-semibold hover:underline">
                                             Failed
                                         </a>
-                                        @endif
+                                        <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
-                                        <a href="{{ route('purchase.preview',$upload->id) }}">
+                                        <a href="<?php echo e(route('dn.preview',$upload->id)); ?>">
                                             <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
                                         <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i> -->
-                                        <div x-data="{ open:false }" class="relative inline-block">
-
-                                            <!-- Button -->
-                                            <button onclick="openDropdown(event, {{ $upload->id }})"
+                                        <div class="relative inline-block">
+                                            <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                                 class="text-gray-500 hover:text-gray-700 px-2">
                                                 <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                             </button>
-
-                                            <!-- Dropdown -->
                                             <div id="globalDropdown"
                                                 class="hidden fixed bg-white dark:bg-neutral-800 border rounded-xl shadow-xl w-48 z-[99999]">
 
@@ -254,10 +260,9 @@
                                                 </button>
                                             </div>
                                         </div>
-
                                     </td>
                                 </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
@@ -266,7 +271,7 @@
         </div>
     </div>
 
-    <!-- Upload Purchase Modal -->
+    <!-- Upload Sales Modal -->
     <div
         x-cloak
         x-show="openUpload"
@@ -274,105 +279,75 @@
         style="display: none;"
         data-upload-modal
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-
         <div class="bg-white dark:bg-neutral-800 w-[720px] rounded-lg shadow-xl">
-
             <!-- Header -->
             <div class="flex justify-between items-center border-b px-5 py-3">
-                <h2 class="text-lg font-semibold">Upload Purchase</h2>
-
+                <h2 class="text-lg font-semibold">Upload Debit Notes</h2>
                 <button @click="openUpload=false" class="text-gray-500 hover:text-gray-700">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <form method="POST" action="{{ route('purchase.upload') }}" enctype="multipart/form-data">
-                @csrf
+            <form method="POST" action="<?php echo e(route('dn.upload')); ?>" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
                 <!-- Body -->
                 <div class="p-6">
-
                     <!-- Upload Area -->
                     <div class="border-2 border-dashed border-blue-400 dark:border-blue-500 rounded-lg p-10 text-center">
-
                         <i class="fa-regular fa-file text-3xl text-blue-500 mb-3"></i>
-
                         <p class="text-gray-600 mb-3">
                             Drag and drop a file here or
                         </p>
-
                         <div class="text-center">
-
                             <!-- Hidden File Input -->
                             <input
                                 type="file"
-                                name="purchase_file"
-                                id="purchaseFileUpload"
+                                name="debit_notes_file"
+                                id="salesFileUpload"
                                 class="hidden"
                                 accept=".xlsx,.xls"
                                 onchange="showFileName(this)">
-
                             <!-- Styled Button -->
                             <button
                                 type="button"
-                                onclick="document.getElementById('purchaseFileUpload').click()"
+                                onclick="document.getElementById('salesFileUpload').click()"
                                 class="border border-blue-500 text-blue-600 px-4 py-2 rounded-md text-sm flex items-center gap-2 mx-auto">
-
                                 <i class="fa-solid fa-upload"></i>
                                 Click to upload
-
                             </button>
-
                         </div>
-
                     </div>
-
                     <!-- File name -->
                     <div id="uploadedFileName" class="text-sm text-gray-500 dark:text-gray-300 mt-3">
                         <i class="fa-solid fa-paperclip"></i>
                         <span id="fileNameText"></span>
                     </div>
-
                     <!-- Notes -->
                     <div class="mt-6 text-sm text-gray-600 dark:text-gray-300">
-
                         <p class="font-semibold mb-2">Notes:</p>
-
                         <ul class="list-disc ml-5 space-y-1">
-
-                            <li>Please make sure the uploaded excel file does not contain the dot(.) and dollar($) symbol in the column header and other then purchase/purchase field do not add anything above header.</li>
-
+                            <li>Please make sure the uploaded excel file does not contain the dot(.) and dollar($) symbol in the column header and other then sales/Debit Notes field do not add anything above header.</li>
                             <li>Please make sure the file size must not exceed 30MB.</li>
-
                             <li>Sync the ledger before uploading the file.</li>
-
                             <li>Please don't upload password protected excel files.</li>
-
                             <li>Date format should be DD/MM/YYYY.</li>
-
                         </ul>
-
                     </div>
-
                 </div>
-
                 <!-- Footer -->
                 <div class="flex justify-end gap-3 border-t px-5 py-3">
-
                     <button
                         @click="openUpload=false"
                         class="px-4 py-2 border rounded-md text-gray-600">
                         Cancel
                     </button>
-
                     <button
                         class="px-4 py-2 bg-blue-600 text-white rounded-md">
                         Upload
                     </button>
-
                     <!-- <button type="submit"
                         class="px-4 py-2 bg-blue-800 text-white rounded-md">
                         Upload & Preview
                     </button> -->
-
                 </div>
             </form>
         </div>
@@ -381,6 +356,7 @@
     <!-- CLIENT DRAWER -->
     <div
         x-cloak
+        style="display: none;"
         x-show="openClient"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="translate-x-full"
@@ -388,93 +364,67 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="translate-x-full"
-        style="display: none;"
         class="fixed inset-0 z-50 flex justify-end">
-
         <!-- Background -->
         <div
             class="absolute inset-0 bg-black/50"
             @click="openClient=false">
         </div>
-
         <!-- Drawer -->
         <div class="relative w-[420px] h-full bg-white dark:bg-neutral-800 shadow-xl flex flex-col">
-
             <!-- Header -->
             <div class="flex justify-between items-center px-5 py-4 border-b">
-
                 <h2 class="text-lg font-semibold">
                     My Company
                 </h2>
-
                 <button @click="openClient=false">
                     <i class="fa-solid fa-xmark text-gray-500"></i>
                 </button>
-
             </div>
-
             <!-- Search -->
             <div class="p-4 border-b">
-
                 <input
                     type="text"
                     id="clientSearch"
                     placeholder="Search by Name"
                     class="w-full border px-3 py-2 rounded-md">
-
             </div>
-
             <!-- Client List -->
             <div class="flex-1 min-h-0 overflow-y-auto">
-
-                @foreach($clients as $client)
-
+                <?php $__currentLoopData = $clients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <a
-                    href="{{ route('sales.select.company',$client->id) }}"
+                    href="<?php echo e(route('sales.select.company',$client->id)); ?>"
                     class="flex items-center justify-between px-4 py-3 border-b hover:bg-gray-100 dark:hover:bg-neutral-700 client-item">
-
                     <div class="flex items-center gap-3">
-
                         <div class="bg-gray-200 dark:bg-neutral-700 p-2 rounded">
                             <i class="fa-solid fa-building text-gray-600"></i>
                         </div>
-
                         <div>
-
                             <div class="font-medium">
-                                {{ $client->name }}
-                            </div>
+                                <?php echo e($client->name); ?>
 
+                            </div>
                             <div class="text-xs text-gray-500">
-                                {{ $client->code ?? '' }}
+                                <?php echo e($client->code ?? ''); ?>
+
                             </div>
-
                         </div>
-
                     </div>
-
                 </a>
-
-                @endforeach
-
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
-
         </div>
-
     </div>
 
-
-    {{-- ══════════════════════════════════════════════════════
-     EDIT MODAL
-    ══════════════════════════════════════════════════════ --}}
+    
     <div id="editModal" class="modal light-only">
         <div class="receipt-wrapper">
             <input type="hidden" id="edit_id">
 
-            {{-- RECEIPT HEADER --}}
+            
             <div class="receipt-head">
                 <div class="receipt-head-left">
-                    <div class="receipt-company">Purchase Bill</div>
+                    <div class="receipt-company">Debit Notes Bill</div>
                     <div class="receipt-subtitle">Tax Invoice</div>
                 </div>
                 <div class="receipt-head-right">
@@ -483,19 +433,18 @@
             </div>
             <div class="receipt-body"> <!-- 🔥 ADD THIS -->
 
-                {{-- META GRID --}}
+                
                 <div class="receipt-meta-grid">
-                    {{-- Left: Supplier --}}
+                    
                     <div class="receipt-meta-block">
                         <div class="receipt-block-title"><i class="fa-solid fa-building text-blue-400 mr-1"></i> Supplier Details</div>
                         <div class="receipt-field-row">
                             <label>Party Name</label>
                             <div style="display:flex; gap:6px; width:100%;">
                                 <select id="edit_party" class="receipt-input party-select ledgerSelect" style="flex:1;">
-                                    <option value=""></option>
-                                    @foreach($ledgers as $ledger)
-                                    <option value="{{ $ledger->name }}">{{ $ledger->name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->name); ?>"><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <button type="button"
                                     onclick="openLedgerModal()"
@@ -521,16 +470,16 @@
                             <input type="text" id="edit_city" class="receipt-input" placeholder="City">
                         </div>
                     </div>
-                    {{-- Right: Invoice --}}
+                    
                     <div class="receipt-meta-block">
                         <div class="receipt-block-title"><i class="fa-solid fa-file-invoice text-blue-400 mr-1"></i> Invoice Details</div>
-                        <div id="invoice_purcashe_ledger_wrap" class="receipt-field-row">
+                        <div class="receipt-field-row">
                             <label>Purcashe Ledger</label>
-                            <select id="noitem_purcashe_ledger" class="receipt-input ledgerSelect">
+                            <select id="noitem_purcashe_ledger" class="receipt-input ledgerSelect" required>
                                 <option value="">Select Ledger</option>
-                                @foreach($purcasheLedgers as $ledger)
-                                <option value="{{ $ledger->name }}" data-ledger-id="{{ $ledger->id }}" data-without-item="{{ $ledger->is_without_item ?? 0 }}">{{ $ledger->name }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $purchaseLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($ledger->name); ?>"><?php echo e($ledger->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
                         <div class="receipt-field-row">
@@ -539,66 +488,36 @@
                         </div>
                         <div class="receipt-field-row">
                             <label>Date</label>
-                            <input type="date" id="edit_date" class="receipt-input" min="{{ session('year_from') }}" max="{{ session('year_to') }}">
+                            <input type="date" id="edit_date" class="receipt-input">
                         </div>
                         <div class="receipt-field-row">
                             <label>Voucher Type</label>
                             <select id="edit_voucher_type" class="receipt-input">
-                                @foreach($vchTypes as $vchType)
-                                <option value="{{ $vchType }}">{{ $vchType }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($vchType); ?>"><?php echo e($vchType); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
                         <div class="receipt-field-row">
                             <label>Place Of Supply</label>
                             <select id="edit_place" class="receipt-input">
                                 <option value="">Select State</option>
-                                @foreach($states as $state)
-                                <option value="{{ $state }}">{{ $state }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($state); ?>"><?php echo e($state); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
+                        </div>
+                        <div class="receipt-field-row">
+                            <label>Against Invoice</label>
+                            <input type="text" id="edit_against_invoice" class="receipt-input" placeholder="Invoice Number">
                         </div>
 
                     </div>
                 </div>
 
-                {{-- ITEMS SECTION --}}
+                
                 <div class="">
-                    <!-- <div class="receipt-items-header style=" display:flex; gap:10px; align-items:center;">
-
-                        <div style="display:flex; gap:10px; align-items:center;">
-
-                            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-                                <input type="radio" name="entry_mode" value="item" checked>
-                                <span>With Item</span>
-                            </label>
-
-                            <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
-                                <input type="radio" name="entry_mode" value="noitem">
-                                <span>Without Item</span>
-                            </label>
-
-                        </div>
-
-                        <div class="receipt-field-row" style="margin:0;">
-                            <label style="width:auto;padding-right:4px;">GST Mode</label>
-                            <select id="gst_calc_mode" class="receipt-input" style="width:180px;">
-                                <option value="standard">Standard (Auto Calculate)</option>
-                                <option value="custom">Custom (Manual Slots)</option>
-                            </select>
-                        </div>
-
-                        <div id="igst_toggle_wrap" class="receipt-field-row" style="margin:0;">
-                            <label style="width:auto;padding-right:4px;">Use IGST</label>
-                            <input type="checkbox" id="edit_is_igst">
-                        </div>
-
-                        <button type="button" id="addItemRow" class="receipt-add-btn">
-                            + Add Row
-                        </button>
-
-                    </div> -->
-                    <div class="receipt-items-header" style="display:flex; gap:10px; align-items:center;">
+                    <div class="receipt-items-header style=" display:flex; gap:10px; align-items:center;">
 
                         <div style="display:flex; gap:10px; align-items:center;">
 
@@ -636,8 +555,9 @@
                         <button type="button" id="addNoItemRow" class="receipt-add-btn" style="display:none;">
                             + Add More
                         </button>
+
                     </div>
-                    {{-- STANDARD MODE: items table --}}
+                    
                     <div id="standard_items_section">
                         <div class="receipt-table-wrap">
                             <table class="receipt-table" id="editItemsTable">
@@ -681,7 +601,7 @@
                         </table>
                     </div>
 
-                    {{-- CUSTOM MODE: rate-wise slots --}}
+                    
                     <div id="custom_slots_section" style="display:none;">
                         <div style="padding:8px 10px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
                             <div style="font-size:11px;color:#6b7280;margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;">
@@ -701,14 +621,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="customSlotsBody">
-                                    {{-- rendered by JS --}}
+                                    
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                {{-- TAX SUMMARY --}}
+                
                 <div class="receipt-tax-summary">
                     <div class="tax-summary-left">
                         <div class="receipt-field-row">
@@ -723,7 +643,7 @@
                             <span class="tax-value" id="sum_amount">0.00</span>
                         </div>
 
-                        {{-- Standard mode: single SGST/CGST/IGST row --}}
+                        
                         <div id="standard_tax_rows">
 
                             <!-- IGST -->
@@ -731,9 +651,9 @@
                                 <span class="tax-label">IGST</span>
                                 <select id="igst_ledger" class="receipt-input" style="width:140px;">
                                     <option value="">Select Ledger</option>
-                                    @foreach($iGstLedgers as $ledger)
-                                    <option value="{{ $ledger->id }}">{{ $ledger->name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $iGstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->id); ?>"><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <!-- <span class="tax-value" id="sum_igst">0.00</span> -->
                                 <input type="number" id="manual_igst" class="receipt-input" style="width:80px;" placeholder="Amt">
@@ -744,9 +664,9 @@
                                 <span class="tax-label">CGST</span>
                                 <select id="cgst_ledger" class="receipt-input" style="width:140px;">
                                     <option value="">Select Ledger</option>
-                                    @foreach($cGstLedgers as $ledger)
-                                    <option value="{{ $ledger->id }}">{{ $ledger->name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $cGstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->id); ?>"><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <!-- <span class="tax-value" id="sum_cgst">0.00</span> -->
                                 <input type="number" id="manual_cgst" class="receipt-input" style="width:80px;" placeholder="Amt">
@@ -757,9 +677,9 @@
                                 <span class="tax-label">SGST</span>
                                 <select id="sgst_ledger" class="receipt-input" style="width:140px;">
                                     <option value="">Select Ledger</option>
-                                    @foreach($sGstLedgers as $ledger)
-                                    <option value="{{ $ledger->id }}">{{ $ledger->name }}</option>
-                                    @endforeach
+                                    <?php $__currentLoopData = $sGstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->id); ?>"><?php echo e($ledger->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                                 <!-- <span class="tax-value" id="sum_sgst">0.00</span> -->
                                 <input type="number" id="manual_sgst" class="receipt-input" style="width:80px;" placeholder="Amt">
@@ -767,14 +687,13 @@
 
                         </div>
 
-                        {{-- Custom mode: rate-wise tax summary rows --}}
+                        
                         <div id="custom_tax_rows" style="display:none;">
-                            {{-- rendered by recalcTotals() --}}
+                            
                         </div>
 
                         <div class="tax-row">
                             <span class="tax-label">Round Off</span>
-                            <!-- <span class="tax-value" id="sum_roundoff">0.00</span> -->
                             <input type="number" step="0.01" id="sum_roundoff" class="receipt-input tax-value" style="width:90px;text-align:right;" value="0.00">
                         </div>
 
@@ -785,7 +704,7 @@
                     </div>
                 </div>
 
-                {{-- Hidden fields (keep existing save logic working) --}}
+                
                 <input type="hidden" id="edit_amount">
                 <input type="hidden" id="edit_sgst">
                 <input type="hidden" id="edit_cgst">
@@ -793,9 +712,9 @@
                 <input type="hidden" id="edit_roundoff">
                 <input type="hidden" id="edit_total_amount">
             </div>
-            {{-- RECEIPT FOOTER --}}
+            
             <div class="receipt-footer">
-                <div class="receipt-footer-note">This is a computer-generated Purchase record.</div>
+                <div class="receipt-footer-note">This is a computer-generated Debit Notes record.</div>
                 <div class="receipt-footer-actions">
                     <button type="button" onclick="closeEditModal()" class="btn-cancel">Cancel</button>
                     <button type="button" onclick="savePurchase()" id="saveRow" class="submit-btn">
@@ -806,99 +725,56 @@
         </div>
     </div>
 
-    <div id="ledgerModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <!-- HEADER -->
-            <div class="modal-header">
-                <h3>Create Ledger</h3>
-                <button type="button" class="close-btn" onclick="closeLedgerModal()">✕</button>
-            </div>
-
-            <!-- BODY -->
-            <div class="modal-body">
-                <form id="ledgerForm">
-                    @csrf
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Name</label>
-                            <input type="text" name="Name">
-                        </div>
-                        <div class="form-group">
-                            <label>Parent</label>
-                            <select name="Parent">
-                                <option>Select Parent</option>
-                                @foreach($parents as $parent)
-                                <option value="{{ $parent->strParents }}">{{ $parent->strParents }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Mailing Name</label>
-                            <input type="text" name="MailingName">
-                        </div>
-                        <div class="form-group">
-                            <label>Address Line 1</label>
-                            <input type="text" name="AddressLine1">
-                        </div>
-                        <div class="form-group">
-                            <label>Address Line 2</label>
-                            <input type="text" name="AddressLine2">
-                        </div>
-                        <div class="form-group">
-                            <label>City</label>
-                            <input type="text" name="City">
-                        </div>
-                        <div class="form-group">
-                            <label>Pincode</label>
-                            <input type="text" name="Pincode">
-                        </div>
-                        <div class="form-group">
-                            <label>State</label>
-                            <select id="State" class="inputCell">
-                                <option value="">Select State</option>
-                                @foreach($states as $state)
-                                <option value="{{$state}}">{{$state}}</option>
-                                @endforeach
-                            </select>
-
-                        </div>
-                        <div class="form-group">
-                            <label>Country</label>
-                            <input type="text" name="Country">
-                        </div>
-                        <div class="form-group">
-                            <label>GST No</label>
-                            <input type="text" name="GstNo">
-                        </div>
-                        <div class="form-group">
-                            <label>GST Registration Type</label>
-                            <select name="GstRegistrationType">
-                                <option value="">Select</option>
-                                <option value="Regular">Regular</option>
-                                <option value="Composition">Composition</option>
-                                <option value="Unregistered">Unregistered</option>
-                                <option value="Casual Taxable">Casual Taxable</option>
-                                <option value="Non-resident Taxable">Non-resident Taxable</option>
-                                <option value="Input Service Distributor">Input Service Distributor</option>
-                                <option value="Special Economic Zone">Special Economic Zone</option>
-                                <option value="E-commerce Operators">E-commerce Operators</option>
-                                <option value="Tax Deduction at Source">Tax Deduction at Source</option>
-                                <option value="TCS Collector">TCS Collector</option>
-                                <option value="Voluntary Registration">Voluntary Registration</option>
-                            </select>
-                        </div>
+    
+<div id="ledgerModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create Ledger</h3>
+            <button type="button" class="close-btn" onclick="closeLedgerModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="ledgerForm">
+                <?php echo csrf_field(); ?>
+                <div class="form-grid">
+                    <div class="form-group"><label>Name</label><input type="text" name="Name"></div>
+                    <div class="form-group"><label>Parent</label>
+                        <select name="Parent"><option>Select Parent</option>
+                            <?php $__currentLoopData = $parents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($p->strParents); ?>"><?php echo e($p->strParents); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button onclick="closeLedgerModal()" class="btn-cancel">Cancel</button>
-                <button type="submit" form="ledgerForm" class="submit-btn">Save Ledger</button>
-            </div>
+                    <div class="form-group"><label>Mailing Name</label><input type="text" name="MailingName"></div>
+                    <div class="form-group"><label>Address Line 1</label><input type="text" name="AddressLine1"></div>
+                    <div class="form-group"><label>Address Line 2</label><input type="text" name="AddressLine2"></div>
+                    <div class="form-group"><label>City</label><input type="text" name="City"></div>
+                    <div class="form-group"><label>Pincode</label><input type="text" name="Pincode"></div>
+                    <div class="form-group"><label>State</label>
+                        <select name="State"><option value="">Select State</option>
+                            <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($s); ?>"><?php echo e($s); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Country</label><input type="text" name="Country"></div>
+                    <div class="form-group"><label>GST No</label><input type="text" name="GstNo"></div>
+                    <div class="form-group"><label>GST Registration Type</label>
+                        <select name="GstRegistrationType">
+                            <option value="">Select</option>
+                            <option>Regular</option><option>Composition</option><option>Unregistered</option>
+                            <option>Casual Taxable</option><option>Non-resident Taxable</option>
+                            <option>Input Service Distributor</option><option>Special Economic Zone</option>
+                            <option>E-commerce Operators</option><option>Tax Deduction at Source</option>
+                            <option>TCS Collector</option><option>Voluntary Registration</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeLedgerModal()" class="btn-cancel">Cancel</button>
+            <button type="submit" form="ledgerForm" class="submit-btn">Save Ledger</button>
         </div>
     </div>
+</div>
 
     <style>
-
         /* SELECT2 */
         .select2-container--default .select2-selection--single {
             background: #fff;
@@ -972,6 +848,7 @@
             background: #ffffff !important;
             color: #000000 !important;
         }
+
         /* MODAL BASE */
         .modal {
             display: none;
@@ -1798,7 +1675,6 @@
             overflow: hidden;
             /* 🔥 IMPORTANT FIX */
         }
-
         .card-header {
             backdrop-filter: blur(6px);
         }
@@ -1806,7 +1682,6 @@
         button {
             transition: all 0.2s ease;
         }
-
         .card-header select {
             cursor: pointer;
         }
@@ -1814,7 +1689,6 @@
         .card-header button {
             white-space: nowrap;
         }
-
         .card-header a {
             letter-spacing: 0.3px;
         }
@@ -1855,79 +1729,79 @@
         }
 
         #ledgerModal .modal-header{
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            padding:15px 20px;
-            border-bottom:1px solid #e5e7eb;
-        }
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px 20px;
+    border-bottom:1px solid #e5e7eb;
+}
 
-        #ledgerModal .modal-body{
-            padding:20px;
-            overflow-y:auto;
-            flex:1;
-        }
+#ledgerModal .modal-body{
+    padding:20px;
+    overflow-y:auto;
+    flex:1;
+}
 
-        #ledgerModal .modal-footer{
-            padding:15px 20px;
-            border-top:1px solid #e5e7eb;
-            display:flex;
-            justify-content:flex-end;
-            gap:10px;
-        }
+#ledgerModal .modal-footer{
+    padding:15px 20px;
+    border-top:1px solid #e5e7eb;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+}
 
-        .form-grid{
-            display:grid;
-            grid-template-columns:repeat(2,1fr);
-            gap:15px;
-        }
+.form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+}
 
-        .form-group{
-            display:flex;
-            flex-direction:column;
-        }
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
 
-        .form-group label{
-            margin-bottom:5px;
-            font-size:13px;
-            font-weight:600;
-        }
+.form-group label{
+    margin-bottom:5px;
+    font-size:13px;
+    font-weight:600;
+}
 
-        /* Ledger Modal Dark Theme */
-        .dark #ledgerModal .modal-content{
-            background:#1f2937;
-            color:#f3f4f6;
-        }
+/* Ledger Modal Dark Theme */
+.dark #ledgerModal .modal-content{
+    background:#1f2937;
+    color:#f3f4f6;
+}
 
-        .dark #ledgerModal .modal-header,
-        .dark #ledgerModal .modal-footer{
-            border-color:#374151;
-        }
+.dark #ledgerModal .modal-header,
+.dark #ledgerModal .modal-footer{
+    border-color:#374151;
+}
 
-        .dark #ledgerModal h3,
-        .dark #ledgerModal label{
-            color:#f3f4f6 !important;
-        }
+.dark #ledgerModal h3,
+.dark #ledgerModal label{
+    color:#f3f4f6 !important;
+}
 
-        .dark #ledgerModal input,
-        .dark #ledgerModal select,
-        .dark #ledgerModal textarea{
-            background:#111827 !important;
-            border:1px solid #374151 !important;
-            color:#f9fafb !important;
-        }
+.dark #ledgerModal input,
+.dark #ledgerModal select,
+.dark #ledgerModal textarea{
+    background:#111827 !important;
+    border:1px solid #374151 !important;
+    color:#f9fafb !important;
+}
 
-        .dark #ledgerModal input::placeholder{
-            color:#9ca3af;
-        }
+.dark #ledgerModal input::placeholder{
+    color:#9ca3af;
+}
 
-        .dark #ledgerModal select option{
-            background:#111827;
-            color:#f9fafb;
-        }
+.dark #ledgerModal select option{
+    background:#111827;
+    color:#f9fafb;
+}
     </style>
-    @endsection
-    @section('scripts')
+    <?php $__env->stopSection(); ?>
+    <?php $__env->startSection('scripts'); ?>
     <script>
         function showFileName(input) {
             if (!validateUploadFileSize(input)) {
@@ -1952,10 +1826,10 @@
             $('#sampleDownload').change(function() {
                 let type = $(this).val();
                 if (type == 'with-item') {
-                    window.location.href = "/samples/Purchase-with-item-sample-file.xlsx";
+                    window.location.href = "/samples/debit-notes-with-item-sample-file.xlsx";
                 }
                 if (type == 'without-item') {
-                    window.location.href = "/samples/Purchase-without-item-sample-file.xlsx";
+                    window.location.href = "/samples/debit-notes-without-item-sample-file.xlsx";
                 }
                 // reset dropdown
                 $(this).val('');
@@ -1974,52 +1848,18 @@
                 allowClear: true,
                 dropdownAutoWidth: true
             });
-
-            $(document).on('focus', '.ledgerSelect', function() {
-                $(this).select2('open');
-            });
         });
     </script>
-    <script>
-        let IGST_LEDGERS = @json($iGstLedgers);
-        let CGST_LEDGERS = @json($cGstLedgers);
-        let SGST_LEDGERS = @json($sGstLedgers);
-        const ITEM_MASTER = @json($stockItems);
-        const PURCHASE_LEDGERS = @json($purcasheLedgers ?? []);
-        const PURCHASE_GST_MAPPINGS = @json($purchaseGstMappings ?? []);
-        const PARTY_LEDGER_DETAILS = @json($ledgers ?? []);
-        const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
+     <script>
+        let IGST_LEDGERS = <?php echo json_encode($iGstLedgers, 15, 512) ?>;
+        let CGST_LEDGERS = <?php echo json_encode($cGstLedgers, 15, 512) ?>;
+        let SGST_LEDGERS = <?php echo json_encode($sGstLedgers, 15, 512) ?>;
+        const ITEM_MASTER = <?php echo json_encode($stockItems, 15, 512) ?>;
+        const PARTY_LEDGER_DETAILS = <?php echo json_encode($partyLedgerDetails ?? [], 15, 512) ?>;
+        const PURCHASE_LEDGERS = <?php echo json_encode($purchaseLedgers ?? [], 15, 512) ?>;
+        const PURCHASE_GST_MAPPINGS = <?php echo json_encode($purchaseGstMappings ?? [], 15, 512) ?>;
     </script>
     <script>
-        function normalizedLedgerName(value) {
-            return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
-        }
-
-        function findPartyLedgerDetails(value) {
-            const normalized = normalizedLedgerName(value);
-            return PARTY_LEDGER_DETAILS.find(ledger =>
-                String(ledger.id || '') === String(value || '') ||
-                normalizedLedgerName(ledger.name) === normalized
-            ) || null;
-        }
-
-        function applyPartyLedgerDetails(value) {
-            const ledger = findPartyLedgerDetails(value);
-
-            $('#edit_gst').val(ledger?.gst_no || '');
-            $('#edit_address').val(ledger?.address || '');
-            $('#edit_pincode').val(ledger?.pincode || '');
-            $('#edit_city').val(ledger?.city || '');
-
-            if (ledger?.state) {
-                $('#edit_place').val(ledger.state).trigger('change');
-            }
-        }
-
-        $(document).on('change', '#edit_party', function () {
-            applyPartyLedgerDetails($(this).val());
-        });
-        
         document.addEventListener("DOMContentLoaded", function() {
             let input = document.getElementById('clientSearch');
             if (input) {
@@ -2055,68 +1895,64 @@
 
         // STATUS
         function handleStatus(status) {
-            $.post("{{ route('purchase.upload.status') }}", {
-                _token: "{{ csrf_token() }}",
+            $.post("<?php echo e(route('dn.upload.status')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
                 id: currentId,
                 status: status
             }, function(res) {
-                showToast(res.message,'success');
+                showToast(res.message, 'success');
                 location.reload();
             });
         }
 
-        // DELETE
+        // DELETE SINGLE
         function handleDelete() {
-
-            if (!confirm('Delete full upload?')) return;
-
-            $.post("{{ route('purchase.bulk.delete') }}", {
-                _token: "{{ csrf_token() }}",
-                ids: [currentId]
-            }, function(res) {
-                showToast(res.message,'success');
-                location.reload();
-            });
+            deleteUpload(currentId);
         }
+
+                $('#selectAllUploads').on('change', function() {
+            $('.rowCheckbox').prop('checked', $(this).is(':checked'));
+        });
+
+        $(document).on('change', '.rowCheckbox', function() {
+            const totalRows = $('.rowCheckbox').length;
+            const checkedRows = $('.rowCheckbox:checked').length;
+            $('#selectAllUploads').prop('checked', totalRows > 0 && totalRows === checkedRows);
+        });
 
         // BULK DELETE
-        function bulkDelete() {
-            let ids = $('.rowCheckbox:checked').map(function() {
+        function bulkDeleteUploads() {
+            const ids = $('.rowCheckbox:checked').map(function() {
                 return this.value;
             }).get();
 
-            if (ids.length === 0) {
+            
+            if (!ids.length) {
                 showToast('Select at least one', 'error');
                 return;
             }
 
-            if (!confirm('Delete selected?')) return;
+            deleteUpload(ids);
+        }
 
-            $.post("{{ route('purchase.bulk.delete') }}", {
-                _token: "{{ csrf_token() }}",
+
+        function deleteUpload(ids) {
+            ids = Array.isArray(ids) ? ids : [ids];
+
+            if (!confirm(ids.length > 1 ? 'Delete selected uploads?' : 'Delete full upload?')) return;
+
+            $.post("<?php echo e(route('dn.bulk.delete')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
                 ids: ids
             }, function(res) {
-                showToast(res.message,'success');
+                showToast(res.message, 'success');
                 location.reload();
             });
         }
 
-        $(document).on('change', '#selectAllUploads', function() {
-            $('.rowCheckbox').prop('checked', this.checked);
-        });
-
-        $(document).on('change', '.rowCheckbox', function() {
-            $('#selectAllUploads').prop(
-                'checked',
-                $('.rowCheckbox').length > 0 && $('.rowCheckbox:checked').length === $('.rowCheckbox').length
-            );
-        });
-
-
         function openPurchaseModal() {
-
-            let fromDate = "{{ session('year_from') }}";
-            let toDate = "{{ session('year_to') }}";
+            let fromDate = "<?php echo e(session('year_from')); ?>";
+            let toDate = "<?php echo e(session('year_to')); ?>";
             let today = new Date().toISOString().split('T')[0];
 
             // 🔥 If today inside FY → use today
@@ -2129,21 +1965,17 @@
             $('#edit_date').val(new Date().toISOString().split('T')[0]);
             $('#edit_party').val('').trigger('change');
             document.getElementById('editModal').classList.add('show');
-
         }
 
         function closeEditModal() {
             document.getElementById('editModal').classList.remove('show');
         }
 
-        function addPurchaseRow(data = {}) {
+        function addPurchaseRow() {
 
             let row = `
             <tr>
-                <td>
-                <select class="item border p-1 itemSelect">
-                        ${buildItemOptions(data.item_name || '')}
-                    </select></td>
+                <td><input class="item border p-1"></td>
                 <td><input class="gst border p-1"></td>
                 <td><input class="qty border p-1"></td>
                 <td><input class="rate border p-1"></td>
@@ -2198,13 +2030,13 @@
             let invoice = $('#edit_invoice').val();
 
             if (!party) {
-                showToast('Please select Party','error');
+                showToast('Please select Party', 'error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
             }
             if (!invoice) {
-                showToast('Please enter Invoice Number','error');
+                showToast('Please enter Invoice Number', 'error');
                 btn.prop('disabled', false);
                 btn.html('Save');
                 return;
@@ -2218,7 +2050,7 @@
                 let ledgerRows = collectNoItemRows();
                 amount = ledgerRows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0);
                 if (!ledgerRows.length || amount <= 0) {
-                    showToast('Please add at least one purchase ledger row','error');
+                    showToast('Please add at least one purchase ledger row', 'error');
                     btn.prop('disabled', false);
                     btn.html('Save');
                     return;
@@ -2300,13 +2132,13 @@
             let sgstLedger = $('#sgst_ledger').val();
             let igstLedger = $('#igst_ledger').val();
             let noitemRows = collectNoItemRows();
-
             if (mode === 'noitem') {
                 $('#gst_calc_mode').val('custom');
+                items = [];
             }
 
             let data = {
-                _token: "{{ csrf_token() }}",
+                _token: "<?php echo e(csrf_token()); ?>",
                 party: party,
                 invoice: invoice,
                 date: $('#edit_date').val(),
@@ -2331,19 +2163,19 @@
                 igst_ledger: igstLedger,
 
                 entry_mode: mode,
-                // purchase_ledger: $('#noitem_purcashe_ledger').val(),
-                purchase_ledger: $('#noitem_purcashe_ledger option:selected').text(),
-                purchase_ledger_name: $('#noitem_purcashe_ledger option:selected').text(),
-                purchase_ledger_id: $('#noitem_purcashe_ledger').val(),
-
+                purchase_ledger: noitemRows[0]?.ledger_name || $('#noitem_purcashe_ledger option:selected').text(),
+                purchase_ledger_name: noitemRows[0]?.ledger_name || $('#noitem_purcashe_ledger option:selected').text(),
+                purchase_ledger_id: noitemRows[0]?.ledger || $('#noitem_purcashe_ledger').val(),
                 items: items,
                 custom_slots: custom_gst,
                 gst_mode: $('#gst_calc_mode').val(),
+                against_invoice: $("#edit_against_invoice").val(),
+                gst_rate: noitemRows[0]?.gst || 0,
                 noitem_rows: noitemRows
             };
 
             $.ajax({
-                url: "{{ route('purchase.manual.create') }}",
+                url: "<?php echo e(route('dn.manual.create')); ?>",
                 type: "POST",
                 data: data,
 
@@ -2387,18 +2219,10 @@
                 $('#standard_items_section').show();
                 $('#no_item_section').hide();
                 $('#addItemRow').show();
-                $('#addNoItemRow').hide();
-                $('#gst_mode_wrap').show();
             } else {
                 $('#standard_items_section').hide();
                 $('#no_item_section').show();
                 $('#addItemRow').hide();
-                $('#addNoItemRow').show();
-                $('#gst_mode_wrap').show();
-                $('#gst_calc_mode').val('custom').trigger('change');
-                if ($('#noItemBody tr').length === 0) {
-                    addNoItemRow();
-                }
             }
         });
 
@@ -2467,360 +2291,14 @@
             recalcTotals(); // 🔥 important
         });
 
-        function recalcTotals() {
-
-            let mode = $('#gst_calc_mode').val();
-            let entryMode = $('input[name="entry_mode"]:checked').val();
-
-            let taxable = 0;
-            let totalGST = 0;
-
-            let isIGST = $('#edit_is_igst').is(':checked');
-            applyGstLedgerMapping(false);
-            let rateMap = {};
-
-            // =========================
-            // ✅ WITH ITEM
-            // =========================
-            if (entryMode === 'item') {
-
-                $('#editItemsBody tr').each(function() {
-
-                    let row = $(this);
-
-                    let qty = parseFloat(row.find('.qty').val()) || 0;
-                    let rate = parseFloat(row.find('.rate').val()) || 0;
-                    let gst = parseFloat(row.find('.gst').val()) || 0;
-                    let itemName = row.find('.item_name option:selected').text();
-                    let itemMapping = findItemGstMapping(itemName);
-
-                    let amount = qty * rate;
-                    row.find('.amount').val(amount.toFixed(2));
-
-                    taxable += amount;
-
-                    let gstAmt = (amount * gst) / 100;
-                    totalGST += gstAmt;
-
-                    if (!rateMap[gst]) {
-                        rateMap[gst] = {
-                            amt: 0,
-                            gst: 0,
-                            rate: gst,
-                            itemName: itemName,
-                            itemMapping: itemMapping ? itemGstMappingObject(itemMapping) : null
-                        };
-                    }
-
-                    rateMap[gst].amt += amount;
-                    rateMap[gst].gst += gstAmt;
-                    if (!rateMap[gst].itemMapping && itemMapping) {
-                        rateMap[gst].itemName = itemName;
-                        rateMap[gst].itemMapping = itemGstMappingObject(itemMapping);
-                    }
-                });
-
-                if (mode === 'standard') {
-                    let firstItemName = $('#editItemsBody tr:first .item_name option:selected').text();
-                    applyItemGstMapping(firstItemName, false);
-                }
-            }
-
-            // =========================
-            // ✅ WITHOUT ITEM (🔥 FIX)
-            // =========================
-            if (entryMode === 'noitem') {
-
-                $('#noItemBody tr').each(function(index) {
-                    let gst = parseFloat($(this).find('.noitem-gst').val()) || 0;
-                    let amount = parseFloat($(this).find('.noitem-amount').val()) || 0;
-                    let ledgerSelect = $(this).find('.noitem-ledger');
-                    let ledgerId = ledgerSelect.val() || '';
-                    let ledgerName = ledgerSelect.find('option:selected').text() || '';
-                    let gstAmt = (amount * gst) / 100;
-                    let key = `row:${index}|${gst}|${ledgerId}`;
-
-                    taxable += amount;
-                    totalGST += gstAmt;
-
-                    rateMap[key] = {
-                        amt: amount,
-                        gst: gstAmt,
-                        rate: gst,
-                        ledgerId: ledgerId,
-                        ledgerName: ledgerName,
-                        slotKey: key
-                    };
-                });
-            }
-
-            let cgst = 0,
-                sgst = 0,
-                igst = 0;
-
-            // =========================
-            // ✅ STANDARD MODE
-            // =========================
-            if (mode === 'standard') {
-
-                if (isIGST) {
-                    igst = totalGST;
-
-                    $('#manual_igst').val(igst.toFixed(2));
-                    $('#manual_cgst').val(0);
-                    $('#manual_sgst').val(0);
-
-                } else {
-                    cgst = totalGST / 2;
-                    sgst = totalGST / 2;
-
-                    $('#manual_cgst').val(cgst.toFixed(2));
-                    $('#manual_sgst').val(sgst.toFixed(2));
-                    $('#manual_igst').val(0);
-                }
-            }
-
-            // =========================
-            // ✅ CUSTOM MODE
-            // =========================
-            if (mode === 'custom') {
-
-                let html = '';
-
-                let existing = {};
-                $('#customSlotsBody tr').each(function() {
-                    let rate = $(this).find('.gst_rate').text().replace('%', '');
-                    let purchaseLedgerId = $(this).find('.slot_purchase_ledger_id').val() || '';
-                    let key = $(this).data('slot-key') || `${rate}|${purchaseLedgerId}`;
-                    existing[key] = {
-                        igst: $(this).find('.igst_ledger').val(),
-                        cgst: $(this).find('.cgst_ledger').val(),
-                        sgst: $(this).find('.sgst_ledger').val()
-                    };
-                });
-
-                Object.keys(rateMap).forEach(key => {
-
-                    let data = rateMap[key];
-                    let rate = data.rate ?? key;
-
-                    let cg = data.gst / 2;
-                    let sg = data.gst / 2;
-
-                    html += `
-            <tr data-slot-key="${data.slotKey || key}" data-purchase-ledger-id="${data.ledgerId || ''}">
-                <td class="gst_rate">${rate}%</td>
-                <td>${data.amt.toFixed(2)}<input type="hidden" class="slot_purchase_ledger_id" value="${data.ledgerId || ''}"></td>
-
-                <td>
-                    <select class="receipt-input igst_ledger">
-                        ${buildLedgerOptions(IGST_LEDGERS, mappedGstLedgerId('igst', existing[key]?.igst ?? existing[`${rate}|${data.ledgerId || ''}`]?.igst, data.ledgerId || '', data.ledgerName || '', data.itemMapping || null))}
-                    </select>
-                </td>
-                <td>
-                    <input type="number" value="${isIGST ? data.gst.toFixed(2) : '0.00'}" class="receipt-input igst_amt">
-                </td>
-
-                <td>
-                    <select class="receipt-input cgst_ledger">
-                        ${buildLedgerOptions(CGST_LEDGERS, mappedGstLedgerId('cgst', existing[key]?.cgst ?? existing[`${rate}|${data.ledgerId || ''}`]?.cgst, data.ledgerId || '', data.ledgerName || '', data.itemMapping || null))}
-                    </select>
-                </td>
-                <td>
-                    <input type="number" value="${isIGST ? '0.00' : cg.toFixed(2)}" class="receipt-input cgst_amt">
-                </td>
-
-                <td>
-                    <select class="receipt-input sgst_ledger">
-                        ${buildLedgerOptions(SGST_LEDGERS, mappedGstLedgerId('sgst', existing[key]?.sgst ?? existing[`${rate}|${data.ledgerId || ''}`]?.sgst, data.ledgerId || '', data.ledgerName || '', data.itemMapping || null))}
-                    </select>
-                </td>
-                <td>
-                    <input type="number" value="${isIGST ? '0.00' : sg.toFixed(2)}" class="receipt-input sgst_amt">
-                </td>
-            </tr>
-            `;
-
-                    if (isIGST) {
-                        igst += data.gst;
-                    } else {
-                        cgst += cg;
-                        sgst += sg;
-                    }
-                });
-
-                $('#customSlotsBody').html(html);
-            }
-
-            // =========================
-            // FINAL TOTAL
-            // =========================
-            let grandTotal = taxable + cgst + sgst + igst;
-
-            $('#sum_amount').text(taxable.toFixed(2));
-            // $('#sum_grand_total').text(grandTotal.toFixed(2));
-            setRoundOffSummary(grandTotal);
-            
-            $('#manual_igst').val(igst.toFixed(2));
-            $('#manual_cgst').val(cgst.toFixed(2));
-            $('#manual_sgst').val(sgst.toFixed(2));
-
-            $('#edit_amount').val(taxable.toFixed(2));
-            $('#edit_cgst').val(cgst.toFixed(2));
-            $('#edit_sgst').val(sgst.toFixed(2));
-            $('#edit_igst').val(igst.toFixed(2));
-            $('#edit_total_amount').val(grandTotal.toFixed(2));
-
-            $('#foot_amount').text(taxable.toFixed(2));
-            $('#foot_total').text(grandTotal.toFixed(2));
+        function getSummaryBaseTotal() {
+            return (parseFloat($('#edit_amount').val()) || 0)
+                + (parseFloat($('#edit_cgst').val()) || 0)
+                + (parseFloat($('#edit_sgst').val()) || 0)
+                + (parseFloat($('#edit_igst').val()) || 0);
         }
 
-        function applyGstLedgerMapping(force = false) {
-            const mapping = getSelectedSalesLedgerMapping();
-
-            if (!mapping) {
-                return;
-            }
-
-            if (mapping.igst_id && (force || !$('#igst_ledger').val())) {
-                $('#igst_ledger').val(mapping.igst_id).trigger('change');
-            }
-
-            if (mapping.cgst_id && (force || !$('#cgst_ledger').val())) {
-                $('#cgst_ledger').val(mapping.cgst_id).trigger('change');
-            }
-
-            if (mapping.sgst_id && (force || !$('#sgst_ledger').val())) {
-                $('#sgst_ledger').val(mapping.sgst_id).trigger('change');
-            }
-        }
-
-        function getSelectedSalesLedgerMapping(selectId = '#noitem_sales_ledger') {
-            const select = $(selectId);
-            const selectedValue = select.val();
-            const selectedText = select.find('option:selected').text();
-
-            return findSalesLedgerMapping(selectedValue, selectedText);
-        }
-
-        function findSalesLedgerMapping(ledgerValue = '', ledgerText = '') {
-            return PURCHASE_GST_MAPPINGS.find(mapping =>
-                String(mapping.id) === String(ledgerValue) ||
-                normalizeLedgerName(mapping.name) === normalizeLedgerName(ledgerValue) ||
-                normalizeLedgerName(mapping.name) === normalizeLedgerName(ledgerText)
-            ) || null;
-        }
-
-        $(document).on('click', '#addNoItemRow', function() {
-            addNoItemRow();
-        });
-
-        $(document).on('click', '.removeNoItem', function() {
-            $(this).closest('tr').remove();
-            recalcTotals();
-        });
-
-        $(document).on('input change', '.noitem-ledger, .noitem-gst, .noitem-amount', function() {
-            recalcTotals();
-        });
-
-        $(document).on('change', '.item_name', function() {
-            applyItemGstMapping($(this).find('option:selected').text(), true);
-            recalcTotals();
-        });
-
-        
-        $(document).on('click', '.receipt-del-btn', function() {
-            $(this).closest('tr').remove();
-            recalcTotals();
-        });
-
-
-        $('#manual_cgst, #manual_sgst, #manual_igst').on('input', function() {
-            $(this).data('manual', true);
-            recalcTotals();
-        });
-
-        $('#gst_calc_mode').change(function() {
-
-            let mode = $(this).val();
-            let entryMode = $('input[name="entry_mode"]:checked').val();
-            // $('#gst_mode_wrap').toggle(entryMode === 'item');
-            $('#gst_mode_wrap').show();
-
-            if (mode === 'standard') {
-                $('#standard_items_section').toggle(entryMode === 'item');
-                $('#standard_tax_rows').show();
-
-                $('#custom_slots_section').hide();
-                $('#custom_tax_rows').hide();
-
-                $('#igst_toggle_wrap').show();
-            } else {
-
-                $('#standard_items_section').toggle(entryMode === 'item');
-                $('#standard_tax_rows').hide();
-
-                $('#custom_slots_section').show();
-                $('#custom_tax_rows').show();
-
-                $('#igst_toggle_wrap').hide(); // optional
-            }
-
-            recalcTotals();
-        });
-
-        function normalizeLedgerName(name) {
-            return String(name || '').trim().toLowerCase();
-        }
-
-        function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {
-            let normalizedText = normalizeLedgerName(ledgerText);
-            return PURCHASE_GST_MAPPINGS.find(mapping =>
-                String(mapping.id || '') === String(ledgerValue || '') ||
-                normalizeLedgerName(mapping.name) === normalizedText
-            ) || null;
-        }
-
-        function itemGstMappingObject(item) {
-            if (!item) {
-                return null;
-            }
-            return {
-                igst_id: item.IGSTLedgerId ? String(item.IGSTLedgerId) : null,
-                cgst_id: item.CGSTLedgerId ? String(item.CGSTLedgerId) : null,
-                sgst_id: item.SGSTLedgerId ? String(item.SGSTLedgerId) : null
-            };
-        }
-
-        
-       
-
-        function normalizeLedgerName(name) {
-            return String(name || '').trim().toLowerCase();
-        }
-
-        function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {
-            let normalizedText = normalizeLedgerName(ledgerText);
-            return PURCHASE_GST_MAPPINGS.find(mapping =>
-                String(mapping.id || '') === String(ledgerValue || '') ||
-                normalizeLedgerName(mapping.name) === normalizedText
-            ) || null;
-        }
-
-        function itemGstMappingObject(item) {
-            if (!item) {
-                return null;
-            }
-            return {
-                igst_id: item.IGSTLedgerId ? String(item.IGSTLedgerId) : null,
-                cgst_id: item.CGSTLedgerId ? String(item.CGSTLedgerId) : null,
-                sgst_id: item.SGSTLedgerId ? String(item.SGSTLedgerId) : null
-            };
-        }
-
-        
-
+        const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
         function calculateRoundOffAmountForSummary(total) {
             total = parseFloat(total) || 0;
             let roundedTotal;
@@ -2838,31 +2316,16 @@
             return Math.round((roundedTotal - total) * 100) / 100;
         }
 
-
-        function getSummaryBaseTotal() {
-            return (parseFloat($('#edit_amount').val()) || 0)
-                + (parseFloat($('#edit_cgst').val()) || 0)
-                + (parseFloat($('#edit_sgst').val()) || 0)
-                + (parseFloat($('#edit_igst').val()) || 0);
-        }
-
         function applyRoundOffSummary(total, roundOff) {
             total = parseFloat(total) || 0;
-            // let roundOff = roundOffAmount === null || roundOffAmount === undefined
-            //     ? calculateRoundOffAmountForSummary(total)
-            //     : (parseFloat(roundOffAmount) || 0);
             roundOff = parseFloat(roundOff) || 0;
             let roundedTotal = total + roundOff;
 
-            //$('#sum_roundoff').text(roundOff.toFixed(2));
-            if ($('#sum_roundoff').is('input')) {
-                $('#sum_roundoff').val(roundOff.toFixed(2));
-            } else {
-                $('#sum_roundoff').text(roundOff.toFixed(2));
-            }
+            $('#sum_roundoff').val(roundOff.toFixed(2));
             $('#edit_roundoff').val(roundOff.toFixed(2));
             $('#sum_grand_total').text(roundedTotal.toFixed(2));
             $('#edit_total_amount').val(roundedTotal.toFixed(2));
+
             return roundedTotal;
         }
 
@@ -2874,7 +2337,6 @@
             }
 
             let roundOff = calculateRoundOffAmountForSummary(total);
-
             return applyRoundOffSummary(total, roundOff);
         }
 
@@ -2882,51 +2344,374 @@
             applyRoundOffSummary(getSummaryBaseTotal(), $(this).val());
         });
 
-        function findItemGstMapping(itemName = '') {
-            let normalizedItem = normalizeLedgerName(itemName);
-            if (!normalizedItem) {
-                return null;
+        function recalcTotals() {
+
+            let mode = $('input[name="entry_mode"]:checked').val();
+            let gstMode = $('#gst_calc_mode').val();
+
+            let taxable = 0;
+            let cgst = 0;
+            let sgst = 0;
+            let igst = 0;
+
+            let rateMap = {};
+            let isIGST = $('#edit_is_igst').is(':checked');
+
+            // ===============================
+            // ✅ WITHOUT ITEM MODE
+            // ===============================
+            if (mode === 'noitem') {
+
+                let amount = parseFloat($('#noitem_amount').val()) || 0;
+                let gstRate = parseFloat($('#noitem_gst_rate').val()) || 0;
+
+                taxable = amount;
+
+                let gstAmt = (amount * gstRate) / 100;
+
+                // 👉 ADD THIS (for custom mode)
+                if (gstRate > 0) {
+                    rateMap[gstRate] = {
+                        taxable: amount,
+                        gst: gstAmt
+                    };
+                }
+
+                if (isIGST) {
+                    igst = gstAmt;
+                } else {
+                    cgst = gstAmt / 2;
+                    sgst = gstAmt / 2;
+                }
             }
-            return ITEM_MASTER.find(item =>
-                normalizeLedgerName(item.strItemName) === normalizedItem
+
+            // ===============================
+            // ✅ WITH ITEM MODE
+            // ===============================
+            else {
+
+                $('#editItemsBody tr').each(function() {
+
+                    let row = $(this);
+
+                    let qty = parseFloat(row.find('.qty').val()) || 0;
+                    let rate = parseFloat(row.find('.rate').val()) || 0;
+                    let gstRate = parseFloat(row.find('.gst').val()) || 0;
+
+                    let amount = qty * rate;
+                    taxable += amount;
+
+                    let gstAmt = (amount * gstRate) / 100;
+
+                    // 👉 ADD THIS (rate-wise grouping)
+                    if (gstRate > 0) {
+                        if (!rateMap[gstRate]) {
+                            rateMap[gstRate] = { taxable: 0, gst: 0 };
+                        }
+                        rateMap[gstRate].taxable += amount;
+                        rateMap[gstRate].gst += gstAmt;
+                    }
+
+                    if (isIGST) {
+                        igst += gstAmt;
+                    } else {
+                        cgst += gstAmt / 2;
+                        sgst += gstAmt / 2;
+                    }
+                });
+            }
+
+            // ===============================
+            // ✅ SET NORMAL VALUES
+            // ===============================
+            $('#sum_amount').text(taxable.toFixed(2));
+            $('#edit_amount').val(taxable);
+
+            $('#edit_cgst').val(cgst.toFixed(2));
+            $('#edit_sgst').val(sgst.toFixed(2));
+            $('#edit_igst').val(igst.toFixed(2));
+
+            $('#manual_cgst').val(cgst.toFixed(2));
+            $('#manual_sgst').val(sgst.toFixed(2));
+            $('#manual_igst').val(igst.toFixed(2));
+
+            let grandTotal = taxable + cgst + sgst + igst;
+
+            // $('#sum_grand_total').text(grandTotal.toFixed(2));
+            // $('#edit_total_amount').val(grandTotal);
+            setRoundOffSummary(grandTotal);
+            // setRoundOffSummary(grandTotal);
+
+            // ===============================
+            // ✅ CUSTOM GST TABLE RENDER
+            // ===============================
+            if (gstMode === 'custom') {
+
+                let html = '';
+
+                Object.keys(rateMap).forEach(rate => {
+
+                    let data = rateMap[rate];
+
+                    let cgstAmt = data.gst / 2;
+                    let sgstAmt = data.gst / 2;
+
+                    html += `
+                        <tr>
+                            <td class="gst_rate">${rate}%</td>
+                            <td>${data.taxable.toFixed(2)}</td>
+
+                            <td>
+                                <select class="igst_ledger">
+                                    ${buildLedgerOptions(IGST_LEDGERS)}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" class="igst_amt" value="${data.gst.toFixed(2)}">
+                            </td>
+
+                            <td>
+                                <select class="cgst_ledger">
+                                    ${buildLedgerOptions(CGST_LEDGERS)}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" class="cgst_amt" value="${cgstAmt.toFixed(2)}">
+                            </td>
+
+                            <td>
+                                <select class="sgst_ledger">
+                                    ${buildLedgerOptions(SGST_LEDGERS)}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" class="sgst_amt" value="${sgstAmt.toFixed(2)}">
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                $('#customSlotsBody').html(html);
+            }
+        }
+
+        $('#noitem_amount, #noitem_gst_rate').on('input', function () {
+            recalcTotals();
+        });
+
+        $('#gst_calc_mode').on('change', function () {
+            recalcTotals();
+        });
+
+        $(document).on('click', '.receipt-del-btn', function() {
+            $(this).closest('tr').remove();
+            recalcTotals();
+        });
+
+
+        $('#manual_cgst, #manual_sgst, #manual_igst').on('input', function() {
+            $(this).data('manual', true);
+            recalcTotals();
+        });
+
+        $('#gst_calc_mode').change(function() {
+
+            let mode = $(this).val();
+
+            if (mode === 'standard') {
+                $('#standard_items_section').show();
+                $('#standard_tax_rows').show();
+
+                $('#custom_slots_section').hide();
+                $('#custom_tax_rows').hide();
+
+                $('#igst_toggle_wrap').show();
+            } else {
+
+                $('#standard_items_section').show(); // items still needed
+                $('#standard_tax_rows').hide();
+
+                $('#custom_slots_section').show();
+                $('#custom_tax_rows').show();
+
+                $('#igst_toggle_wrap').hide(); // optional
+            }
+
+            recalcTotals();
+        });
+
+        function buildLedgerOptions(list) {
+            let options = '<option value="">Select Ledger</option>';
+            list.forEach(l => {
+                options += `<option value="${l.id}">${l.name}</option>`;
+            });
+            return options;
+        }
+
+        function buildLedgerOptions(list, selected = '') {
+            let options = '<option value="">Select Ledger</option>';
+            list.forEach(l => {
+                let isSelected = String(selected || '') === String(l.id || '') ? 'selected' : '';
+                options += `<option value="${l.id}" ${isSelected}>${l.name}</option>`;
+            });
+            return options;
+        }
+
+        function normalizeLedgerName(name) {
+            return String(name || '').trim().toLowerCase();
+        }
+
+        function normalizeName(value) {
+            return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+        }
+
+        function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+            return PARTY_LEDGER_DETAILS.find(ledger =>
+                String(ledger.id || '') === String(ledgerValue || '') ||
+                normalizeName(ledger.name) === normalizeName(ledgerValue) ||
+                normalizeName(ledger.name) === normalizeName(ledgerText)
             ) || null;
         }
 
-        function applyItemGstMapping(itemName = '', force = false) {
-            const mapping = itemGstMappingObject(findItemGstMapping(itemName));
-            if (!mapping) {
+        function clearPartyLedgerDetails() {
+            $('#edit_gst').val('');
+            $('#edit_address').val('');
+            $('#edit_pincode').val('');
+            $('#edit_city').val('');
+            $('#edit_place').val('').trigger('change');
+        }
+
+        function applyPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
+            const details = findPartyLedgerDetails(ledgerValue, ledgerText);
+            if (!details) {
+                if (!ledgerValue && !ledgerText) {
+                    clearPartyLedgerDetails();
+                }
                 return;
             }
 
-            if (mapping.igst_id && (force || !$('#igst_ledger').val())) {
-                $('#igst_ledger').val(mapping.igst_id).trigger('change');
-            }
-            if (mapping.cgst_id && (force || !$('#cgst_ledger').val())) {
-                $('#cgst_ledger').val(mapping.cgst_id).trigger('change');
-            }
-            if (mapping.sgst_id && (force || !$('#sgst_ledger').val())) {
-                $('#sgst_ledger').val(mapping.sgst_id).trigger('change');
+            $('#edit_gst').val(details.gst_no || '');
+            $('#edit_address').val(details.address || '');
+            $('#edit_pincode').val(details.pincode || '');
+            $('#edit_city').val(details.city || '');
+            if (details.state) {
+                $('#edit_place').val(details.state).trigger('change');
             }
         }
 
-        function mappedGstLedgerId(type, existing = null, ledgerValue = '', ledgerText = '', itemMapping = null) {
+        $(document).on('change', '#edit_party', function () {
+            applyPartyLedgerDetails($(this).val(), $(this).find('option:selected').text());
+        });
+
+        function findItemGstMapping(itemName = '') {
+            if (!itemName) {
+                return null;
+            }
+
+            const normalizedItemName = normalizeName(itemName);
+            return ITEM_MASTER.find(item => normalizeName(item.strItemName || item.name || '') === normalizedItemName) || null;
+        }
+
+        function valueByPossibleKeys(source, keys) {
+            if (!source) {
+                return '';
+            }
+
+            for (const key of keys) {
+                if (source[key] !== undefined && source[key] !== null && source[key] !== '') {
+                    return source[key];
+                }
+            }
+
+            const normalizedKeys = keys.map(key => key.toLowerCase());
+            const matchedKey = Object.keys(source).find(key => normalizedKeys.includes(key.toLowerCase()));
+            return matchedKey ? source[matchedKey] : '';
+        }
+
+        function itemGstLedgerId(item, type) {
+            const keyMap = {
+                igst: ['igst_id', 'IGSTLedgerId', 'igstLedgerId', 'igst_ledger_id'],
+                cgst: ['cgst_id', 'CGSTLedgerId', 'cgstLedgerId', 'cgst_ledger_id'],
+                sgst: ['sgst_id', 'SGSTLedgerId', 'sgstLedgerId', 'sgst_ledger_id']
+            };
+
+            return valueByPossibleKeys(item, keyMap[type] || []);
+        }
+
+        function getItemGstMappingByRate(rate) {
+            const normalizedRate = parseFloat(rate) || 0;
+            let foundItem = null;
+
+            $('#editItemsBody tr').each(function() {
+                const itemName = $(this).find('.item_name').val();
+                const itemRate = parseFloat($(this).find('.gst').val()) || 0;
+                if (itemRate !== normalizedRate) {
+                    return;
+                }
+
+                const item = findItemGstMapping(itemName);
+                if (item) {
+                    foundItem = item;
+                    return false;
+                }
+            });
+
+            return foundItem;
+        }
+
+        function findPurchaseLedgerMapping(ledgerId = '', ledgerName = '') {
+            let normalized = normalizeLedgerName(ledgerName);
+            return PURCHASE_GST_MAPPINGS.find(mapping =>
+                String(mapping.id || '') === String(ledgerId || '') ||
+                normalizeLedgerName(mapping.name) === normalized
+            ) || null;
+        }
+
+        function mappedGstLedgerId(type, existing = '', ledgerId = '', ledgerName = '') {
             if (existing) {
                 return existing;
             }
-            if (itemMapping && itemMapping[`${type}_id`]) {
-                return itemMapping[`${type}_id`];
+            let mapping = findPurchaseLedgerMapping(ledgerId, ledgerName);
+            return mapping ? (mapping[`${type}_id`] || '') : '';
+        }
+
+        function itemMappedGstLedgerId(type, rate, existing = '') {
+            const item = getItemGstMappingByRate(rate);
+            if (!item) {
+                return existing || '';
             }
-            let mapping = findPurchaseLedgerMapping(ledgerValue, ledgerText);
-            return mapping ? mapping[`${type}_id`] : null;
+
+            return itemGstLedgerId(item, type) || existing || '';
+        }
+
+        function applyItemGstMapping(itemName = '', force = false) {
+            const item = findItemGstMapping(itemName);
+            if (!item || $('#gst_calc_mode').val() !== 'standard') {
+                return;
+            }
+
+            const igstLedgerId = itemGstLedgerId(item, 'igst');
+            const cgstLedgerId = itemGstLedgerId(item, 'cgst');
+            const sgstLedgerId = itemGstLedgerId(item, 'sgst');
+
+            if (igstLedgerId && (force || !$('#igst_ledger').val())) {
+                $('#igst_ledger').val(igstLedgerId).trigger('change');
+            }
+            if (cgstLedgerId && (force || !$('#cgst_ledger').val())) {
+                $('#cgst_ledger').val(cgstLedgerId).trigger('change');
+            }
+            if (sgstLedgerId && (force || !$('#sgst_ledger').val())) {
+                $('#sgst_ledger').val(sgstLedgerId).trigger('change');
+            }
         }
 
         function buildPurchaseLedgerOptions(selected = '') {
-            let html = `<option value="">Select Ledger</option>`;
+            let html = '<option value="">Select Ledger</option>';
             PURCHASE_LEDGERS.forEach(ledger => {
-                let selectedAttr = String(ledger.id || '') === String(selected || '') ||
-                    normalizeLedgerName(ledger.name) === normalizeLedgerName(selected)
-                    ? 'selected' : '';
-                html += `<option value="${ledger.id}" ${selectedAttr}>${ledger.name}</option>`;
+                let id = ledger.id || ledger.iLedgerId || ledger.name || ledger.strCustomerName || '';
+                let name = ledger.name || ledger.strCustomerName || ledger.strLedgerName || '';
+                let isSelected = String(selected || '') === String(id || '') ? 'selected' : '';
+                html += `<option value="${id}" ${isSelected}>${name}</option>`;
             });
             return html;
         }
@@ -2934,10 +2719,10 @@
         function addNoItemRow(data = {}) {
             let row = `
                 <tr>
-                    <td><select class="receipt-input noitem-ledger">${buildPurchaseLedgerOptions(data.ledger || data.ledger_id || data.ledger_name || '')}</select></td>
-                    <td><input type="number" class="receipt-input noitem-gst" value="${data.gst || data.gst_rate || 18}"></td>
-                    <td><input type="number" class="receipt-input noitem-amount" value="${data.amount || data.taxable || ''}"></td>
-                    <td><button type="button" class="removeNoItem">×</button></td>
+                    <td><select class="receipt-input noitem-ledger">${buildPurchaseLedgerOptions(data.ledger || '')}</select></td>
+                    <td><input type="number" class="receipt-input noitem-gst" value="${data.gst || 0}"></td>
+                    <td><input type="number" class="receipt-input noitem-amount" value="${data.amount || ''}"></td>
+                    <td><button type="button" class="receipt-del-btn removeNoItem">x</button></td>
                 </tr>
             `;
             $('#noItemBody').append(row);
@@ -2947,12 +2732,16 @@
         function collectNoItemRows() {
             let rows = [];
             $('#noItemBody tr').each(function() {
-                let ledger = $(this).find('.noitem-ledger').val();
-                let amount = parseFloat($(this).find('.noitem-amount').val()) || 0;
+                let row = $(this);
+                let ledger = row.find('.noitem-ledger').val();
+                let ledgerName = row.find('.noitem-ledger option:selected').text();
+                let gst = parseFloat(row.find('.noitem-gst').val()) || 0;
+                let amount = parseFloat(row.find('.noitem-amount').val()) || 0;
                 if (ledger && amount > 0) {
                     rows.push({
                         ledger: ledger,
-                        gst: $(this).find('.noitem-gst').val(),
+                        ledger_name: ledgerName,
+                        gst: gst,
                         amount: amount
                     });
                 }
@@ -2960,16 +2749,218 @@
             return rows;
         }
 
-        function buildLedgerOptions(list, selected = null) {
-            let html = `<option value="">Select Ledger</option>`;
-            list.forEach(l => {
-                let selectedAttr = String(selected || '') === String(l.id || '') ? 'selected' : '';
-                html += `<option value="${l.id}" ${selectedAttr}>${l.name}</option>`;
-            });
-            return html;
+        function toggleSectionsByMode() {
+            let gstMode = $('#gst_calc_mode').val();
+            let entryMode = $('input[name="entry_mode"]:checked').val();
+
+            if (entryMode === 'item') {
+                $('#standard_items_section').show();
+                $('#no_item_section').hide();
+                $('#addItemRow').show();
+                $('#addNoItemRow').hide();
+                $('#gst_mode_wrap').show();
+            } else {
+                $('#standard_items_section').hide();
+                $('#no_item_section').show();
+                $('#addItemRow').hide();
+                $('#addNoItemRow').show();
+                $('#gst_mode_wrap').hide();
+                $('#gst_calc_mode').val('custom');
+                gstMode = 'custom';
+                if ($('#noItemBody tr').length === 0) {
+                    addNoItemRow();
+                }
+            }
+
+            if (gstMode === 'standard') {
+                $('#standard_tax_rows').show();
+                $('#custom_slots_section').hide();
+                $('#custom_tax_rows').hide();
+                $('#igst_toggle_wrap').show();
+            } else {
+                $('#standard_tax_rows').hide();
+                $('#custom_slots_section').show();
+                $('#custom_tax_rows').show();
+                $('#igst_toggle_wrap').hide();
+            }
         }
 
-        
+        $(document).on('change', 'input[name="entry_mode"]', function() {
+            toggleSectionsByMode();
+            recalcTotals();
+        });
+
+        $(document).on('click', '#addNoItemRow', function() {
+            addNoItemRow();
+        });
+
+        $(document).on('click', '.removeNoItem', function() {
+            $(this).closest('tr').remove();
+            recalcTotals();
+        });
+
+        $(document).on('input change', '.noitem-ledger, .noitem-gst, .noitem-amount', function() {
+            recalcTotals();
+        });
+
+        $(document).on('change', '.itemSelect', function() {
+            let row = $(this).closest('tr');
+            let name = $(this).val();
+            let item = findItemGstMapping(name);
+
+            if (item) {
+                row.find('.hsn').val(item.hsn || '');
+                row.find('.gst').val(item.gst_rate || '');
+                row.find('.rate').val(item.rate || '');
+            }
+
+            let qty = parseFloat(row.find('.qty').val()) || 0;
+            let rate = parseFloat(row.find('.rate').val()) || 0;
+            row.find('.amount').val((qty * rate).toFixed(2));
+
+            applyItemGstMapping(name, true);
+            recalcTotals();
+        });
+
+        function recalcTotals() {
+            let entryMode = $('input[name="entry_mode"]:checked').val();
+            let gstMode = $('#gst_calc_mode').val();
+            let taxable = 0;
+            let cgst = 0;
+            let sgst = 0;
+            let igst = 0;
+            let rateMap = {};
+            let isIGST = $('#edit_is_igst').is(':checked');
+
+            if (entryMode === 'noitem') {
+                $('#noItemBody tr').each(function(index) {
+                    let row = $(this);
+                    let ledgerId = row.find('.noitem-ledger').val() || '';
+                    let ledgerName = row.find('.noitem-ledger option:selected').text() || '';
+                    let gstRate = parseFloat(row.find('.noitem-gst').val()) || 0;
+                    let amount = parseFloat(row.find('.noitem-amount').val()) || 0;
+                    let gstAmt = (amount * gstRate) / 100;
+                    let key = `${index}|${gstRate}|${ledgerId}`;
+
+                    taxable += amount;
+                    if (isIGST) {
+                        igst += gstAmt;
+                    } else {
+                        cgst += gstAmt / 2;
+                        sgst += gstAmt / 2;
+                    }
+
+                    rateMap[key] = {
+                        taxable: amount,
+                        gst: gstAmt,
+                        rate: gstRate,
+                        ledgerId: ledgerId,
+                        ledgerName: ledgerName
+                    };
+                });
+            } else {
+                $('#editItemsBody tr').each(function() {
+                    let row = $(this);
+                    let qty = parseFloat(row.find('.qty').val()) || 0;
+                    let rate = parseFloat(row.find('.rate').val()) || 0;
+                    let gstRate = parseFloat(row.find('.gst').val()) || 0;
+                    let amount = qty * rate;
+                    let gstAmt = (amount * gstRate) / 100;
+
+                    row.find('.amount').val(amount.toFixed(2));
+                    taxable += amount;
+                    if (isIGST) {
+                        igst += gstAmt;
+                    } else {
+                        cgst += gstAmt / 2;
+                        sgst += gstAmt / 2;
+                    }
+
+                    if (!rateMap[gstRate]) {
+                        rateMap[gstRate] = {
+                            taxable: 0,
+                            gst: 0,
+                            rate: gstRate,
+                            ledgerId: '',
+                            ledgerName: ''
+                        };
+                    }
+                    rateMap[gstRate].taxable += amount;
+                    rateMap[gstRate].gst += gstAmt;
+                });
+            }
+
+            $('#sum_amount').text(taxable.toFixed(2));
+            $('#edit_amount').val(taxable.toFixed(2));
+            $('#edit_cgst').val(cgst.toFixed(2));
+            $('#edit_sgst').val(sgst.toFixed(2));
+            $('#edit_igst').val(igst.toFixed(2));
+            $('#manual_cgst').val(cgst.toFixed(2));
+            $('#manual_sgst').val(sgst.toFixed(2));
+            $('#manual_igst').val(igst.toFixed(2));
+
+            let grandTotal = taxable + cgst + sgst + igst;
+            // $('#sum_grand_total').text(grandTotal.toFixed(2));
+            // $('#edit_total_amount').val(grandTotal.toFixed(2));
+            setRoundOffSummary(grandTotal);
+            // setRoundOffSummary(grandTotal);
+            $('#foot_amount').text(taxable.toFixed(2));
+            $('#foot_total').text(grandTotal.toFixed(2));
+
+            if (gstMode === 'custom') {
+                let html = '';
+                let existingRows = {};
+
+                $('#customSlotsBody tr').each(function() {
+                    let row = $(this);
+                    existingRows[row.data('slot-key')] = {
+                        igst: row.find('.igst_ledger').val(),
+                        cgst: row.find('.cgst_ledger').val(),
+                        sgst: row.find('.sgst_ledger').val()
+                    };
+                });
+
+                Object.keys(rateMap).forEach(key => {
+                    let data = rateMap[key];
+                    let rate = data.rate ?? key;
+                    let existing = existingRows[key] || {};
+                    let igstLedgerId = entryMode === 'item'
+                        ? itemMappedGstLedgerId('igst', rate, existing.igst)
+                        : mappedGstLedgerId('igst', existing.igst, data.ledgerId, data.ledgerName);
+                    let cgstLedgerId = entryMode === 'item'
+                        ? itemMappedGstLedgerId('cgst', rate, existing.cgst)
+                        : mappedGstLedgerId('cgst', existing.cgst, data.ledgerId, data.ledgerName);
+                    let sgstLedgerId = entryMode === 'item'
+                        ? itemMappedGstLedgerId('sgst', rate, existing.sgst)
+                        : mappedGstLedgerId('sgst', existing.sgst, data.ledgerId, data.ledgerName);
+                    let cgstAmt = data.gst / 2;
+                    let sgstAmt = data.gst / 2;
+
+                    html += `
+                        <tr data-slot-key="${key}">
+                            <td class="gst_rate">${rate}%</td>
+                            <td>${data.taxable.toFixed(2)}<input type="hidden" class="slot_purchase_ledger_id" value="${data.ledgerId || ''}"></td>
+                            <td><select class="igst_ledger">${buildLedgerOptions(IGST_LEDGERS, igstLedgerId)}</select></td>
+                            <td><input type="number" class="igst_amt" value="${data.gst.toFixed(2)}"></td>
+                            <td><select class="cgst_ledger">${buildLedgerOptions(CGST_LEDGERS, cgstLedgerId)}</select></td>
+                            <td><input type="number" class="cgst_amt" value="${cgstAmt.toFixed(2)}"></td>
+                            <td><select class="sgst_ledger">${buildLedgerOptions(SGST_LEDGERS, sgstLedgerId)}</select></td>
+                            <td><input type="number" class="sgst_amt" value="${sgstAmt.toFixed(2)}"></td>
+                        </tr>
+                    `;
+                });
+
+                $('#customSlotsBody').html(html);
+            }
+        }
+
+        $('#gst_calc_mode').on('change', function () {
+            toggleSectionsByMode();
+            recalcTotals();
+        });
+
+        toggleSectionsByMode();
+
 
         function buildItemOptions(selected = '') {
             let html = '<option value="">Select Item</option>';
@@ -2985,7 +2976,6 @@
             });
             return html;
         }
-
         $(document).on('change','.item_name',function(){
             let itemId = $(this).val();
             let item = ITEM_MASTER.find(
@@ -3001,118 +2991,68 @@
         });
 
         function openLedgerModal() {
-            document.getElementById('ledgerModal').classList.add('show');
+            let modal = document.getElementById('ledgerModal');
+            if (!modal) {
+                console.error('ledgerModal not found');
+                return;
+            }
+            modal.classList.add('show');
         }
 
         function closeLedgerModal() {
-            document.getElementById('ledgerModal').classList.remove('show');
+            let modal = document.getElementById('ledgerModal');
+            if (!modal) {
+                return;
+            }
+            modal.classList.remove('show');
         }
 
         // Optional: handle form submit
-        $('#ledgerForm').on('submit', function(e) {
-            e.preventDefault();
+    $('#ledgerForm').on('submit', function(e) {
+        e.preventDefault();
 
-            let formData = $(this).serialize();
+        let formData = $(this).serialize();
 
-            $.ajax({
-                url: "{{ route('purchase.ledger.store') }}",
-                type: "POST",
-                data: formData,
-                success: function(response) {
-                    showToast(response.message, 'success');
-                    let name = $('input[name="Name"]').val();
+        $.ajax({
+            url: "<?php echo e(route('sales.ledger.store')); ?>",
+            type: "POST",
+            data: formData,
+            success: function(response) {
+                closeLedgerModal();
+                let name = $('input[name="Name"]').val();
 
-                    // ✅ Add into EDIT MODAL dropdown
-                    let newOption = new Option(name, name, true, true);
-                    $('#edit_party').append(newOption).trigger('change');
+                // ✅ Add into EDIT MODAL dropdown
+                let newOption = new Option(name, name, true, true);
+                $('#edit_party').append(newOption).trigger('change');
 
-                    // ✅ ALSO update table dropdowns (VERY IMPORTANT)
-                    $('.ledgerSelect').each(function () {
-                        $(this).append(new Option(name, name));
-                    });
+                // ✅ ALSO update table dropdowns (VERY IMPORTANT)
+                $('.ledgerSelect').each(function() {
+                    $(this).append(new Option(name, name));
+                });
 
-                    // ✅ Refresh Select2 UI
-                    $('#edit_party').trigger('change');
-                    $('.ledgerSelect').trigger('change');
+                // ✅ Refresh Select2 UI
+                $('#edit_party').trigger('change');
+                $('.ledgerSelect').trigger('change');
 
-                    // ✅ Clear form
-                    $('#ledgerForm')[0].reset();
+                // ✅ Clear form
+                $('#ledgerForm')[0].reset();
 
-                    closeLedgerModal();
-                    // location.reload();
-                    // OPTIONAL: add new ledger in dropdown
-                    // let name = $('input[name="Name"]').val();
 
-                    // $('.ledgerSelect').append(
-                    //     `<option value="${name}" selected>${name}</option>`
-                    // ).trigger('change');
+                // location.reload();
+                // OPTIONAL: add new ledger in dropdown
+                // let name = $('input[name="Name"]').val();
 
-                },
-                error: function(xhr) {
-                    showToast('Error saving ledger','error');
-                    console.log(xhr.responseText);
-                }
-            });
-        });
-        $('input[name="entry_mode"]').on('change', function () {
-
-            let mode = $(this).val();
-
-            if(mode === 'noitem')
-            {
-                // Force Custom GST
-                $('#gst_calc_mode')
-                    .val('custom')
-                    .trigger('change')
-                    .prop('disabled', true);
-
-                $('#igst_toggle_wrap').hide();
-
-                $('#standard_items_section').hide();
-                $('#no_item_section').show();
-
-                $('#addItemRow').hide();
-                $('#addNoItemRow').show();
-
-                $('#invoice_purcashe_ledger_wrap').hide();
-                $('#gst_calc_mode').closest('.receipt-field-row').hide();
-            }
-            else
-            {
-                $('#gst_calc_mode')
-                    .prop('disabled', false);
-
-                $('#igst_toggle_wrap').show();
-
-                $('#standard_items_section').show();
-                $('#no_item_section').hide();
-
-                $('#addItemRow').show();
-                $('#addNoItemRow').hide();
-
-                $('#invoice_purcashe_ledger_wrap').show();
-                $('#gst_calc_mode').closest('.receipt-field-row').show();
-            }
-
-            recalcTotals();
-        });
-
-        $(document).on('change','input[name="entry_mode"]',function(){
-            let mode = $(this).val();
-            if(mode === 'item')
-            {
-                $('#standard_items_section').show();
-                $('#addItemRow').show();
-                $('#no_item_section').hide();
-                $('#invoice_purcashe_ledger_wrap').show();
-            }
-            else
-            {
-                $('#standard_items_section').hide();
-                $('#addItemRow').hide();
-                $('#no_item_section').show();
-                $('#invoice_purcashe_ledger_wrap').hide();
+                // $('.ledgerSelect').append(
+                //     `<option value="${name}" selected>${name}</option>`
+                // ).trigger('change');
+            },
+            error: function(xhr) {
+                showToast('Error saving ledger','error');
+                console.log(xhr.responseText);
             }
         });
+    });
     </script>
-    @endsection
+    <?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/bulkupload/debit_note/index.blade.php ENDPATH**/ ?>
