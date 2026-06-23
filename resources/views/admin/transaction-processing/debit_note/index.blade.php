@@ -51,7 +51,7 @@
                                         </button>
 
                                         <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDelete()"
-                                            class="bulk-icon-btn px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap">
+                                            class="bulk-icon-btn px-4 py-3 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap">
                                             <i class="fa-solid fa-trash text-xs"></i>
                                         </button>
 

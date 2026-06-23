@@ -310,6 +310,67 @@ class PurchaseUploadController extends Controller
         }
     }
 
+    private function getCompletePartyLedgerDetails(int $partyId, ?string $partyName): ?array
+    {
+        $partyName = trim((string) $partyName);
+        if ($partyName === '') {
+            return null;
+        }
+
+        $ledger = DB::table('LedgerMaster')
+            ->selectRaw("GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
+            ->where('iPartyId', $partyId)
+            ->whereRaw('LOWER(TRIM(strCustomerName)) = ?', [strtolower($partyName)])
+            ->first();
+
+        if (!$ledger) {
+            $ledger = DB::table('ledgers')
+                ->selectRaw("GstNo AS gst_no, TRIM(CONCAT_WS(' ', AddressLine1, AddressLine2)) AS address, Pincode AS pincode, City AS city, State AS state")
+                ->where('iPartyId', $partyId)
+                ->whereRaw('LOWER(TRIM(Name)) = ?', [strtolower($partyName)])
+                ->first();
+        }
+
+        if (!$ledger) {
+            return null;
+        }
+
+        $details = [
+            'gst_no' => trim((string) ($ledger->gst_no ?? '')),
+            'address' => trim((string) ($ledger->address ?? '')),
+            'pincode' => trim((string) ($ledger->pincode ?? '')),
+            'city' => trim((string) ($ledger->city ?? '')),
+            'state' => trim((string) ($ledger->state ?? '')),
+        ];
+
+        if ($details['state'] !== '' && is_numeric($details['state'])) {
+            $details['state'] = DB::table('state')
+                ->where('stateId', $details['state'])
+                ->value('stateName') ?? $details['state'];
+        }
+
+        if ($details['gst_no'] === '' || $details['address'] === '' || $details['pincode'] === '' || $details['state'] === '') {
+            return null;
+        }
+
+        return $details;
+    }
+
+    private function mergePartyLedgerDetails(array $source, ?array $ledgerDetails): array
+    {
+        if (!$ledgerDetails) {
+            return $source;
+        }
+
+        $source['gst_no'] = trim((string) ($source['gst_no'] ?? '')) !== '' ? $source['gst_no'] : $ledgerDetails['gst_no'];
+        $source['place_of_supply'] = trim((string) ($source['place_of_supply'] ?? '')) !== '' ? $source['place_of_supply'] : $ledgerDetails['state'];
+        $source['address'] = trim((string) ($source['address'] ?? '')) !== '' ? $source['address'] : $ledgerDetails['address'];
+        $source['pincode'] = trim((string) ($source['pincode'] ?? '')) !== '' ? $source['pincode'] : $ledgerDetails['pincode'];
+        $source['city'] = trim((string) ($source['city'] ?? '')) !== '' ? $source['city'] : $ledgerDetails['city'];
+
+        return $source;
+    }
+
     private function getRoundOffLedger($partyId)
     {
         return DB::table('LedgerMaster')
@@ -463,7 +524,10 @@ class PurchaseUploadController extends Controller
                     $sumIgst        = array_sum(array_column($items, 'igst'));
                     $sumTotalAmount = array_sum(array_column($items, 'total_amount'));
 
-                    $first = $items[0];
+                    $first = $this->mergePartyLedgerDetails(
+                        $items[0],
+                        $this->getCompletePartyLedgerDetails($iPartyId, $items[0]['party_name'] ?? null)
+                    );
                     $purchaseLedger = DB::table('LedgerMaster')
                         ->where('iPartyId', $iPartyId)
                         ->where('strCustomerName', $first['purchase_ledger'])
@@ -592,6 +656,9 @@ class PurchaseUploadController extends Controller
                         'gst_no'                => $first['gst_no'],
                         'party_name'            => $first['party_name'],
                         'place_of_supply'       => $first['place_of_supply'],
+                        'address'               => $first['address'] ?? null,
+                        'pincode'               => $first['pincode'] ?? null,
+                        'city'                  => $first['city'] ?? null,
 
                         'purchase_ledger'       => $first['purchase_ledger'],
                         'purchase_ledger_id'    => $purchaseLedger?->iLedgerId,
@@ -750,7 +817,10 @@ class PurchaseUploadController extends Controller
 
             DB::transaction(function () use ($invoiceGroups, $iPartyId, $upload, &$total) {
                 foreach ($invoiceGroups as $groupKey => $rows) {
-                    $first = $rows[0];
+                    $first = $this->mergePartyLedgerDetails(
+                        $rows[0],
+                        $this->getCompletePartyLedgerDetails($iPartyId, $rows[0]['party_name'] ?? null)
+                    );
                     
                     // Calculate totals
                     $sumAmount = array_sum(array_column($rows, 'amount'));
@@ -867,6 +937,9 @@ class PurchaseUploadController extends Controller
                         'gst_no'            => $first['gst_no'],
                         'party_name'        => $first['party_name'],
                         'place_of_supply'   => $first['place_of_supply'],
+                        'address'           => $first['address'] ?? null,
+                        'pincode'           => $first['pincode'] ?? null,
+                        'city'              => $first['city'] ?? null,
                         
                         'purchase_ledger'      => $first['purchase_ledger'],
                         'purchase_ledger_id'   => $purchaseLedger?->iLedgerId,

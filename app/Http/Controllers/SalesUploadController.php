@@ -365,6 +365,49 @@ class SalesUploadController extends Controller
         return true;
     }
 
+    private function getCompletePartyLedgerDetails($partyId, ?string $partyName): ?array
+    {
+        $partyName = trim((string) $partyName);
+        if ($partyName === '') {
+            return null;
+        }
+
+        $ledger = DB::query()
+            ->fromSub(function ($query) use ($partyId) {
+                $query->selectRaw("strCustomerName AS name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, StateName AS state")
+                    ->from('LedgerMaster')
+                    ->where('iPartyId', $partyId)
+                    ->where('strParents', 'Sundry Debtors')
+                    ->unionAll(
+                        DB::table('ledgers')
+                            ->selectRaw("name AS name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, State AS state")
+                            ->where('iPartyId', $partyId)
+                            ->where('Parent', 'Sundry Debtors')
+                    );
+            }, 'party_ledgers')
+            ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($partyName)])
+            ->first();
+
+        if (!$ledger) {
+            return null;
+        }
+
+        $details = [
+            'gst_no' => trim((string) ($ledger->gst_no ?? '')),
+            'address' => trim((string) ($ledger->address ?? '')),
+            'pincode' => trim((string) ($ledger->pincode ?? '')),
+            'state' => trim((string) ($ledger->state ?? '')),
+        ];
+
+        foreach ($details as $value) {
+            if ($value === '') {
+                return null;
+            }
+        }
+
+        return $details;
+    }
+
     private function getRoundOffLedger($partyId)
     {
         return DB::table('LedgerMaster')
@@ -511,6 +554,7 @@ class SalesUploadController extends Controller
                         ->where('iPartyId', $iPartyId)
                         ->where('strCustomerName', $first['sales_ledger'])
                         ->first();
+                    $partyLedgerDetails = $this->getCompletePartyLedgerDetails($iPartyId, $first['party_name']);
 
                     $mapping = $this->getGstMapping(
                         $iPartyId,
@@ -610,9 +654,11 @@ class SalesUploadController extends Controller
                         'invoice_no'        => $invoiceNo,
                         'date'              => $first['date'],
 
-                        'gst_no'            => $first['gst_no'],
+                        'gst_no'            => $partyLedgerDetails['gst_no'] ?? $first['gst_no'],
                         'party_name'        => $first['party_name'],
-                        'place_of_supply'   => $first['place_of_supply'],
+                        'place_of_supply'   => $partyLedgerDetails['state'] ?? $first['place_of_supply'],
+                        'address'           => $partyLedgerDetails['address'] ?? null,
+                        'pincode'           => $partyLedgerDetails['pincode'] ?? null,
 
                         'sales_ledger'      => $first['sales_ledger'],
                         'sales_ledger_id'   => $salesLedger?->iLedgerId,
@@ -762,6 +808,7 @@ class SalesUploadController extends Controller
                         ->where('iPartyId', $iPartyId)
                         ->where('strCustomerName', $first['sales_ledger'])
                         ->first();
+                    $partyLedgerDetails = $this->getCompletePartyLedgerDetails($iPartyId, $first['party_name']);
 
                     $gstSlots = $this->buildSalesCustomGstSlots($rows, $iPartyId);
                     $rates = array_unique(array_filter(array_column($gstSlots, 'gst_rate')));
@@ -791,9 +838,11 @@ class SalesUploadController extends Controller
                         'upload_id'         => $upload->id,
                         'invoice_no'        => $first['invoice_no'],
                         'date'              => $this->parseDate($first['date']),
-                        'gst_no'            => $first['gst_no'],
+                        'gst_no'            => $partyLedgerDetails['gst_no'] ?? $first['gst_no'],
                         'party_name'        => $first['party_name'],
-                        'place_of_supply'   => $first['place_of_supply'],
+                        'place_of_supply'   => $partyLedgerDetails['state'] ?? $first['place_of_supply'],
+                        'address'           => $partyLedgerDetails['address'] ?? null,
+                        'pincode'           => $partyLedgerDetails['pincode'] ?? null,
 
                         'sales_ledger'      => $first['sales_ledger'],
                         'sales_ledger_id'   => $salesLedger?->iLedgerId,

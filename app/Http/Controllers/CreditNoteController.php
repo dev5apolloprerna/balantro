@@ -102,6 +102,62 @@ class CreditNoteController extends Controller
             )
             ->get();
     }
+
+    private function getCompletePartyLedgerDetails($partyId, ?string $partyName): ?array
+    {
+        $partyName = trim((string) $partyName);
+
+        if ($partyName === '') {
+            return null;
+        }
+
+        $ledger = DB::table('LedgerMaster')
+            ->selectRaw("GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
+            ->where('iPartyId', $partyId)
+            ->where('strCustomerName', $partyName)
+            ->first();
+
+        if (!$ledger) {
+            $ledger = DB::table('ledgers')
+                ->selectRaw("GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state")
+                ->where('iPartyId', $partyId)
+                ->where('name', $partyName)
+                ->first();
+        }
+
+        if (!$ledger) {
+            return null;
+        }
+
+        $details = [
+            'gst_no' => trim((string) ($ledger->gst_no ?? '')),
+            'address' => trim((string) ($ledger->address ?? '')),
+            'pincode' => trim((string) ($ledger->pincode ?? '')),
+            'city' => trim((string) ($ledger->city ?? '')),
+            'state' => trim((string) ($ledger->state ?? '')),
+        ];
+
+        if ($details['gst_no'] === '' || $details['address'] === '' || $details['pincode'] === '' || $details['state'] === '') {
+            return null;
+        }
+
+        return $details;
+    }
+
+    private function applyPartyLedgerDetails(array $row, ?array $ledgerDetails): array
+    {
+        if (!$ledgerDetails) {
+            return $row;
+        }
+
+        $row['gst_no'] = $row['gst_no'] ?: $ledgerDetails['gst_no'];
+        $row['address'] = $row['address'] ?: $ledgerDetails['address'];
+        $row['pincode'] = $row['pincode'] ?: $ledgerDetails['pincode'];
+        $row['city'] = $row['city'] ?: $ledgerDetails['city'];
+        $row['place_of_supply'] = $row['place_of_supply'] ?: $ledgerDetails['state'];
+
+        return $row;
+    }
     
     private function getSalesLedgerGstMappings($partyId): array
     {
@@ -971,6 +1027,9 @@ class CreditNoteController extends Controller
                     'gst_no' => $row[2] ?? null,
                     'party_name' => $row[3] ?? null,
                     'place_of_supply' => $row[4] ?? null,
+                    'address' => null,
+                    'pincode' => null,
+                    'city' => null,
                     'sales_ledger' => $row[5] ?? null,
                     'item_name' => $row[6] ?? null,
                     'quantity' => $this->toNumber($row[7]),
@@ -993,7 +1052,10 @@ class CreditNoteController extends Controller
                     $sumCgst = array_sum(array_column($items, 'cgst'));
                     $sumIgst = array_sum(array_column($items, 'igst'));
                     $sumTotalAmount = array_sum(array_column($items, 'total_amount'));
-                    $first = $items[0];
+                    $first = $this->applyPartyLedgerDetails(
+                        $items[0],
+                        $this->getCompletePartyLedgerDetails($iPartyId, $items[0]['party_name'] ?? null)
+                    );
                     
                     $salesLedger = DB::table('LedgerMaster')
                         ->where('iPartyId', $iPartyId)
@@ -1063,6 +1125,9 @@ class CreditNoteController extends Controller
                         'gst_no' => $first['gst_no'],
                         'party_name' => $first['party_name'],
                         'place_of_supply' => $first['place_of_supply'],
+                        'address' => $first['address'] ?? null,
+                        'pincode' => $first['pincode'] ?? null,
+                        'city' => $first['city'] ?? null,
                         'sales_ledger' => $first['sales_ledger'],
                         'sales_ledger_id' => $salesLedger?->iLedgerId,
                         'sales_ledger_name' => $salesLedger?->strCustomerName,
@@ -1163,6 +1228,9 @@ class CreditNoteController extends Controller
                     'gst_no'          => $row[2] ?? null,
                     'party_name'      => $row[3] ?? null,
                     'place_of_supply' => $row[4] ?? null,
+                    'address'         => null,
+                    'pincode'         => null,
+                    'city'            => null,
                     'sales_ledger'    => $row[5] ?? null,
                     'amount'          => $this->toNumber($row[6] ?? 0),
                     'sgst'            => $this->toNumber($row[7] ?? 0),
@@ -1176,7 +1244,10 @@ class CreditNoteController extends Controller
 
             DB::transaction(function () use ($noteGroups, $iPartyId, $upload, &$total) {
                 foreach ($noteGroups as $groupKey => $rows) {
-                    $first = $rows[0];
+                    $first = $this->applyPartyLedgerDetails(
+                        $rows[0],
+                        $this->getCompletePartyLedgerDetails($iPartyId, $rows[0]['party_name'] ?? null)
+                    );
                     
                     // Calculate totals
                     $sumAmount = array_sum(array_column($rows, 'amount'));
@@ -1268,6 +1339,9 @@ class CreditNoteController extends Controller
                         'gst_no'            => $first['gst_no'],
                         'party_name'        => $first['party_name'],
                         'place_of_supply'   => $first['place_of_supply'],
+                        'address'           => $first['address'] ?? null,
+                        'pincode'           => $first['pincode'] ?? null,
+                        'city'              => $first['city'] ?? null,
                         
                         'sales_ledger'      => $first['sales_ledger'],
                         'sales_ledger_id'   => $salesLedger?->iLedgerId,

@@ -50,7 +50,7 @@
                                         </button>
                                         <button type="button"
                                             onclick="bulkDelete()"
-                                            class="bulk-icon-btn px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap"
+                                            class="bulk-icon-btn px-4 py-3 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap"
                                             title="Delete selected uploads">
                                             <i class="fa-solid fa-trash-can text-xs"></i>
                                         </button>

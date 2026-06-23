@@ -49,9 +49,8 @@
                                             Select Client
                                         </button>
                                         <button id="bulkDeleteBtn" type="button" onclick="bulkDeleteUploads()"
-                                            class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-md flex items-center gap-2 shadow-sm">
+                                            class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-3 rounded-md flex items-center gap-2 shadow-sm">
                                             <i class="fa-solid fa-trash"></i>
-                                            Delete Selected
                                         </button>
                                         @if(session('guid'))
                                             <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800 shrink-0" 

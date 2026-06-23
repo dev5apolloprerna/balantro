@@ -43,12 +43,18 @@
                                         <?php endif; ?>
                                         <!-- Divider -->
                                         <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
-                                        <?php endif; ?>
+                                        <?php endif; ?>                                        
+
                                         <button
                                             @click="openClient=true"
                                             class="bulk-text-btn bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md flex items-center gap-2 shadow-sm whitespace-nowrap">
                                             <i class="fa-solid fa-building"></i>
                                             Select Client
+                                        </button>
+
+                                        <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
+                                            class="px-4 py-3 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                            <i class="fa-solid fa-trash text-xs"></i>
                                         </button>
 
                                         <?php if(session('guid')): ?>
@@ -108,7 +114,7 @@
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
                                     <th class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" id="selectAllUploads">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3">File Name</th>
@@ -128,7 +134,7 @@
                                 <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" class="rowCheckbox" value="<?php echo e($upload->id); ?>">
                                     </td>
                                     <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
@@ -483,13 +489,53 @@
         }
 
         // DELETE
-        function handleDelete() {
+        // function handleDelete() {
 
-            if (!confirm('Delete full upload?')) return;
+        //     if (!confirm('Delete full upload?')) return;
+
+        //     $.post("<?php echo e(route('cn.bulk.delete')); ?>", {
+        //         _token: "<?php echo e(csrf_token()); ?>",
+        //         ids: [currentId]
+        //     }, function(res) {
+        //         showToast(res.message,'success');
+        //         location.reload();
+        //     });
+        // }
+        function handleDelete() {
+            deleteUpload(currentId);
+        }
+
+        $('#selectAllUploads').on('change', function() {
+            $('.rowCheckbox').prop('checked', $(this).is(':checked'));
+        });
+
+        $(document).on('change', '.rowCheckbox', function() {
+            const totalRows = $('.rowCheckbox').length;
+            const checkedRows = $('.rowCheckbox:checked').length;
+            $('#selectAllUploads').prop('checked', totalRows > 0 && totalRows === checkedRows);
+        });
+
+        function bulkDeleteUploads() {
+            const ids = $('.rowCheckbox:checked').map(function() {
+                return this.value;
+            }).get();
+
+            if (!ids.length) {
+                alert('Select at least one upload');
+                return;
+            }
+
+            deleteUpload(ids);
+        }
+
+        function deleteUpload(ids) {
+            ids = Array.isArray(ids) ? ids : [ids];
+
+            if (!confirm(ids.length > 1 ? 'Delete selected uploads?' : 'Delete full upload?')) return;
 
             $.post("<?php echo e(route('cn.bulk.delete')); ?>", {
                 _token: "<?php echo e(csrf_token()); ?>",
-                ids: [currentId]
+                ids: ids
             }, function(res) {
                 showToast(res.message,'success');
                 location.reload();

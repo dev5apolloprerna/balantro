@@ -43,18 +43,17 @@
                                         <!-- Divider -->
                                         <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
 
-                                        <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
-                                            class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-md flex items-center gap-2 shadow-sm">
-                                            <i class="fa-solid fa-trash"></i>
-                                            Delete Selected
-                                        </button>
-
                                         <!-- Select Client -->
                                         <button
                                             @click="openClient=true"
                                             class="bulk-text-btn bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md flex items-center gap-2 shadow-sm whitespace-nowrap">
                                             <i class="fa-solid fa-building"></i>
                                             Select Client
+                                        </button>
+
+                                        <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
+                                            class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2.5 rounded-md flex items-center gap-2 shadow-sm">
+                                            <i class="fa-solid fa-trash"></i>
                                         </button>
 
                                         @if(session('guid'))

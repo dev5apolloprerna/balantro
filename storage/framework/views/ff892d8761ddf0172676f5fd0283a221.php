@@ -52,6 +52,11 @@
                                             Select Client
                                         </button>
 
+                                        <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDelete()"
+                                            class="bulk-icon-btn px-4 py-3 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap">
+                                            <i class="fa-solid fa-trash text-xs"></i>
+                                        </button>
+
                                         <?php if(session('guid')): ?>
                                             <a href="<?php echo e(route('clients.Gstindex', session('guid'))); ?>" class="bulk-settings-btn rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800 shrink-0" 
                                                 title="GST Settings">
@@ -109,7 +114,7 @@
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
                                     <th class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" id="selectAllUploads">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3">File Name</th>
@@ -129,7 +134,7 @@
                                 <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox"  class="rowCheckbox" value="<?php echo e($upload->id); ?>">
                                     </td>
                                     <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
@@ -497,6 +502,17 @@
                 location.reload();
             });
         }
+
+        $('#selectAllUploads').on('change', function() {
+            $('.rowCheckbox').prop('checked', $(this).is(':checked'));
+        });
+
+        $(document).on('change', '.rowCheckbox', function() {
+            const totalRows = $('.rowCheckbox').length;
+            const checkedRows = $('.rowCheckbox:checked').length;
+            $('#selectAllUploads').prop('checked', totalRows > 0 && totalRows === checkedRows);
+        });
+
 
         // BULK DELETE
         function bulkDelete() {

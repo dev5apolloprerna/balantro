@@ -94,6 +94,48 @@ class DebitNoteController extends Controller
         return back(); // ->with('success', 'Records Updated');
         //return redirect()->route('sales.upload.page');
     }
+
+    private function getPartyLedgerAutofillDetails($partyId, ?string $partyName): ?object
+    {
+        $partyName = trim((string) $partyName);
+
+        if ($partyName === '') {
+            return null;
+        }
+
+        $ledger = collect(Ledger::getAllCreditorsLedgers($partyId))
+            ->first(function ($ledger) use ($partyName) {
+                return strtolower(trim((string) $ledger->name)) === strtolower($partyName);
+            });
+
+        if (
+            !$ledger ||
+            empty($ledger->gst_no) ||
+            empty($ledger->pincode) ||
+            empty($ledger->address) ||
+            empty($ledger->state)
+        ) {
+            return null;
+        }
+
+        return $ledger;
+    }
+
+    private function applyPartyLedgerAutofill(array $data, ?object $partyLedger): array
+    {
+        if (!$partyLedger) {
+            return $data;
+        }
+
+        $data['gst_no'] = $data['gst_no'] ?: $partyLedger->gst_no;
+        $data['place_of_supply'] = $data['place_of_supply'] ?: $partyLedger->state;
+        $data['address'] = $data['address'] ?? $partyLedger->address;
+        $data['pincode'] = $data['pincode'] ?? $partyLedger->pincode;
+        $data['city'] = $data['city'] ?? ($partyLedger->city ?? null);
+
+        return $data;
+    }
+
     private function getSalesLedgerGstMappings($partyId): array
     {
         return DB::table('LedgerMaster')
@@ -697,6 +739,8 @@ class DebitNoteController extends Controller
                             : 0;
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
+                    $partyLedgerAutofill = $this->getPartyLedgerAutofillDetails($iPartyId, $first['party_name']);
+                    $first = $this->applyPartyLedgerAutofill($first, $partyLedgerAutofill);
                     $transaction = DebitNoteTransaction::create([
                         'iPartyId'        => $iPartyId,
                         'upload_id'       => $upload->id,
@@ -707,6 +751,9 @@ class DebitNoteController extends Controller
                         'gst_no'          => $first['gst_no'],
                         'party_name'      => $first['party_name'],
                         'place_of_supply' => $first['place_of_supply'],
+                        'address'         => $first['address'] ?? null,
+                        'pincode'         => $first['pincode'] ?? null,
+                        'city'            => $first['city'] ?? null,
 
                         'purchase_ledger' => $first['purchase_ledger'], // 🔥
                         'purchase_ledger_id'    => $purchaseLedger?->iLedgerId,
@@ -960,6 +1007,8 @@ class DebitNoteController extends Controller
                     $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
+                    $partyLedgerAutofill = $this->getPartyLedgerAutofillDetails($iPartyId, $first['party_name']);
+                    $first = $this->applyPartyLedgerAutofill($first, $partyLedgerAutofill);
 
                     $transaction = DebitNoteTransaction::create([
                         'iPartyId'        => $iPartyId,
@@ -973,6 +1022,9 @@ class DebitNoteController extends Controller
                         'gst_no'          => $first['gst_no'],
                         'party_name'      => $first['party_name'],
                         'place_of_supply' => $first['place_of_supply'],
+                        'address'         => $first['address'] ?? null,
+                        'pincode'         => $first['pincode'] ?? null,
+                        'city'            => $first['city'] ?? null,
 
                         'purchase_ledger'      => $first['purchase_ledger'],
                         'purchase_ledger_id'   => $purchaseLedger?->iLedgerId,
@@ -1544,6 +1596,7 @@ class DebitNoteController extends Controller
             // ===============================
             $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
+            
             $transaction->update([
                 'taxable_amount' => $sumAmount,
                 'cgst' => $sumCgst,
