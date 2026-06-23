@@ -268,7 +268,7 @@
             {{-- Left: Supplier --}}
             <div class="receipt-meta-block">
                 <div class="receipt-block-title"><i class="fa-solid fa-building text-blue-400 mr-1"></i> Supplier Details</div>
-                <div class="receipt-field-row" id="header_purchase_ledger_row">
+                <div class="receipt-field-row" id="header_party_row">
                     <label>Party Name</label>
                     <div style="display:flex; gap:6px; width:100%;">
                         <select id="edit_party" class="receipt-input party-select ledgerSelect" style="flex:1;">

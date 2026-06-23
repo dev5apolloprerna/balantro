@@ -425,7 +425,7 @@ class PurchaseUploadController extends Controller
             foreach ($sheet as $key => $row) {
                 if ($key === 0) continue;                 // skip header
                 if (empty(array_filter($row))) continue;  // skip blank rows
-                if (empty($row[0]) || empty($row[1]) || empty($row[3])) continue;
+                if (empty($row[0]) || empty($row[1])) continue; // if (empty($row[0]) || empty($row[1]) || empty($row[3])) continue;
 
                 
                 $invoiceNo = trim((string) $row[0]);
@@ -542,7 +542,14 @@ class PurchaseUploadController extends Controller
                         'history_date_value' => $this->historyDate($first['date']),
                         'year_value' => session('year'),
                     ]);
-                    if (!$hasValidGstSlab || $isDuplicateVoucher) {
+                    $hasRequiredDetails = $this->hasPurchaseRequiredDetails(
+                        $first['party_name'] ?? null,
+                        $items,
+                        [],
+                        $first['purchase_ledger'] ?? null
+                    );
+
+                    if (!$hasRequiredDetails || !$hasValidGstSlab || $isDuplicateVoucher) { 
                         $status = 'pending';
                     }
 
@@ -716,7 +723,7 @@ class PurchaseUploadController extends Controller
             foreach ($sheet as $key => $row) {
                 if ($key === 0) continue;
                 if (empty(array_filter($row))) continue;
-                if (empty($row[0]) || empty($row[1]) || empty($row[3])) continue;
+                if (empty($row[0]) || empty($row[1])) continue; // if (empty($row[0]) || empty($row[1]) || empty($row[3])) continue;
                 
                 
                 $invoiceNo = trim((string) $row[0]);
@@ -840,7 +847,13 @@ class PurchaseUploadController extends Controller
                         'history_date_value' => $this->historyDate($first['date']),
                         'year_value' => session('year'),
                     ]);
-                    $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
+                    $hasRequiredDetails = $this->hasPurchaseRequiredDetails(
+                        $first['party_name'] ?? null,
+                        [],
+                        $rows,
+                        $first['purchase_ledger'] ?? null
+                    );
+                    $status = (!$hasRequiredDetails || !$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved'; // $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
 
@@ -968,6 +981,19 @@ class PurchaseUploadController extends Controller
         return is_numeric($clean) ? (float) $clean : 0;
     }
 
+    private function hasPurchaseRequiredDetails(?string $partyName, array $items = [], array $noitemRows = [], ?string $purchaseLedger = null): bool
+    {
+        $hasParty = trim((string) $partyName) !== '';
+        $hasItem = collect($items)->contains(fn ($item) => trim((string) ($item['item_name'] ?? $item['item'] ?? '')) !== '');
+        $hasLedger = trim((string) $purchaseLedger) !== '' && trim((string) $purchaseLedger) !== 'Select Ledger';
+
+        if (!$hasLedger) {
+            $hasLedger = collect($noitemRows)->contains(fn ($row) => trim((string) ($row['ledger'] ?? '')) !== '');
+        }
+
+        return $hasParty && ($hasItem || $hasLedger);
+    }
+
     // SAVE PURCHASE
     public function save(Request $request)
     {
@@ -1008,14 +1034,24 @@ class PurchaseUploadController extends Controller
                 return response()->json(['status' => false, 'message' => 'Duplicate voucher combination is not allowed.']);
             }
             $uploadId = $row->upload_id;
+            $existingItems = PurchaseTransactionItem::where('transaction_id', $row->id)
+                ->get(['item_name'])
+                ->map(fn ($item) => ['item_name' => $item->item_name])
+                ->all();
+            $purchaseLedger = $row->purchase_ledger;
+            $rowStatus = $this->hasPurchaseRequiredDetails($partyName, $existingItems, [], $purchaseLedger)
+                ? 'saved'
+                : 'pending';
             $row->update([
                 'invoice_no' => $request->invoice_no[$id],
                 'date' => $request->date[$id],
                 //'party_name' => $request->party_name[$id] ?? $request->ledger[$id],
-                'party_name' => $request->party_name[$id]  ?: ($request->party_ledger[$id] ?? $request->ledger[$id]),
+                // 'party_name' => $request->party_name[$id]  ?: ($request->party_ledger[$id] ?? $request->ledger[$id]),
+                'party_name' => $partyName,
                 'place_of_supply' => $request->place_of_supply[$id],
                 'purchase_ledger' => $request->party_name[$id]  ?: ($request->party_ledger[$id] ?? $request->ledger[$id]),
-                'status' => 'saved',
+                //'status' => 'saved',
+                'status' => $rowStatus,
                 'vchType' => $request->voucher_type[$id]
             ]);
         }
@@ -1584,6 +1620,20 @@ class PurchaseUploadController extends Controller
             // =========================================================
             $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
+            $requestItems = $data['items'] ?? [];
+            $requestNoitemRows = $request->noitem_rows ?? [];
+            $canMarkSaved = $this->hasPurchaseRequiredDetails(
+                $request['party_name'] ?? null,
+                $requestItems,
+                $requestNoitemRows,
+                $purchase_ledger
+            );
+            $hasApplicableGstRates = $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
+                $requestItems,
+                $requestNoitemRows,
+                $request->custom_slots ?? [],
+                $request->gst_rate ?? null
+            ));
             $transaction->update([
                 'amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
@@ -1591,12 +1641,13 @@ class PurchaseUploadController extends Controller
                 'igst'         => $sumIgst,
                 // 'total_amount' => $sumAmount + $sumSgst + $sumCgst + $sumIgst,
                 'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status'       => $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
-                    $data['items'] ?? [],
-                    $request->noitem_rows ?? [],
-                    $request->custom_slots ?? [],
-                    $request->gst_rate ?? null
-                )) ? 'saved' : 'pending',
+                // 'status'       => $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
+                //     $data['items'] ?? [],
+                //     $request->noitem_rows ?? [],
+                //     $request->custom_slots ?? [],
+                //     $request->gst_rate ?? null
+                // )) ? 'saved' : 'pending',
+                'status'       => ($canMarkSaved && $hasApplicableGstRates) ? 'saved' : 'pending',
                 'roundoff_id'  => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),                

@@ -310,6 +310,7 @@
                     <label>Party Name</label>
                     <div style="display:flex; gap:6px; width:100%;">
                         <select id="edit_party" class="receipt-input party-select" style="flex:1;">
+                            <option value="">Select Party</option>
                             @foreach($ledgers as $ledger)
                                 <option value="{{ $ledger->name }}">{{ $ledger->name }}</option>
                             @endforeach
@@ -950,6 +951,21 @@ function applyPartyLedgerDetails(value) {
     }
 }
 
+function ensureSelectOption(selector, value, label = value) {
+    if (!value) {
+        return;
+    }
+
+    const select = $(selector);
+    const exists = select.find('option').filter(function () {
+        return normalizedLedgerName($(this).val()) === normalizedLedgerName(value);
+    }).length > 0;
+
+    if (!exists) {
+        select.append(new Option(label || value, value, true, true));
+    }
+}
+
 $(document).on('change', '#edit_party', function () {
     applyPartyLedgerDetails($(this).val());
 });
@@ -1002,7 +1018,9 @@ window.addEventListener('load', function () {
          // modal dropdown
         $('#edit_party').select2({
             dropdownParent: $('#editModal'),
-            width: '100%'
+            width: '100%',
+            placeholder: "Select Party",
+            allowClear: true
         });
     });
 
@@ -1021,7 +1039,9 @@ window.addEventListener('load', function () {
             if ($.fn.select2) {
                 $('#edit_party').select2({
                     dropdownParent: $('#editModal'),
-                    width: '100%'
+                    width: '100%',
+                    placeholder: "Select Party",
+                    allowClear: true
                 });
             }
         }, 200);
@@ -1275,6 +1295,7 @@ window.addEventListener('load', function () {
                 $('#edit_date').val(res.date);
                 $('#edit_gst').val(res.gst_no);
                 // $('#edit_party').val(res.party_name);
+                 ensureSelectOption('#edit_party', res.party_name);
                 $('#edit_party').val(res.party_name).trigger('change'); // 🔥 IMPORTANT
                 //$('#edit_place').val(res.place_of_supply);
                 $('#edit_place option').each(function () {
@@ -1445,6 +1466,7 @@ window.addEventListener('load', function () {
 
         //$('#edit_party').val(btn.data('party'));
         let party = btn.data('party');
+         ensureSelectOption('#edit_party', party);
         $('#edit_party').val(party).trigger('change'); // 🔥 IMPORTANT
         // $('#edit_place').val(btn.data('place'));
         let vch = btn.data('vchtype');
@@ -1715,6 +1737,7 @@ window.addEventListener('load', function () {
     // ── Save (Update) ────────────────────────────────────────────────────
     $('#updateRow').click(function () {
         let items = [];
+        let partyName = $('#edit_party').val();
 
         if ($('#no_item_section').is(':visible')) {
 
@@ -1775,10 +1798,19 @@ window.addEventListener('load', function () {
                 });
             });
         }
+        let noitemRows = collectNoItemRows();
+        let hasItem = items.some(item => (item.item_name || '').trim() !== '');
+        let hasNoItemLedger = noitemRows.some(row => String(row.ledger || '').trim() !== '');
+        let selectedPurchaseLedger = $('#noitem_purchase_ledger').val();
+
+        if (!partyName || (!hasItem && !hasNoItemLedger && !selectedPurchaseLedger)) {
+            showToast('Please select Party and at least one Item or Purchase Ledger before updating.', 'error');
+            return;
+        }
         console.log({
             gst_mode: $('#gst_calc_mode').val(),
             custom_slots: collectCustomSlots(),
-            noitem_rows: collectNoItemRows()
+            noitem_rows: noitemRows
         });
  
         $.ajax({
@@ -1791,7 +1823,8 @@ window.addEventListener('load', function () {
 
                 invoice_no: $('#edit_invoice').val(),
                 date: $('#edit_date').val(),
-                party_name: $('#edit_party').val(),
+                //party_name: $('#edit_party').val(),
+                party_name: partyName,
                 gst_no: $('#edit_gst').val(),
                 place_of_supply: $('#edit_place').val(),
                 //purchase_ledger: $('#edit_ledger').val(),
@@ -1823,7 +1856,7 @@ window.addEventListener('load', function () {
                 items: items,
                 entry_mode: $('#no_item_section').is(':visible') ? 'noitem' : 'item',
                 custom_slots: collectCustomSlots(),
-                noitem_rows: collectNoItemRows()
+                noitem_rows: noitemRows //noitem_rows: collectNoItemRows()
             },
             success: (res) => {
                 if (res.status) {

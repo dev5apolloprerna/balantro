@@ -1554,7 +1554,19 @@ class DebitNoteController extends Controller
                 'roundoff_id' => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status' => $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
+                // 'status' => $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
+                //     $data['items'] ?? [],
+                //     $request->noitem_rows ?? [],
+                //     $request->custom_slots ?? [],
+                //     $request->gst_rate ?? null
+                // )) ? 'saved' : 'Pending'
+                'status' => $this->canMarkDebitNoteSaved(
+                    $transaction,
+                    $request->party_name ?: $transaction->party_name,
+                    $ledger->name ?? $ledgerName,
+                    $data['items'] ?? [],
+                    $request->noitem_rows ?? []
+                ) && $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
                     $data['items'] ?? [],
                     $request->noitem_rows ?? [],
                     $request->custom_slots ?? [],
@@ -1740,6 +1752,30 @@ class DebitNoteController extends Controller
         ]);
     }
 
+    private function canMarkDebitNoteSaved(
+        DebitNoteTransaction $transaction,
+        ?string $partyName,
+        ?string $ledgerName = null,
+        array $items = [],
+        array $noItemRows = []
+    ): bool {
+        $hasParty = trim((string) $partyName) !== '';
+
+        $hasLedger = trim((string) ($ledgerName ?: $transaction->purchase_ledger_name ?: $transaction->purchase_ledger)) !== '';
+
+        $hasSubmittedItem = collect($items)->contains(function ($item) {
+            return trim((string) ($item['item_name'] ?? '')) !== '';
+        });
+
+        $hasExistingItem = DebitNoteTransactionItem::where('transaction_id', $transaction->id)->exists();
+
+        $hasNoItemLedger = collect($noItemRows)->contains(function ($row) {
+            return trim((string) ($row['ledger'] ?? $row['ledger_name'] ?? '')) !== '';
+        });
+
+        return $hasParty && ($hasLedger || $hasSubmittedItem || $hasExistingItem || $hasNoItemLedger);
+    }
+
     public function save(Request $request)
     {
         $iPartyId = session('iPartyId');
@@ -1763,16 +1799,16 @@ class DebitNoteController extends Controller
             // ===============================
             // PURCHASE LEDGER
             // ===============================
-            $ledgerName = $request->purchase_ledger_name[$id] ?? null;
+            $ledgerName = $request->purchase_ledger_name[$id] ?? ($request->ledger[$id] ?? null);
 
             $ledger = $ledgerName
                 ? Ledger::getLedgerByName($iPartyId, $ledgerName)
                 : null;
 
-            $voucherType = $request->vch_type[$id] ?? $row->vch_type;
-            $noteNo = $request->note_no[$id] ?? $row->note_no;
-            $partyName = $request->party_name[$id] ?: ($request->purchase_ledger_name[$id] ?? $row->party_name);
-            $date = $request->note_date[$id] ?? $row->note_date;
+            $voucherType = $request->vch_type[$id] ?? ($request->voucher_type[$id] ?? $row->vch_type);
+            $noteNo = $request->note_no[$id] ?? ($request->invoice_no[$id] ?? $row->note_no);
+            $partyName = $request->party_name[$id] ?? $row->party_name;
+            $date = $request->note_date[$id] ?? ($request->date[$id] ?? $row->note_date);
             if ($this->voucherCombinationExists('debit_note_transactions', [
                 'iPartyId' => $iPartyId,
                 'voucher_column' => 'vch_type',
@@ -1799,20 +1835,21 @@ class DebitNoteController extends Controller
             // UPDATE ROW
             // ===============================
             $row->update([
-                'note_no' => $request->note_no[$id] ?? $row->note_no,
-                'note_date' => $request->note_date[$id] ?? $row->note_date,
+                'note_no' => $request->note_no[$id] ?? ($request->invoice_no[$id] ?? $row->note_no),
+                'note_date' => $request->note_date[$id] ?? ($request->date[$id] ?? $row->note_date),
 
-                'party_name' => $request->party_name[$id]
-                    ?: ($request->purchase_ledger_name[$id] ?? $row->party_name),
+                'party_name' => $partyName,
 
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
 
                 'purchase_ledger_id' => $ledger->id ?? $row->purchase_ledger_id,
                 'purchase_ledger_name' => $ledger->name ?? $row->purchase_ledger_name,
 
-                'vch_type' => $request->vch_type[$id] ?? 'Debit Note',
-
-                'status' => 'saved'
+                'vch_type' => $voucherType ?: 'Debit Note',
+                // 'status' => 'saved'
+                'status' => $this->canMarkDebitNoteSaved($row, $partyName, $ledger->name ?? $ledgerName)
+                    ? 'saved'
+                    : 'Pending'
             ]);
         }
 

@@ -48,7 +48,12 @@
                                             <i class="fa-solid fa-building"></i>
                                             Select Client
                                         </button>
-
+                                        <button type="button"
+                                            onclick="bulkDelete()"
+                                            class="bulk-icon-btn px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap"
+                                            title="Delete selected uploads">
+                                            <i class="fa-solid fa-trash-can text-xs"></i>
+                                        </button>
                                         @if(session('guid'))
                                             <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800 shrink-0"
                                                 title="GST Settings">
@@ -106,7 +111,7 @@
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
                                     <th class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" id="selectAllUploads">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3">File Name</th>
@@ -126,7 +131,7 @@
                                 @foreach($uploads as $upload)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox">
+                                        <input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}">
                                     </td>
                                     <td class="px-4 py-3">{{ $loop->iteration }}</td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
@@ -485,5 +490,38 @@
                 location.reload();
             });
         }
+
+        // BULK DELETE
+        function bulkDelete() {
+            let ids = $('.rowCheckbox:checked').map(function() {
+                return this.value;
+            }).get();
+
+            if (ids.length === 0) {
+                showToast('Select at least one upload', 'error');
+                return;
+            }
+
+            if (!confirm('Delete selected uploads?')) return;
+
+            $.post("{{ route('purchase.bulk.delete') }}", {
+                _token: "{{ csrf_token() }}",
+                ids: ids
+            }, function(res) {
+                showToast(res.message,'success');
+                location.reload();
+            });
+        }
+
+        $(document).on('change', '#selectAllUploads', function() {
+            $('.rowCheckbox').prop('checked', this.checked);
+        });
+
+        $(document).on('change', '.rowCheckbox', function() {
+            $('#selectAllUploads').prop(
+                'checked',
+                $('.rowCheckbox').length > 0 && $('.rowCheckbox:checked').length === $('.rowCheckbox').length
+            );
+        });
     </script>
     @endsection
