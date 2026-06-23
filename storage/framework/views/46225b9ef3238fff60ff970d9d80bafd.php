@@ -1,7 +1,7 @@
-@extends('layouts.super_admin')
-@section('content')
 
-<div x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
+<?php $__env->startSection('content'); ?>
+
+<div x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }"
     x-init="openUpload = false">
 
     <div class="container mx-auto">
@@ -16,31 +16,33 @@
             <!-- TOP BAR -->
             <div class="p-4 bulk-toolbar-row flex items-center justify-between w-full gap-3 flex-nowrap border-b border-gray-200 dark:border-neutral-600">
 
-                @include('admin.transaction-processing.bulk-upload-tabs')
+                <?php echo $__env->make('admin.transaction-processing.bulk-upload-tabs', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
                 <div class="flex items-center gap-3">
 
-                    @if(session('client_name'))
+                    <?php if(session('client_name')): ?>
                     <div class="text-green-600 font-semibold" style="font-size: 1.0rem;font-variant-caps: small-caps;">
-                        {{ session('client_name') }}
+                        <?php echo e(session('client_name')); ?>
+
                     </div>
-                    @endif
+                    <?php endif; ?>
                     <!-- Divider -->        
                     <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                     <!-- Year Dropdown -->
-                    @if(!empty($years) && count($years))
+                    <?php if(!empty($years) && count($years)): ?>
                     <select
                         onchange="window.location.href=this.value"
                         class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
-                        @foreach($years as $key => $year)
+                        <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $year): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <option
-                            value="{{ route('sales.select.year', $year->strYear) }}"
-                            {{ session('year') == $year->strYear ? 'selected' : '' }}>
-                            {{ $year->strYear }}
+                            value="<?php echo e(route('sales.select.year', $year->strYear)); ?>"
+                            <?php echo e(session('year') == $year->strYear ? 'selected' : ''); ?>>
+                            <?php echo e($year->strYear); ?>
+
                         </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
-                    @endif
+                    <?php endif; ?>
                     <!-- Divider -->
                     <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
 
@@ -72,38 +74,40 @@
                     </thead>
 
                     <tbody class="divide-y text-gray-700 dark:text-gray-200">
-                        @foreach($uploads as $upload)
+                        <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
 
                             <td class="px-4 py-3"><input type="checkbox"></td>
 
-                            <td class="px-4 py-3">{{ $loop->iteration }}</td>
+                            <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
 
                             <td class="px-4 py-3 font-medium">
-                                {{ $upload->file_name }}
+                                <?php echo e($upload->file_name); ?>
+
                             </td>
 
-                            <td class="px-4 py-3">{{ $upload->total }}</td>
-                            <td class="px-4 py-3">{{ $upload->pending }}</td>
-                            <td class="px-4 py-3">{{ $upload->saved }}</td>
+                            <td class="px-4 py-3"><?php echo e($upload->total); ?></td>
+                            <td class="px-4 py-3"><?php echo e($upload->pending); ?></td>
+                            <td class="px-4 py-3"><?php echo e($upload->saved); ?></td>
 
                             <td class="px-4 py-3">
-                                <a href="{{ route('transaction_processing.preview_processing_journal',$upload->id) }}"
-                                    class="@if($upload->status=='completed') text-green-500
-                                      @elseif($upload->status=='processing') text-yellow-500
-                                      @else text-blue-500 @endif font-semibold">
-                                    {{ ucfirst($upload->status) }}
+                                <a href="<?php echo e(route('transaction_processing.preview_processing_journal',$upload->id)); ?>"
+                                    class="<?php if($upload->status=='completed'): ?> text-green-500
+                                      <?php elseif($upload->status=='processing'): ?> text-yellow-500
+                                      <?php else: ?> text-blue-500 <?php endif; ?> font-semibold">
+                                    <?php echo e(ucfirst($upload->status)); ?>
+
                                 </a>
                             </td>
 
                             <td class="px-4 py-3 text-right">
-                                <a href="{{ route('transaction_processing.preview_processing_journal',$upload->id) }}">
+                                <a href="<?php echo e(route('transaction_processing.preview_processing_journal',$upload->id)); ?>">
                                     <i class="fa-regular fa-eye action-icon text-gray-500"></i>
                                 </a>
                                 <div x-data="{ open:false }" class="relative inline-block">
 
                                     <!-- Button -->
-                                    <button onclick="openDropdown(event, {{ $upload->id }})"
+                                    <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                         class="text-gray-500 hover:text-gray-700 px-2">
                                         <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                     </button>
@@ -130,7 +134,7 @@
                             </td>
 
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
 
                 </table>
@@ -157,7 +161,7 @@
 
             <!-- FORM -->
             <form id="uploadForm" enctype="multipart/form-data">
-                @csrf
+                <?php echo csrf_field(); ?>
 
                 <div class="p-6">
 
@@ -277,9 +281,9 @@
         /* 🔥 IMPORTANT FIX */
     }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 
 <script>
     // ✅ SHOW FILE NAME
@@ -310,7 +314,7 @@
         $('#uploadLoader').removeClass('hidden');
 
         $.ajax({
-            url: "{{ route('journal.upload') }}",
+            url: "<?php echo e(route('journal.upload')); ?>",
             type: "POST",
             data: formData,
             processData: false,
@@ -374,8 +378,8 @@
 
     // STATUS
     function handleStatus(status) {
-        $.post("{{ route('journal.upload.status') }}", {
-            _token: "{{ csrf_token() }}",
+        $.post("<?php echo e(route('journal.upload.status')); ?>", {
+            _token: "<?php echo e(csrf_token()); ?>",
             id: currentId,
             status: status
         }, function(res) {
@@ -389,8 +393,8 @@
 
         if (!confirm('Delete full upload?')) return;
 
-        $.post("{{ route('journal.bulk.delete') }}", {
-            _token: "{{ csrf_token() }}",
+        $.post("<?php echo e(route('journal.bulk.delete')); ?>", {
+            _token: "<?php echo e(csrf_token()); ?>",
             ids: [currentId]
         }, function(res) {
             showToast(res.message,'success');
@@ -412,8 +416,8 @@
 
         if (!confirm('Delete selected?')) return;
 
-        $.post("{{ route('journal.bulk.delete') }}", {
-            _token: "{{ csrf_token() }}",
+        $.post("<?php echo e(route('journal.bulk.delete')); ?>", {
+            _token: "<?php echo e(csrf_token()); ?>",
             ids: ids
         }, function(res) {
             showToast(res.message,'success');
@@ -422,4 +426,6 @@
     }
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/journal/index.blade.php ENDPATH**/ ?>

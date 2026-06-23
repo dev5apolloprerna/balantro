@@ -1,4 +1,5 @@
-<div class="bulk-upload-tabs flex items-center bg-gray-200 dark:bg-neutral-900 rounded-lg p-1 w-fit">
+<div class="bulk-upload-tabs flex items-center shrink-0 flex-nowrap bg-gray-200 dark:bg-neutral-900 rounded-lg p-1 w-fit">
+    
     <!-- Sales -->
     <a href="{{ route('transaction_processing.processing_sales') }}"
         class="px-3 px-3 py-1.5 text-xs font-medium rounded-md transition whitespace-nowrap

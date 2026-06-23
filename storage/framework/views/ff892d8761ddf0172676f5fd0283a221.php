@@ -1,11 +1,11 @@
-@extends('layouts.super_admin')
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div data-controller="confirm-delete"
-    x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
+    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }"
     x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold mb-0 dark:text-white">{{ __("Debit Notes") }}</h6>
+            <h6 class="font-semibold mb-0 dark:text-white"><?php echo e(__("Debit Notes")); ?></h6>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-12">
@@ -16,30 +16,32 @@
                             <div class="flex flex-col sm:flex-row gap-3 w-full">
                                 <div class="bulk-toolbar-row flex items-center justify-between w-full gap-3 flex-nowrap">
                                     <!-- Left Side Tabs -->
-                                    @include('admin.transaction-processing.bulk-upload-tabs')
+                                    <?php echo $__env->make('admin.transaction-processing.bulk-upload-tabs', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
                                     <!-- Right Side Actions -->
                                     <div class="bulk-toolbar-actions flex items-center justify-end gap-2 mt-0 w-full flex-nowrap">
-                                        @if(session('client_name'))
+                                        <?php if(session('client_name')): ?>
                                         <div class="bulk-client-name text-sm text-green-600 font-semibold whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
-                                            {{ session('client_name') }}
+                                            <?php echo e(session('client_name')); ?>
+
                                         </div>
-                                        @endif
+                                        <?php endif; ?>
                                         <!-- Divider -->
                                         <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                                         <!-- Year Dropdown -->
-                                        @if(!empty($years) && count($years))
+                                        <?php if(!empty($years) && count($years)): ?>
                                         <select
                                             onchange="window.location.href=this.value"
                                             class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
-                                            @foreach($years as $key => $year)
+                                            <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $year): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                             <option
-                                                value="{{ route('sales.select.year', $year->strYear) }}"
-                                                {{ session('year') == $year->strYear ? 'selected' : '' }}>
-                                                {{ $year->strYear }}
+                                                value="<?php echo e(route('sales.select.year', $year->strYear)); ?>"
+                                                <?php echo e(session('year') == $year->strYear ? 'selected' : ''); ?>>
+                                                <?php echo e($year->strYear); ?>
+
                                             </option>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
-                                        @endif
+                                        <?php endif; ?>
                                         <!-- Divider -->
                                         <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                                         <!-- Select Client -->
@@ -50,8 +52,8 @@
                                             Select Client
                                         </button>
 
-                                        @if(session('guid'))
-                                            <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800 shrink-0" 
+                                        <?php if(session('guid')): ?>
+                                            <a href="<?php echo e(route('clients.Gstindex', session('guid'))); ?>" class="bulk-settings-btn rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800 shrink-0" 
                                                 title="GST Settings">
 
                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -95,7 +97,7 @@
 
                                                 </svg>
                                             </a>
-                                            @endif
+                                            <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -124,61 +126,69 @@
                             </thead>
                             <!-- Table Body -->
                             <tbody class="divide-y">
-                                @foreach($uploads as $upload)
+                                <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
                                         <input type="checkbox">
                                     </td>
-                                    <td class="px-4 py-3">{{ $loop->iteration }}</td>
+                                    <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200">
-                                        {{ $upload->file_name }}
+                                        <?php echo e($upload->file_name); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ ucfirst(str_replace('_',' ',$upload->type)) }}
+                                        <?php echo e(ucfirst(str_replace('_',' ',$upload->type))); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->statement_date ?? '-' }}
+                                        <?php echo e($upload->statement_date ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->synced_date ?? '-' }}
+                                        <?php echo e($upload->synced_date ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->total ?? '-' }}
+                                        <?php echo e($upload->total ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->pending ?? '-' }}
+                                        <?php echo e($upload->pending ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->saved ?? '-' }}
+                                        <?php echo e($upload->saved ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->synced ?? '-' }}
+                                        <?php echo e($upload->synced ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        @if($upload->status == 'Completed')
-                                        <a href="{{ route('transaction_processing.preview_processing_debit_note',$upload->id) }}"
+                                        <?php if($upload->status == 'Completed'): ?>
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_debit_note',$upload->id)); ?>"
                                             class="text-green-500 font-semibold hover:underline">
                                             Completed
                                         </a>
-                                        @elseif($upload->status == 'Processing')
-                                        <a href="{{ route('transaction_processing.preview_processing_debit_note',$upload->id) }}"
+                                        <?php elseif($upload->status == 'Processing'): ?>
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_debit_note',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Processing
                                         </a>
-                                        @elseif($upload->status == 'Pending')
-                                        <a href="{{ route('transaction_processing.preview_processing_purchase',$upload->id) }}"
+                                        <?php elseif($upload->status == 'Pending'): ?>
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_purchase',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Pending
                                         </a>
-                                        @else
-                                        <a href="{{ route('transaction_processing.preview_processing_debit_note',$upload->id) }}"
+                                        <?php else: ?>
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_debit_note',$upload->id)); ?>"
                                             class="text-red-500 font-semibold hover:underline">
                                             Failed
                                         </a>
-                                        @endif
+                                        <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
-                                        <a href="{{ route('transaction_processing.preview_processing_debit_note',$upload->id) }}">
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_debit_note',$upload->id)); ?>">
                                             <i class="fa-regular fa-eye  action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
                                         <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i>
@@ -186,7 +196,7 @@
                                         <div x-data="{ open:false }" class="relative inline-block">
 
                                             <!-- Button -->
-                                            <button onclick="openDropdown(event, {{ $upload->id }})"
+                                            <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                                 class="text-gray-500 hover:text-gray-700 px-2">
                                                 <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                             </button>
@@ -212,7 +222,7 @@
                                         </div>
                                     </td>
                                 </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
@@ -237,8 +247,8 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <form method="POST" action="{{ route('purchase.upload') }}" enctype="multipart/form-data">
-                @csrf
+            <form method="POST" action="<?php echo e(route('purchase.upload')); ?>" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
                 <!-- Body -->
                 <div class="p-6">
                     <!-- Upload Area -->
@@ -343,9 +353,9 @@
             </div>
             <!-- Client List -->
             <div class="flex-1 min-h-0 overflow-y-auto">
-                @foreach($clients as $client)
+                <?php $__currentLoopData = $clients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <a
-                    href="{{ route('sales.select.company',$client->id) }}"
+                    href="<?php echo e(route('sales.select.company',$client->id)); ?>"
                     class="flex items-center justify-between px-4 py-3 border-b hover:bg-gray-100 dark:hover:bg-neutral-700 client-item">
                     <div class="flex items-center gap-3">
                         <div class="bg-gray-200 dark:bg-neutral-700 p-2 rounded">
@@ -353,15 +363,17 @@
                         </div>
                         <div>
                             <div class="font-medium">
-                                {{ $client->name }}
+                                <?php echo e($client->name); ?>
+
                             </div>
                             <div class="text-xs text-gray-500">
-                                {{ $client->code ?? '' }}
+                                <?php echo e($client->code ?? ''); ?>
+
                             </div>
                         </div>
                     </div>
                 </a>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
     </div>
@@ -401,8 +413,8 @@
             /* 🔥 IMPORTANT FIX */
         }
     </style>
-    @endsection
-    @section('scripts')
+    <?php $__env->stopSection(); ?>
+    <?php $__env->startSection('scripts'); ?>
     <script>
         function showFileName(event) {
             const file = event.target.files[0];
@@ -462,8 +474,8 @@
 
         // STATUS
         function handleStatus(status) {
-            $.post("{{ route('dn.upload.status') }}", {
-                _token: "{{ csrf_token() }}",
+            $.post("<?php echo e(route('dn.upload.status')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
                 id: currentId,
                 status: status
             }, function(res) {
@@ -477,8 +489,8 @@
 
             if (!confirm('Delete full upload?')) return;
 
-            $.post("{{ route('dn.bulk.delete') }}", {
-                _token: "{{ csrf_token() }}",
+            $.post("<?php echo e(route('dn.bulk.delete')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
                 ids: [currentId]
             }, function(res) {
                 showToast(res.message,'success');
@@ -500,8 +512,8 @@
 
             if (!confirm('Delete selected?')) return;
 
-            $.post("{{ route('dn.bulk.delete') }}", {
-                _token: "{{ csrf_token() }}",
+            $.post("<?php echo e(route('dn.bulk.delete')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
                 ids: ids
             }, function(res) {
                 showToast(res.message,'success');
@@ -509,4 +521,6 @@
             });
         }
     </script>
-    @endsection
+    <?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/debit_note/index.blade.php ENDPATH**/ ?>

@@ -1,5 +1,5 @@
-<div class="bulk-upload-tabs flex items-center gap-1 border border-gray-200 dark:border-neutral-600 rounded-md px-1 py-1 bg-white dark:bg-neutral-800">
-    
+<div class="bulk-upload-tabs flex items-center shrink-0 flex-nowrap gap-1 border border-gray-200 dark:border-neutral-600 rounded-md px-1 py-1 bg-white dark:bg-neutral-800">
+
     <a href="<?php echo e(route('data_entry_operators.bulkuploadsales')); ?>"
         class="px-3 py-1.5 text-xs font-medium rounded-md transition whitespace-nowrap
         <?php echo e(request()->routeIs('data_entry_operators.bulkuploadsales') 

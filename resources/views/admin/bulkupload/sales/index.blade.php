@@ -14,18 +14,18 @@
                     <div class="card-header border-b border-neutral-200 dark:border-neutral-600 bg-white dark:bg-neutral-700 p-2 sm:p-3">
                         <div class="flex flex-col gap-3">
                             <div class="flex flex-col sm:flex-row gap-3 w-full">
-                                <div class="bulk-toolbar-row">
+                                <div class="bulk-toolbar-row flex items-center justify-between w-full gap-3 flex-nowrap">
                                     <!-- Left Side Tabs -->
                                     @include('admin.bulkupload.bulk-upload-tabs')
                                     <!-- Right Side Actions -->
-                                    <div class="bulk-toolbar-actions">
+                                    <div class="bulk-toolbar-actions flex items-center justify-end gap-2 mt-0 w-full flex-nowrap">
 
                                         <!-- LEFT GROUP (Client + Dropdown) -->
-                                        <div class="bulk-meta-group bg-gray-100 dark:bg-neutral-700 rounded-md">
+                                        <div class="bulk-meta-group flex items-center gap-2 bg-gray-100 dark:bg-neutral-700 px-3 py-2 rounded-md min-w-0">
 
                                             <!-- Client Name -->
                                             @if(session('client_name'))
-                                            <span class="bulk-client-name text-xs font-semibold text-green-600 whitespace-nowrap" style="font-variant-caps: small-caps;">
+                                            <span class="bulk-client-name text-xs font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
                                                 {{ session('client_name') }}
                                             </span>
                                             @endif
@@ -66,7 +66,7 @@
                                             <!-- Client -->
                                             <button
                                                 @click="openClient=true"
-                                                class="bulk-text-btn text-xs border rounded-md hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-1">
+                                                class="bulk-text-btn px-3 py-2 text-xs border rounded-md hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-1 whitespace-nowrap">
                                                 <i class="fa-solid fa-building text-xs"></i>
                                                 Client
                                             </button>
@@ -74,25 +74,25 @@
                                             <!-- Upload -->
                                             <button
                                                 @click="{{ session('iPartyId') ? 'openUpload = true' : 'openClient = true' }}"
-                                                class="bulk-text-btn text-xs border rounded-md hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-1">
+                                                class="bulk-text-btn px-3 py-2 text-xs border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 flex items-center gap-1 whitespace-nowrap">
                                                 <i class="fa-solid fa-upload text-xs"></i>
                                                 Upload
                                             </button>
 
                                             <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
-                                                class="bulk-icon-btn text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                class="bulk-icon-btn px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap">
                                                 <i class="fa-solid fa-trash text-xs"></i>
                                                 
                                             </button>
 
                                             <!-- Primary Action -->
                                             <button id="addEntryBtn"
-                                                class="bulk-text-btn text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm">
+                                                 class="bulk-text-btn px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap">
                                                 <i class="fa-solid fa-plus text-xs"></i>
                                                 Add
                                             </button>
                                             @if(session('guid'))
-                                            <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800"
+                                            <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800 shrink-0"
                                                 title="GST Settings">
 
                                                 <svg xmlns="http://www.w3.org/2000/svg"

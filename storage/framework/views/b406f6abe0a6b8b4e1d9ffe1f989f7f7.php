@@ -1,25 +1,13 @@
-@extends('layouts.super_admin')
-@section('content')
 
-@if(session('success'))
-<div class="bg-green-100 text-green-800 px-4 py-3 rounded mb-4">
-    {{ session('success') }}
-</div>
-@endif
-
-@if(session('error'))
-<div class="bg-red-100 text-red-800 px-4 py-3 rounded mb-4">
-    {{ session('error') }}
-</div>
-@endif
+<?php $__env->startSection('content'); ?>
 <div data-controller="confirm-delete"
-    x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
+    x-data="{ openUpload:false, openClient: <?php echo e(session('iPartyId') ? 'false' : 'true'); ?> }"
     x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold mb-0 dark:text-white">{{ __("Bank") }}</h6>
+            <h6 class="font-semibold mb-0 dark:text-white"><?php echo e(__("Purchase")); ?></h6>
         </div>
-
+        
         <div class="grid grid-cols-1 lg:grid-cols-12">
             <div class="col-span-12">
                 <div class="card !border-0 rounded-lg overflow-hidden bg-white dark:bg-neutral-800">
@@ -28,82 +16,45 @@
                             <div class="flex flex-col sm:flex-row gap-3 w-full">
                                 <div class="bulk-toolbar-row flex items-center justify-between w-full gap-3 flex-nowrap">
                                     <!-- Left Side Tabs -->
-                                    @include('admin.bulkupload.bulk-upload-tabs')
+                                    <?php echo $__env->make('admin.transaction-processing.bulk-upload-tabs', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
                                     <!-- Right Side Actions -->
-                                    <div class="bulk-toolbar-actions flex items-center justify-end gap-2 mt-0 w-full flex-nowrap">
-
-                                        <!-- LEFT GROUP (Client + Dropdown) -->
-                                        <div class="bulk-meta-group flex items-center gap-2 bg-gray-100 dark:bg-neutral-700 px-3 py-2 rounded-md min-w-0">
-
-                                            <!-- Client Name -->
-                                            @if(session('client_name'))
-                                            <span class="bulk-client-name text-xs font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
-                                                {{ session('client_name') }}
-                                            </span>
-                                            @endif
-                                            <!-- Divider -->
-                                            <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
-                                            <!-- Year Dropdown -->
-                                            @if(!empty($years) && count($years))
-                                            <select
-                                                onchange="window.location.href=this.value"
-                                                class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
-                                                <option value="">Select Year</option>
-                                                @foreach($years as $key => $year)
-                                                <option
-                                                    value="{{ route('sales.select.year', $year->strYear) }}"
-                                                    {{ session('year') == $year->strYear || (!session('year') && $key == 0) ? 'selected' : '' }}>
-                                                    {{ $year->strYear }}
-                                                </option>
-                                                @endforeach
-                                            </select>
-                                            @endif
-
-                                            <!-- Divider -->
-                                            <!-- <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div> -->
-
-                                            <!-- Sample Dropdown -->
-                                            <!-- <select id="sampleDownload"
-                                                class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
-                                                <option value="">Select Sample</option>
-                                                <option value="with-item">With Item</option>
-                                                <option value="without-item">Without Item</option>
-                                            </select> -->
+                                     <div class="bulk-toolbar-actions flex items-center justify-end gap-2 mt-0 w-full flex-nowrap">
+                                        <?php if(session('client_name')): ?>
+                                        <div class="bulk-client-name text-sm text-green-600 font-semibold whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
+                                            <?php echo e(session('client_name')); ?>
 
                                         </div>
+                                        <?php endif; ?>
+                                        <!-- Divider -->
+                                        <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
+                                        <!-- Year Dropdown -->
+                                        <?php if(!empty($years) && count($years)): ?>
+                                        <select
+                                            onchange="window.location.href=this.value"
+                                            class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
+                                            <?php $__currentLoopData = $years; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $year): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option
+                                                value="<?php echo e(route('sales.select.year', $year->strYear)); ?>"
+                                                <?php echo e(session('year') == $year->strYear ? 'selected' : ''); ?>>
+                                                <?php echo e($year->strYear); ?>
 
-                                        <!-- RIGHT GROUP (Actions) -->
-                                        <div class="flex items-center gap-1.5 shrink-0">
+                                            </option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </select>
+                                        <?php endif; ?>
+                                        <!-- Divider -->
+                                        <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
 
-                                            <!-- Client -->
-                                            <button
-                                                @click="openClient=true"
-                                                class="bulk-text-btn px-3 py-2 text-xs border rounded-md hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-1 whitespace-nowrap">
-                                                <i class="fa-solid fa-building text-xs"></i>
-                                                Client
-                                            </button>
+                                        <!-- Select Client -->
+                                        <button
+                                            @click="openClient=true"
+                                            class="bulk-text-btn bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md flex items-center gap-2 shadow-sm whitespace-nowrap">
+                                            <i class="fa-solid fa-building"></i>
+                                            Select Client
+                                        </button>
 
-                                            <!-- Upload -->
-                                            <button
-                                                @click="{{ session('iPartyId') ? 'openUpload = true' : 'openClient = true' }}"
-                                                class="bulk-text-btn px-3 py-2 text-xs border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 flex items-center gap-1 whitespace-nowrap">
-                                                <i class="fa-solid fa-upload text-xs"></i>
-                                                Upload
-                                            </button>
-                                            <button id="bulkDeleteBtn" title="Delete Selected" type="button" onclick="bulkDeleteUploads()"
-                                                class="bulk-icon-btn px-3 py-2.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap">
-                                                <i class="fa-solid fa-trash text-xs"></i>
-                                            </button>
-
-                                            <!-- Primary Action -->
-                                            <!-- <button id="addEntryBtn"
-                                                 class="bulk-text-btn px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap">
-                                                <i class="fa-solid fa-plus text-xs"></i>
-                                                Entry
-                                            </button> -->
-
-                                            @if(session('guid'))
-                                            <a href="{{ route('clients.Gstindex', session('guid')) }}" class="bulk-settings-btn rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800 shrink-0"
+                                        <?php if(session('guid')): ?>
+                                            <a href="<?php echo e(route('clients.Gstindex', session('guid'))); ?>" class="bulk-settings-btn rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800 shrink-0" 
                                                 title="GST Settings">
 
                                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -147,22 +98,19 @@
 
                                                 </svg>
                                             </a>
-                                            @endif
-
-                                        </div>
-
+                                            <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="w-full">
-                        <table id="bankTable" class="w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200">
+                    <div class="overflow-x-auto">
+                        <table id="bankTable" class="min-w-full text-sm text-left text-gray-600 dark:text-gray-200">
                             <!-- Table Header -->
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
                                     <th class="px-4 py-3">
-                                        <input type="checkbox" id="selectAllUploads">
+                                        <input type="checkbox">
                                     </th>
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3 w-[250px]">File Name</th>
@@ -179,71 +127,82 @@
                             </thead>
                             <!-- Table Body -->
                             <tbody class="divide-y">
-                                @foreach($uploads as $upload)
+                                <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                                     <td class="px-4 py-3">
-                                        <input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}">
+                                        <input type="checkbox">
                                     </td>
-                                    <td class="px-4 py-3">{{ $loop->iteration }}</td>
+                                    <td class="px-4 py-3"><?php echo e($loop->iteration); ?></td>
                                     <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-200 w-[250px] truncate">
-                                        {{ $upload->file_name }}
+                                        <?php echo e($upload->file_name); ?>
+
                                     </td>
                                     <!-- <td class="px-4 py-3">
-                                        {{ ucfirst(str_replace('_',' ',$upload->type)) }}
+                                        <?php echo e(ucfirst(str_replace('_',' ',$upload->type))); ?>
+
                                     </td> -->
                                     <td class="px-4 py-3">
-                                        {{ $upload->statement_date ?? '-' }}
+                                        <?php echo e($upload->statement_date ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->synced_date ?? '-' }}
+                                        <?php echo e($upload->synced_date ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->total ?? '-' }}
+                                        <?php echo e($upload->total ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->pending ?? '-' }}
+                                        <?php echo e($upload->pending ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->saved ?? '-' }}
+                                        <?php echo e($upload->saved ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        {{ $upload->synced ?? '-' }}
+                                        <?php echo e($upload->synced ?? '-'); ?>
+
                                     </td>
                                     <td class="px-4 py-3">
-                                        @if($upload->status == 'Completed')
-                                        <a href="{{ route('bank.preview',$upload->id) }}"
+                                        <?php if($upload->status == 'Completed'): ?>
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>"
                                             class="text-green-500 font-semibold hover:underline">
                                             Completed
                                         </a>
-                                        @elseif($upload->status == 'Processing')
-                                        <a href="{{ route('bank.preview',$upload->id) }}"
+                                        <?php elseif($upload->status == 'Processing'): ?>
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Processing
                                         </a>
-                                        @elseif($upload->status == 'Pending')
-                                        <a href="{{ route('bank.preview',$upload->id) }}"
+                                        <?php elseif($upload->status == 'Pending'): ?>
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>"
                                             class="text-yellow-500 font-semibold hover:underline">
                                             Pending
                                         </a>
-                                        @else
-                                        <a href="{{ route('bank.preview',$upload->id) }}"
+                                        <?php else: ?>
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>"
                                             class="text-red-500 font-semibold hover:underline">
                                             Failed
                                         </a>
-                                        @endif
+                                        <?php endif; ?>
                                     </td>
-                                    <td class="px-4 py-3 text-right w-[120px] flex justify-end gap-3">
-                                        <a href="{{ route('bank.preview',$upload->id) }}">
+                                    <td class="px-4 py-3 text-right flex justify-end gap-4">
+                                        <a href="<?php echo e(route('transaction_processing.preview_processing_bank',$upload->id)); ?>">
                                             <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
-                                        <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i> -->
+                                        <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i>
+                                        <i class="fa-solid fa-ellipsis-vertical text-gray-500 cursor-pointer"></i> -->
                                         <div x-data="{ open:false }" class="relative inline-block">
 
                                             <!-- Button -->
-                                            <button onclick="openDropdown(event, {{ $upload->id }})"
+                                            <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                                 class="text-gray-500 hover:text-gray-700 px-2">
                                                 <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                             </button>
+
+                                            <!-- Dropdown -->
                                             <div id="globalDropdown"
                                                 class="hidden fixed bg-white dark:bg-neutral-800 border rounded-xl shadow-xl w-48 z-[99999]">
 
@@ -262,10 +221,9 @@
                                                 </button>
                                             </div>
                                         </div>
-
                                     </td>
                                 </tr>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </tbody>
                         </table>
                     </div>
@@ -282,63 +240,42 @@
         style="display: none;"
         data-upload-modal
         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-
         <div class="bg-white dark:bg-neutral-800 w-[650px] rounded-lg shadow-xl">
-
             <!-- HEADER -->
             <div class="flex justify-between items-center border-b px-5 py-4">
-
                 <h2 class="text-lg font-semibold">
                     Upload Banking
                 </h2>
-
                 <button @click="openUpload=false">
                     <i class="fa-solid fa-xmark text-gray-500"></i>
                 </button>
-
             </div>
-
-            <form method="POST" action="{{ route('bank.upload') }}" enctype="multipart/form-data">
-                @csrf
-
+            <form method="POST" action="<?php echo e(route('bank.upload')); ?>" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
                 <div class="p-6 space-y-5">
-
                     <!-- SELECT BANK -->
-
                     <div>
-
                         <label class="text-sm font-medium text-gray-600">
                             Select Bank
                         </label>
-
                         <select
                             name="bank_name"
                             class="w-full mt-1 border rounded-md px-3 py-2 text-sm">
-
                             <option value="">Search to Select</option>
+                            <?php $__currentLoopData = $banks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $bank): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($bank->name); ?>">
+                                <?php echo e($bank->name); ?>
 
-                            @foreach($banks as $bank)
-
-                            <option value="{{$bank->name}}">
-                                {{$bank->name}}
                             </option>
-
-                            @endforeach
-
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
-
                     </div>
-
-
                     <!-- DRAG DROP AREA -->
-
                     <div
                         class="border-2 border-dashed border-blue-400 rounded-lg p-10 text-center bg-gray-50 dark:bg-neutral-900">
-
                         <p class="text-gray-600 mb-3">
                             Drag and drop a file here or
                         </p>
-
                         <input
                             type="file"
                             name="bank_file"
@@ -346,116 +283,67 @@
                             class="hidden"
                             accept=".xlsx,.xls,.csv"
                             onchange="showFileName(this)">
-
                         <button
                             type="button"
                             onclick="document.getElementById('bankFileUpload').click()"
                             class="border border-blue-500 text-blue-600 px-4 py-2 rounded-md text-sm">
-
                             Click to upload
-
                         </button>
-
                     </div>
-
-
                     <!-- FILE NAME -->
-
                     <div id="uploadedFileName" class="text-sm text-gray-500 hidden">
-
                         <i class="fa-solid fa-paperclip"></i>
                         <span id="fileNameText"></span>
-
                     </div>
-
-
                     <!-- NOTES -->
-
                     <div class="mt-6 text-sm">
-
                         <p class="font-semibold mb-2 text-gray-300">
                             Notes:
                         </p>
-
                         <div class="grid grid-cols-2 gap-3 text-xs">
-
                             <div class="border border-neutral-600 rounded-md p-3 bg-gray-100 text-gray-700 dark:bg-neutral-700 dark:text-gray-200">
-
                                 ❌ Please don't upload Passbook, Share Market statement and Loan statement.
-
                             </div>
-
                             <div class="border border-neutral-600 rounded-md p-3 bg-gray-100 text-gray-700 dark:bg-neutral-700 dark:text-gray-200">
-
                                 ❌ Please don't upload password protected, RTP or TEXT format files.
-
                             </div>
-
                         </div>
-
                     </div>
-
-
                     <!-- FILE TYPES -->
-
                     <div class="grid grid-cols-3 gap-3 text-center text-sm">
-
                         <div class="border rounded-md p-3">
-
                             📊 Excel
                             <br>
                             <span class="text-xs text-gray-500">Upto 30 min</span>
-
                         </div>
-
                         <!-- <div class="border rounded-md p-3">
-
                             📄 Original PDF
                             <br>
                             <span class="text-xs text-gray-500">Upto 1 Hour</span>
-
                         </div>
-
                         <div class="border rounded-md p-3">
-
                             🖨 Scanned PDF
                             <br>
                             <span class="text-xs text-gray-500">Upto 12 Hours</span>
-
                         </div> -->
-
                     </div>
-
                 </div>
-
-
                 <!-- FOOTER -->
-
                 <div class="flex justify-end gap-3 border-t px-5 py-4">
-
                     <button
                         type="button"
                         @click="openUpload=false"
                         class="px-4 py-2 border rounded-md">
-
                         Cancel
-
                     </button>
-
                     <button
                         type="submit"
                         class="px-4 py-2 bg-blue-600 text-white rounded-md">
-
                         Upload
-
                     </button>
-
                 </div>
-
             </form>
-
         </div>
-
     </div>
 
     <!-- CLIENT DRAWER -->
@@ -470,78 +358,55 @@
         x-transition:leave-start="translate-x-0"
         x-transition:leave-end="translate-x-full"
         class="fixed inset-0 z-50 flex justify-end">
-
         <!-- Background -->
         <div
             class="absolute inset-0 bg-black/50"
             @click="openClient=false">
         </div>
-
         <!-- Drawer -->
         <div class="relative w-[420px] h-full bg-white dark:bg-neutral-800 shadow-xl flex flex-col">
-
             <!-- Header -->
             <div class="flex justify-between items-center px-5 py-4 border-b">
-
                 <h2 class="text-lg font-semibold">
                     My Company
                 </h2>
-
                 <button @click="openClient=false">
                     <i class="fa-solid fa-xmark text-gray-500"></i>
                 </button>
-
             </div>
-
             <!-- Search -->
             <div class="p-4 border-b">
-
                 <input
                     type="text"
                     id="clientSearch"
                     placeholder="Search by Name"
                     class="w-full border px-3 py-2 rounded-md">
-
             </div>
-
             <!-- Client List -->
-            <!-- <div class="overflow-y-auto h-[calc(100%-120px)]"> -->
             <div class="flex-1 min-h-0 overflow-y-auto">
-
-                @foreach($clients as $client)
-
+                <?php $__currentLoopData = $clients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <a
-                    href="{{ route('sales.select.company',$client->id) }}"
+                    href="<?php echo e(route('sales.select.company',$client->id)); ?>"
                     class="flex items-center justify-between px-4 py-3 border-b hover:bg-gray-100 dark:hover:bg-neutral-700 client-item">
-
                     <div class="flex items-center gap-3">
-
                         <div class="bg-gray-200 dark:bg-neutral-700 p-2 rounded">
                             <i class="fa-solid fa-building text-gray-600"></i>
                         </div>
-
                         <div>
-
                             <div class="font-medium">
-                                {{ $client->name }}
-                            </div>
+                                <?php echo e($client->name); ?>
 
+                            </div>
                             <div class="text-xs text-gray-500">
-                                {{ $client->code ?? '' }}
+                                <?php echo e($client->code ?? ''); ?>
+
                             </div>
-
                         </div>
-
                     </div>
-
                 </a>
-
-                @endforeach
-
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
-
         </div>
-
     </div>
 
     <style>
@@ -584,42 +449,15 @@
             overflow: hidden;
             /* 🔥 IMPORTANT FIX */
         }
-
-        .card-header {
-            backdrop-filter: blur(6px);
-        }
-
-        button {
-            transition: all 0.2s ease;
-        }
-        .card-header select {
-            cursor: pointer;
-        }
-
-        .card-header button {
-            white-space: nowrap;
-        }
-        .card-header a {
-            letter-spacing: 0.3px;
-        }
     </style>
-    @endsection
-    @section('scripts')
+    <?php $__env->stopSection(); ?>
+    <?php $__env->startSection('scripts'); ?>
     <script>
-        function showFileName(input) {
-            if (!validateUploadFileSize(input)) {
-                document.getElementById('fileNameText').innerText = '';
-                document.getElementById('uploadedFileName').style.display = 'none';
-                return;
-            }
-
-            let fileName = input.files[0]?.name;
-            if (fileName) {
-                document.getElementById('fileNameText').innerText = fileName;
-                document.getElementById('uploadedFileName').style.display = 'block';
-            } else {
-                document.getElementById('fileNameText').innerText = '';
-                document.getElementById('uploadedFileName').style.display = 'none';
+        function showFileName(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById("fileNameText").innerText = file.name;
+                document.getElementById("uploadedFileName").classList.remove("hidden");
             }
         }
     </script>
@@ -639,7 +477,6 @@
         });
     </script>
     <script>
-        
         document.addEventListener("DOMContentLoaded", function() {
             let input = document.getElementById('clientSearch');
             if (input) {
@@ -673,8 +510,8 @@
 
         // STATUS CHANGE
         function handleStatus(status) {
-            $.post("{{ route('bank.upload.status') }}", {
-                _token: "{{ csrf_token() }}",
+            $.post("<?php echo e(route('bank.upload.status')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
                 id: currentId,
                 status: status
             }, function(res) {
@@ -685,45 +522,16 @@
 
         // DELETE
         function handleDelete() {
-            deleteUpload(currentId);
-        }
-
-        $('#selectAllUploads').on('change', function() {
-            $('.rowCheckbox').prop('checked', $(this).is(':checked'));
-        });
-
-        $(document).on('change', '.rowCheckbox', function() {
-            const totalRows = $('.rowCheckbox').length;
-            const checkedRows = $('.rowCheckbox:checked').length;
-            $('#selectAllUploads').prop('checked', totalRows > 0 && totalRows === checkedRows);
-        });
-
-        function bulkDeleteUploads() {
-            const ids = $('.rowCheckbox:checked').map(function() {
-                return this.value;
-            }).get();
-
-            if (!ids.length) {
-                showToast('Select at least one upload','error');
-                return;
-            }
-
-            deleteUpload(ids);
-        }
-
-        function deleteUpload(ids) {
-            ids = Array.isArray(ids) ? ids : [ids];
-
-            if (!confirm(ids.length > 1 ? 'Delete selected uploads?' : 'Delete full upload?')) return;
-
-            $.post("{{ route('bank.bulk.delete') }}", {
-                _token: "{{ csrf_token() }}",
-                ids: ids
+            if (!confirm('Delete full upload?')) return;
+            $.post("<?php echo e(route('bank.bulk.delete')); ?>", {
+                _token: "<?php echo e(csrf_token()); ?>",
+                ids: [currentId]
             }, function(res) {
                 showToast(res.message,'success');
                 location.reload();
             });
         }
-        
     </script>
-    @endsection
+    <?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/bank/index.blade.php ENDPATH**/ ?>

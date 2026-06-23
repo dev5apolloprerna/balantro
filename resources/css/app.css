@@ -25,7 +25,7 @@
         transform: translateY(0);
     }
 
-    /* Keep every legacy modal hidden until JS explicitly opens it.
+     /* Keep every legacy modal hidden until JS explicitly opens it.
        Financial/transaction pages that use drawers or `style=display:none` still opt in normally. */
     .modal {
         display: none;
