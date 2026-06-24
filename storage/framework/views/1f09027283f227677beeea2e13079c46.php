@@ -268,6 +268,69 @@
         </div>
     </div>
 
+    <!-- CLIENT DRAWER -->
+    <div
+        x-cloak
+        style="display: none;"
+        x-show="openClient"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="fixed inset-0 z-50 flex justify-end">
+        <!-- Background -->
+        <div
+            class="absolute inset-0 bg-black/50"
+            @click="openClient=false">
+        </div>
+        <!-- Drawer -->
+        <div class="relative w-[420px] h-full bg-white dark:bg-neutral-800 shadow-xl flex flex-col">
+            <!-- Header -->
+            <div class="flex justify-between items-center px-5 py-4 border-b">
+                <h2 class="text-lg font-semibold">
+                    My Company
+                </h2>
+                <button @click="openClient=false">
+                    <i class="fa-solid fa-xmark text-gray-500"></i>
+                </button>
+            </div>
+            <!-- Search -->
+            <div class="p-4 border-b">
+                <input
+                    type="text"
+                    id="clientSearch"
+                    placeholder="Search by Name"
+                    class="w-full border px-3 py-2 rounded-md">
+            </div>
+            <!-- Client List -->
+            <div class="flex-1 min-h-0 overflow-y-auto">
+                <?php $__currentLoopData = $clients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <a
+                    href="<?php echo e(route('sales.select.company',$client->id)); ?>"
+                    class="flex items-center justify-between px-4 py-3 border-b hover:bg-gray-100 dark:hover:bg-neutral-700 client-item">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-gray-200 dark:bg-neutral-700 p-2 rounded">
+                            <i class="fa-solid fa-building text-gray-600"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium">
+                                <?php echo e($client->name); ?>
+
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                <?php echo e($client->code ?? ''); ?>
+
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= JOURNAL Add MODAL ================= -->
     <div id="journalModal" class="modal" style="display: none;">
         <div class="receipt-wrapper">
@@ -709,6 +772,19 @@
 
 <?php $__env->startSection('scripts'); ?>
 <script>
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        let input = document.getElementById('clientSearch');
+        if (input) {
+            input.addEventListener('keyup', function() {
+                let filter = this.value.toLowerCase();
+                document.querySelectorAll('.client-item').forEach(function(item) {
+                    item.style.display = item.innerText.toLowerCase().includes(filter) ? '' : 'none';
+                });
+            });
+        }
+    });
+
     let ledgers = <?php echo json_encode($ledgers, 15, 512) ?>;
 </script>
 <script>

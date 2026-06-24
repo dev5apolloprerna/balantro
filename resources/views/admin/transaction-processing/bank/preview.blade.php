@@ -10,10 +10,10 @@
         {{ session('error') }}
     </div>
 @endif
-<div class="w-full px-4">
-    <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700">
+<div class="w-full px-4 h-[calc(100vh-110px)] min-h-0 flex flex-col">
+    <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700 flex flex-col flex-1 min-h-0">
         <!-- HEADER -->
-        <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
+        <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700 shrink-0">
             <!-- <div class="flex items-center gap-3">
                 <h2 class="text-white text-lg font-semibold">
                     Transactions
@@ -53,7 +53,7 @@
             </div>
         </div>
         <!-- FILTER BAR -->
-        <div class="flex justify-between px-5 py-3 border-b border-neutral-700 text-sm">
+        <div class="flex justify-between px-5 py-3 border-b border-neutral-700 text-sm shrink-0">
             <div class="flex gap-6">
                 <div>
                     <label class="text-gray-700 dark:text-gray-300 text-sm">Transaction Type</label>
@@ -108,10 +108,10 @@
             </div>
         </div>
 
-        <form id="bankForm">
+        <form id="bankForm" class="flex-1 min-h-0">
             @csrf
             
-            <div class="overflow-auto max-h-[70vh]">
+            <div class="h-full overflow-auto pb-6">
                 <table id="bankTable" class="min-w-full text-sm text-gray-700 dark:text-gray-200">
                     <thead class="bg-gray-100 dark:bg-neutral-800 text-xs uppercase text-gray-700 dark:text-gray-400">
                         <tr>

@@ -217,13 +217,33 @@ class TransactionProcessingController extends Controller
             ->get();
         $ledgers = Ledger::getAllDebtorsLedgers($iPartyId);
 
+        $customGstSlots = DB::table('SalesCustomGst')
+            ->whereIn('transaction_id', $rows->pluck('id')->all())
+            ->get();
+
         $iGstLedgers = Ledger::getAlliGstLedgers($iPartyId);
         $cGstLedgers = Ledger::getAllcGstLedgers($iPartyId);
         $sGstLedgers = Ledger::getAllsGstLedgers($iPartyId);
-        $iGstLedgers = Ledger::mergeLedgersByIds($iPartyId, $iGstLedgers, $rows->pluck('igst_id')->all());
-        $cGstLedgers = Ledger::mergeLedgersByIds($iPartyId, $cGstLedgers, $rows->pluck('cgst_id')->all());
-        $sGstLedgers = Ledger::mergeLedgersByIds($iPartyId, $sGstLedgers, $rows->pluck('sgst_id')->all());
-        $salesLedgers = Ledger::getSalesLedgers($iPartyId);
+        $iGstLedgers = Ledger::mergeLedgersByIds(
+            $iPartyId,
+            $iGstLedgers,
+            array_merge($rows->pluck('igst_id')->all(), $customGstSlots->pluck('igst_ledger_id')->all())
+        );
+        $cGstLedgers = Ledger::mergeLedgersByIds(
+            $iPartyId,
+            $cGstLedgers,
+            array_merge($rows->pluck('cgst_id')->all(), $customGstSlots->pluck('cgst_ledger_id')->all())
+        );
+        $sGstLedgers = Ledger::mergeLedgersByIds(
+            $iPartyId,
+            $sGstLedgers,
+            array_merge($rows->pluck('sgst_id')->all(), $customGstSlots->pluck('sgst_ledger_id')->all())
+        );
+        $salesLedgers = Ledger::mergeLedgersByIds(
+            $iPartyId,
+            Ledger::getSalesLedgers($iPartyId),
+            array_merge($rows->pluck('sales_ledger_id')->all(), $customGstSlots->pluck('ledger_id')->all())
+        );
         $salesGstMappings = $this->getLedgerGstMappings($iPartyId, 'Sales Accounts');
         $stockItems = DB::table('StockItemMaster')
                 ->where('iPartyId', $iPartyId)
