@@ -1480,7 +1480,7 @@
                 $('#sum_sgst').text(parseFloat(res.sgst || 0).toFixed(2));
                 $('#sum_igst').text(parseFloat(res.igst || 0).toFixed(2));
                 // $('#sum_grand_total').text(parseFloat(res.total_amount || 0).toFixed(2));
-                setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                setRoundOffSummary(getDebitNoteSummaryBaseTotal(res));
 
                 $('#cgst_ledger').val(res.cgst_id).trigger('change');
                 $('#sgst_ledger').val(res.sgst_id).trigger('change');
@@ -1500,7 +1500,7 @@
                     $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
                     $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
                     //$('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
-                    setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                    setRoundOffSummary(getDebitNoteSummaryBaseTotal(res));
                 } else {
                     recalcTotals(); // EDIT MODE
                 }
@@ -1756,7 +1756,7 @@
                 $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
                 $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
                 // $('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
-                setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                setRoundOffSummary(getDebitNoteSummaryBaseTotal(res));
 
                 setSelectValueByTextOrValue($('#noitem_purchase_ledger'), res.purchase_ledger_id || res.purchase_ledger_name || res.purchase_ledger);
                 $("#edit_against_invoice").val(res.against_invoice);
@@ -1835,7 +1835,7 @@
                     $('#sum_sgst').text(parseFloat(res.sgst).toFixed(2));
                     $('#sum_igst').text(parseFloat(res.igst).toFixed(2));
                     // $('#sum_grand_total').text(parseFloat(res.total_amount).toFixed(2));
-                    setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                    setRoundOffSummary(getDebitNoteSummaryBaseTotal(res));
 
                 } else {
                     recalcTotals(); // only for standard mode
@@ -1847,7 +1847,7 @@
                 $('#sum_sgst').text(parseFloat(res.sgst || 0).toFixed(2));
                 $('#sum_igst').text(parseFloat(res.igst || 0).toFixed(2));
                 //$('#sum_grand_total').text(parseFloat(res.total_amount || 0).toFixed(2));
-                setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                setRoundOffSummary(getDebitNoteSummaryBaseTotal(res));
 
                 // if (!res.items || !res.items.length) {
                 //     tbody.html('<tr><td colspan="9" class="text-center py-4" style="color:#94a3b8;font-size:12px;">No items — click Add Row</td></tr>');
@@ -2158,6 +2158,13 @@
         return parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
     }
 
+    function getDebitNoteSummaryBaseTotal(res) {
+        return (parseFloat(res?.taxable_amount || 0) || 0)
+            + (parseFloat(res?.cgst || 0) || 0)
+            + (parseFloat(res?.sgst || 0) || 0)
+            + (parseFloat(res?.igst || 0) || 0);
+    }
+    
     function renderNoItemCustomSlots(rateMap) {
         let slotHtml = '';
         let customIgst = 0;
