@@ -1072,7 +1072,7 @@
     function addNoItemRow(row = {}) {
         const selectedLedger = row.ledger || row.ledger_id || row.sales_ledger_id || row.ledger_name || row.sales_ledger_name || row.sales_ledger || '';
         const tr = `
-            <tr>
+            <tr data-igst-ledger-id="${row.igst_ledger_id || ''}" data-cgst-ledger-id="${row.cgst_ledger_id || ''}" data-sgst-ledger-id="${row.sgst_ledger_id || ''}">
                 <td>
                     <select class="receipt-input noitem-ledger">
                         ${buildNoItemLedgerOptions(selectedLedger)}
@@ -1734,6 +1734,7 @@
                 $('#edit_remarks').val(res.remarks || res.Remarks || '');
 
                 // 🔥 GST SETTINGS
+                window.currentCreditNoteCustomGstSlots = res.custom_gst || [];
                 $('#gst_calc_mode').val(res.gst_mode || 'standard').trigger('change');
                 $('#edit_is_igst').prop('checked', res.is_igst == 1);
 
@@ -1766,7 +1767,10 @@
                         res.custom_gst.forEach(slot => addNoItemRow({
                             ledger: slot.ledger_id || slot.sales_ledger_id || slot.ledger_name || res.sales_ledger_id || res.sales_ledger_name || res.sales_ledger,
                             gst: slot.gst_rate,
-                            amount: slot.taxable || slot.amount || 0
+                            amount: slot.taxable || slot.amount || 0,
+                            igst_ledger_id: slot.igst_ledger_id,
+                            cgst_ledger_id: slot.cgst_ledger_id,
+                            sgst_ledger_id: slot.sgst_ledger_id
                         }));
                     } else {
                         addNoItemRow({
@@ -2201,7 +2205,10 @@
                         rate: gstRate,
                         ledgerId: ledgerId,
                         ledgerName: ledgerName,
-                        slotKey: rateKey
+                        slotKey: rateKey,
+                        igstLedgerId: $(this).data('igst-ledger-id') || '',
+                        cgstLedgerId: $(this).data('cgst-ledger-id') || '',
+                        sgstLedgerId: $(this).data('sgst-ledger-id') || ''
                     };
                 }
 
@@ -2272,6 +2279,15 @@
             let data   = rateMap[mapKey] || { amt:0, igst:0, cgst:0, sgst:0 };
             let rate = data.rate ?? mapKey;
             rate = (parseFloat(rate) || 0).toString();
+            let existingSlot = (window.currentCreditNoteCustomGstSlots || []).find(slot => {
+                let slotRate = (parseFloat(slot.gst_rate || 0) || 0).toString();
+                let sameRate = slotRate === rate;
+                let sameLedger = !data.ledgerId || String(slot.ledger_id || '') === String(data.ledgerId || '');
+                return sameRate && sameLedger;
+            }) || {};
+            data.igstLedgerId = data.igstLedgerId || existingSlot.igst_ledger_id || '';
+            data.cgstLedgerId = data.cgstLedgerId || existingSlot.cgst_ledger_id || '';
+            data.sgstLedgerId = data.sgstLedgerId || existingSlot.sgst_ledger_id || '';
             let halfR  = parseFloat(rate) / 2;
             // Auto-compute: use sum from item recalc (standard) or allow manual override
             let igstAmt = data.igst;
@@ -2285,15 +2301,15 @@
 
             // Build ledger options
             let iOpts = iGstLedgers.map(l => {
-                let sel = String(l.id) === String(mappedGstLedgerId('igst', null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
+                let sel = String(l.id) === String(mappedGstLedgerId('igst', data.igstLedgerId || null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
                 return `<option value="${l.id}" ${sel}>${l.name}</option>`;
             }).join('');
             let cOpts = cGstLedgers.map(l => {
-                let sel = String(l.id) === String(mappedGstLedgerId('cgst', null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
+                let sel = String(l.id) === String(mappedGstLedgerId('cgst', data.cgstLedgerId || null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
                 return `<option value="${l.id}" ${sel}>${l.name}</option>`;
             }).join('');
             let sOpts = sGstLedgers.map(l => {
-                let sel = String(l.id) === String(mappedGstLedgerId('sgst', null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
+                let sel = String(l.id) === String(mappedGstLedgerId('sgst', data.sgstLedgerId || null, data.ledgerId || '', data.ledgerName || '')) ? 'selected' : '';
                 return `<option value="${l.id}" ${sel}>${l.name}</option>`;
             }).join('');
 

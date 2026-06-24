@@ -74,7 +74,7 @@
                                             <!-- Upload -->
                                             <button
                                                 @click="{{ session('iPartyId') ? 'openUpload = true' : 'openClient = true' }}"
-                                                class="bulk-text-btn px-3 py-2 text-xs border rounded-md hover:bg-gray-100 dark:hover:bg-neutral-700 flex items-center gap-1 whitespace-nowrap">
+                                                class="bulk-text-btn px-3 py-2 text-xs border border-blue-500 text-blue-600 rounded-md hover:bg-blue-50 flex items-center gap-1 whitespace-nowrap">
                                                 <i class="fa-solid fa-upload text-xs"></i>
                                                 Upload
                                             </button>
