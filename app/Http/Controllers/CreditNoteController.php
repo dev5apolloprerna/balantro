@@ -511,9 +511,17 @@ class CreditNoteController extends Controller
         ];
     }
 
+    private function roundCurrency($value): float
+    {
+        return round((float) $value, 2);
+    }
+
     private function calculateRoundOffAmount($amount, $sgst, $cgst, $igst, ?string $side = 'normal'): float
     {
-        $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        $grandTotal = $this->roundCurrency($amount)
+            + $this->roundCurrency($sgst)
+            + $this->roundCurrency($cgst)
+            + $this->roundCurrency($igst);
 
         $roundedGrandTotal = match ($side) {
             'upper_side' => ceil($grandTotal),
@@ -526,7 +534,10 @@ class CreditNoteController extends Controller
 
     private function calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, ?string $side = 'normal'): float
     {
-        $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        $grandTotal = $this->roundCurrency($amount)
+            + $this->roundCurrency($sgst)
+            + $this->roundCurrency($cgst)
+            + $this->roundCurrency($igst);
         $roundOff = $this->calculateRoundOffAmount($amount, $sgst, $cgst, $igst, $side);
 
         return round($grandTotal + $roundOff, 2);
@@ -1780,10 +1791,10 @@ class CreditNoteController extends Controller
 
                         $sumAmount += $amount;
                         if ($transaction->is_igst == 1) {
-                            $sumIgst += $gstAmount;
+                            $sumIgst += $this->roundCurrency($gstAmount);
                         } else {
-                            $sumCgst += $gstAmount / 2;
-                            $sumSgst += $gstAmount / 2;
+                            $sumCgst += $this->roundCurrency(($amount * $gstRate) / 200);
+                            $sumSgst += $this->roundCurrency(($amount * $gstRate) / 200);
                         }
                     }
                 } else {
@@ -2407,10 +2418,10 @@ class CreditNoteController extends Controller
 
                         $sumAmount += $amount;
                         if ($request->is_igst == 1) {
-                            $sumIgst += $gstAmount;
+                            $sumIgst += $this->roundCurrency($gstAmount);
                         } else {
-                            $sumCgst += $gstAmount / 2;
-                            $sumSgst += $gstAmount / 2;
+                            $sumCgst += $this->roundCurrency(($amount * $gstRate) / 200);
+                            $sumSgst += $this->roundCurrency(($amount * $gstRate) / 200);
                         }
                     }
                 } else {

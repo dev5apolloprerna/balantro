@@ -1148,7 +1148,7 @@ function loadIntoModal(res, editable) {
                     slot.cgst_amount = 0;
                     slot.sgst_amount = 0;
                 } else {
-                    const halfTax = taxable * rate / 2 / 100;
+                    const halfTax = roundCurrency(taxable * rate / 2 / 100);
                     slot.igst_amount = 0;
                     slot.cgst_amount = halfTax.toFixed(2);
                     slot.sgst_amount = halfTax.toFixed(2);
@@ -1244,9 +1244,9 @@ function buildCustomSlotsFromNoItemRows() {
         if (!rate || !taxable) return;
 
         const totalTax = taxable * rate / 100;
-        const igst = isIGST ? totalTax : 0;
-        const cgst = isIGST ? 0 : totalTax / 2;
-        const sgst = isIGST ? 0 : totalTax / 2;
+        const igst = isIGST ? roundCurrency(totalTax) : 0;
+        const cgst = isIGST ? 0 : roundCurrency(taxable * rate / 200);
+        const sgst = isIGST ? 0 : roundCurrency(taxable * rate / 200);
         const mapping = findSalesLedgerMapping(row.ledger, row.ledger_name) || {};
         const igstOpts = IGST_LEDGERS.map(l => `<option value="${l.id}" ${String(l.id) === String(mapping.igst_id || '') ? 'selected' : ''}>${l.name}</option>`).join('');
         const cgstOpts = CGST_LEDGERS.map(l => `<option value="${l.id}" ${String(l.id) === String(mapping.cgst_id || '') ? 'selected' : ''}>${l.name}</option>`).join('');
@@ -1279,11 +1279,11 @@ function applyCustomModeTaxSplit() {
         let totalTax = (taxable * rate) / 100;
 
         if (isIGST) {
-            row.find('.slot-igst-amt').val(totalTax.toFixed(2));
+            row.find('.slot-igst-amt').val(roundCurrency(totalTax).toFixed(2));
             row.find('.slot-cgst-amt').val('0.00');
             row.find('.slot-sgst-amt').val('0.00');
         } else {
-            let halfTax = totalTax / 2;
+            let halfTax = roundCurrency(taxable * rate / 200);
             row.find('.slot-igst-amt').val('0.00');
             row.find('.slot-cgst-amt').val(halfTax.toFixed(2));
             row.find('.slot-sgst-amt').val(halfTax.toFixed(2));
@@ -1349,13 +1349,14 @@ function recalcTotals() {
             if (isIGST) {
                 totalIGST += gstAmount;
             } else {
-                totalCGST += gstAmount / 2;
-                totalSGST += gstAmount / 2;
+                const halfGst = roundCurrency(amount * rate / 200);
+                totalCGST += halfGst;
+                totalSGST += halfGst;
             }
         });
     }
 
-    let grand = totalAmt + totalCGST + totalSGST + totalIGST;
+    let grand = roundCurrency(totalAmt) + roundCurrency(totalCGST) + roundCurrency(totalSGST) + roundCurrency(totalIGST);
     updateSummaryUI(totalAmt, totalCGST, totalSGST, totalIGST, grand);
     setHiddenFields(totalAmt, totalCGST, totalSGST, totalIGST, grand);
     updateSubtotalFooter();
@@ -1371,15 +1372,15 @@ function recalcItemRow(row) {
     let cgst = 0, sgst = 0, igst = 0;
 
     if (gst > 0 && $('#gst_calc_mode').val() === 'standard') {
-        if (isIGST) { igst = amount * gst / 100; }
-        else        { cgst = amount * gst / 200; sgst = amount * gst / 200; }
+        if (isIGST) { igst = roundCurrency(amount * gst / 100); }
+        else        { cgst = roundCurrency(amount * gst / 200); sgst = roundCurrency(amount * gst / 200); }
     }
 
     row.find('.item-amount').val(amount.toFixed(2));
     row.find('.item-cgst').val(cgst.toFixed(2));
     row.find('.item-sgst').val(sgst.toFixed(2));
     row.find('.item-igst').val(igst.toFixed(2));
-    row.find('.item-total').val((amount+cgst+sgst+igst).toFixed(2));
+    row.find('.item-total').val((roundCurrency(amount)+roundCurrency(cgst)+roundCurrency(sgst)+roundCurrency(igst)).toFixed(2));
 }
 
 // ─── NO-ITEM MODE RECALC ─────────────────────────────────────────────────────
@@ -1577,6 +1578,10 @@ $('#ledgerForm').on('submit', function (e) {
 });
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
+function roundCurrency(value) {
+    return Math.round(((parseFloat(value) || 0) + Number.EPSILON) * 100) / 100;
+}
+
 function fmt(v) {
     return parseFloat(v||0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
 }
@@ -1603,13 +1608,13 @@ function calculateRoundOffAmountForSummary(total) {
             roundedTotal = Math.round(total);
             break;
     }
-    return Math.round((roundedTotal - total) * 100) / 100;
+    return roundCurrency(roundedTotal - total);
 }
 
 function applyRoundOffSummary(total, roundOff) {
             total = parseFloat(total) || 0;
             roundOff = parseFloat(roundOff) || 0;
-            let roundedTotal = total + roundOff;
+            let roundedTotal = roundCurrency(total) + roundCurrency(roundOff);
 
     $('#sum_roundoff').val(roundOff.toFixed(2));
     $('#edit_roundoff').val(roundOff.toFixed(2));

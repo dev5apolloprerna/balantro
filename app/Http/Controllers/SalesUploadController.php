@@ -442,9 +442,17 @@ class SalesUploadController extends Controller
         ];
     }
 
+    private function roundCurrency($value): float
+    {
+        return round((float) $value, 2);
+    }
+
     private function calculateRoundOffAmount($amount, $sgst, $cgst, $igst, ?string $side = 'normal'): float
     {
-        $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        $grandTotal = $this->roundCurrency($amount)
+            + $this->roundCurrency($sgst)
+            + $this->roundCurrency($cgst)
+            + $this->roundCurrency($igst);
 
         $roundedGrandTotal = match ($side) {
             'upper_side' => ceil($grandTotal),
@@ -457,7 +465,10 @@ class SalesUploadController extends Controller
     
     private function calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, ?string $side = 'normal'): float
     {
-        $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        $grandTotal = $this->roundCurrency($amount)
+            + $this->roundCurrency($sgst)
+            + $this->roundCurrency($cgst)
+            + $this->roundCurrency($igst);
         $roundOff = $this->calculateRoundOffAmount($amount, $sgst, $cgst, $igst, $side);
 
         return round($grandTotal + $roundOff, 2);
@@ -1230,7 +1241,7 @@ class SalesUploadController extends Controller
             $igstAmount = 0;
             $cgstAmount = 0;
             $sgstAmount = 0;
-            $gstTotal = ($rowAmount * $gstRate) / 100;
+            $gstTotal = $this->roundCurrency(($rowAmount * $gstRate) / 100);
 
             // For no-item rows the tax amount must always be derived from the
             // edited taxable amount and GST rate. Custom slots are used to keep
@@ -1238,8 +1249,8 @@ class SalesUploadController extends Controller
             if ($isIgst) {
                 $igstAmount = $gstTotal;
             } else {
-                $cgstAmount = $gstTotal / 2;
-                $sgstAmount = $gstTotal / 2;
+                $cgstAmount = $this->roundCurrency($rowAmount * ($gstRate / 2) / 100);
+                $sgstAmount = $this->roundCurrency($rowAmount * ($gstRate / 2) / 100);
             }
 
             $salesLedgerRow = !empty($row['ledger']) ? Ledger::getLedgerById($transaction->iPartyId, $row['ledger']) : null;
@@ -1501,15 +1512,16 @@ class SalesUploadController extends Controller
                     foreach ($request->noitem_rows as $row) {
                         $rowAmount = (float)($row['amount'] ?? 0);
                         $rowGstRate = (float)($row['gst'] ?? 0);
-                        $rowGstAmount = ($rowAmount * $rowGstRate) / 100;
+                        $rowGstAmount = $this->roundCurrency(($rowAmount * $rowGstRate) / 100);
 
-                        $sumAmount += $rowAmount;
+                        $sumAmount += $this->roundCurrency($rowAmount);
 
                         if (($request->is_igst ?? 0) == 1) {
                             $sumIgst += $rowGstAmount;
                         } else {
-                            $sumCgst += $rowGstAmount / 2;
-                            $sumSgst += $rowGstAmount / 2;
+                            $halfGstAmount = $this->roundCurrency($rowAmount * ($rowGstRate / 2) / 100);
+                            $sumCgst += $halfGstAmount;
+                            $sumSgst += $halfGstAmount;
                         }
                     }
                 } else {
@@ -1934,7 +1946,7 @@ class SalesUploadController extends Controller
                 $sumIgst   = 0;
                 if($request->entry_mode == 'noitem')
                 {
-                    $sumAmount = collect($request->noitem_rows ?? [])->sum(fn ($row) => (float) ($row['amount'] ?? 0));
+                    $sumAmount = collect($request->noitem_rows ?? [])->sum(fn ($row) => $this->roundCurrency($row['amount'] ?? 0));
 
                     if (($request->gst_mode ?? 'standard') == 'custom' && !empty($request->custom_slots))
                     {
@@ -1948,9 +1960,9 @@ class SalesUploadController extends Controller
 
                         foreach ($request->custom_slots as $slot)
                         {
-                            $sumCgst += (float) ($slot['cgst_amount'] ?? 0);
-                            $sumSgst += (float) ($slot['sgst_amount'] ?? 0);
-                            $sumIgst += (float) ($slot['igst_amount'] ?? 0);
+                            $sumCgst += $this->roundCurrency($slot['cgst_amount'] ?? 0);
+                            $sumSgst += $this->roundCurrency($slot['sgst_amount'] ?? 0);
+                            $sumIgst += $this->roundCurrency($slot['igst_amount'] ?? 0);
                         }
                     }
                     else
@@ -1959,13 +1971,14 @@ class SalesUploadController extends Controller
                         {
                             $rowAmount = (float)($row['amount'] ?? 0);
                             $rowGstRate = (float)($row['gst'] ?? 0);
-                            $rowGstAmount = ($rowAmount * $rowGstRate) / 100;
+                            $rowGstAmount = $this->roundCurrency(($rowAmount * $rowGstRate) / 100);
 
                             if (($request->is_igst ?? 0) == 1) {
                                 $sumIgst += $rowGstAmount;
                             } else {
-                                $sumCgst += $rowGstAmount / 2;
-                                $sumSgst += $rowGstAmount / 2;
+                                $halfGstAmount = $this->roundCurrency($rowAmount * ($rowGstRate / 2) / 100);
+                                $sumCgst += $halfGstAmount;
+                                $sumSgst += $halfGstAmount;
                             }
                         }
                     }
