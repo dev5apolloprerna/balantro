@@ -30,7 +30,8 @@
                     <!-- Year Dropdown -->
                     @if(!empty($years) && count($years))
                     <select
-                        onchange="window.location.href=this.value"
+                        id="journalYearSelect"
+                        onchange="if (this.value) window.location.href=this.value"
                         class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
                         @foreach($years as $key => $year)
                         <option value="">Select Year </option>
@@ -45,8 +46,9 @@
                     <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                     <!-- Sample Dropdown -->
                     <select
+                        id="journalSampleSelect"
                         class="text-xs bg-transparent border-0 focus:ring-0 outline-none">
-                        <option>Select Sample</option>
+                        <option value="">Select Sample</option>
                         <option value="{{ asset('/samples/journal-sample-file.xlsx') }}">
                             Download Sample
                         </option>
@@ -790,7 +792,11 @@
     }
 
     document.addEventListener('click', function() {
-        document.getElementById('globalDropdown').classList.add('hidden');
+        // document.getElementById('globalDropdown').classList.add('hidden');
+        let dropdown = document.getElementById('globalDropdown');
+        if (dropdown) {
+            dropdown.classList.add('hidden');
+        }
     });
 
     // STATUS
@@ -842,9 +848,16 @@
         });
     }
 
-    document.querySelector('select').addEventListener('change', function() {
-        if (this.value !== "Sample") {
+    // document.querySelector('select').addEventListener('change', function() {
+    //     if (this.value !== "Sample") {
+    //         window.location.href = this.value;
+    //     }
+    // });
+
+    document.getElementById('journalSampleSelect')?.addEventListener('change', function() {
+        if (this.value) {
             window.location.href = this.value;
+            this.value = '';
         }
     });
 

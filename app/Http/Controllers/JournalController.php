@@ -107,10 +107,13 @@ class JournalController extends Controller
 
                 $amount = (float)$row[4];
                 $drcr = strtolower($row[3]);
+                $ledger = Ledger::getLedgerByName($iPartyId, $row[2]);
 
                 JournalTransactionItem::create([
                     'transaction_id' => $transaction->id,
-                    'ledger_name' => $row[2],
+                    // 'ledger_name' => $row[2],
+                    'ledger_id' => $ledger->id ?? null,
+                    'ledger_name' => $ledger->name ?? $row[2],
                     'dr_cr' => ucfirst($drcr),
                     'debit' => $drcr == 'dr' ? $amount : 0,
                     'credit' => $drcr == 'cr' ? $amount : 0,
@@ -170,11 +173,18 @@ class JournalController extends Controller
             'total_debit' => $txn->total_debit,
             'total_credit' => $txn->total_credit,
             'status' => $txn->status,
-            'items' => $txn->items->map(function ($item) {
+            //'items' => $txn->items->map(function ($item) {
+            'items' => $txn->items->map(function ($item) use ($txn) {
+                $ledgerId = $item->ledger_id;
+
+                if (!$ledgerId && $item->ledger_name) {
+                    $ledger = Ledger::getLedgerByName($txn->iPartyId, $item->ledger_name);
+                    $ledgerId = $ledger->id ?? null;
+                }
                 return [
                     'id' => $item->id,
                     'ledger_name' => $item->ledger_name,
-                    'ledger_id' => $item->ledger_id,
+                    'ledger_id' => $ledgerId, // 'ledger_id' => $item->ledger_id,
                     'dr_cr' => $item->dr_cr,
                     'debit' => $item->debit,
                     'credit' => $item->credit,
@@ -228,11 +238,11 @@ class JournalController extends Controller
                 $credit = $item['credit'] ?? 0;
 
                 $dr_cr = $debit > 0 ? 'Dr' : 'Cr';
-                $ledger = DB::table('LedgerMaster')->where('iLedgerId', $item['ledger_id'])->first();
+                $ledger = Ledger::getLedgerById($txn->iPartyId, $item['ledger_id']); // $ledger = DB::table('LedgerMaster')->where('iLedgerId', $item['ledger_id'])->first();
                 JournalTransactionItem::create([
                     'transaction_id' => $txn->id,
-                    'ledger_id'      => $ledger->iLedgerId ?? null,
-                    'ledger_name'    => $ledger->strCustomerName ?? null,
+                    'ledger_id'      => $ledger->id ?? null, // 'ledger_id'      => $ledger->iLedgerId ?? null,
+                    'ledger_name'    => $ledger->name ?? null, // 'ledger_name'    => $ledger->strCustomerName ?? null,
                     'dr_cr' => $dr_cr, // ✅ FIXED
                     'debit' => $debit,
                     'credit' => $credit,
@@ -242,9 +252,9 @@ class JournalController extends Controller
 
             if ($txn) {
 
-                $saved = JournalTransaction::where('upload_id', $request->id)->where('status', 'saved')->count();
-                $pending = JournalTransaction::where('upload_id', $request->id)->where('status', 'pending')->count();
-                $total = JournalTransaction::where('upload_id', $request->id)->count();
+                $saved = JournalTransaction::where('upload_id', $txn->upload_id)->where('status', 'saved')->count();
+                $pending = JournalTransaction::where('upload_id', $txn->upload_id)->where('status', 'pending')->count();
+                $total = JournalTransaction::where('upload_id', $txn->upload_id)->count();
 
                 BulkJournalUpload::where('id', $txn->upload_id)->update([
                     'total' => $total,
