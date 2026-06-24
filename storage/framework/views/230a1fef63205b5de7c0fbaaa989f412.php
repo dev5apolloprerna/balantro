@@ -1474,12 +1474,13 @@
                     res.custom_gst.forEach(slot => {
                         let slotLedgerId = slot.ledger_id || slot.sales_ledger_id || '';
                         let slotLedgerName = slot.ledger_name || '';
+                        let slotKey = customSlotKey(slot.gst_rate, slotLedgerId);
                         let igstLedgerName = iGstLedgers.find(l => l.id == mappedGstLedgerId('igst', slot.igst_ledger_id, slotLedgerId, slotLedgerName))?.name || '';
                         let cgstLedgerName = cGstLedgers.find(l => l.id == mappedGstLedgerId('cgst', slot.cgst_ledger_id, slotLedgerId, slotLedgerName))?.name || '';
                         let sgstLedgerName = sGstLedgers.find(l => l.id == mappedGstLedgerId('sgst', slot.sgst_ledger_id, slotLedgerId, slotLedgerName))?.name || '';
 
                         html += `
-                        <tr data-rate="${parseFloat(slot.gst_rate) || 0}">
+                        <tr data-slot-key="${slotKey}" data-rate="${parseFloat(slot.gst_rate) || 0}">
                             <td>${slot.gst_rate}%</td>
                             <td class="slot-taxable view-cell-num">${parseFloat(slot.taxable || 0).toFixed(2)}</td>
                             <td>${igstLedgerName || '-'}</td>
@@ -1677,7 +1678,7 @@
                     let cgst = parseFloat(res.cgst) || 0;
                     let sgst = parseFloat(res.sgst) || 0;
                     let igst = parseFloat(res.igst) || 0;
-                    let total = amount + cgst + sgst + igst;
+                    let total = roundCurrency(amount + cgst + sgst + igst);
 
                     // $('#sum_grand_total').html(total);
                     setRoundOffSummary(total);
@@ -1691,16 +1692,19 @@
                     let html = '';
 
                     res.custom_gst.forEach(slot => {
+                        let slotLedgerId = slot.ledger_id || slot.sales_ledger_id || '';
+                        let slotLedgerName = slot.ledger_name || '';
+                        let slotKey = customSlotKey(slot.gst_rate, slotLedgerId);
 
                         html += `
-                        <tr data-rate="${parseFloat(slot.gst_rate) || 0}">
+                        <tr data-slot-key="${slotKey}" data-rate="${parseFloat(slot.gst_rate) || 0}">
                             <td>${slot.gst_rate}%</td>
 
-                            <td class="slot-taxable">${slot.taxable}</td>
+                            <td class="slot-taxable">${slot.taxable}<input type="hidden" class="slot_sales_ledger_id" value="${slotLedgerId}"></td>
 
                             <td>
                                 <select class="slot-igst-ledger">
-                                    ${buildLedgerOptions(iGstLedgers, mappedGstLedgerId('igst', slot.igst_ledger_id, slot.ledger_id || slot.sales_ledger_id || '', slot.ledger_name || ''))}
+                                    ${buildLedgerOptions(iGstLedgers, mappedGstLedgerId('igst', slot.igst_ledger_id, slotLedgerId, slotLedgerName))}
                                 </select>
                             </td>
 
@@ -1710,7 +1714,7 @@
 
                             <td>
                                 <select class="slot-cgst-ledger">
-                                    ${buildLedgerOptions(cGstLedgers, mappedGstLedgerId('cgst', slot.cgst_ledger_id, slot.ledger_id || slot.sales_ledger_id || '', slot.ledger_name || ''))}
+                                    ${buildLedgerOptions(cGstLedgers, mappedGstLedgerId('cgst', slot.cgst_ledger_id, slotLedgerId, slotLedgerName))}
                                 </select>
                             </td>
 
@@ -1720,7 +1724,7 @@
 
                             <td>
                                 <select class="slot-sgst-ledger">
-                                    ${buildLedgerOptions(sGstLedgers, mappedGstLedgerId('sgst', slot.sgst_ledger_id, slot.ledger_id || slot.sales_ledger_id || '', slot.ledger_name || ''))}
+                                    ${buildLedgerOptions(sGstLedgers, mappedGstLedgerId('sgst', slot.sgst_ledger_id, slotLedgerId, slotLedgerName))}
                                 </select>
                             </td>
 
@@ -1753,6 +1757,10 @@
         });
 
         return html;
+    }
+
+    function customSlotKey(rate, ledgerId) {
+        return `${parseFloat(rate) || 0}|${ledgerId || ''}`;
     }
 
     // ═══════ ADD ITEM ROW ═══════
@@ -1872,17 +1880,17 @@
             // let gstRate = 18;
 
             // if (isIGST) {
-            //     igst = amount * gstRate / 100;
+            //     igst = roundCurrency(amount * gstRate / 100);
             // } else {
-            //     cgst = amount * (gstRate / 2) / 100;
-            //     sgst = amount * (gstRate / 2) / 100;
+            //     cgst = roundCurrency(amount * (gstRate / 2) / 100);
+            //     sgst = roundCurrency(amount * (gstRate / 2) / 100);
             // }
 
-            // let total = amount + cgst + sgst + igst;
+            // let total = roundCurrency(amount + cgst + sgst + igst);
             let cgst = parseFloat($('#edit_cgst').val()) || 0;
             let sgst = parseFloat($('#edit_sgst').val()) || 0;
             let igst = parseFloat($('#edit_igst').val()) || 0;
-            let total = amount + cgst + sgst + igst;
+            let total = roundCurrency(amount + cgst + sgst + igst);
             // Update UI
             $('#sum_amount').text(amount.toFixed(2));
             $('#sum_cgst').text(cgst.toFixed(2));
@@ -2006,16 +2014,16 @@
     // if (mode === 'standard') {
     //     // Auto calculate based on gst_rate + isIGST
     //     let gstRate = parseFloat(row.find('.item-gst_rate').val()) || 0;
-    //     let amount = qty * rate;
+    //     let amount = roundCurrency(qty * rate);
 
     //     let cgst = 0, sgst = 0, igst = 0;
 
     //     if (gstRate > 0) {
     //         if (isIGST) {
-    //             igst = amount * gstRate / 100;
+    //             igst = roundCurrency(amount * gstRate / 100);
     //         } else {
-    //             cgst = amount * (gstRate / 2) / 100;
-    //             sgst = amount * (gstRate / 2) / 100;
+    //             cgst = roundCurrency(amount * (gstRate / 2) / 100);
+    //             sgst = roundCurrency(amount * (gstRate / 2) / 100);
     //         }
     //     }
 
@@ -2061,6 +2069,10 @@
 
     function fmt(v) {
         return parseFloat(v||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    function roundCurrency(value) {
+        return Math.round(((parseFloat(value) || 0) + Number.EPSILON) * 100) / 100;
     }
 
     function buildItemRow(item) {
@@ -2111,7 +2123,7 @@
         let qty = parseFloat(row.find('.item-qty').val()) || 0;
         let rate = parseFloat(row.find('.item-rate').val()) || 0;
         let gstRate = parseFloat(row.find('.item-gst_rate').val()) || 0;
-        let amount = qty * rate;
+        let amount = roundCurrency(qty * rate);
         //let isIGST = $('#edit_is_igst').is(':checked');
         let isIGST = isIgstChecked();
         let mode = $('#gst_calc_mode').val();
@@ -2123,14 +2135,14 @@
         //if (mode === 'standard' && gstRate > 0) {
         if (gstRate > 0) {
             if (isIGST) {
-                igst = amount * gstRate / 100;
+                igst = roundCurrency(amount * gstRate / 100);
             } else {
-                cgst = amount * (gstRate / 2) / 100;
-                sgst = amount * (gstRate / 2) / 100;
+                cgst = roundCurrency(amount * (gstRate / 2) / 100);
+                sgst = roundCurrency(amount * (gstRate / 2) / 100);
             }
         }
         // Custom mode uses these calculated amounts to populate the rate-wise slot table.
-        let total = amount + cgst + sgst + igst;
+        let total = roundCurrency(amount + cgst + sgst + igst);
 
         row.find('.item-amount').val(amount.toFixed(2));
         row.find('.item-cgst').val(cgst.toFixed(2));
@@ -2149,7 +2161,7 @@
     const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
 
     function calculateRoundOffAmountForSummary(total) {
-        total = parseFloat(total) || 0;
+        total = roundCurrency(total);
         let roundedTotal;
 
         switch (ROUND_OFF_SIDE) {
@@ -2168,9 +2180,9 @@
     }
 
     function applyRoundOffSummary(total, roundOff) {
-        total = parseFloat(total) || 0;
-        roundOff = parseFloat(roundOff) || 0;
-        let roundedTotal = total + roundOff;
+        total = roundCurrency(total);
+        roundOff = roundCurrency(roundOff);
+        let roundedTotal = roundCurrency(total + roundOff);
 
         $('#sum_roundoff').val(roundOff.toFixed(2));
         $('#edit_roundoff').val(roundOff.toFixed(2));
@@ -2181,7 +2193,7 @@
     }
 
     function setRoundOffSummary(total, roundOffAmount = null) {
-        total = parseFloat(total) || 0;
+        total = roundCurrency(total);
         if (roundOffAmount !== null && roundOffAmount !== undefined) {
             let roundOff = parseFloat(roundOffAmount) || 0;
             return applyRoundOffSummary(total - roundOff, roundOff);
@@ -2212,7 +2224,7 @@
             $('#noItemBody tr').each(function(index) {
                 let rowAmount = parseFloat($(this).find('.noitem-amount').val()) || 0;
                 let gstRate = parseFloat($(this).find('.noitem-gst').val()) || 0;
-                let gstAmount = (rowAmount * gstRate) / 100;
+                let gstAmount = roundCurrency(rowAmount * gstRate / 100);
                 let ledgerSelect = $(this).find('.noitem-ledger');
                 let ledgerId = ledgerSelect.val() || '';
                 let ledgerName = ledgerSelect.find('option:selected').text() || '';
@@ -2236,17 +2248,18 @@
                 rateMap[rateKey].amt += rowAmount;
 
                 if (isIGST) {
-                    igst += gstAmount;
-                    rateMap[rateKey].igst += gstAmount;
+                    igst = roundCurrency(igst + gstAmount);
+                    rateMap[rateKey].igst = roundCurrency(rateMap[rateKey].igst + gstAmount);
                 } else {
-                    cgst += gstAmount / 2;
-                    sgst += gstAmount / 2;
-                    rateMap[rateKey].cgst += gstAmount / 2;
-                    rateMap[rateKey].sgst += gstAmount / 2;
+                    let halfGstAmount = roundCurrency(rowAmount * (gstRate / 2) / 100);
+                    cgst = roundCurrency(cgst + halfGstAmount);
+                    sgst = roundCurrency(sgst + halfGstAmount);
+                    rateMap[rateKey].cgst = roundCurrency(rateMap[rateKey].cgst + halfGstAmount);
+                    rateMap[rateKey].sgst = roundCurrency(rateMap[rateKey].sgst + halfGstAmount);
                 }
             });
 
-            let total = amount + cgst + sgst + igst;
+            let total = roundCurrency(amount + cgst + sgst + igst);
 
             // Update hidden fields
             $('#edit_amount').val(amount);
@@ -2286,10 +2299,10 @@
             let igst = parseFloat(row.find('.item-igst').val()) || 0;
             let gstRate = parseFloat(row.find('.item-gst_rate').val()) || 0;
 
-            totalAmount += amount;
-            totalCGST += cgst;
-            totalSGST += sgst;
-            totalIGST += igst;
+            totalAmount = roundCurrency(totalAmount + amount);
+            totalCGST = roundCurrency(totalCGST + cgst);
+            totalSGST = roundCurrency(totalSGST + sgst);
+            totalIGST = roundCurrency(totalIGST + igst);
 
             // 🔥 BUILD RATE MAP
             if (!rateMap[gstRate]) {
@@ -2301,13 +2314,13 @@
                 };
             }
 
-            rateMap[gstRate].amt += amount;
-            rateMap[gstRate].igst += igst;
-            rateMap[gstRate].cgst += cgst;
-            rateMap[gstRate].sgst += sgst;
+            rateMap[gstRate].amt = roundCurrency(rateMap[gstRate].amt + amount);
+            rateMap[gstRate].igst = roundCurrency(rateMap[gstRate].igst + igst);
+            rateMap[gstRate].cgst = roundCurrency(rateMap[gstRate].cgst + cgst);
+            rateMap[gstRate].sgst = roundCurrency(rateMap[gstRate].sgst + sgst);
         });
 
-        let grandTotal = totalAmount + totalCGST + totalSGST + totalIGST;
+        let grandTotal = roundCurrency(totalAmount + totalCGST + totalSGST + totalIGST);
 
         // UI update
         $('#sum_amount').text(totalAmount.toFixed(2));
@@ -2383,82 +2396,82 @@
     // Each unique GST% from items gets one row with IGST/CGST/SGST
     // ledger dropdowns and auto-computed tax amounts.
     // ═══════════════════════════════════════════════════════════════
-    function renderCustomSlots(rateMap, grandTotal) {
-        let sGstLedgers = <?php echo json_encode($sGstLedgers ?? [], 15, 512) ?>;
-        let cGstLedgers = <?php echo json_encode($cGstLedgers ?? [], 15, 512) ?>;
-        let iGstLedgers = <?php echo json_encode($iGstLedgers ?? [], 15, 512) ?>;
+    // function renderCustomSlots(rateMap, grandTotal) {
+    //     let sGstLedgers = <?php echo json_encode($sGstLedgers ?? [], 15, 512) ?>;
+    //     let cGstLedgers = <?php echo json_encode($cGstLedgers ?? [], 15, 512) ?>;
+    //     let iGstLedgers = <?php echo json_encode($iGstLedgers ?? [], 15, 512) ?>;
 
-        let allRates = Object.keys(rateMap).filter(r => {
-            let data = rateMap[r] || {};
-            return (parseFloat(data.amt) || 0) !== 0 ||
-                (parseFloat(data.igst) || 0) !== 0 ||
-                (parseFloat(data.cgst) || 0) !== 0 ||
-                (parseFloat(data.sgst) || 0) !== 0;
-        });
+    //     let allRates = Object.keys(rateMap).filter(r => {
+    //         let data = rateMap[r] || {};
+    //         return (parseFloat(data.amt) || 0) !== 0 ||
+    //             (parseFloat(data.igst) || 0) !== 0 ||
+    //             (parseFloat(data.cgst) || 0) !== 0 ||
+    //             (parseFloat(data.sgst) || 0) !== 0;
+    //     });
 
-        // Build the slot table body
-        let slotHtml = '';
-        let customSgst=0, customCgst=0, customIgst=0;
+    //     // Build the slot table body
+    //     let slotHtml = '';
+    //     let customSgst=0, customCgst=0, customIgst=0;
 
-        allRates.forEach(function(rate) {
-            rate = (parseFloat(rate) || 0).toString();
-            let data   = rateMap[rate] || { amt:0, igst:0, cgst:0, sgst:0 };
-            let halfR  = parseFloat(rate) / 2;
-            // Auto-compute: use sum from item recalc (standard) or allow manual override
-            let igstAmt = data.igst;
-            let cgstAmt = data.cgst;
-            let sgstAmt = data.sgst;
-            customIgst += igstAmt;
-            customCgst += cgstAmt;
-            customSgst += sgstAmt;
+    //     allRates.forEach(function(rate) {
+    //         rate = (parseFloat(rate) || 0).toString();
+    //         let data   = rateMap[rate] || { amt:0, igst:0, cgst:0, sgst:0 };
+    //         let halfR  = parseFloat(rate) / 2;
+    //         // Auto-compute: use sum from item recalc (standard) or allow manual override
+    //         let igstAmt = data.igst;
+    //         let cgstAmt = data.cgst;
+    //         let sgstAmt = data.sgst;
+    //         customIgst += igstAmt;
+    //         customCgst += cgstAmt;
+    //         customSgst += sgstAmt;
 
-            let isZero = data.amt === 0;
+    //         let isZero = data.amt === 0;
 
-            // Build ledger options
-            let iOpts = iGstLedgers.map(l => {
-                let sel = String(l.id) === String(mappedGstLedgerId('igst')) ? 'selected' : '';
-                return `<option value="${l.id}" ${sel}>${l.name}</option>`;
-            }).join('');
-            let cOpts = cGstLedgers.map(l => {
-                let sel = String(l.id) === String(mappedGstLedgerId('cgst')) ? 'selected' : '';
-                return `<option value="${l.id}" ${sel}>${l.name}</option>`;
-            }).join('');
-            let sOpts = sGstLedgers.map(l => {
-                let sel = String(l.id) === String(mappedGstLedgerId('sgst')) ? 'selected' : '';
-                return `<option value="${l.id}" ${sel}>${l.name}</option>`;
-            }).join('');
+    //         // Build ledger options
+    //         let iOpts = iGstLedgers.map(l => {
+    //             let sel = String(l.id) === String(mappedGstLedgerId('igst')) ? 'selected' : '';
+    //             return `<option value="${l.id}" ${sel}>${l.name}</option>`;
+    //         }).join('');
+    //         let cOpts = cGstLedgers.map(l => {
+    //             let sel = String(l.id) === String(mappedGstLedgerId('cgst')) ? 'selected' : '';
+    //             return `<option value="${l.id}" ${sel}>${l.name}</option>`;
+    //         }).join('');
+    //         let sOpts = sGstLedgers.map(l => {
+    //             let sel = String(l.id) === String(mappedGstLedgerId('sgst')) ? 'selected' : '';
+    //             return `<option value="${l.id}" ${sel}>${l.name}</option>`;
+    //         }).join('');
 
-            slotHtml += `<tr class="${isZero ? 'zero-row' : ''}" data-rate="${rate}">
-                <td><span class="rate-badge"><span class="slot-rate"></span>${rate}%</span></td>
-                <td class="slot-taxable"><strong>${fmt(data.amt)}</strong></td>
-                <td><select class="slot-igst-ledger" data-rate="${rate}""><option value="">— Ledger —</option>${iOpts}</select></td>
-                <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${igstAmt.toFixed(2)}" step="any"></td>
-                <td><select class="slot-cgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${cOpts}</select></td>
-                <td><input type="number" class="slot-cgst-amt" data-rate="${rate}" value="${cgstAmt.toFixed(2)}" step="any"></td>
-                <td><select class="slot-sgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${sOpts}</select></td>
-                <td><input type="number" class="slot-sgst-amt" data-rate="${rate}" value="${sgstAmt.toFixed(2)}" step="any"></td>
-            </tr>`;
-        });
+    //         slotHtml += `<tr class="${isZero ? 'zero-row' : ''}" data-rate="${rate}">
+    //             <td><span class="rate-badge"><span class="slot-rate"></span>${rate}%</span></td>
+    //             <td class="slot-taxable"><strong>${fmt(data.amt)}</strong></td>
+    //             <td><select class="slot-igst-ledger" data-rate="${rate}""><option value="">— Ledger —</option>${iOpts}</select></td>
+    //             <td><input type="number" class="slot-igst-amt" data-rate="${rate}" value="${igstAmt.toFixed(2)}" step="any"></td>
+    //             <td><select class="slot-cgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${cOpts}</select></td>
+    //             <td><input type="number" class="slot-cgst-amt" data-rate="${rate}" value="${cgstAmt.toFixed(2)}" step="any"></td>
+    //             <td><select class="slot-sgst-ledger" data-rate="${rate}"><option value="">— Ledger —</option>${sOpts}</select></td>
+    //             <td><input type="number" class="slot-sgst-amt" data-rate="${rate}" value="${sgstAmt.toFixed(2)}" step="any"></td>
+    //         </tr>`;
+    //     });
 
-        $('#customSlotsBody').html(slotHtml);
+    //     $('#customSlotsBody').html(slotHtml);
 
-        // Render custom mode summary
-        let customSummaryHtml = `
-            <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${fmt(customIgst)}</span></div>
-            <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${fmt(customCgst)}</span></div>
-            <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${fmt(customSgst)}</span></div>`;
-        $('#custom_tax_rows').html(customSummaryHtml);
+    //     // Render custom mode summary
+    //     let customSummaryHtml = `
+    //         <div class="tax-row"><span class="tax-label">IGST (Total)</span><span class="tax-value">${fmt(customIgst)}</span></div>
+    //         <div class="tax-row"><span class="tax-label">CGST (Total)</span><span class="tax-value">${fmt(customCgst)}</span></div>
+    //         <div class="tax-row"><span class="tax-label">SGST (Total)</span><span class="tax-value">${fmt(customSgst)}</span></div>`;
+    //     $('#custom_tax_rows').html(customSummaryHtml);
 
-        // Update hidden fields for save
-        $('#edit_igst').val(customIgst.toFixed(2));
-        $('#edit_cgst').val(customCgst.toFixed(2));
-        $('#edit_sgst').val(customSgst.toFixed(2));
-        let total = parseFloat($('#edit_amount').val()) + customIgst + customCgst + customSgst;
-        // $('#edit_total_amount').val(total.toFixed(2));
-        // $('#sum_grand_total').text(fmt(total));
-        setRoundOffSummary(total);
-        setRoundOffSummary(total);
-    }
+    //     // Update hidden fields for save
+    //     $('#edit_igst').val(customIgst.toFixed(2));
+    //     $('#edit_cgst').val(customCgst.toFixed(2));
+    //     $('#edit_sgst').val(customSgst.toFixed(2));
+    //     let total = parseFloat($('#edit_amount').val()) + customIgst + customCgst + customSgst;
+    //     // $('#edit_total_amount').val(total.toFixed(2));
+    //     // $('#sum_grand_total').text(fmt(total));
+    //     setRoundOffSummary(total);
+    //     setRoundOffSummary(total);
+    // }
 
     $(document).on('input', '#noitem_amount', function() {
         recalcTotals();
@@ -2478,7 +2491,7 @@
         $('#customSlotsBody tr').each(function() {
             let rate = (parseFloat($(this).data('rate')) || 0).toString();
             let salesLedgerId = $(this).find('.slot_sales_ledger_id').val() || '';
-            let key = $(this).data('slot-key') || `${rate}|${salesLedgerId}`;
+            let key = $(this).data('slot-key') || customSlotKey(rate, salesLedgerId);    
 
             existingSelections[key] = {
                 igst_ledger: $(this).find('.slot-igst-ledger').val(),
@@ -2521,7 +2534,7 @@
             // Keep user-selected ledgers, but always refresh tax amounts from latest item data
 
             let existing = existingSelections[data.slotKey || mapKey] ||
-                existingSelections[`${rate}|${data.ledgerId || ''}`] ||
+                existingSelections[customSlotKey(rate, data.ledgerId || '')] ||
                 existingSelections[rate] ||
                 {};
             // let igstAmt = existing.igst_amt !== undefined ? existing.igst_amt : data.igst;
@@ -2532,13 +2545,13 @@
             // customCgst += parseFloat(cgstAmt) || 0;
             // customSgst += parseFloat(sgstAmt) || 0;
             
-            let igstAmt = parseFloat(data.igst) || 0;
-            let cgstAmt = parseFloat(data.cgst) || 0;
-            let sgstAmt = parseFloat(data.sgst) || 0;
+            let igstAmt = roundCurrency(data.igst);
+            let cgstAmt = roundCurrency(data.cgst);
+            let sgstAmt = roundCurrency(data.sgst);
 
-            customIgst += igstAmt;
-            customCgst += cgstAmt;
-            customSgst += sgstAmt;
+            customIgst = roundCurrency(customIgst + igstAmt);
+            customCgst = roundCurrency(customCgst + cgstAmt);
+            customSgst = roundCurrency(customSgst + sgstAmt);
 
             let isZero = data.amt === 0;
 
@@ -2581,7 +2594,7 @@
         $('#edit_igst').val(customIgst.toFixed(2));
         $('#edit_cgst').val(customCgst.toFixed(2));
         $('#edit_sgst').val(customSgst.toFixed(2));
-        let total = parseFloat($('#edit_amount').val()) + customIgst + customCgst + customSgst;
+        let total = roundCurrency((parseFloat($('#edit_amount').val()) || 0) + customIgst + customCgst + customSgst);
         // $('#edit_total_amount').val(total.toFixed(2));
         // $('#sum_grand_total').text(fmt(total));
         setRoundOffSummary(total);

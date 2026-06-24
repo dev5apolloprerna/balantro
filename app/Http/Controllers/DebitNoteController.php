@@ -1305,6 +1305,8 @@ class DebitNoteController extends Controller
             'sgst' => 'nullable|numeric',
             'igst' => 'nullable|numeric',
             'total_amount' => 'nullable|numeric',
+            'roundoff' => 'nullable|numeric',
+            'gst_rate' => 'nullable|numeric',
             'noitem_amount' => 'nullable|numeric',
 
             'igst_ledger' => 'nullable|integer',
@@ -1312,6 +1314,8 @@ class DebitNoteController extends Controller
             'sgst_ledger' => 'nullable|integer',
 
             'purchase_ledger' => 'nullable|string',
+            'purchase_ledger_id' => 'nullable',
+            'purchase_ledger_name' => 'nullable|string',
             'sales_ledger' => 'nullable|string',
 
             'items' => 'nullable|array',
@@ -1385,11 +1389,17 @@ class DebitNoteController extends Controller
             // ===============================
             // PURCHASE LEDGER
             // ===============================
-            $ledgerName = isset($request->purchase_ledger) && $request->purchase_ledger != "Select Ledger" ? $request->purchase_ledger : $transaction->purchase_ledger;
+            $ledgerName = isset($request->purchase_ledger) && trim((string) $request->purchase_ledger) !== '' && $request->purchase_ledger != "Select Ledger"
+                ? trim((string) $request->purchase_ledger)
+                : ($transaction->purchase_ledger_name ?: $transaction->purchase_ledger);
 
-            $ledger = $ledgerName
-                ? Ledger::getLedgerByName($transaction->iPartyId, $ledgerName)
+            $ledger = $request->filled('purchase_ledger_id')
+                ? Ledger::getLedgerById($transaction->iPartyId, $request->purchase_ledger_id)
                 : null;
+
+            if (!$ledger && $ledgerName) {
+                $ledger = Ledger::getLedgerByName($transaction->iPartyId, $ledgerName);
+            }
 
             // ===============================
             // HEADER UPDATE (SAFE)
@@ -1412,13 +1422,15 @@ class DebitNoteController extends Controller
                 'is_igst' => $request->is_igst ?? $transaction->is_igst,
                 'gst_mode' => $request->gst_mode ?? $transaction->gst_mode ?? 'standard',
 
-                'purchase_ledger_id' => $ledger->id ?? $transaction->purchase_ledger_id,
-                'purchase_ledger_name' => $ledger->name ?? $transaction->purchase_ledger_name,
+                'purchase_ledger' => $ledger->name ?? $ledgerName ?? $transaction->purchase_ledger,
+                'purchase_ledger_id' => $ledger->id ?? $request->purchase_ledger_id ?? $transaction->purchase_ledger_id,
+                'purchase_ledger_name' => $ledger->name ?? $request->purchase_ledger_name ?? $ledgerName ?? $transaction->purchase_ledger_name,
 
                 'strYear'       => session('year'),
                 'year_from_date' => session('year_from'),
                 'year_to_date'  => session('year_to'),
                 'isWithItem'    => $request->entry_mode == 'noitem' ? 0 : 1,
+                'gst_rate'      => $request->gst_rate ?? $transaction->gst_rate,
             ]);
 
             $gstMode = $transaction->gst_mode;
@@ -1441,6 +1453,25 @@ class DebitNoteController extends Controller
                     if (isset($itemData['item_name'])) {
                         $itemData['item_name'] = trim((string) $itemData['item_name']);
                     }
+
+                    $itemAmount = (float)($itemData['amount'] ?? 0);
+                    if ($itemAmount === 0.0) {
+                        $itemAmount = (float)($itemData['quantity'] ?? 0) * (float)($itemData['rate'] ?? 0);
+                    }
+                    $itemGstRate = (float)($itemData['gst_rate'] ?? 0);
+                    $itemGstAmount = ($itemAmount * $itemGstRate) / 100;
+
+                    $itemData['amount'] = $itemAmount;
+                    if ((int) $transaction->is_igst === 1) {
+                        $itemData['igst'] = $itemGstAmount;
+                        $itemData['cgst'] = 0;
+                        $itemData['sgst'] = 0;
+                    } else {
+                        $itemData['igst'] = 0;
+                        $itemData['cgst'] = $itemGstAmount / 2;
+                        $itemData['sgst'] = $itemGstAmount / 2;
+                    }
+                    $itemData['total_amount'] = $itemAmount + (float) $itemData['cgst'] + (float) $itemData['sgst'] + (float) $itemData['igst'];
 
                     $itemId = $itemData['id'] ?? null;
                     $itemData['transaction_id'] = $transaction->id;
@@ -1466,6 +1497,11 @@ class DebitNoteController extends Controller
                     $sumIgst   += (float)($itemData['igst'] ?? 0);
                 }
 
+                if (($request->gst_mode ?? $gstMode) === 'custom' && !empty($request->custom_slots)) {
+                    $sumCgst = collect($request->custom_slots)->sum(fn ($slot) => (float)($slot['cgst_amount'] ?? 0));
+                    $sumSgst = collect($request->custom_slots)->sum(fn ($slot) => (float)($slot['sgst_amount'] ?? 0));
+                    $sumIgst = collect($request->custom_slots)->sum(fn ($slot) => (float)($slot['igst_amount'] ?? 0));
+                }
                 // delete removed items
                 
             } else {
