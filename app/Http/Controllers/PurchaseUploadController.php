@@ -1122,7 +1122,23 @@ class PurchaseUploadController extends Controller
         if (is_numeric($value)) {
             return Date::excelToDateTimeObject((float) $value)->format('Y-m-d');
         }
-        return date('Y-m-d', strtotime((string) $value));
+        $date = trim((string) $value);
+        if ($date === '') {
+            return date('Y-m-d');
+        }
+
+        $normalizedDate = str_replace(['-', '.'], '/', $date);
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $normalizedDate, $matches)) {
+            $day = (int) $matches[1];
+            $month = (int) $matches[2];
+            $year = (int) $matches[3];
+
+            if (checkdate($month, $day, $year)) {
+                return sprintf('%04d-%02d-%02d', $year, $month, $day);
+            }
+        }
+
+        return date('Y-m-d', strtotime($date));
     }
 
     private function toNumber(mixed $value): float

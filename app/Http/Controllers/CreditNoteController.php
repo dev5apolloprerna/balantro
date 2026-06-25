@@ -2260,7 +2260,21 @@ class CreditNoteController extends Controller
         if (is_numeric($value)) {
             return Date::excelToDateTimeObject((float) $value)->format('Y-m-d');
         }
-        return date('Y-m-d', strtotime((string) $value));
+        
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+
+        foreach (['d/m/Y', 'd-m-Y', 'd.m.Y', 'Y-m-d', 'Y/m/d'] as $format) {
+            $date = \DateTime::createFromFormat('!' . $format, $value);
+            if ($date && $date->format($format) === $value) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        $timestamp = strtotime($value);
+        return $timestamp ? date('Y-m-d', $timestamp) : '';
     }
 
     public function changeUploadStatus(Request $request)

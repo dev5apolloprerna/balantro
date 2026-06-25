@@ -729,7 +729,7 @@ class SalesUploadController extends Controller
                             : 0;
                     
                     // if (!$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
-                    if (!$partyMatched || !$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
+                    if (!$partyMatched || !$this->isUploadDateInSelectedYear($first['date']) || !$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
                         $status = 'pending';
                     }
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
@@ -917,7 +917,7 @@ class SalesUploadController extends Controller
                         $isIgst
                     );
                     $status = $hasGstLedgers ? 'saved' : 'pending';
-                    if (!$partyMatched || !$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $first['invoice_no'], session('year'))) {
+                    if (!$partyMatched || !$this->isUploadDateInSelectedYear($first['date']) || !$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $first['invoice_no'], session('year'))) {
                         $status = 'pending';
                     }
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
@@ -1814,10 +1814,34 @@ class SalesUploadController extends Controller
         if ($value instanceof \DateTimeInterface) {
             return $value->format('Y-m-d');
         }
+
         if (is_numeric($value)) {
             return Date::excelToDateTimeObject((float) $value)->format('Y-m-d');
         }
-        return date('Y-m-d', strtotime((string) $value));
+        
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+
+        foreach (['d/m/Y', 'd-m-Y', 'd.m.Y', 'd/m/y', 'd-m-y', 'Y-m-d', 'Y/m/d', 'm/d/Y', 'm-d-Y'] as $format) {
+            $date = \DateTimeImmutable::createFromFormat('!' . $format, $value);
+            if ($date && $date->format($format) === $value) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        $timestamp = strtotime($value);
+        return $timestamp ? date('Y-m-d', $timestamp) : '';
+    }
+
+    private function isUploadDateInSelectedYear(?string $date): bool
+    {
+        if (empty($date) || empty(session('year_from')) || empty(session('year_to'))) {
+            return false;
+        }
+
+        return $date >= session('year_from') && $date <= session('year_to');
     }
 
     private function toNumber(mixed $value): float
