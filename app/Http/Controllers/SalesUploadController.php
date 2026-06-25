@@ -433,6 +433,11 @@ class SalesUploadController extends Controller
         ];
     }
 
+    private function hasUploadPartyMatch(array $partyLookup): bool
+    {
+        return in_array($partyLookup['matched_by'] ?? null, ['gst_no', 'party_name'], true);
+    }
+
     private function getCompletePartyLedgerDetails($partyId, ?string $partyName): ?array
     {
         $partyName = trim((string) $partyName);
@@ -636,7 +641,7 @@ class SalesUploadController extends Controller
                     //$partyLedgerDetails = $this->getCompletePartyLedgerDetails($iPartyId, $first['party_name']);
                     $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $partyLedgerDetails = $partyLookup['details'];
-                    $partyMatched = $partyLookup['matched'];
+                    $partyMatched = $this->hasUploadPartyMatch($partyLookup);
 
                     $mapping = $this->getGstMapping(
                         $iPartyId,
@@ -893,7 +898,7 @@ class SalesUploadController extends Controller
                         ->first();
                     $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $partyLedgerDetails = $partyLookup['details'];
-                    $partyMatched = $partyLookup['matched'];
+                    $partyMatched = $this->hasUploadPartyMatch($partyLookup);
 
                     $gstSlots = $this->buildSalesCustomGstSlots($rows, $iPartyId);
                     $rates = array_unique(array_filter(array_column($gstSlots, 'gst_rate')));

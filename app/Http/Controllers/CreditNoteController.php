@@ -103,6 +103,29 @@ class CreditNoteController extends Controller
             ->get();
     }
 
+        private function normalizeGstNo($gstNo): string
+    {
+        return strtoupper(preg_replace('/\s+/', '', trim((string) $gstNo)));
+    }
+
+    private function ledgerDetailsArray($ledger, string $matchedBy): array
+    {
+        return [
+            'party_name' => trim((string) ($ledger->party_name ?? '')),
+            'gst_no' => trim((string) ($ledger->gst_no ?? '')),
+            'address' => trim((string) ($ledger->address ?? '')),
+            'pincode' => trim((string) ($ledger->pincode ?? '')),
+            'city' => trim((string) ($ledger->city ?? '')),
+            'state' => trim((string) ($ledger->state ?? '')),
+            'matched_by' => $matchedBy,
+        ];
+    }
+
+    private function hasMinimumLedgerDetails(array $details): bool
+    {
+        return $details['party_name'] !== '' && $details['gst_no'] !== '';
+    }
+
     private function getCompletePartyLedgerDetails($partyId, ?string $partyName): ?array
     {
         $partyName = trim((string) $partyName);
@@ -112,14 +135,14 @@ class CreditNoteController extends Controller
         }
 
         $ledger = DB::table('LedgerMaster')
-            ->selectRaw("GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
+            ->selectRaw("strCustomerName AS party_name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state") // ->selectRaw("GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
             ->where('iPartyId', $partyId)
             ->where('strCustomerName', $partyName)
             ->first();
 
         if (!$ledger) {
             $ledger = DB::table('ledgers')
-                ->selectRaw("GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state")
+                ->selectRaw("name AS party_name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state") // ->selectRaw("GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state")
                 ->where('iPartyId', $partyId)
                 ->where('name', $partyName)
                 ->first();
@@ -129,19 +152,44 @@ class CreditNoteController extends Controller
             return null;
         }
 
-        $details = [
-            'gst_no' => trim((string) ($ledger->gst_no ?? '')),
-            'address' => trim((string) ($ledger->address ?? '')),
-            'pincode' => trim((string) ($ledger->pincode ?? '')),
-            'city' => trim((string) ($ledger->city ?? '')),
-            'state' => trim((string) ($ledger->state ?? '')),
-        ];
+        $details = $this->ledgerDetailsArray($ledger, 'party_name');
 
-        if ($details['gst_no'] === '' || $details['address'] === '' || $details['pincode'] === '' || $details['state'] === '') {
+        return $this->hasMinimumLedgerDetails($details) ? $details : null;
+    }
+
+    private function getCompletePartyLedgerDetailsByGst($partyId, ?string $gstNo): ?array
+    {
+        $gstNo = $this->normalizeGstNo($gstNo);
+        if ($gstNo === '') {
+            return null;
+        }
+        $ledger = DB::table('LedgerMaster')
+            ->selectRaw("strCustomerName AS party_name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
+            ->where('iPartyId', $partyId)
+            ->whereRaw("UPPER(REPLACE(GSTNo, ' ', '')) = ?", [$gstNo])
+            ->first();
+
+        if (!$ledger) {
+            $ledger = DB::table('ledgers')
+                ->selectRaw("name AS party_name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state")
+                ->where('iPartyId', $partyId)
+                ->whereRaw("UPPER(REPLACE(GstNo, ' ', '')) = ?", [$gstNo])
+                ->first();
+        }
+
+        if (!$ledger) {
             return null;
         }
 
-        return $details;
+        $details = $this->ledgerDetailsArray($ledger, 'gst_no');
+
+        return $this->hasMinimumLedgerDetails($details) ? $details : null;
+    }
+
+    private function resolveUploadPartyLedgerDetails($partyId, array $row): ?array
+    {
+        return $this->getCompletePartyLedgerDetailsByGst($partyId, $row['gst_no'] ?? null)
+            ?: $this->getCompletePartyLedgerDetails($partyId, $row['party_name'] ?? null);
     }
 
     private function applyPartyLedgerDetails(array $row, ?array $ledgerDetails): array
@@ -149,7 +197,9 @@ class CreditNoteController extends Controller
         if (!$ledgerDetails) {
             return $row;
         }
-
+        if (($ledgerDetails['matched_by'] ?? null) === 'gst_no') {
+            $row['party_name'] = $ledgerDetails['party_name'];
+        }
         $row['gst_no'] = $row['gst_no'] ?: $ledgerDetails['gst_no'];
         $row['address'] = $row['address'] ?: $ledgerDetails['address'];
         $row['pincode'] = $row['pincode'] ?: $ledgerDetails['pincode'];
@@ -1063,10 +1113,9 @@ class CreditNoteController extends Controller
                     $sumCgst = array_sum(array_column($items, 'cgst'));
                     $sumIgst = array_sum(array_column($items, 'igst'));
                     $sumTotalAmount = array_sum(array_column($items, 'total_amount'));
-                    $first = $this->applyPartyLedgerDetails(
-                        $items[0],
-                        $this->getCompletePartyLedgerDetails($iPartyId, $items[0]['party_name'] ?? null)
-                    );
+                    $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($iPartyId, $items[0]);
+                    $first = $this->applyPartyLedgerDetails($items[0], $partyLedgerDetails);
+                    $partyLedgerMatched = $partyLedgerDetails !== null;
                     
                     $salesLedger = DB::table('LedgerMaster')
                         ->where('iPartyId', $iPartyId)
@@ -1120,7 +1169,7 @@ class CreditNoteController extends Controller
                     }
 
                     $noteNo = explode('|', $groupKey)[0];
-                    if (!$this->hasOnlyValidGstSlabs($rates) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
+                    if (!$partyLedgerMatched || !$this->hasOnlyValidGstSlabs($rates) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
                         $status = 'pending';
                     }
                     
@@ -1255,10 +1304,9 @@ class CreditNoteController extends Controller
 
             DB::transaction(function () use ($noteGroups, $iPartyId, $upload, &$total) {
                 foreach ($noteGroups as $groupKey => $rows) {
-                    $first = $this->applyPartyLedgerDetails(
-                        $rows[0],
-                        $this->getCompletePartyLedgerDetails($iPartyId, $rows[0]['party_name'] ?? null)
-                    );
+                    $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($iPartyId, $rows[0]);
+                    $first = $this->applyPartyLedgerDetails($rows[0], $partyLedgerDetails);
+                    $partyLedgerMatched = $partyLedgerDetails !== null;
                     
                     // Calculate totals
                     $sumAmount = array_sum(array_column($rows, 'amount'));
@@ -1333,7 +1381,7 @@ class CreditNoteController extends Controller
                     
                     $status = $this->hasRequiredGstLedgers($gstSlots, $isIgst) ? 'saved' : 'pending';
                     $noteNo = $first['note_no'];
-                    if (!$this->hasOnlyValidGstSlabs(array_column($gstSlots, 'gst_rate')) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
+                    if (!$partyLedgerMatched || !$this->hasOnlyValidGstSlabs(array_column($gstSlots, 'gst_rate')) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
                         $status = 'pending';
                     }
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);

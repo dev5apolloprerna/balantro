@@ -310,67 +310,6 @@ class PurchaseUploadController extends Controller
         }
     }
 
-    private function getCompletePartyLedgerDetails(int $partyId, ?string $partyName): ?array
-    {
-        $partyName = trim((string) $partyName);
-        if ($partyName === '') {
-            return null;
-        }
-
-        $ledger = DB::table('LedgerMaster')
-            ->selectRaw("GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
-            ->where('iPartyId', $partyId)
-            ->whereRaw('LOWER(TRIM(strCustomerName)) = ?', [strtolower($partyName)])
-            ->first();
-
-        if (!$ledger) {
-            $ledger = DB::table('ledgers')
-                ->selectRaw("GstNo AS gst_no, TRIM(CONCAT_WS(' ', AddressLine1, AddressLine2)) AS address, Pincode AS pincode, City AS city, State AS state")
-                ->where('iPartyId', $partyId)
-                ->whereRaw('LOWER(TRIM(Name)) = ?', [strtolower($partyName)])
-                ->first();
-        }
-
-        if (!$ledger) {
-            return null;
-        }
-
-        $details = [
-            'gst_no' => trim((string) ($ledger->gst_no ?? '')),
-            'address' => trim((string) ($ledger->address ?? '')),
-            'pincode' => trim((string) ($ledger->pincode ?? '')),
-            'city' => trim((string) ($ledger->city ?? '')),
-            'state' => trim((string) ($ledger->state ?? '')),
-        ];
-
-        if ($details['state'] !== '' && is_numeric($details['state'])) {
-            $details['state'] = DB::table('state')
-                ->where('stateId', $details['state'])
-                ->value('stateName') ?? $details['state'];
-        }
-
-        if ($details['gst_no'] === '' || $details['address'] === '' || $details['pincode'] === '' || $details['state'] === '') {
-            return null;
-        }
-
-        return $details;
-    }
-
-    private function mergePartyLedgerDetails(array $source, ?array $ledgerDetails): array
-    {
-        if (!$ledgerDetails) {
-            return $source;
-        }
-
-        $source['gst_no'] = trim((string) ($source['gst_no'] ?? '')) !== '' ? $source['gst_no'] : $ledgerDetails['gst_no'];
-        $source['place_of_supply'] = trim((string) ($source['place_of_supply'] ?? '')) !== '' ? $source['place_of_supply'] : $ledgerDetails['state'];
-        $source['address'] = trim((string) ($source['address'] ?? '')) !== '' ? $source['address'] : $ledgerDetails['address'];
-        $source['pincode'] = trim((string) ($source['pincode'] ?? '')) !== '' ? $source['pincode'] : $ledgerDetails['pincode'];
-        $source['city'] = trim((string) ($source['city'] ?? '')) !== '' ? $source['city'] : $ledgerDetails['city'];
-
-        return $source;
-    }
-
     private function normalizeGstNo(?string $gstNo): string
     {
         return strtoupper(preg_replace('/\s+/', '', trim((string) $gstNo)));
@@ -434,6 +373,21 @@ class PurchaseUploadController extends Controller
         }
 
         return $details;
+    }
+
+    private function isPartyLedgerAcceptedForUpload(?array $ledgerDetails, ?string $uploadedGstNo): bool
+    {
+        if (!$ledgerDetails) {
+            return false;
+        }
+
+        $hasUploadedGstNo = $this->normalizeGstNo($uploadedGstNo) !== '';
+
+        if ($hasUploadedGstNo) {
+            return !empty($ledgerDetails['matched_by_gst']);
+        }
+
+        return !empty($ledgerDetails['matched_by_name']);
     }
 
     private function hasCompletePartyLedgerDetails(?array $ledgerDetails): bool
@@ -633,7 +587,10 @@ class PurchaseUploadController extends Controller
                         $items[0]['party_name'] ?? null,
                         $items[0]['gst_no'] ?? null
                     );
-                    $partyLedgerMatched = (bool) $partyLedgerDetails;
+                    $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload(
+                        $partyLedgerDetails,
+                        $items[0]['gst_no'] ?? null
+                    );
                     $first = $this->mergePartyLedgerDetails(
                         $items[0],
                         $partyLedgerDetails
@@ -937,7 +894,10 @@ class PurchaseUploadController extends Controller
                         $rows[0]['party_name'] ?? null,
                         $rows[0]['gst_no'] ?? null
                     );
-                    $partyLedgerMatched = (bool) $partyLedgerDetails;
+                    $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload(
+                        $partyLedgerDetails,
+                        $rows[0]['gst_no'] ?? null
+                    );
                     $first = $this->mergePartyLedgerDetails(
                         $rows[0],
                         $partyLedgerDetails
