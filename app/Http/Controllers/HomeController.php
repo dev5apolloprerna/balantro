@@ -171,6 +171,39 @@ class HomeController extends Controller
             $to   = $r->input('to', session('selectedTo'));
             $selectedRange = $range ?: session('selectedRange', 'current_year');
 
+            $activeTab = $r->get('tab') === 'documents' ? 'documents' : 'financial';
+            $type = (int) $r->input('type', 1);
+
+            $documentCounts = Document::where('user_id', $userId)
+                ->selectRaw('status, COUNT(*) as count')
+                ->groupBy('status')
+                ->pluck('count', 'status');
+
+            $uploadedCount   = (int) ($documentCounts['uploaded'] ?? 0);
+            $inProgressCount = (int) (($documentCounts['accepted'] ?? 0)
+                + ($documentCounts['data_entry_in_progress'] ?? 0)
+                + ($documentCounts['data_entry_completed'] ?? 0)
+                + ($documentCounts['query_raised'] ?? 0)
+                + ($documentCounts['query_resolved'] ?? 0));
+            $completedCount  = (int) ($documentCounts['approved'] ?? 0);
+            $rejectedCount   = (int) ($documentCounts['rejected'] ?? 0);
+            $acceptedCount   = (int) ($documentCounts['accepted'] ?? 0);
+
+            if ($activeTab === 'documents') {
+                return view('home', [
+                    'uploaded_count'    => $uploadedCount,
+                    'in_progress_count' => $inProgressCount,
+                    'completed_count'   => $completedCount,
+                    'rejected_count'    => $rejectedCount,
+                    'accepted_count'    => $acceptedCount,
+                    'active_tab'        => 'documents',
+                    'partyId'           => $partyId,
+                    'activeType'        => $type,
+                    'fyRangeSel'        => $selectedRange,
+                    'financialYears'    => $financialYears,
+                ]);
+            }
+
             $defaultGroupNames = [
                 'Sales Accounts',
                 'Purchase Accounts',
@@ -187,8 +220,6 @@ class HomeController extends Controller
                 $allGroupsWithBalances = $svc->getAllGroupsWithBalances($userId, $from, $to);
                 $allGroups = collect($allGroupsWithBalances);
                 
-                \Log::info('Groups with balances found:', ['count' => $allGroups->count()]);
-
                 // If still no groups, create some default groups for demo
                 if ($allGroups->isEmpty()) {
                     \Log::warning('No groups with balances found, creating demo groups');
@@ -206,8 +237,7 @@ class HomeController extends Controller
                     ]);
                 }
             } catch (\Exception $e) {
-                \Log::error('Error fetching groups with balances: ' . $e->getMessage());
-
+                
                 // Fallback: try to get groups without balances
                 $allGroups = DB::table('GroupMaster')
                     ->where('iPartyId', $partyId)
@@ -255,19 +285,6 @@ class HomeController extends Controller
                 ['key' => '3', 'value' => "Recepit & Payment"],
                 ['key' => '4', 'value' => "Cash & Bank balance"]
             ];
-
-            // ---- CALL STORED PROCEDURE ----
-            // $rows = DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$userId]);
-            // $row  = $rows[0] ?? (object) [];
-
-            $uploadedCount   = (int) ($row->uploaded_count    ?? 0);
-            $inProgressCount = (int) ($row->in_progress_count ?? 0);
-            $completedCount  = (int) ($row->completed_count   ?? 0);
-            $rejectedCount   = (int) ($row->rejected_count    ?? 0);
-            $acceptedCount   = (int) ($row->accepted_count    ?? 0);
-
-            // ---- Chart logic (FIXED to include monthly comparison arrays) ----
-            $type = (int) $r->input('type', 1);
 
             // $from = $r->input('from');
             // $to   = $r->input('to');
@@ -400,9 +417,6 @@ class HomeController extends Controller
                 ];
             }
             
-            $allGroupsWithBalances = $svc->getAllGroupsWithBalances($userId, $from, $to);
-            $allGroups = collect($allGroupsWithBalances);
-
             $basis = $selectedRes ?: ($charts[$type - 1] ?? []);
             $labelFY   = $selectedRes['fy_label']  ?? ($basis['fy_label'] ?? '');
             $range     = $selectedRes['range']     ?? ($basis['range'] ?? ['from' => $from, 'to' => $to]);
@@ -466,26 +480,7 @@ class HomeController extends Controller
                 ];
             }
 
-            $activeTab = $r->get('tab', 'financial');
-            if ($activeTab === 'documents') {
-                return view('home', [
-                    'uploaded_count'    => $uploadedCount,
-                    'in_progress_count' => $inProgressCount,
-                    'completed_count'   => $completedCount,
-                    'rejected_count'    => $rejectedCount,
-                    'accepted_count'    => $acceptedCount,
-                    'active_tab'        => 'documents',
-                    'partyId'           => $partyId,
-                    'allGroups'         => $allGroups,
-                    'selectedGroups'    => $selectedGroups,
-                    'selectedGroupsWithBalances' => $selectedGroupsWithBalances,
-                    'defaultGroupIds'   => $defaultGroupIds,
-                    'activeType'        => $type,
-                    'allGroupCards'     => $allGroupCards, // Add this
-                    'fyRangeSel' => $selectedRange,
-                    'financialYears' => $financialYears,
-                ]);
-            } else {
+            if ($activeTab === 'financial') {
                 $svc = new ReportsService();
                 $resp = $svc->pandl($r->user()->id, $from, $to);
                 $guid = Auth::user()->guid ?? '';

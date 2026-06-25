@@ -1,4 +1,4 @@
-    @php
+    <?php
         use Carbon\Carbon;
         use Illuminate\Support\Facades\DB;
 
@@ -154,7 +154,7 @@
         }
         $assets = $totalAssets;
         
-    @endphp
+    ?>
 
     <style>
         /* ===== 6 COLOR SYSTEM ===== */
@@ -286,10 +286,10 @@
         
     </style>
 
-    <!-- @include('client_dashboard.topmenu') -->
+    <!-- <?php echo $__env->make('client_dashboard.topmenu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?> -->
     <div class="container py-0">
 
-        <form id="graphForm" method="GET" action="{{ route('home') }}" class="rounded-lg">
+        <form id="graphForm" method="GET" action="<?php echo e(route('home')); ?>" class="rounded-lg">
             <input type="hidden" name="tab" value="financial">
             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
 
@@ -298,8 +298,8 @@
                     <div class="relative"
                         x-data="{
                             open: false,
-                            selected: @js($selectedFinancialYear),
-                            options: @js($financialYearOptions->pluck('label', 'value')),
+                            selected: <?php echo \Illuminate\Support\Js::from($selectedFinancialYear)->toHtml() ?>,
+                            options: <?php echo \Illuminate\Support\Js::from($financialYearOptions->pluck('label', 'value'))->toHtml() ?>,
                             init() {
                                 this.$watch('selected', value => {
                                     handleRangeChange(value);
@@ -339,19 +339,20 @@
                                 class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
                                 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
-                                @forelse ($financialYearOptions as $financialYear)
+                                <?php $__empty_1 = true; $__currentLoopData = $financialYearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                     <li>
                                         <button type="button"
-                                            @click="selected=@js($financialYear['value']); open=false"
+                                            @click="selected=<?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>; open=false"
                                             class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
-                                            {{ $financialYear['label'] }}
+                                            <?php echo e($financialYear['label']); ?>
+
                                         </button>
                                     </li>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <li class="px-4 py-2 text-left text-gray-500 dark:text-gray-400">
                                         No financial years found
                                     </li>
-                                @endforelse                               
+                                <?php endif; ?>                               
 
                             </ul>
                         </div>
@@ -360,9 +361,9 @@
 
                     <!-- KEEP THESE hidden fields -->
                     <!-- <option value="custom">Custom Range</option> -->
-                    <input type="hidden" id="fy_from" name="from" value="{{ $fromVal }}">
-                    <input type="hidden" id="fy_to" name="to" value="{{ $toVal }}">
-                    <input type="hidden" id="fy_type" name="type" value="{{ (int) ($activeType ?? 1) }}">
+                    <input type="hidden" id="fy_from" name="from" value="<?php echo e($fromVal); ?>">
+                    <input type="hidden" id="fy_to" name="to" value="<?php echo e($toVal); ?>">
+                    <input type="hidden" id="fy_type" name="type" value="<?php echo e((int) ($activeType ?? 1)); ?>">
                 </div>
 
             </div>
@@ -480,7 +481,7 @@
 
 
     <!-- Rest of your tabs and chart code remains the same -->
-    @php
+    <?php
         $tabLabels = [
             1 => 'Sales vs Purchase',
             2 => 'Creditors vs Debtors',
@@ -489,7 +490,7 @@
         ];
         $active = (int) ($activeType ?? 1);
 
-    @endphp
+    ?>
     
     <!-- <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"> -->
     <div class="flex flex-wrap items-center justify-end gap-3">
@@ -691,8 +692,8 @@
         <!-- ... existing report links ... -->
     </div>
 
-    {{-- Dynamic Group Cards - IMPROVED WITH BETTER FALLBACKS --}}
-    @php
+    
+    <?php
         $fmt = fn($v) => number_format((float) $v, 2, '.', ',');
         $leftBar = fn($index) => $colorMap[array_keys($colorMap)[$index % count($colorMap)]];
         $chip = fn($index) => 'bg-gray-50 text-gray-600 dark:bg-gray-900/30 dark:text-gray-300';
@@ -706,10 +707,10 @@
             // No user selection, use default groups
             $groupsToDisplay = $defaultGroupIds;
         }
-    @endphp
+    ?>
 
-    {{-- Dynamic Group Cards - USING allGroupCards WITH PROPER ICONS AND COLORS --}}
-    @php
+    
+    <?php
         $fmt = fn($v) => number_format((float) $v, 2, '.', ',');
 
         $leftBar = fn($accent) => match ($accent) {
@@ -755,8 +756,8 @@
             'gray' => 'bg-gray-50 text-gray-600 dark:bg-gray-900/30 dark:text-gray-300',
             default => 'bg-gray-50 text-gray-600 dark:bg-gray-900/30 dark:text-gray-300',
         };
-    @endphp
-    @php
+    ?>
+    <?php
         // Maintain selected order (FIFO style)
         if (!empty($allGroupCards) && !empty($selectedGroups)) {
 
@@ -770,20 +771,20 @@
                 return $aPos <=> $bPos;
             });
         }
-    @endphp
-    @if (!empty($allGroupCards) && count($allGroupCards) > 0)
+    ?>
+    <?php if(!empty($allGroupCards) && count($allGroupCards) > 0): ?>
         <div class="mt-1">
             <div class="flex items-center justify-between mb-1">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         Accounts Summary
                         <span class="text-sm text-gray-500 dark:text-gray-400">
-                            {{ count($allGroupCards) }} accounts
+                            <?php echo e(count($allGroupCards)); ?> accounts
                         </span>
                     </h3>
                 </div>
 
-                <div class="relative" x-data="groupCustomizer({{ $selectedGroupsJson }}, {{ $allGroupIdsJson }}, {{ $defaultGroupIdsJson }})" x-init="init()">
+                <div class="relative" x-data="groupCustomizer(<?php echo e($selectedGroupsJson); ?>, <?php echo e($allGroupIdsJson); ?>, <?php echo e($defaultGroupIdsJson); ?>)" x-init="init()">
 
                     <!-- BUTTON -->
                     <button type="button" @click="toggle()"
@@ -819,35 +820,36 @@
                         <!-- SCROLLABLE LIST -->
                         <div class="overflow-y-auto p-4 space-y-2" style="flex:1; min-height:0;">
 
-                            @foreach ($allGroups as $index => $group)
-                                @php
+                            <?php $__currentLoopData = $allGroups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
                                     
                                     $colorIndex = $index % count($colorMap);
                                     $colorKeys = array_keys($colorMap);
                                     $color = $colorKeys[$colorIndex];
-                                @endphp
+                                ?>
 
                                 <label
                                     class="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50"
                                     :class="{
                                         'bg-blue-50 dark:bg-blue-900/20': selectedGroups.includes(
-                                            {{ (int) $group->iGroupId }})
+                                            <?php echo e((int) $group->iGroupId); ?>)
                                     }">
 
-                                    <input type="checkbox" value="{{ (int) $group->iGroupId }}" x-model="selectedGroups"
-                                        :disabled="isGroupDisabled({{ (int) $group->iGroupId }})"
+                                    <input type="checkbox" value="<?php echo e((int) $group->iGroupId); ?>" x-model="selectedGroups"
+                                        :disabled="isGroupDisabled(<?php echo e((int) $group->iGroupId); ?>)"
                                         class="w-4 h-4 text-indigo-600 border-gray-300 rounded">
 
                                     <span class="text-sm text-gray-700 dark:text-gray-300 flex-1">
-                                        @if(in_array((int)$group->iGroupId, $selectedGroups))
-                                            {{ array_search((int)$group->iGroupId, $selectedGroups) + 1 }}.
-                                        @endif
-                                        {{ $group->strGroupName }}
+                                        <?php if(in_array((int)$group->iGroupId, $selectedGroups)): ?>
+                                            <?php echo e(array_search((int)$group->iGroupId, $selectedGroups) + 1); ?>.
+                                        <?php endif; ?>
+                                        <?php echo e($group->strGroupName); ?>
+
                                     </span>
 
-                                    <div class="w-3 h-3 rounded-full {{ $colorMap[$color] }}"></div>
+                                    <div class="w-3 h-3 rounded-full <?php echo e($colorMap[$color]); ?>"></div>
                                 </label>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                         </div>
 
@@ -901,63 +903,63 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="cardsContainer">
-                @foreach ($allGroupCards as $card)
-                    @php
+                <?php $__currentLoopData = $allGroupCards; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $card): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
                         $value = $card['value'];
-                    @endphp
-                    @if($card['name'] == 'Capital Account')                    
-                        @php $value = $value + $Profit_Loss_Amt; @endphp                        
-                    @endif
-                    <form method="GET" action="{{ route('reports.ledger') }}" class="card-form">
+                    ?>
+                    <?php if($card['name'] == 'Capital Account'): ?>                    
+                        <?php $value = $value + $Profit_Loss_Amt; ?>                        
+                    <?php endif; ?>
+                    <form method="GET" action="<?php echo e(route('reports.ledger')); ?>" class="card-form">
                         <button type="submit"
-                            class="group block w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl card-hover color-{{ $loop->index % 6 }}">
+                            class="group block w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl card-hover color-<?php echo e($loop->index % 6); ?>">
                             <div
                                 class="relative  rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[92px] transition-all duration-300 hover:shadow-md">
-                                {{-- <div class="absolute inset-y-0 left-0 w-1.5 {{ $leftBar($card['accent']) }}">
-                        </div> --}}
+                                
 
                                 <div class="p-4 pl-6">
                                     <div class="flex items-start justify-between">
                                         <div class="pr-3 flex-1">
                                             <div
                                                 class="text-[12px] uppercase tracking-wide text-gray-500 dark:text-gray-400 truncate">
-                                                {{ $card['label'] }}
+                                                <?php echo e($card['label']); ?>
+
                                             </div>
                                             <div class="mt-0.5 text-xl md:text-2xl font-semibold leading-tight text-gray-900 dark:text-white tabular-nums"
                                                 style="font-size: 1rem !important;">
-                                                ₹ {{ $fmt(round($value)) }}
+                                                ₹ <?php echo e($fmt(round($value))); ?>
+
                                             </div>
                                         </div>
 
                                         <div class="shrink-0">
-                                            {{-- <div
-                                                class="h-9 w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center {{ $chip($card['accent']) }} transition-colors group-hover:bg-opacity-80"> --}}
-                                            {{-- <i class="{{ $card['icon'] }} text-sm md:text-base"></i> --}}
-                                            <img src="{{ $card['icon'] }}" class="h-5 w-5 md:h-10 md:w-10 object-contain"
+                                            
+                                            
+                                            <img src="<?php echo e($card['icon']); ?>" class="h-5 w-5 md:h-10 md:w-10 object-contain"
                                                 alt="icon">
-                                            {{-- </div> --}}
+                                            
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </button>
-                        <input type="hidden" name="group_id" value="{{ $card['iGroupId'] }}" />
-                        <input type="hidden" name="from" value="{{ $fromVal }}">
-                        <input type="hidden" name="to" value="{{ $toVal }}">
+                        <input type="hidden" name="group_id" value="<?php echo e($card['iGroupId']); ?>" />
+                        <input type="hidden" name="from" value="<?php echo e($fromVal); ?>">
+                        <input type="hidden" name="to" value="<?php echo e($toVal); ?>">
                     </form>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
-    @elseif($allGroups->isNotEmpty() && !empty($selectedGroups))
-        {{-- Fallback: If allGroupCards is empty but we have groups, create basic cards --}}
-        @php
+    <?php elseif($allGroups->isNotEmpty() && !empty($selectedGroups)): ?>
+        
+        <?php
             $groupsToDisplay = $selectedGroups;
             $displayedCount = 0;
-        @endphp
+        ?>
 
         <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="cardsContainer">
-            @foreach ($groupsToDisplay as $index => $groupId)
-            @php
+            <?php $__currentLoopData = $groupsToDisplay; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $groupId): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php
                 
                     $group = $allGroups->firstWhere('iGroupId', $groupId);
                     if (!$group) {
@@ -968,48 +970,50 @@
                     $groupName = $group->strGroupName ?? 'Unknown Group';
                     $accentColor = $this->getAccentColor($groupName);
                     $groupIcon = $this->getGroupIcon($groupName);
-                @endphp
-                @if($group->strGroupName == 'Capital Account')
-                    @php $closingBalance += $Profit_Loss_Amt; @endphp
-                @endif
-                <form method="GET" action="{{ route('reports.ledger') }}" class="card-form">
+                ?>
+                <?php if($group->strGroupName == 'Capital Account'): ?>
+                    <?php $closingBalance += $Profit_Loss_Amt; ?>
+                <?php endif; ?>
+                <form method="GET" action="<?php echo e(route('reports.ledger')); ?>" class="card-form">
                     <button type="submit"
                         class="group block w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl card-hover">
                         <div
                             class="relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[92px] transition-all duration-300 hover:shadow-md">
-                            <div class="absolute inset-y-0 left-0 w-1.5 {{ $leftBar($accentColor) }}"></div>
+                            <div class="absolute inset-y-0 left-0 w-1.5 <?php echo e($leftBar($accentColor)); ?>"></div>
 
                             <div class="p-4 pl-6">
                                 <div class="flex items-start justify-between">
                                     <div class="pr-3 flex-1">
                                         <div
                                             class="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400 truncate">
-                                            {{ $groupName }}
+                                            <?php echo e($groupName); ?>
+
                                         </div>
                                         <div class="mt-0.5 text-xl md:text-2xl font-semibold leading-tight text-gray-900 dark:text-white tabular-nums"
                                             style="font-size: 1rem !important;">
-                                            ₹ {{ $fmt($closingBalance) }}
+                                            ₹ <?php echo e($fmt($closingBalance)); ?>
+
                                         </div>
                                     </div>
 
                                     <div class="shrink-0">
                                         <div
-                                            class="h-9 w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center {{ $chip($accentColor) }} transition-colors group-hover:bg-opacity-80">
-                                            <i class="{{ $groupIcon }} text-sm md:text-base"></i>
+                                            class="h-9 w-9 md:h-10 md:w-10 rounded-full flex items-center justify-center <?php echo e($chip($accentColor)); ?> transition-colors group-hover:bg-opacity-80">
+                                            <i class="<?php echo e($groupIcon); ?> text-sm md:text-base"></i>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </button>
-                    <input type="hidden" name="group_id" value="{{ $groupId }}" />
-                    <input type="hidden" name="from" value="{{ $fromVal }}">
-                    <input type="hidden" name="to" value="{{ $toVal }}">
+                    <input type="hidden" name="group_id" value="<?php echo e($groupId); ?>" />
+                    <input type="hidden" name="from" value="<?php echo e($fromVal); ?>">
+                    <input type="hidden" name="to" value="<?php echo e($toVal); ?>">
                 </form>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
 
-        @if ($displayedCount === 0)
+        <?php if($displayedCount === 0): ?>
             <div
                 class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                 <p class="text-yellow-800 dark:text-yellow-200 text-sm">
@@ -1017,8 +1021,8 @@
                     Selected groups not found in your account. Please use "Customize Groups" to select available groups.
                 </p>
             </div>
-        @endif
-    @elseif($allGroups->isEmpty())
+        <?php endif; ?>
+    <?php elseif($allGroups->isEmpty()): ?>
         <div
             class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p class="text-yellow-800 dark:text-yellow-200 text-sm">
@@ -1026,7 +1030,7 @@
                 No groups found for your account. Please contact administrator.
             </p>
         </div>
-    @else
+    <?php else: ?>
         <div
             class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
             <p class="text-yellow-800 dark:text-yellow-200 text-sm">
@@ -1034,7 +1038,7 @@
                 No groups available. Please use "Customize Groups" to select groups to display.
             </p>
         </div>
-    @endif
+    <?php endif; ?>
 
     <script>
         // Simple notification function for Alpine component
@@ -1159,11 +1163,11 @@
 
                         try {
                             const response = await fetch(
-                                "{{ route('dashboard.save-card-preferences') }}", {
+                                "<?php echo e(route('dashboard.save-card-preferences')); ?>", {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                                         'Accept': 'application/json'
                                     },
                                     body: JSON.stringify({
@@ -1240,7 +1244,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-        const charts = @json($charts ?? []);
+        const charts = <?php echo json_encode($charts ?? [], 15, 512) ?>;
         console.log(charts);
         const chartByKey = key => charts.find(x => {
             const normalized = String(x?.key ?? '').toLowerCase();
@@ -1271,7 +1275,7 @@
             console.error('cashBank chart data missing');
         }
 
-        let activeType = {{ (int) ($activeType ?? 1) }};
+        let activeType = <?php echo e((int) ($activeType ?? 1)); ?>;
         // let chart = null;
         let salesChart = null;
         let mainChart = null;
@@ -3096,8 +3100,8 @@ function renderChartFor(type, metric, compare = 'none') {
             }
         };
 
-        let plData = @json($plData ?? []);
-        //let plData = @json($pl ?? []);
+        let plData = <?php echo json_encode($plData ?? [], 15, 512) ?>;
+        //let plData = <?php echo json_encode($pl ?? [], 15, 512) ?>;
 
         // ===== SAFE FIND FUNCTION =====
         const getValue = (arr, name) => {
@@ -3234,15 +3238,15 @@ function renderChartFor(type, metric, compare = 'none') {
         });
 
 
-        //let bsData = JSON.parse('{!! json_encode($bsData ?? []) !!}');
+        //let bsData = JSON.parse('<?php echo json_encode($bsData ?? []); ?>');
 
         // let rows = bsData.rows || [];
         // Assets (DR → make positive)
-        let assets = Math.abs(Number({{ $assets ?? 0 }}));
+        let assets = Math.abs(Number(<?php echo e($assets ?? 0); ?>));
         // Liabilities
-        let liabilities = Number({{ $liabs }});
+        let liabilities = Number(<?php echo e($liabs); ?>);
         // Equity (Capital)
-        let equity = Number({{ $equity }});
+        let equity = Number(<?php echo e($equity); ?>);
         // Total for center
         let totalAssets = assets;
         const bs_colors = ['#22d3ee', '#fbbf24', '#a78bfa'];
@@ -3413,17 +3417,17 @@ function renderChartFor(type, metric, compare = 'none') {
         }
 
         let chartData = {
-            sales: @json($charts[0]['in'] ?? []),
-            purchase: @json($charts[0]['out'] ?? []),
+            sales: <?php echo json_encode($charts[0]['in'] ?? [], 15, 512) ?>,
+            purchase: <?php echo json_encode($charts[0]['out'] ?? [], 15, 512) ?>,
 
-            direct_income: @json($charts[1]['in'] ?? []),
-            indirect_income: @json($charts[2]['in'] ?? []),
+            direct_income: <?php echo json_encode($charts[1]['in'] ?? [], 15, 512) ?>,
+            indirect_income: <?php echo json_encode($charts[2]['in'] ?? [], 15, 512) ?>,
 
-            direct_expense: @json($charts[1]['out'] ?? []),
-            indirect_expense: @json($charts[2]['out'] ?? [])
+            direct_expense: <?php echo json_encode($charts[1]['out'] ?? [], 15, 512) ?>,
+            indirect_expense: <?php echo json_encode($charts[2]['out'] ?? [], 15, 512) ?>
         };
 
-        let months = @json($charts[0]['months'] ?? []);
+        let months = <?php echo json_encode($charts[0]['months'] ?? [], 15, 512) ?>;
         const textColor = isDarkMode() ? '#e5e7eb' : '#000000'; // white / black
         const gridColor = isDarkMode() ? '#000000' : '#e5e7eb'; // dark / light grid
         
@@ -3484,7 +3488,7 @@ function renderChartFor(type, metric, compare = 'none') {
         });
 
         function handleRangeChange(value) {
-            const financialYearRanges = @json($financialYearOptions->keyBy('value'));
+            const financialYearRanges = <?php echo json_encode($financialYearOptions->keyBy('value'), 15, 512) ?>;
             const selectedRange = financialYearRanges[value];
             if (!selectedRange) {
                 return;
@@ -4365,4 +4369,4 @@ function convertCumulativeToMonthly(arr = []) {
 
     return result;
 }
-</script>
+</script><?php /**PATH D:\xampp\htdocs\balantro\resources\views/client_dashboard/financial_dashboard.blade.php ENDPATH**/ ?>
