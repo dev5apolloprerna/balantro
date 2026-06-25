@@ -137,14 +137,14 @@ class CreditNoteController extends Controller
         $ledger = DB::table('LedgerMaster')
             ->selectRaw("strCustomerName AS party_name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state") // ->selectRaw("GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
             ->where('iPartyId', $partyId)
-            ->where('strCustomerName', $partyName)
+            ->whereRaw('LOWER(TRIM(strCustomerName)) = ?', [strtolower($partyName)])
             ->first();
 
         if (!$ledger) {
             $ledger = DB::table('ledgers')
                 ->selectRaw("name AS party_name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state") // ->selectRaw("GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state")
                 ->where('iPartyId', $partyId)
-                ->where('name', $partyName)
+                ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($partyName)])
                 ->first();
         }
 
@@ -190,6 +190,19 @@ class CreditNoteController extends Controller
     {
         return $this->getCompletePartyLedgerDetailsByGst($partyId, $row['gst_no'] ?? null)
             ?: $this->getCompletePartyLedgerDetails($partyId, $row['party_name'] ?? null);
+    }
+
+    private function isPartyLedgerAcceptedForUpload(?array $ledgerDetails, ?string $uploadedGstNo): bool
+    {
+        if (!$ledgerDetails) {
+            return false;
+        }
+
+        if ($this->normalizeGstNo($uploadedGstNo) !== '') {
+            return ($ledgerDetails['matched_by'] ?? null) === 'gst_no';
+        }
+
+        return ($ledgerDetails['matched_by'] ?? null) === 'party_name';
     }
 
     private function applyPartyLedgerDetails(array $row, ?array $ledgerDetails): array
@@ -1115,7 +1128,7 @@ class CreditNoteController extends Controller
                     $sumTotalAmount = array_sum(array_column($items, 'total_amount'));
                     $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($iPartyId, $items[0]);
                     $first = $this->applyPartyLedgerDetails($items[0], $partyLedgerDetails);
-                    $partyLedgerMatched = $partyLedgerDetails !== null;
+                    $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $items[0]['gst_no'] ?? null);
                     
                     $salesLedger = DB::table('LedgerMaster')
                         ->where('iPartyId', $iPartyId)
@@ -1306,7 +1319,7 @@ class CreditNoteController extends Controller
                 foreach ($noteGroups as $groupKey => $rows) {
                     $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($iPartyId, $rows[0]);
                     $first = $this->applyPartyLedgerDetails($rows[0], $partyLedgerDetails);
-                    $partyLedgerMatched = $partyLedgerDetails !== null;
+                    $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $rows[0]['gst_no'] ?? null);
                     
                     // Calculate totals
                     $sumAmount = array_sum(array_column($rows, 'amount'));

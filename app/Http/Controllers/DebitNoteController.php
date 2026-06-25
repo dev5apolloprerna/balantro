@@ -136,6 +136,86 @@ class DebitNoteController extends Controller
         return $data;
     }
 
+    private function normalizeGstNo($gstNo): string
+    {
+        return strtoupper(preg_replace('/\s+/', '', trim((string) $gstNo)));
+    }
+
+    private function partyLedgerDetailsArray($ledger, string $matchedBy): array
+    {
+        return [
+            'party_name' => trim((string) ($ledger->party_name ?? '')),
+            'gst_no' => trim((string) ($ledger->gst_no ?? '')),
+            'address' => trim((string) ($ledger->address ?? '')),
+            'pincode' => trim((string) ($ledger->pincode ?? '')),
+            'city' => trim((string) ($ledger->city ?? '')),
+            'state' => trim((string) ($ledger->state ?? '')),
+            'matched_by' => $matchedBy,
+        ];
+    }
+
+    private function partyLedgerBaseQuery($partyId)
+    {
+        return DB::query()
+            ->fromSub(function ($query) use ($partyId) {
+                $query->selectRaw("strCustomerName AS party_name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
+                    ->from('LedgerMaster')
+                    ->where('iPartyId', $partyId)
+                    ->where('strParents', 'Sundry Creditors')
+                    ->unionAll(
+                        DB::table('ledgers')
+                            ->selectRaw("name AS party_name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, City AS city, State AS state")
+                            ->where('iPartyId', $partyId)
+                            ->where('Parent', 'Sundry Creditors')
+                    );
+            }, 'party_ledgers');
+    }
+
+    private function getUploadPartyLedgerDetails($partyId, ?string $partyName, ?string $gstNo): ?array
+    {
+        $normalizedGstNo = $this->normalizeGstNo($gstNo);
+
+        if ($normalizedGstNo !== '') {
+            $ledger = $this->partyLedgerBaseQuery($partyId)
+                ->whereRaw("UPPER(REPLACE(gst_no, ' ', '')) = ?", [$normalizedGstNo])
+                ->first();
+
+            if ($ledger) {
+                return $this->partyLedgerDetailsArray($ledger, 'gst_no');
+            }
+        }
+
+        $partyName = trim((string) $partyName);
+        if ($partyName === '') {
+            return null;
+        }
+
+        $ledger = $this->partyLedgerBaseQuery($partyId)
+            ->whereRaw('LOWER(TRIM(party_name)) = ?', [strtolower($partyName)])
+            ->first();
+
+        return $ledger ? $this->partyLedgerDetailsArray($ledger, 'party_name') : null;
+    }
+
+    private function applyUploadPartyLedgerDetails(array $data, ?array $partyLedgerDetails): array
+    {
+        if (!$partyLedgerDetails) {
+            return $data;
+        }
+
+        if (($partyLedgerDetails['matched_by'] ?? null) === 'gst_no') {
+            $data['party_name'] = $partyLedgerDetails['party_name'];
+        }
+
+        $data['gst_no'] = $data['gst_no'] ?: $partyLedgerDetails['gst_no'];
+        $data['place_of_supply'] = $data['place_of_supply'] ?: $partyLedgerDetails['state'];
+        $data['address'] = $data['address'] ?? $partyLedgerDetails['address'];
+        $data['pincode'] = $data['pincode'] ?? $partyLedgerDetails['pincode'];
+        $data['city'] = $data['city'] ?? $partyLedgerDetails['city'];
+
+        return $data;
+    }
+
     private function getSalesLedgerGstMappings($partyId): array
     {
         return DB::table('LedgerMaster')
@@ -703,6 +783,9 @@ class DebitNoteController extends Controller
                     }
 
                     $rates = array_unique($rates);
+                    $partyLedgerDetails = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
+                    $first = $this->applyUploadPartyLedgerDetails($first, $partyLedgerDetails);
+                    $hasPartyLedgerMatch = !empty($partyLedgerDetails);
                     $hasValidGstSlab = $this->allGstRatesAreApplicable($rates);
                     $isDuplicateVoucher = $this->voucherCombinationExists('debit_note_transactions', [
                         'iPartyId' => $iPartyId,
@@ -724,7 +807,7 @@ class DebitNoteController extends Controller
                         'history_date_value' => $this->historyDate($first['date']),
                         'year_value' => session('year'),
                     ]);
-                    if (!$hasValidGstSlab || $isDuplicateVoucher) {
+                    if (!$hasPartyLedgerMatch || !$hasValidGstSlab || $isDuplicateVoucher) {
                         $status = 'Pending';
                     }
 
@@ -739,8 +822,8 @@ class DebitNoteController extends Controller
                             : 0;
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
-                    $partyLedgerAutofill = $this->getPartyLedgerAutofillDetails($iPartyId, $first['party_name']);
-                    $first = $this->applyPartyLedgerAutofill($first, $partyLedgerAutofill);
+                    // $partyLedgerAutofill = $this->getPartyLedgerAutofillDetails($iPartyId, $first['party_name']);
+                    // $first = $this->applyPartyLedgerAutofill($first, $partyLedgerAutofill);
                     $transaction = DebitNoteTransaction::create([
                         'iPartyId'        => $iPartyId,
                         'upload_id'       => $upload->id,
@@ -981,8 +1064,11 @@ class DebitNoteController extends Controller
                     }
                     
                     $mapping = $this->getGstMapping($iPartyId, $first['purchase_ledger']);
+                    $partyLedgerDetails = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
+                    $first = $this->applyUploadPartyLedgerDetails($first, $partyLedgerDetails);
+                    $hasPartyLedgerMatch = !empty($partyLedgerDetails);
                     
-                    // Status is always 'saved' for accounting invoices
+                    // Status is saved only when all existing validations and party ledger matching pass.
                     $hasValidGstSlab = $this->allGstRatesAreApplicable(array_column($gstSlots, 'gst_rate'));
                     $isDuplicateVoucher = $this->voucherCombinationExists('debit_note_transactions', [
                         'iPartyId' => $iPartyId,
@@ -1004,11 +1090,11 @@ class DebitNoteController extends Controller
                         'history_date_value' => $this->historyDate($first['date']),
                         'year_value' => session('year'),
                     ]);
-                    $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
+                    $status = (!$hasPartyLedgerMatch || !$hasValidGstSlab || $isDuplicateVoucher) ? 'Pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
-                    $partyLedgerAutofill = $this->getPartyLedgerAutofillDetails($iPartyId, $first['party_name']);
-                    $first = $this->applyPartyLedgerAutofill($first, $partyLedgerAutofill);
+                    // $partyLedgerAutofill = $this->getPartyLedgerAutofillDetails($iPartyId, $first['party_name']);
+                    // $first = $this->applyPartyLedgerAutofill($first, $partyLedgerAutofill);
 
                     $transaction = DebitNoteTransaction::create([
                         'iPartyId'        => $iPartyId,
