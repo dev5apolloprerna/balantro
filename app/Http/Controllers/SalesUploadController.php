@@ -365,6 +365,74 @@ class SalesUploadController extends Controller
         return true;
     }
 
+    private function normalizeGstNo(?string $gstNo): string
+    {
+        return strtoupper(trim((string) $gstNo));
+    }
+
+    private function getUploadPartyLedgerDetails($partyId, ?string $partyName, ?string $gstNo): array
+    {
+        $partyName = trim((string) $partyName);
+        $normalizedGstNo = $this->normalizeGstNo($gstNo);
+
+        $baseQuery = fn () => DB::query()
+            ->fromSub(function ($query) use ($partyId) {
+                $query->selectRaw("strCustomerName AS name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, StateName AS state")
+                    ->from('LedgerMaster')
+                    ->where('iPartyId', $partyId)
+                    ->where('strParents', 'Sundry Debtors')
+                    ->unionAll(
+                        DB::table('ledgers')
+                            ->selectRaw("name AS name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, State AS state")
+                            ->where('iPartyId', $partyId)
+                            ->where('Parent', 'Sundry Debtors')
+                    );
+            }, 'party_ledgers');
+
+        $ledger = null;
+        $matchedBy = null;
+
+        if ($normalizedGstNo !== '') {
+            $ledger = $baseQuery()
+                ->whereRaw('UPPER(TRIM(gst_no)) = ?', [$normalizedGstNo])
+                ->first();
+
+            if ($ledger) {
+                $matchedBy = 'gst_no';
+            }
+        }
+
+        if (!$ledger && $partyName !== '') {
+            $ledger = $baseQuery()
+                ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($partyName)])
+                ->first();
+
+            if ($ledger) {
+                $matchedBy = 'party_name';
+            }
+        }
+
+        if (!$ledger) {
+            return [
+                'matched' => false,
+                'matched_by' => null,
+                'details' => null,
+            ];
+        }
+
+        return [
+            'matched' => true,
+            'matched_by' => $matchedBy,
+            'details' => [
+                'name' => trim((string) ($ledger->name ?? '')),
+                'gst_no' => trim((string) ($ledger->gst_no ?? '')),
+                'address' => trim((string) ($ledger->address ?? '')),
+                'pincode' => trim((string) ($ledger->pincode ?? '')),
+                'state' => trim((string) ($ledger->state ?? '')),
+            ],
+        ];
+    }
+
     private function getCompletePartyLedgerDetails($partyId, ?string $partyName): ?array
     {
         $partyName = trim((string) $partyName);
@@ -565,7 +633,10 @@ class SalesUploadController extends Controller
                         ->where('iPartyId', $iPartyId)
                         ->where('strCustomerName', $first['sales_ledger'])
                         ->first();
-                    $partyLedgerDetails = $this->getCompletePartyLedgerDetails($iPartyId, $first['party_name']);
+                    //$partyLedgerDetails = $this->getCompletePartyLedgerDetails($iPartyId, $first['party_name']);
+                    $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
+                    $partyLedgerDetails = $partyLookup['details'];
+                    $partyMatched = $partyLookup['matched'];
 
                     $mapping = $this->getGstMapping(
                         $iPartyId,
@@ -652,7 +723,8 @@ class SalesUploadController extends Controller
                             ? reset($rates)
                             : 0;
                     
-                    if (!$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
+                    // if (!$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
+                    if (!$partyMatched || !$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
                         $status = 'pending';
                     }
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
@@ -666,7 +738,7 @@ class SalesUploadController extends Controller
                         'date'              => $first['date'],
 
                         'gst_no'            => $partyLedgerDetails['gst_no'] ?? $first['gst_no'],
-                        'party_name'        => $first['party_name'],
+                        'party_name'        => $partyLedgerDetails['name'] ?? $first['party_name'],
                         'place_of_supply'   => $partyLedgerDetails['state'] ?? $first['place_of_supply'],
                         'address'           => $partyLedgerDetails['address'] ?? null,
                         'pincode'           => $partyLedgerDetails['pincode'] ?? null,
@@ -819,7 +891,9 @@ class SalesUploadController extends Controller
                         ->where('iPartyId', $iPartyId)
                         ->where('strCustomerName', $first['sales_ledger'])
                         ->first();
-                    $partyLedgerDetails = $this->getCompletePartyLedgerDetails($iPartyId, $first['party_name']);
+                    $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
+                    $partyLedgerDetails = $partyLookup['details'];
+                    $partyMatched = $partyLookup['matched'];
 
                     $gstSlots = $this->buildSalesCustomGstSlots($rows, $iPartyId);
                     $rates = array_unique(array_filter(array_column($gstSlots, 'gst_rate')));
@@ -838,7 +912,7 @@ class SalesUploadController extends Controller
                         $isIgst
                     );
                     $status = $hasGstLedgers ? 'saved' : 'pending';
-                    if (!$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $first['invoice_no'], session('year'))) {
+                    if (!$partyMatched || !$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $first['invoice_no'], session('year'))) {
                         $status = 'pending';
                     }
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
@@ -850,7 +924,7 @@ class SalesUploadController extends Controller
                         'invoice_no'        => $first['invoice_no'],
                         'date'              => $this->parseDate($first['date']),
                         'gst_no'            => $partyLedgerDetails['gst_no'] ?? $first['gst_no'],
-                        'party_name'        => $first['party_name'],
+                        'party_name'        => $partyLedgerDetails['name'] ?? $first['party_name'],
                         'place_of_supply'   => $partyLedgerDetails['state'] ?? $first['place_of_supply'],
                         'address'           => $partyLedgerDetails['address'] ?? null,
                         'pincode'           => $partyLedgerDetails['pincode'] ?? null,

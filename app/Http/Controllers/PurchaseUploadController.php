@@ -371,6 +371,110 @@ class PurchaseUploadController extends Controller
         return $source;
     }
 
+    private function normalizeGstNo(?string $gstNo): string
+    {
+        return strtoupper(preg_replace('/\s+/', '', trim((string) $gstNo)));
+    }
+
+    private function findPartyLedgerForUpload(int $partyId, ?string $partyName, ?string $gstNo): ?array
+    {
+        $partyName = trim((string) $partyName);
+        $gstNo = $this->normalizeGstNo($gstNo);
+
+        $ledgerSelect = "name, gst_no, address, pincode, city, state";
+        $ledgerQuery = DB::query()->fromSub(function ($query) use ($partyId) {
+            $query->from('LedgerMaster')
+                ->selectRaw("strCustomerName AS name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, '' AS city, StateName AS state")
+                ->where('iPartyId', $partyId)
+                ->unionAll(
+                    DB::table('ledgers')
+                        ->selectRaw("Name AS name, GstNo AS gst_no, TRIM(CONCAT_WS(' ', AddressLine1, AddressLine2)) AS address, Pincode AS pincode, City AS city, State AS state")
+                        ->where('iPartyId', $partyId)
+                );
+        }, 'party_ledgers')
+            ->selectRaw($ledgerSelect);
+
+        $ledger = null;
+        $matchedByGst = false;
+        $matchedByName = false;
+
+        if ($gstNo !== '') {
+            $ledger = (clone $ledgerQuery)
+                ->whereRaw("UPPER(REPLACE(TRIM(COALESCE(gst_no, '')), ' ', '')) = ?", [$gstNo])
+                ->first();
+            $matchedByGst = (bool) $ledger;
+        }
+
+        if (!$ledger && $partyName !== '') {
+            $ledger = (clone $ledgerQuery)
+                ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($partyName)])
+                ->first();
+            $matchedByName = (bool) $ledger;
+        }
+
+        if (!$ledger) {
+            return null;
+        }
+
+        $details = [
+            'name' => trim((string) ($ledger->name ?? '')),
+            'gst_no' => trim((string) ($ledger->gst_no ?? '')),
+            'address' => trim((string) ($ledger->address ?? '')),
+            'pincode' => trim((string) ($ledger->pincode ?? '')),
+            'city' => trim((string) ($ledger->city ?? '')),
+            'state' => trim((string) ($ledger->state ?? '')),
+            'matched_by_gst' => $matchedByGst,
+            'matched_by_name' => $matchedByName,
+        ];
+
+        if ($details['state'] !== '' && is_numeric($details['state'])) {
+            $details['state'] = DB::table('state')
+                ->where('stateId', $details['state'])
+                ->value('stateName') ?? $details['state'];
+        }
+
+        return $details;
+    }
+
+    private function hasCompletePartyLedgerDetails(?array $ledgerDetails): bool
+    {
+        return $ledgerDetails
+            && trim((string) ($ledgerDetails['gst_no'] ?? '')) !== ''
+            && trim((string) ($ledgerDetails['address'] ?? '')) !== ''
+            && trim((string) ($ledgerDetails['pincode'] ?? '')) !== ''
+            && trim((string) ($ledgerDetails['state'] ?? '')) !== '';
+    }
+
+    private function getCompletePartyLedgerDetails(int $partyId, ?string $partyName, ?string $gstNo = null): ?array
+    {
+        $ledgerDetails = $this->findPartyLedgerForUpload($partyId, $partyName, $gstNo);
+
+        return $this->hasCompletePartyLedgerDetails($ledgerDetails) ? $ledgerDetails : null;
+    }
+
+    private function mergePartyLedgerDetails(array $source, ?array $ledgerDetails): array
+    {
+        if (!$ledgerDetails) {
+            return $source;
+        }
+
+        if (!empty($ledgerDetails['matched_by_gst']) && trim((string) ($ledgerDetails['name'] ?? '')) !== '') {
+            $source['party_name'] = $ledgerDetails['name'];
+        }
+
+        if (!$this->hasCompletePartyLedgerDetails($ledgerDetails)) {
+            return $source;
+        }
+
+        $source['gst_no'] = trim((string) ($source['gst_no'] ?? '')) !== '' ? $source['gst_no'] : $ledgerDetails['gst_no'];
+        $source['place_of_supply'] = trim((string) ($source['place_of_supply'] ?? '')) !== '' ? $source['place_of_supply'] : $ledgerDetails['state'];
+        $source['address'] = trim((string) ($source['address'] ?? '')) !== '' ? $source['address'] : $ledgerDetails['address'];
+        $source['pincode'] = trim((string) ($source['pincode'] ?? '')) !== '' ? $source['pincode'] : $ledgerDetails['pincode'];
+        $source['city'] = trim((string) ($source['city'] ?? '')) !== '' ? $source['city'] : $ledgerDetails['city'];
+
+        return $source;
+    }
+
     private function getRoundOffLedger($partyId)
     {
         return DB::table('LedgerMaster')
@@ -524,9 +628,15 @@ class PurchaseUploadController extends Controller
                     $sumIgst        = array_sum(array_column($items, 'igst'));
                     $sumTotalAmount = array_sum(array_column($items, 'total_amount'));
 
+                    $partyLedgerDetails = $this->findPartyLedgerForUpload(
+                        $iPartyId,
+                        $items[0]['party_name'] ?? null,
+                        $items[0]['gst_no'] ?? null
+                    );
+                    $partyLedgerMatched = (bool) $partyLedgerDetails;
                     $first = $this->mergePartyLedgerDetails(
                         $items[0],
-                        $this->getCompletePartyLedgerDetails($iPartyId, $items[0]['party_name'] ?? null)
+                        $partyLedgerDetails
                     );
                     $purchaseLedger = DB::table('LedgerMaster')
                         ->where('iPartyId', $iPartyId)
@@ -613,7 +723,7 @@ class PurchaseUploadController extends Controller
                         $first['purchase_ledger'] ?? null
                     );
 
-                    if (!$hasRequiredDetails || !$hasValidGstSlab || $isDuplicateVoucher) { 
+                    if (!$hasRequiredDetails || !$hasValidGstSlab || $isDuplicateVoucher || !$partyLedgerMatched) {
                         $status = 'pending';
                     }
 
@@ -817,9 +927,20 @@ class PurchaseUploadController extends Controller
 
             DB::transaction(function () use ($invoiceGroups, $iPartyId, $upload, &$total) {
                 foreach ($invoiceGroups as $groupKey => $rows) {
+                    // $first = $this->mergePartyLedgerDetails(
+                    //     $rows[0],
+                    //     $this->getCompletePartyLedgerDetails($iPartyId, $rows[0]['party_name'] ?? null)
+                    // );
+
+                    $partyLedgerDetails = $this->findPartyLedgerForUpload(
+                        $iPartyId,
+                        $rows[0]['party_name'] ?? null,
+                        $rows[0]['gst_no'] ?? null
+                    );
+                    $partyLedgerMatched = (bool) $partyLedgerDetails;
                     $first = $this->mergePartyLedgerDetails(
                         $rows[0],
-                        $this->getCompletePartyLedgerDetails($iPartyId, $rows[0]['party_name'] ?? null)
+                        $partyLedgerDetails
                     );
                     
                     // Calculate totals
@@ -923,7 +1044,7 @@ class PurchaseUploadController extends Controller
                         $rows,
                         $first['purchase_ledger'] ?? null
                     );
-                    $status = (!$hasRequiredDetails || !$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved'; // $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
+                    $status = (!$hasRequiredDetails || !$hasValidGstSlab || $isDuplicateVoucher || !$partyLedgerMatched) ? 'pending' : 'saved'; // $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved'; // $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
 
