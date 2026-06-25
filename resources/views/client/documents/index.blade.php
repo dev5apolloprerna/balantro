@@ -354,6 +354,11 @@
                     <th class="px-4 py-2 font-bold">
                         Document
                     </th>
+                    @if ($user->role != \App\Models\User::ROLES['client'])
+                    <th class="px-4 py-2 font-bold">
+                        Client
+                    </th>
+                    @endif
                     <th class="px-4 py-2 font-bold">
                         Upload Date
                     </th>
@@ -438,6 +443,11 @@
                             </div>
                         </div>
                     </td>
+                    @if ($user->role != \App\Models\User::ROLES['client'])
+                    <td class="px-4 py-2 group-hover:text-black">
+                        {{ $doc->client_name ?? 'N/A' }}
+                    </td>
+                    @endif
                     <td class="px-4 py-2 group-hover:text-black">
                         {{ optional($doc->created_at)->timezone(config('app.timezone'))->format('d M, Y, h:i A') }}
                     </td>

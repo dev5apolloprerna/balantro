@@ -485,7 +485,7 @@ class TransactionProcessingController extends Controller
                 'party_name' => $party,
                 'place_of_supply' => $request->place_of_supply[$id],
                 'purchase_ledger' => $request->ledger[$id] ?? $row->purchase_ledger,
-                'status' => 'submitted',
+                // 'status' => 'saved',
                 'vchType' => $request->voucher_type[$id]
             ]);
             $submittedCount++;
@@ -553,7 +553,7 @@ class TransactionProcessingController extends Controller
                 'party_name' => trim((string) ($request->party_name[$id] ?: $ledgerName)),
                 'place_of_supply' => $request->place_of_supply[$id],
                 'sales_ledger' => $ledgerName,
-                'status' => 'submitted',
+                // 'status' => 'saved',
                 'vchType' => $request->voucher_type[$id]
             ]);
             $submittedCount++;
@@ -607,7 +607,7 @@ class TransactionProcessingController extends Controller
             $row->value_date  = $request->value_date[$id] ?? $row->value_date;
             $row->narration   = $request->narration[$id] ?? $row->narration;
             $row->ledger_name = $request->ledger[$id] ?? $row->ledger_name;
-            $row->status      = 'submitted';
+            // $row->status      = 'submitted';
             $row->save();
             $submittedCount++;
         }
@@ -742,7 +742,7 @@ class TransactionProcessingController extends Controller
                 'party_name' => trim((string) ($request->party_name[$id] ?? $ledgerName)),
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
                 'sales_ledger' => $ledgerName,
-                'status' => 'submitted',
+                // 'status' => 'submitted',
                 'vch_type' => $request->voucher_type[$id] ?? $row->vch_type
             ]);
             $submittedCount++;
@@ -894,7 +894,7 @@ class TransactionProcessingController extends Controller
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
                 'purchase_ledger' => $request->ledger[$id] ?? $row->purchase_ledger,
                 'vch_type' => $request->voucher_type[$id] ?? $row->vch_type,
-                'status' => 'submitted',
+                // 'status' => 'submitted',
             ]);
             $submittedCount++;
         }
@@ -993,7 +993,7 @@ class TransactionProcessingController extends Controller
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
                 'purchase_ledger' => $request->ledger[$id] ?? $row->purchase_ledger,
                 'vchType' => $request->voucher_type[$id] ?? $row->vch_type,
-                'status' => 'submitted',
+                //'status' => 'submitted',
             ]);
             // $row->update(['status' => 'submitted']);
             $submittedCount++;

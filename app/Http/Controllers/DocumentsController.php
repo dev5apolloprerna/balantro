@@ -120,6 +120,7 @@ class DocumentsController extends Controller
                 $join->on('df.attachable_id', '=', 'documents.id')
                     ->where('df.rn', '=', 1);
             })
+            ->leftJoin('users as document_clients', 'document_clients.id', '=', 'documents.user_id')
             ->when($q !== '', function ($q2) use ($q) {
                 $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $q) . '%';
                 $q2->where(function ($w) use ($like) {
@@ -142,7 +143,7 @@ class DocumentsController extends Controller
             // -------------------------------------------------------------------
             ->when($start,  fn($q2) => $q2->whereDate('documents.created_at', '>=', $start))
             ->when($end,    fn($q2) => $q2->whereDate('documents.created_at', '<=', $end));
-
+        
         // Role scoping
         if ($user->role === \App\Models\User::ROLES['super_admin']) {
             // see all
@@ -166,6 +167,7 @@ class DocumentsController extends Controller
                 'df.path as file_path',
                 'df.original_name as file_name',
                 'df.size as file_size',
+                'document_clients.name as client_name',
             ])
             //->toSql();
             ->paginate(20);
@@ -256,7 +258,8 @@ class DocumentsController extends Controller
         }
 
         $savedIds  = [];
-        $publicDir = public_path('documents');
+        $userDocumentDir = 'documents/' . $userId;
+        $publicDir = public_path($userDocumentDir); //$publicDir = public_path('documents');
 
         if (!File::isDirectory($publicDir)) {
             File::makeDirectory($publicDir, 0755, true, true);
@@ -285,7 +288,7 @@ class DocumentsController extends Controller
             $doc = new \App\Models\Document();
             $doc->user_id = $userId;
             $doc->status  = 'uploaded';
-            $doc->file    = 'documents/' . $name; // relative to public/
+            $doc->file    = $userDocumentDir . '/' . $name; // relative to public/ $doc->file    = 'documents/' . $name; // relative to public/
             $doc->save();
 
             // Also insert into polymorphic files table
@@ -417,11 +420,12 @@ class DocumentsController extends Controller
         $size         = $uploaded->getSize();
 
         $newName = 'document_' . now()->format('Ymd_Hisv') . '_' . Str::random(8) . ($ext ? ".{$ext}" : '');
-        $destDir = public_path('documents');
+        $userDocumentDir = 'documents/' . $document->user_id;
+        $destDir = public_path($userDocumentDir); // $destDir = public_path('documents');
         if (!is_dir($destDir)) @mkdir($destDir, 0775, true);
         $uploaded->move($destDir, $newName);
 
-        $publicRelPath = 'documents/' . $newName;
+        $publicRelPath = $userDocumentDir . '/' . $newName; // $publicRelPath = 'documents/' . $newName;
 
         DB::beginTransaction();
         try {
