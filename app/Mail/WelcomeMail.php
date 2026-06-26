@@ -11,16 +11,21 @@ class WelcomeMail extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
+    public $plainPassword;
 
-    public function __construct($user)
+    public function __construct($user, ?string $plainPassword = null)
     {
         $this->user = $user;
+        $this->plainPassword = $plainPassword;
     }
 
     public function build()
     {
-        return $this->subject('Welcome to Balantro!')
+        return $this->subject('Your Balantro Account Setup Details')
             ->to($this->user->email)
-            ->view('emails.welcome');
+            ->view('emails.welcome')
+            ->with([
+                'plainPassword' => $this->plainPassword,
+            ]);
     }
 }

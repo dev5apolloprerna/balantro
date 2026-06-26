@@ -19,24 +19,15 @@
             }
         }
     </style>
-    {{-- <h1>Welcome to Balantro, {{ $user->name }}!</h1> --}}
-    @if ($user->role == 0)
-        @php $password = "Client1!"; @endphp
-    @elseif ($user->role == 2)
-        @php $password = "Manager1!"; @endphp
-    @elseif ($user->role == 3)
-        @php $password = "Supervisor1!"; @endphp
-    @elseif ($user->role == 4)
-        @php $password = "Dataentryoperator1!"; @endphp
-    @else
-        @php $password = "Superadmin1!"; @endphp
-    @endif
+    @php
+        $password = $plainPassword ?? 'Please use the password shared by your administrator.';
+    @endphp
     {{-- <p>Login Details as below : </p>
     <p>User Name : {{ $user->email }}</p>
     <p>Password : {{ $password }}</p>
     <p>Thank you for registering with us.</p> --}}
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">
-        Your Balantro account is ready. Here are your sign-in details.
+        Your Balantro account setup is complete. Here are your sign-in details.
     </div>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7f9;">
@@ -50,7 +41,7 @@
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td style="font-size:18px;font-weight:600;">Balantro</td>
-                                    <td align="right" style="font-size:12px;opacity:.85;">Welcome</td>
+                                    <td align="right" style="font-size:12px;opacity:.85;">Account Setup</td>
                                 </tr>
                             </table>
                         </td>
@@ -59,10 +50,10 @@
                     <!-- Body -->
                     <tr>
                         <td class="px" style="padding:28px 32px;">
-                            <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:#111827;">Welcome to Balantro,
+                            <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:#111827;">Your Balantro Account Is Ready,
                                 {{ $user->name }}!</h1>
                             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#374151;">
-                                Your account has been created. Use the details below to sign in and get started.
+                                Your client account has been created successfully. Please use the secure setup details below to sign in.
                             </p>
 
                             <!-- Credentials card -->
@@ -72,7 +63,7 @@
                                     <td style="padding:16px 20px;">
                                         <p
                                             style="margin:0 0 8px;font-size:13px;letter-spacing:.02em;color:#6b7280;text-transform:uppercase;">
-                                            Login details</p>
+                                            Account setup details</p>
                                         <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
                                             <tr>
                                                 <td style="padding:6px 0;font-size:15px;color:#111827;width:130px;">Username
@@ -104,7 +95,7 @@
                             </table>
 
                             <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#4b5563;">
-                                For your security, we recommend changing your password after your first login.
+                                For your security, please change this password after your first login and do not share it with anyone.
                             </p>
 
                             <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">

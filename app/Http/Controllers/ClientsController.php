@@ -14,7 +14,6 @@ use App\Services\FilterService;
 use App\Mail\WelcomeMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
@@ -236,7 +235,7 @@ class ClientsController extends Controller
         if ($client->save()) {
             try {
                 // Mail::to($client->email)->send(new WelcomeMail($client));
-                Mail::to($client->email)->queue(new WelcomeMail($client));
+                Mail::to($client->email)->queue(new WelcomeMail($client, $generatedPassword));
                 // Password::sendResetLink(['email' => $client->email]);
             } catch (\Throwable $e) {
                 report($e);
@@ -338,8 +337,7 @@ class ClientsController extends Controller
 
         // Optional: send welcome email & reset link (wrap to avoid hard-fails)
         try {
-            Mail::to($client->email)->send(new WelcomeMail($client));
-            Password::sendResetLink(['email' => $client->email]);
+            Mail::to($client->email)->send(new WelcomeMail($client, $plainPassword));
         } catch (\Throwable $e) {
             report($e);
         }
