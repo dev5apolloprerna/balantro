@@ -785,7 +785,10 @@ class DebitNoteController extends Controller
                     $rates = array_unique($rates);
                     $partyLedgerDetails = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $first = $this->applyUploadPartyLedgerDetails($first, $partyLedgerDetails);
-                    $hasPartyLedgerMatch = !empty($partyLedgerDetails);
+                    $hasPartyLedgerMatch = !empty($partyLedgerDetails)
+                        && $this->normalizeGstNo($first['gst_no']) !== ''
+                        && $this->normalizeGstNo($first['gst_no']) === $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
+
                     $hasValidGstSlab = $this->allGstRatesAreApplicable($rates);
                     $isDuplicateVoucher = $this->voucherCombinationExists('debit_note_transactions', [
                         'iPartyId' => $iPartyId,
@@ -1066,10 +1069,20 @@ class DebitNoteController extends Controller
                     $mapping = $this->getGstMapping($iPartyId, $first['purchase_ledger']);
                     $partyLedgerDetails = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $first = $this->applyUploadPartyLedgerDetails($first, $partyLedgerDetails);
-                    $hasPartyLedgerMatch = !empty($partyLedgerDetails);
+                    $hasPartyLedgerMatch = !empty($partyLedgerDetails)
+                        && $this->normalizeGstNo($first['gst_no']) !== ''
+                        && $this->normalizeGstNo($first['gst_no']) === $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
                     
-                    // Status is saved only when all existing validations and party ledger matching pass.
+                    // Status is saved only when party ledger, GST ledger, amounts, GST rates, GST No and duplicate checks pass.
                     $hasValidGstSlab = $this->allGstRatesAreApplicable(array_column($gstSlots, 'gst_rate'));
+                    $hasGstLedgerMatch = $this->hasRequiredGstLedgers($gstSlots, $isIgst);
+                    $hasAmountAndRateMatch = collect($gstSlots)->every(function ($slot) {
+                        $taxable = (float) ($slot['taxable'] ?? 0);
+                        $gstRate = (float) ($slot['gst_rate'] ?? 0);
+                        $gstAmount = (float) ($slot['igst_amount'] ?? 0) + (float) ($slot['cgst_amount'] ?? 0) + (float) ($slot['sgst_amount'] ?? 0);
+
+                        return $taxable > 0 && $this->valuesMatch(($taxable * $gstRate) / 100, $gstAmount);
+                    });
                     $isDuplicateVoucher = $this->voucherCombinationExists('debit_note_transactions', [
                         'iPartyId' => $iPartyId,
                         'voucher_column' => 'vch_type',
@@ -1090,7 +1103,7 @@ class DebitNoteController extends Controller
                         'history_date_value' => $this->historyDate($first['date']),
                         'year_value' => session('year'),
                     ]);
-                    $status = (!$hasPartyLedgerMatch || !$hasValidGstSlab || $isDuplicateVoucher) ? 'Pending' : 'saved';
+                    $status = (!$hasPartyLedgerMatch || !$hasGstLedgerMatch || !$hasAmountAndRateMatch || !$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
                     // $partyLedgerAutofill = $this->getPartyLedgerAutofillDetails($iPartyId, $first['party_name']);
@@ -1740,7 +1753,8 @@ class DebitNoteController extends Controller
                     $request->party_name ?: $transaction->party_name,
                     $ledger->name ?? $ledgerName,
                     $data['items'] ?? [],
-                    $request->noitem_rows ?? []
+                    $request->noitem_rows ?? [],
+                    $request->custom_slots ?? []
                 ) && $this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates(
                     $data['items'] ?? [],
                     $request->noitem_rows ?? [],
@@ -1927,28 +1941,119 @@ class DebitNoteController extends Controller
         ]);
     }
 
+    private function valuesMatch(float $expected, float $actual, float $tolerance = 0.05): bool
+    {
+        return abs(round($expected, 2) - round($actual, 2)) <= $tolerance;
+    }
+
+    private function hasMatchingPartyLedger(int $partyId, ?string $partyName, ?string $gstNo): bool
+    {
+        $partyLedgerDetails = $this->getUploadPartyLedgerDetails($partyId, $partyName, $gstNo);
+
+        if (!$partyLedgerDetails) {
+            return false;
+        }
+
+        $submittedGstNo = $this->normalizeGstNo($gstNo);
+        $ledgerGstNo = $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
+
+        return $submittedGstNo !== '' && $ledgerGstNo !== '' && $submittedGstNo === $ledgerGstNo;
+    }
+
+    private function hasRequiredDebitNoteGstLedgers(DebitNoteTransaction $transaction, array $customSlots = []): bool
+    {
+        if (($transaction->gst_mode ?? 'standard') === 'custom') {
+            if (empty($customSlots)) {
+                $customSlots = DebitNoteCustomGst::where('transaction_id', $transaction->id)
+                    ->get()
+                    ->map(fn ($slot) => [
+                        'igst_ledger_id' => $slot->igst_ledger_id,
+                        'igst_amount' => $slot->igst_amount,
+                        'cgst_ledger_id' => $slot->cgst_ledger_id,
+                        'cgst_amount' => $slot->cgst_amount,
+                        'sgst_ledger_id' => $slot->sgst_ledger_id,
+                        'sgst_amount' => $slot->sgst_amount,
+                    ])
+                    ->all();
+            }
+
+            foreach ($customSlots as $slot) {
+                if ((float) ($slot['igst_amount'] ?? 0) != 0.0 && empty($slot['igst_ledger_id'])) {
+                    return false;
+                }
+                if ((float) ($slot['cgst_amount'] ?? 0) != 0.0 && empty($slot['cgst_ledger_id'])) {
+                    return false;
+                }
+                if ((float) ($slot['sgst_amount'] ?? 0) != 0.0 && empty($slot['sgst_ledger_id'])) {
+                    return false;
+                }
+            }
+
+            return !empty($customSlots);
+        }
+
+        if ((float) $transaction->igst != 0.0) {
+            return !empty($transaction->igst_id);
+        }
+
+        $needsCgst = (float) $transaction->cgst != 0.0;
+        $needsSgst = (float) $transaction->sgst != 0.0;
+
+        return (!$needsCgst || !empty($transaction->cgst_id))
+            && (!$needsSgst || !empty($transaction->sgst_id))
+            && ($needsCgst || $needsSgst || (float) $transaction->taxable_amount > 0);
+    }
+
+    private function hasMatchingAmountsAndRates(DebitNoteTransaction $transaction, array $items = [], array $noItemRows = [], array $customSlots = []): bool
+    {
+        if (($transaction->gst_mode ?? 'standard') === 'custom' && !empty($customSlots)) {
+            foreach ($customSlots as $slot) {
+                $taxable = (float) ($slot['taxable'] ?? $slot['amount'] ?? 0);
+                $rate = (float) ($slot['rate'] ?? $slot['gst_rate'] ?? 0);
+                $gstAmount = (float) ($slot['igst_amount'] ?? 0) + (float) ($slot['cgst_amount'] ?? 0) + (float) ($slot['sgst_amount'] ?? 0);
+
+                if ($taxable <= 0 || !$this->valuesMatch(($taxable * $rate) / 100, $gstAmount)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        $rows = !empty($items) ? $items : $noItemRows;
+        foreach ($rows as $row) {
+            $amount = (float) ($row['amount'] ?? 0);
+            $rate = (float) ($row['gst_rate'] ?? $row['gst'] ?? $transaction->gst_rate ?? 0);
+            if ($amount <= 0) {
+                return false;
+            }
+            if (isset($row['igst']) || isset($row['cgst']) || isset($row['sgst'])) {
+                $gstAmount = (float) ($row['igst'] ?? 0) + (float) ($row['cgst'] ?? 0) + (float) ($row['sgst'] ?? 0);
+                if (!$this->valuesMatch(($amount * $rate) / 100, $gstAmount)) {
+                    return false;
+                }
+            }
+        }
+
+        return !empty($rows) || (float) $transaction->taxable_amount > 0;
+    }
+
     private function canMarkDebitNoteSaved(
         DebitNoteTransaction $transaction,
         ?string $partyName,
         ?string $ledgerName = null,
         array $items = [],
-        array $noItemRows = []
+        array $noItemRows = [],
+        array $customSlots = []
     ): bool {
-        $hasParty = trim((string) $partyName) !== '';
+        $hasPartyLedger = $this->hasMatchingPartyLedger($transaction->iPartyId, $partyName, $transaction->gst_no);
+        $hasPurchaseLedger = !empty($transaction->purchase_ledger_id)
+            || !empty(Ledger::getLedgerByName($transaction->iPartyId, $ledgerName ?: $transaction->purchase_ledger_name ?: $transaction->purchase_ledger));
 
-        $hasLedger = trim((string) ($ledgerName ?: $transaction->purchase_ledger_name ?: $transaction->purchase_ledger)) !== '';
-
-        $hasSubmittedItem = collect($items)->contains(function ($item) {
-            return trim((string) ($item['item_name'] ?? '')) !== '';
-        });
-
-        $hasExistingItem = DebitNoteTransactionItem::where('transaction_id', $transaction->id)->exists();
-
-        $hasNoItemLedger = collect($noItemRows)->contains(function ($row) {
-            return trim((string) ($row['ledger'] ?? $row['ledger_name'] ?? '')) !== '';
-        });
-
-        return $hasParty && ($hasLedger || $hasSubmittedItem || $hasExistingItem || $hasNoItemLedger);
+        return $hasPartyLedger
+            && $hasPurchaseLedger
+            && $this->hasRequiredDebitNoteGstLedgers($transaction, $customSlots)
+            && $this->hasMatchingAmountsAndRates($transaction, $items, $noItemRows, $customSlots);
     }
 
     public function save(Request $request)

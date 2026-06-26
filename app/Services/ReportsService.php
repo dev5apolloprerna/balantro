@@ -521,6 +521,7 @@ class ReportsService
                 'EXEC dbo.GetLedgerMasters ?, ?, ?, ?, ?',
                 [$partyId, $groupId, $startDate, $endDate, $strCustomerName]
             ));
+            
             // Optional post-processing: group by ledger and compute totals
             $byLedger = [];
             $grandDr = 0.0;

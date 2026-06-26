@@ -522,6 +522,36 @@ class CreditNoteController extends Controller
         return array_values($slots);
     }
 
+    private function amountsMatchCalculatedTotal(float $taxable, float $sgst, float $cgst, float $igst, $submittedTotal = null): bool
+    {
+        if ($submittedTotal === null || $submittedTotal === '') {
+            return true;
+        }
+
+        $calculatedTotal = $this->roundCurrency($taxable + $sgst + $cgst + $igst);
+        $submittedTotal = $this->roundCurrency($submittedTotal);
+
+        return $calculatedTotal === $submittedTotal
+            || $this->roundCurrency(round($calculatedTotal)) === $submittedTotal
+            || $this->roundCurrency(ceil($calculatedTotal)) === $submittedTotal
+            || $this->roundCurrency(floor($calculatedTotal)) === $submittedTotal;
+    }
+
+    private function hasMappedSalesLedgers(array $slots, $headerSalesLedger = null): bool
+    {
+        if (empty($headerSalesLedger)) {
+            return false;
+        }
+
+        foreach ($slots as $slot) {
+            if (($slot['amount'] ?? $slot['taxable'] ?? 0) > 0 && empty($slot['ledger_id'])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function hasRequiredGstLedgers(array $slots, bool $isIgst): bool
     {
         foreach ($slots as $slot) {
@@ -1182,7 +1212,7 @@ class CreditNoteController extends Controller
                     }
 
                     $noteNo = explode('|', $groupKey)[0];
-                    if (!$partyLedgerMatched || !$this->hasOnlyValidGstSlabs($rates) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
+                    if (!$partyLedgerMatched || empty($salesLedger) || !$this->hasOnlyValidGstSlabs($rates) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
                         $status = 'pending';
                     }
                     
@@ -1392,7 +1422,8 @@ class CreditNoteController extends Controller
                     
                     $mapping = $this->getGstMapping($iPartyId, $first['sales_ledger']);
                     
-                    $status = $this->hasRequiredGstLedgers($gstSlots, $isIgst) ? 'saved' : 'pending';
+                    $amountMatched = $this->amountsMatchCalculatedTotal($sumAmount, $sumSgst, $sumCgst, $sumIgst, $sumTotalAmount);
+                    $status = ($this->hasMappedSalesLedgers($gstSlots, $salesLedger) && $this->hasRequiredGstLedgers($gstSlots, $isIgst) && $amountMatched) ? 'saved' : 'pending';
                     $noteNo = $first['note_no'];
                     if (!$partyLedgerMatched || !$this->hasOnlyValidGstSlabs(array_column($gstSlots, 'gst_rate')) || $this->creditNoteVoucherExists($iPartyId, 'Credit Note', $noteNo, session('year'))) {
                         $status = 'pending';
@@ -1637,17 +1668,34 @@ class CreditNoteController extends Controller
                     'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'
                 ], 422);
             }
+            $partyName = $request->party_name[$id] ?: ($request->ledger[$id] ?? $row->party_name);
+            $salesLedgerName = $request->sales_ledger[$id] ?? $row->sales_ledger;
+            $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($row->iPartyId, [
+                'gst_no' => $row->gst_no,
+                'party_name' => $partyName,
+            ]);
+            $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $row->gst_no);
+            $salesLedger = $salesLedgerName ? Ledger::getLedgerByName($row->iPartyId, $salesLedgerName) : null;
+            $gstLedgersMatched = $row->is_igst == 1
+                ? ((float) $row->igst <= 0 || !empty($row->igst_id))
+                : (((float) $row->cgst <= 0 || !empty($row->cgst_id)) && ((float) $row->sgst <= 0 || !empty($row->sgst_id)));
+            $gstRatesValid = $this->hasOnlyValidGstSlabs([$row->gst_rate]);
+            $amountMatched = $this->amountsMatchCalculatedTotal((float) $row->taxable_amount, (float) $row->sgst, (float) $row->cgst, (float) $row->igst, $row->total_amount);
+            $rowStatus = ($partyLedgerMatched && !empty($salesLedger) && $gstLedgersMatched && $gstRatesValid && $amountMatched) ? 'saved' : 'pending';
+
             $row->update([
                 'note_no'         => $request->note_no[$id] ?? $request->invoice_no[$id] ?? $row->note_no,
                 'note_date'       => $request->note_date[$id] ?? $request->date[$id] ?? $row->note_date,
-                'party_name'      => $request->party_name[$id] ?: ($request->ledger[$id] ?? $row->party_name),
+                'party_name'      => $partyName,
                 'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
 
                 // 🔥 IMPORTANT FOR CREDIT NOTE
-                'sales_ledger' => $request->sales_ledger[$id] ?? $row->sales_ledger,
+                'sales_ledger' => $salesLedgerName,
+                'sales_ledger_id' => $salesLedger->id ?? $salesLedger->iLedgerId ?? $row->sales_ledger_id,
+                'sales_ledger_name' => $salesLedger->name ?? $salesLedger->strCustomerName ?? $row->sales_ledger_name,
                 'remarks'         => $request->remarks[$id] ?? $row->remarks,
 
-                'status'          => 'saved',
+                'status'          => $rowStatus,
                 'vch_type'        => $request->voucher_type[$id] ?? 'Credit Note'
             ]);
         }
@@ -1807,7 +1855,7 @@ class CreditNoteController extends Controller
             // ITEMS HANDLING
             // ===============================
             $submittedIds = [];
-            $sumAmount = $sumCgst = $sumSgst = $sumIgst = 0;
+            $sumAmount = $sumCgst = $sumSgst = $sumIgst = $sumSubmittedTotal = 0;
 
             if (!empty($data['items'])) {
                 CreditNoteTransactionItem::where('transaction_id', $transaction->id)
@@ -1839,6 +1887,7 @@ class CreditNoteController extends Controller
                     $sumCgst   += (float)($itemData['cgst'] ?? 0);
                     $sumSgst   += (float)($itemData['sgst'] ?? 0);
                     $sumIgst   += (float)($itemData['igst'] ?? 0);
+                    $sumSubmittedTotal += (float)($itemData['total_amount'] ?? 0);
                 }
 
                 
@@ -1956,6 +2005,37 @@ class CreditNoteController extends Controller
             // ===============================
             $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
+            $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($transaction->iPartyId, [
+                'gst_no' => $request->gst_no ?: $transaction->gst_no,
+                'party_name' => $request->party_name ?: $transaction->party_name,
+            ]);
+            $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $request->gst_no ?: $transaction->gst_no);
+            $gstRatesValid = $this->hasOnlyValidGstSlabs($this->extractCreditNoteRequestGstRates($request, $sumAmount, $sumCgst, $sumSgst, $sumIgst));
+            $submittedTotal = $sumSubmittedTotal > 0 ? $sumSubmittedTotal : $request->input('total_amount');
+            $amountMatched = $this->amountsMatchCalculatedTotal($sumAmount, $sumSgst, $sumCgst, $sumIgst, $submittedTotal);
+            $gstLedgersMatched = true;
+            $salesLedgersMatched = !empty($salesLedger);
+
+            if ($transaction->gst_mode === 'custom') {
+                $customSlots = CreditNoteCustomGst::where('transaction_id', $transaction->id)->get()->map(fn ($slot) => [
+                    'amount' => (float) $slot->amount,
+                    'ledger_id' => $slot->ledger_id,
+                    'igst_amount' => (float) $slot->igst_amount,
+                    'igst_ledger_id' => $slot->igst_ledger_id,
+                    'cgst_amount' => (float) $slot->cgst_amount,
+                    'cgst_ledger_id' => $slot->cgst_ledger_id,
+                    'sgst_amount' => (float) $slot->sgst_amount,
+                    'sgst_ledger_id' => $slot->sgst_ledger_id,
+                ])->all();
+                $salesLedgersMatched = $this->hasMappedSalesLedgers($customSlots, $salesLedger);
+                $gstLedgersMatched = $this->hasRequiredGstLedgers($customSlots, (bool) $transaction->is_igst);
+            } elseif ($transaction->is_igst == 1) {
+                $gstLedgersMatched = $sumIgst <= 0 || !empty($transaction->igst_id);
+            } else {
+                $gstLedgersMatched = ($sumCgst <= 0 || !empty($transaction->cgst_id)) && ($sumSgst <= 0 || !empty($transaction->sgst_id));
+            }
+
+            $finalStatus = ($partyLedgerMatched && $salesLedgersMatched && $amountMatched && $gstRatesValid && $gstLedgersMatched) ? 'saved' : 'pending';
             $transaction->update([
                 'taxable_amount' => $sumAmount,
                 'cgst' => $sumCgst,
@@ -1966,7 +2046,7 @@ class CreditNoteController extends Controller
                 'roundoff_id' => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status' => $this->hasOnlyValidGstSlabs($this->extractCreditNoteRequestGstRates($request, $sumAmount, $sumCgst, $sumSgst, $sumIgst)) ? 'saved' : 'pending'
+                'status' => $finalStatus
             ]);
 
             // ===============================

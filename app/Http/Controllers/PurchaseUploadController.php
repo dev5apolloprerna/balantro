@@ -679,8 +679,9 @@ class PurchaseUploadController extends Controller
                         [],
                         $first['purchase_ledger'] ?? null
                     );
+                    $purchaseLedgerMapped = $this->purchaseLedgerIsMapped($iPartyId, $first['purchase_ledger'] ?? null);
 
-                    if (!$hasRequiredDetails || !$hasValidGstSlab || $isDuplicateVoucher || !$partyLedgerMatched) {
+                    if (!$hasRequiredDetails || !$purchaseLedgerMapped || !$hasValidGstSlab || $isDuplicateVoucher || !$partyLedgerMatched) {
                         $status = 'pending';
                     }
 
@@ -1004,7 +1005,10 @@ class PurchaseUploadController extends Controller
                         $rows,
                         $first['purchase_ledger'] ?? null
                     );
-                    $status = (!$hasRequiredDetails || !$hasValidGstSlab || $isDuplicateVoucher || !$partyLedgerMatched) ? 'pending' : 'saved'; // $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved'; // $status = (!$hasValidGstSlab || $isDuplicateVoucher) ? 'pending' : 'saved';
+                    $purchaseLedgerMapped = $this->purchaseLedgerIsMapped($iPartyId, $first['purchase_ledger'] ?? null);
+                    $gstLedgersMapped = $this->customGstLedgersAreMapped($gstSlots, $isIgst);
+                    $amountMatched = $this->purchaseAmountsMatch([], $rows);
+                    $status = (!$hasRequiredDetails || !$purchaseLedgerMapped || !$gstLedgersMapped || !$amountMatched || !$hasValidGstSlab || $isDuplicateVoucher || !$partyLedgerMatched) ? 'pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
 
@@ -1162,6 +1166,77 @@ class PurchaseUploadController extends Controller
         }
 
         return $hasParty && ($hasItem || $hasLedger);
+    }
+
+    private function purchaseLedgerIsMapped(int $partyId, ?string $purchaseLedger): bool
+    {
+        $purchaseLedger = trim((string) $purchaseLedger);
+
+        if ($purchaseLedger === '' || $purchaseLedger === 'Select Ledger') {
+            return false;
+        }
+
+        return DB::table('LedgerMaster')
+            ->where('iPartyId', $partyId)
+            ->where('strCustomerName', $purchaseLedger)
+            ->exists();
+    }
+
+    private function gstLedgersAreMappedForAmounts(
+        bool $isIgst,
+        float $igst,
+        float $cgst,
+        float $sgst,
+        $igstLedgerId,
+        $cgstLedgerId,
+        $sgstLedgerId
+    ): bool {
+        if ($isIgst || $igst > 0) {
+            return $igst <= 0 || !empty($igstLedgerId);
+        }
+
+        return ($cgst <= 0 || !empty($cgstLedgerId))
+            && ($sgst <= 0 || !empty($sgstLedgerId));
+    }
+
+    private function customGstLedgersAreMapped(array $customSlots, bool $isIgst): bool
+    {
+        foreach ($customSlots as $slot) {
+            if (!$this->gstLedgersAreMappedForAmounts(
+                $isIgst,
+                (float) ($slot['igst_amount'] ?? 0),
+                (float) ($slot['cgst_amount'] ?? 0),
+                (float) ($slot['sgst_amount'] ?? 0),
+                $slot['igst_ledger_id'] ?? null,
+                $slot['cgst_ledger_id'] ?? null,
+                $slot['sgst_ledger_id'] ?? null
+            )) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function purchaseAmountsMatch(array $items = [], array $noitemRows = []): bool
+    {
+        foreach ($items as $item) {
+            $quantity = (float) ($item['quantity'] ?? 0);
+            $rate = (float) ($item['rate'] ?? 0);
+            $amount = (float) ($item['amount'] ?? 0);
+
+            if ($quantity > 0 && $rate > 0 && round($quantity * $rate, 2) != round($amount, 2)) {
+                return false;
+            }
+        }
+
+        foreach ($noitemRows as $row) {
+            if ((float) ($row['amount'] ?? 0) <= 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // SAVE PURCHASE
@@ -1804,6 +1879,33 @@ class PurchaseUploadController extends Controller
                 $request->custom_slots ?? [],
                 $request->gst_rate ?? null
             ));
+            $partyLedgerDetails = $this->findPartyLedgerForUpload(
+                $transaction->iPartyId,
+                $request['party_name'] ?? null,
+                $request['gst_no'] ?? null
+            );
+            $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload(
+                $partyLedgerDetails,
+                $request['gst_no'] ?? null
+            );
+            $purchaseLedgerMapped = $this->purchaseLedgerIsMapped($transaction->iPartyId, $purchase_ledger);
+            $amountMatched = $this->purchaseAmountsMatch($requestItems, $requestNoitemRows);
+            $gstLedgersMapped = $gstMode === 'custom'
+                ? $this->customGstLedgersAreMapped(
+                    collect($request->custom_slots ?? [])
+                        ->map(fn ($slot) => $this->applyGstMappingToCustomSlot($slot, $gstMapping))
+                        ->all(),
+                    (bool) $transaction->is_igst
+                )
+                : $this->gstLedgersAreMappedForAmounts(
+                    (bool) $transaction->is_igst,
+                    (float) $sumIgst,
+                    (float) $sumCgst,
+                    (float) $sumSgst,
+                    $transaction->igst_id,
+                    $transaction->cgst_id,
+                    $transaction->sgst_id
+                );
             $transaction->update([
                 'amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
@@ -1817,7 +1919,14 @@ class PurchaseUploadController extends Controller
                 //     $request->custom_slots ?? [],
                 //     $request->gst_rate ?? null
                 // )) ? 'saved' : 'pending',
-                'status'       => ($canMarkSaved && $hasApplicableGstRates) ? 'saved' : 'pending',
+                'status'       => (
+                    $canMarkSaved
+                    && $partyLedgerMatched
+                    && $purchaseLedgerMapped
+                    && $amountMatched
+                    && $hasApplicableGstRates
+                    && $gstLedgersMapped
+                ) ? 'saved' : 'pending',
                 'roundoff_id'  => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),                

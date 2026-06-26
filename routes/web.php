@@ -103,6 +103,7 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
         Route::post('/sales-upload', [\App\Http\Controllers\SalesUploadController::class, 'upload'])->name('sales.upload');
         Route::get('/sales-preview/{id}', [\App\Http\Controllers\SalesUploadController::class, 'preview'])->name('sales.preview');
         Route::post('/sales-save',[\App\Http\Controllers\SalesUploadController::class,'save'])->name('sales.save');
+        Route::post('/sales-rematch/{id}', [\App\Http\Controllers\SalesUploadController::class, 'rematch'])->name('sales.rematch');
         Route::post('/ledger-store',[\App\Http\Controllers\SalesUploadController::class,'storeLedger'])->name('sales.ledger.store');
         Route::post('/sales-delete/{id}', [\App\Http\Controllers\SalesUploadController::class, 'delete'])->name('sales.delete');
         Route::get('/select-company/{id}', [\App\Http\Controllers\SalesUploadController::class,'selectCompany'])->name('sales.select.company');
@@ -258,9 +259,9 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
         Route::post('/clients/Gst-Setting/update',[\App\Http\Controllers\ClientsController::class, 'GstSettingupdate'])->name('clients.GstSettingupdate');
         Route::post('/clients/roundoff-setting/update',[\App\Http\Controllers\ClientsController::class, 'updateRoundoffSetting'])->name('clients.updateRoundoffSetting');
         Route::post('/clients/gst-mapping/save',[\App\Http\Controllers\ClientsController::class,'saveGstMapping'])->name('clients.saveGstMapping');
-        Route::delete('/clients/gst-mapping/delete/{id}',[\App\Http\Controllers\ClientsController::class,'deleteGstMapping'])->name('clients.deleteGstMapping');
+        Route::match(['post', 'delete'], '/clients/gst-mapping/delete/{id}',[\App\Http\Controllers\ClientsController::class,'deleteGstMapping'])->name('clients.deleteGstMapping');
         Route::post('/clients/item-gst-mapping/save',[\App\Http\Controllers\ClientsController::class,'saveItemGstMapping'])->name('clients.saveItemGstMapping');
-        Route::delete('/clients/item-gst-mapping/delete/{id}',[\App\Http\Controllers\ClientsController::class,'deleteItemGstMapping'])->name('clients.deleteItemGstMapping');
+        Route::match(['post', 'delete'], '/clients/item-gst-mapping/delete/{id}',[\App\Http\Controllers\ClientsController::class,'deleteItemGstMapping'])->name('clients.deleteItemGstMapping');
 
         Route::get('/documents/index',        [\App\Http\Controllers\DocumentsController::class, 'index'])->name('documents.index');
 

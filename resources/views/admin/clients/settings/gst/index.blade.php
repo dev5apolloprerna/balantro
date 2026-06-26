@@ -650,7 +650,7 @@ $(document).on('click','.deleteMapping',function(){
     let ledgerId = $(this).data('id');
     $.ajax({
         url: "{{ route('clients.deleteGstMapping', ':id') }}".replace(':id', ledgerId),
-        type: 'DELETE',
+        type: 'POST',
         data: {
             _token: '{{ csrf_token() }}'
         },
@@ -734,7 +734,7 @@ $(document).on('click','.deleteItemMapping',function(){
     $.ajax({
         url: "{{ route('clients.deleteItemGstMapping', ':id') }}"
                 .replace(':id', itemId),
-        type: 'DELETE',
+        type: 'POST',
         data: {
             _token: '{{ csrf_token() }}'
         },

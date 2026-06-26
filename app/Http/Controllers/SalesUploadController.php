@@ -438,6 +438,56 @@ class SalesUploadController extends Controller
         return in_array($partyLookup['matched_by'] ?? null, ['gst_no', 'party_name'], true);
     }
 
+    private function hasUploadedGstNoMatch(array $partyLookup, ?string $uploadedGstNo): bool
+    {
+        $uploadedGstNo = $this->normalizeGstNo($uploadedGstNo);
+        $ledgerGstNo = $this->normalizeGstNo($partyLookup['details']['gst_no'] ?? null);
+
+        if ($uploadedGstNo === '') {
+            return $ledgerGstNo === '';
+        }
+
+        return $uploadedGstNo === $ledgerGstNo;
+    }
+
+    private function hasSalesLedgerMatch($salesLedger): bool
+    {
+        return !empty($salesLedger?->iLedgerId) || !empty($salesLedger?->id);
+    }
+
+    private function hasSalesLedgerMatchForRows(int $partyId, array $rows): bool
+    {
+        foreach ($rows as $row) {
+            $ledgerName = trim((string) ($row['sales_ledger'] ?? ''));
+
+            if ($ledgerName === '') {
+                return false;
+            }
+
+            $ledger = DB::table('LedgerMaster')
+                ->where('iPartyId', $partyId)
+                ->where('strCustomerName', $ledgerName)
+                ->first();
+
+            if (!$this->hasSalesLedgerMatch($ledger)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function totalsMatch(float $uploadedTotal, float $amount, float $sgst, float $cgst, float $igst, ?string $roundOffSide = 'normal'): bool
+    {
+        if ($uploadedTotal == 0) {
+            return true;
+        }
+
+        $calculatedTotal = $this->calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, $roundOffSide);
+
+        return abs($this->roundCurrency($uploadedTotal) - $this->roundCurrency($calculatedTotal)) <= 0.01;
+    }
+
     private function getCompletePartyLedgerDetails($partyId, ?string $partyName): ?array
     {
         $partyName = trim((string) $partyName);
@@ -642,13 +692,14 @@ class SalesUploadController extends Controller
                     $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $partyLedgerDetails = $partyLookup['details'];
                     $partyMatched = $this->hasUploadPartyMatch($partyLookup);
+                    $gstNoMatched = $this->hasUploadedGstNoMatch($partyLookup, $first['gst_no']);
 
                     $mapping = $this->getGstMapping(
                         $iPartyId,
                         $first['sales_ledger']
                     );
 
-                    $status = 'pending';
+                    // $status = 'pending';
                     $amountMatched = true;
                     foreach ($items as $item)
                     {
@@ -670,29 +721,7 @@ class SalesUploadController extends Controller
                             break;
                         }
                     }
-                    $is_igst = 0;
-                    if($amountMatched)
-                    {
-                        if($sumIgst > 0)
-                        {
-                            if(!empty($mapping['igst_id']))
-                            {
-                                $status = 'saved';
-                            }
-                            $is_igst = 1;
-                        }
-                        else
-                        {
-                            if(
-                                !empty($mapping['cgst_id']) &&
-                                !empty($mapping['sgst_id'])
-                            )
-                            {
-                                $status = 'saved';
-                            }
-                            $is_igst = 0;
-                        }
-                    }
+                    $is_igst = $sumIgst > 0 ? 1 : 0;
                     $rates = [];
 
                     foreach ($items as $item)
@@ -728,12 +757,34 @@ class SalesUploadController extends Controller
                             ? reset($rates)
                             : 0;
                     
-                    // if (!$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
-                    if (!$partyMatched || !$this->isUploadDateInSelectedYear($first['date']) || !$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))) {
-                        $status = 'pending';
-                    }
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
+                    $amountMatched = $amountMatched && $this->totalsMatch(
+                        $sumTotalAmount,
+                        $sumAmount,
+                        $sumSgst,
+                        $sumCgst,
+                        $sumIgst,
+                        $roundOffSetting['side']
+                    );
+                    $hasGstLedgers = $this->hasRequiredGstLedgers([[
+                        'cgst_amount' => $sumCgst,
+                        'sgst_amount' => $sumSgst,
+                        'igst_amount' => $sumIgst,
+                        'cgst_ledger_id' => $mapping['cgst_id'],
+                        'sgst_ledger_id' => $mapping['sgst_id'],
+                        'igst_ledger_id' => $mapping['igst_id'],
+                    ]], (bool) $is_igst);
+                    $status = (
+                        $this->hasSalesLedgerMatch($salesLedger) &&
+                        $partyMatched &&
+                        $gstNoMatched &&
+                        $amountMatched &&
+                        $hasGstLedgers &&
+                        $this->isUploadDateInSelectedYear($first['date']) &&
+                        $this->hasOnlyValidGstSlabs($rates) &&
+                        !$this->salesVoucherExists($iPartyId, 'sales', $invoiceNo, session('year'))
+                    ) ? 'saved' : 'pending';
 
                     $transaction = SalesTransaction::create([
                         'iPartyId'          => $iPartyId,
@@ -899,6 +950,7 @@ class SalesUploadController extends Controller
                     $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $partyLedgerDetails = $partyLookup['details'];
                     $partyMatched = $this->hasUploadPartyMatch($partyLookup);
+                    $gstNoMatched = $this->hasUploadedGstNoMatch($partyLookup, $first['gst_no']);
 
                     $gstSlots = $this->buildSalesCustomGstSlots($rows, $iPartyId);
                     $rates = array_unique(array_filter(array_column($gstSlots, 'gst_rate')));
@@ -916,12 +968,26 @@ class SalesUploadController extends Controller
                         ]],
                         $isIgst
                     );
-                    $status = $hasGstLedgers ? 'saved' : 'pending';
-                    if (!$partyMatched || !$this->isUploadDateInSelectedYear($first['date']) || !$this->hasOnlyValidGstSlabs($rates) || $this->salesVoucherExists($iPartyId, 'sales', $first['invoice_no'], session('year'))) {
-                        $status = 'pending';
-                    }
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
+                    $amountMatched = $this->totalsMatch(
+                        $sumTotalAmount,
+                        $sumAmount,
+                        $sumSgst,
+                        $sumCgst,
+                        $sumIgst,
+                        $roundOffSetting['side']
+                    );
+                    $status = (
+                        $this->hasSalesLedgerMatchForRows($iPartyId, $rows) &&
+                        $partyMatched &&
+                        $gstNoMatched &&
+                        $amountMatched &&
+                        $hasGstLedgers &&
+                        $this->isUploadDateInSelectedYear($first['date']) &&
+                        $this->hasOnlyValidGstSlabs($rates) &&
+                        !$this->salesVoucherExists($iPartyId, 'sales', $first['invoice_no'], session('year'))
+                    ) ? 'saved' : 'pending';
 
                     $transaction = SalesTransaction::create([
                         'iPartyId'          => $iPartyId,
@@ -1053,6 +1119,182 @@ class SalesUploadController extends Controller
             'message' => 'Saved Successfully'
         ]);
         // return back()->with('success', 'Records Updated');
+    }
+
+    public function rematch($id)
+    {
+        $iPartyId = session('iPartyId');
+        if (!$iPartyId) {
+            return redirect()->route('data_entry_operators.bulkuploadsales')
+                ->with('error', 'Please select company first');
+        }
+
+        $upload = BulkSalesUpload::where('id', $id)
+            ->where('iPartyId', $iPartyId)
+            ->first();
+
+        if (!$upload) {
+            return back()->with('error', 'Upload not found');
+        }
+
+        $matched = 0;
+        $stillPending = 0;
+
+        DB::transaction(function () use ($upload, $iPartyId, &$matched, &$stillPending) {
+            $transactions = SalesTransaction::with(['items', 'customGst'])
+                ->where('upload_id', $upload->id)
+                ->where('iPartyId', $iPartyId)
+                ->where('status', 'pending')
+                ->get();
+
+            foreach ($transactions as $transaction) {
+                if ($this->rematchPendingSalesTransaction($transaction)) {
+                    $transaction->status = 'saved';
+                    $matched++;
+                } else {
+                    $transaction->status = 'pending';
+                    $stillPending++;
+                }
+
+                $transaction->save();
+            }
+
+            $this->refreshSalesUploadCounts($upload->id);
+        });
+
+        return back()->with(
+            $matched > 0 ? 'success' : 'info',
+            "Re-Match completed. {$matched} pending entr" . ($matched === 1 ? 'y was' : 'ies were') . " saved; {$stillPending} remain pending."
+        );
+    }
+
+    private function rematchPendingSalesTransaction(SalesTransaction $transaction): bool
+    {
+        $partyId = $transaction->iPartyId;
+        $salesLedgerName = $transaction->sales_ledger_name ?: $transaction->sales_ledger;
+        $salesLedger = $salesLedgerName ? Ledger::getLedgerByName($partyId, $salesLedgerName) : null;
+        $mapping = $this->getGstMapping($partyId, $salesLedger?->name ?? $salesLedgerName);
+        $partyLookup = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
+        $partyDetails = $partyLookup['details'] ?? null;
+
+        $transaction->fill([
+            'party_name' => $partyDetails['name'] ?? $transaction->party_name,
+            'gst_no' => $partyDetails['gst_no'] ?? $transaction->gst_no,
+            'place_of_supply' => $partyDetails['state'] ?? $transaction->place_of_supply,
+            'address' => $partyDetails['address'] ?? $transaction->address,
+            'pincode' => $partyDetails['pincode'] ?? $transaction->pincode,
+            'sales_ledger_id' => $salesLedger?->id ?? $salesLedger?->iLedgerId ?? $transaction->sales_ledger_id,
+            'sales_ledger_name' => $salesLedger?->name ?? $salesLedger?->strCustomerName ?? $transaction->sales_ledger_name,
+            'cgst_id' => $mapping['cgst_id'],
+            'cgst_ledger_name' => $mapping['cgst_name'],
+            'sgst_id' => $mapping['sgst_id'],
+            'sgst_ledger_name' => $mapping['sgst_name'],
+            'igst_id' => $mapping['igst_id'],
+            'igst_ledger_name' => $mapping['igst_name'],
+        ]);
+
+        $hasGstLedgers = (int) $transaction->isWithItem === 1
+            ? $this->rematchSalesItems($transaction)
+            : $this->rematchSalesAccountingGst($transaction, $mapping);
+        $invoiceDate = $transaction->date instanceof \DateTimeInterface
+            ? $transaction->date->format('Y-m-d')
+            : $transaction->date;
+
+        return $hasGstLedgers
+            && $this->hasUploadPartyMatch($partyLookup)
+            && $this->isUploadDateInSelectedYear($invoiceDate)
+            && $this->hasOnlyValidGstSlabs($this->salesTransactionGstRates($transaction))
+            && !$this->salesVoucherExists($partyId, $transaction->vchType, $transaction->invoice_no, $transaction->strYear ?? session('year'), $transaction->id);
+    }
+
+    private function rematchSalesItems(SalesTransaction $transaction): bool
+    {
+        $hasAllMappings = true;
+
+        foreach ($transaction->items as $item) {
+            $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item->item_name);
+            $item->cgst_id = $itemMapping['cgst_id'];
+            $item->sgst_id = $itemMapping['sgst_id'];
+            $item->igst_id = $itemMapping['igst_id'];
+            $item->save();
+
+            if (!$this->hasRequiredGstLedgers([[
+                'cgst_amount' => $item->cgst,
+                'sgst_amount' => $item->sgst,
+                'igst_amount' => $item->igst,
+                'cgst_ledger_id' => $itemMapping['cgst_id'],
+                'sgst_ledger_id' => $itemMapping['sgst_id'],
+                'igst_ledger_id' => $itemMapping['igst_id'],
+            ]], (float) $item->igst > 0)) {
+                $hasAllMappings = false;
+            }
+        }
+
+        return $hasAllMappings;
+    }
+
+    private function rematchSalesAccountingGst(SalesTransaction $transaction, array $mapping): bool
+    {
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            $slots = [];
+            foreach ($transaction->customGst as $slot) {
+                $slotMapping = $this->getGstMapping($transaction->iPartyId, $slot->ledger_name ?: $transaction->sales_ledger);
+                $slot->fill([
+                    'cgst_ledger_id' => $slotMapping['cgst_id'],
+                    'cgst_ledger_name' => $slotMapping['cgst_name'],
+                    'sgst_ledger_id' => $slotMapping['sgst_id'],
+                    'sgst_ledger_name' => $slotMapping['sgst_name'],
+                    'igst_ledger_id' => $slotMapping['igst_id'],
+                    'igst_ledger_name' => $slotMapping['igst_name'],
+                ])->save();
+                $slots[] = [
+                    'cgst_amount' => $slot->cgst_amount,
+                    'sgst_amount' => $slot->sgst_amount,
+                    'igst_amount' => $slot->igst_amount,
+                    'cgst_ledger_id' => $slotMapping['cgst_id'],
+                    'sgst_ledger_id' => $slotMapping['sgst_id'],
+                    'igst_ledger_id' => $slotMapping['igst_id'],
+                ];
+            }
+
+            return $this->hasRequiredGstLedgers($slots, (float) $transaction->igst > 0);
+        }
+
+        return $this->hasRequiredGstLedgers([[
+            'cgst_amount' => $transaction->cgst,
+            'sgst_amount' => $transaction->sgst,
+            'igst_amount' => $transaction->igst,
+            'cgst_ledger_id' => $mapping['cgst_id'],
+            'sgst_ledger_id' => $mapping['sgst_id'],
+            'igst_ledger_id' => $mapping['igst_id'],
+        ]], (float) $transaction->igst > 0);
+    }
+
+    private function salesTransactionGstRates(SalesTransaction $transaction): array
+    {
+        if ((int) $transaction->isWithItem === 1) {
+            return $transaction->items->pluck('gst_rate')->filter(fn ($rate) => (float) $rate > 0)->all();
+        }
+
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            return $transaction->customGst->pluck('gst_rate')->filter(fn ($rate) => (float) $rate > 0)->all();
+        }
+
+        return $transaction->gst_rate ? [$transaction->gst_rate] : [];
+    }
+
+    private function refreshSalesUploadCounts(int $uploadId): void
+    {
+        $saved = SalesTransaction::where('upload_id', $uploadId)->where('status', 'saved')->count();
+        $pending = SalesTransaction::where('upload_id', $uploadId)->where('status', 'pending')->count();
+        $total = SalesTransaction::where('upload_id', $uploadId)->count();
+
+        BulkSalesUpload::where('id', $uploadId)->update([
+            'total' => $total,
+            'saved' => $saved,
+            'pending' => $pending,
+            'status' => $pending > 0 ? 'Pending' : 'Completed',
+        ]);
     }
 
     // PREVIEW PAGE
@@ -1668,6 +1910,30 @@ class SalesUploadController extends Controller
             // =========================================================
             $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
+            $partyLookup = $this->getUploadPartyLedgerDetails($transaction->iPartyId, $request['party_name'] ?? null, $request['gst_no'] ?? null);
+            $gstLedgerSlots = $gstMode === 'custom' && !empty($request->custom_slots)
+                ? array_map(fn ($slot) => [
+                    'cgst_amount' => $slot['cgst_amount'] ?? 0,
+                    'sgst_amount' => $slot['sgst_amount'] ?? 0,
+                    'igst_amount' => $slot['igst_amount'] ?? 0,
+                    'cgst_ledger_id' => $slot['cgst_ledger_id'] ?? null,
+                    'sgst_ledger_id' => $slot['sgst_ledger_id'] ?? null,
+                    'igst_ledger_id' => $slot['igst_ledger_id'] ?? null,
+                ], (array) $request->custom_slots)
+                : [[
+                'cgst_amount' => $sumCgst,
+                'sgst_amount' => $sumSgst,
+                'igst_amount' => $sumIgst,
+                'cgst_ledger_id' => $transaction->cgst_id,
+                'sgst_ledger_id' => $transaction->sgst_id,
+                'igst_ledger_id' => $transaction->igst_id,
+            ]];
+            $hasGstLedgers = $this->hasRequiredGstLedgers($gstLedgerSlots, ((int) ($request->is_igst ?? 0)) === 1);
+            $canSave = $this->hasSalesLedgerMatch($sales_ledger_id) &&
+                $this->hasUploadPartyMatch($partyLookup) &&
+                $this->hasUploadedGstNoMatch($partyLookup, $request['gst_no'] ?? null) &&
+                $hasGstLedgers &&
+                $this->hasOnlyValidGstSlabs($this->extractSalesRequestGstRates($request, $sumAmount, $sumCgst, $sumSgst, $sumIgst));
             
             $updateData = [
                 'amount'       => $sumAmount,
@@ -1679,7 +1945,7 @@ class SalesUploadController extends Controller
                 'roundoff_id'  => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-                'status'       => $this->hasOnlyValidGstSlabs($this->extractSalesRequestGstRates($request, $sumAmount, $sumCgst, $sumSgst, $sumIgst)) ? 'saved' : 'pending',
+                'status'       => $canSave ? 'saved' : 'pending',
             ];
 
             \Log::info("Final transaction update", ['data' => $updateData]);

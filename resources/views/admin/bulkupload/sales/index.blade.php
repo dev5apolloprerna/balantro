@@ -223,6 +223,17 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
+                                        @if($upload->status == 'Pending' && ($upload->pending ?? 0) > 0)
+                                        <form method="POST" action="{{ route('sales.rematch', $upload->id) }}" class="inline">
+                                            @csrf
+                                            <button
+                                                type="submit"
+                                                title="Re-Match pending entries"
+                                                class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
+                                                Re-Match
+                                            </button>
+                                        </form>
+                                        @endif
                                         <a href="{{ route('sales.preview',$upload->id) }}">
                                             <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>
