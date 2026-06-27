@@ -149,7 +149,7 @@
                     </div>
 
                     <div class="overflow-y-auto h-[calc(100%-120px)]">
-                        <table class="min-w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                        <table class="min-w-full text-sm text-left">
                             <!-- Table Header -->
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
@@ -233,6 +233,17 @@
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
+                                        <?php if($upload->status == 'Pending' && ($upload->pending ?? 0) > 0): ?>
+                                        <form method="POST" action="<?php echo e(route('sales.rematch', $upload->id)); ?>" class="inline">
+                                            <?php echo csrf_field(); ?>
+                                            <button
+                                                type="submit"
+                                                title="Re-Match pending entries"
+                                                class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
+                                                Re-Match
+                                            </button>
+                                        </form>
+                                        <?php endif; ?>
                                         <a href="<?php echo e(route('sales.preview',$upload->id)); ?>">
                                             <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>

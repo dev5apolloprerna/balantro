@@ -147,7 +147,7 @@
                     </div>
 
                     <div class="overflow-y-auto h-[calc(100%-120px)]">
-                        <table class="min-w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                        <table class="min-w-full text-sm text-left">
                             <!-- Table Header -->
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>

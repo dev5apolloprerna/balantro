@@ -331,23 +331,23 @@ class ClientsController extends Controller
         // }
 
         // Optional: send welcome email & reset link (wrap to avoid hard-fails)
-        $welcomeEmailSent = $this->sendWelcomeEmail($client, $plainPassword);
-        dd($welcomeEmailSent);
+        $welcomeEmailSent = $this->sendWelcomeEmail($client, $plainPassword, true);
+        
         // Respond
         if ($request->expectsJson()) {
             return response()->json([
                 'status'  => 'success',
                 'message' => __('admin.clients.flash.client_update_msg'),
                 'client'  => $client->load(['profile', 'groups', 'managers', 'supervisors', 'dataEntryOperators']),
-                'mail_sent' => $welcomeEmailSent,
-                'mail_warning' => $welcomeEmailSent ? null : __('Welcome email could not be sent. Please verify SMTP settings.'),
+                'mail_queued' => $welcomeEmailSent,
+                'mail_warning' => $welcomeEmailSent ? null : __('Welcome email could not be queued. Please verify queue/mail settings.'),
             ]);
         }
 
         $redirect = redirect()->route('clients.index')->with('notice', __('admin.clients.flash.client_update_msg'));
 
         if (!$welcomeEmailSent) {
-            $redirect->with('alert', __('Client was saved, but the welcome email could not be sent. Please verify SMTP settings.'));
+            $redirect->with('alert', __('Client was saved, but the welcome email could not be queued. Please verify queue/mail settings.'));
         }
 
         return $redirect;
