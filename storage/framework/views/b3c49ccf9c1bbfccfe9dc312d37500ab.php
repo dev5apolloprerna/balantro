@@ -1,5 +1,5 @@
-@extends('layouts.super_admin')
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
 <div class="container mx-auto">
     <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700">
@@ -10,7 +10,8 @@
                     Sales Transactions
                 </h2>
                 <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                    {{ $rows->count() }}
+                    <?php echo e($rows->count()); ?>
+
                 </span>
             </div> -->
             <div class="flex items-center gap-3">
@@ -25,15 +26,17 @@
                 </h2>
 
                 <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                    {{ $rows->count() }}
+                    <?php echo e($rows->count()); ?>
+
                 </span>
             </div>
             <div class="flex gap-2">
-                @if(session('client_name'))
+                <?php if(session('client_name')): ?>
                 <div class="text-sm text-green-600 font-semibold">
-                    {{ session('client_name') }}
+                    <?php echo e(session('client_name')); ?>
+
                 </div>
-                @endif
+                <?php endif; ?>
                 <button class="border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded text-sm">
                     More Info
                 </button>
@@ -100,9 +103,9 @@
                 </div>
             </div>
         </div>
-        <!-- <form id="salesForm" method="POST" action="{{ route('sales.save') }}"> -->
+        <!-- <form id="salesForm" method="POST" action="<?php echo e(route('sales.save')); ?>"> -->
         <form id="salesForm">
-            @csrf
+            <?php echo csrf_field(); ?>
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
                 <table id="salesTable" class="min-w-[1100px] w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
                     <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-xs text-gray-700 dark:text-gray-300 uppercase sticky top-0 z-10">
@@ -144,115 +147,122 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
-                        @foreach($rows as $index=>$row)
+                        <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
                             <td class="px-3 py-2">
-                                <input type="checkbox" name="selected[]" value="{{$row->id}}">
+                                <input type="checkbox" name="selected[]" value="<?php echo e($row->id); ?>">
                             </td>
                             <td class="px-3 py-2">
-                                {{ $index+1 }}
+                                <?php echo e($index+1); ?>
+
                             </td>
                             <td class="px-3 py-2">
                                 <input type="date"
-                                    name="date[{{$row->id}}]"
-                                    value="{{ \Carbon\Carbon::parse($row->date)->format('Y-m-d') }}"
+                                    name="date[<?php echo e($row->id); ?>]"
+                                    value="<?php echo e(\Carbon\Carbon::parse($row->date)->format('Y-m-d')); ?>"
                                     class="inputCell">
                             </td>
                             <td class="px-3 py-2">
                                 <input type="text"
-                                    name="invoice_no[{{$row->id}}]"
-                                    value="{{$row->invoice_no}}"
+                                    name="invoice_no[<?php echo e($row->id); ?>]"
+                                    value="<?php echo e($row->invoice_no); ?>"
                                     class="inputCell">
                             </td>
                             <td class="px-3 py-2">
-                                <select name="voucher_type[{{$row->id}}]" class="inputCell voucherSelect">
-                                    @foreach($vchTypes as $vchType)
-                                    <option value="{{$vchType}}"
-                                        {{ strtolower(trim($vchType)) == strtolower(trim($row->vchType))  ? 'selected' : '' }}>{{$vchType}}</option>
-                                    @endforeach
+                                <select name="voucher_type[<?php echo e($row->id); ?>]" class="inputCell voucherSelect">
+                                    <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($vchType); ?>"
+                                        <?php echo e(strtolower(trim($vchType)) == strtolower(trim($row->vchType))  ? 'selected' : ''); ?>><?php echo e($vchType); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
                             <td class="px-3 py-2">
                                 <!-- Party Name -->
                                 <input type="text"
-                                    name="party_name[{{$row->id}}]"
-                                    value="{{$row->party_name}}"
+                                    name="party_name[<?php echo e($row->id); ?>]"
+                                    value="<?php echo e($row->party_name); ?>"
                                     class="inputCell mb-1">
                                 <!-- Ledger -->
-                                <select name="ledger[{{$row->id}}]"
+                                <select name="ledger[<?php echo e($row->id); ?>]"
                                     class="ledgerSelect inputCell">
                                     <option value="">Select Ledger</option>
-                                    @foreach($ledgers as $ledger)
-                                    <option value="{{$ledger->name}}"
-                                        {{ $row->sales_ledger==$ledger->name?'selected':'' }}>
-                                        {{$ledger->name}}
+                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->name); ?>"
+                                        <?php echo e($row->sales_ledger==$ledger->name?'selected':''); ?>>
+                                        <?php echo e($ledger->name); ?>
+
                                     </option>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
                             <td class="px-3 py-2">
-                                {{$row->gst_no}}
+                                <?php echo e($row->gst_no); ?>
+
                             </td>
                             <td class="px-3 py-2">
-                                <select name="place_of_supply[{{$row->id}}]"
+                                <select name="place_of_supply[<?php echo e($row->id); ?>]"
                                     class="inputCell">
                                     <option value="">Select State</option>
-                                    @foreach($states as $state)
-                                    <option value="{{$state}}"
-                                        {{ strtolower(trim($state)) == strtolower(trim($row->place_of_supply)) ? 'selected':''}}>
-                                        {{$state}}
+                                    <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($state); ?>"
+                                        <?php echo e(strtolower(trim($state)) == strtolower(trim($row->place_of_supply)) ? 'selected':''); ?>>
+                                        <?php echo e($state); ?>
+
                                     </option>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
                             <!-- <td class="px-3 py-2">
-                                <select name="ledger[{{$row->id}}]" class="ledgerSelect inputCell">
+                                <select name="ledger[<?php echo e($row->id); ?>]" class="ledgerSelect inputCell">
                                     <option value="">Select Ledger</option>
-                                    @foreach($ledgers as $ledger)
-                                    <option value="{{$ledger->name}}"
-                                        {{ $row->sales_ledger==$ledger->name?'selected':'' }}>
-                                        {{$ledger->name}}
+                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->name); ?>"
+                                        <?php echo e($row->sales_ledger==$ledger->name?'selected':''); ?>>
+                                        <?php echo e($ledger->name); ?>
+
                                     </option>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td> -->
                             <td class="px-3 py-2 text-right">
-                                {{ number_format($row->total_amount,2) }}
+                                <?php echo e(number_format($row->total_amount,2)); ?>
+
                             </td>
                             <td class="px-3 py-2">
                                 <span class="text-yellow-400">
-                                    {{$row->status}}
+                                    <?php echo e($row->status); ?>
+
                                 </span>
                             </td>
                             <td class="px-3 py-2">
-                                {{-- VIEW BUTTON --}}
+                                
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300"
-                                    title="View" data-id="{{ $row->id }}">
+                                    title="View" data-id="<?php echo e($row->id); ?>">
                                     <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
                                 <button type="button"
                                     class="text-blue-400 hover:text-blue-300 editRow"
                                     title="Edit"
-                                    data-id="{{ $row->id }}"
-                                    data-invoice="{{ $row->invoice_no }}"
-                                    data-date="{{ \Carbon\Carbon::parse($row->date)->format('Y-m-d') }}"
-                                    data-gst_no="{{ $row->gst_no }}"
-                                    data-vchtype="{{ $row->vchType }}"
-                                    data-party="{{ $row->party_name }}"
-                                    data-place="{{ $row->place_of_supply }}"
-                                    data-ledger="{{ $row->sales_ledger }}"
-                                    data-amount="{{ $row->total_amount }}"
-                                    data-cgst="{{ $row->cgst }}"
-                                    data-sgst="{{ $row->sgst }}"
-                                    data-igst="{{ $row->igst }}">
+                                    data-id="<?php echo e($row->id); ?>"
+                                    data-invoice="<?php echo e($row->invoice_no); ?>"
+                                    data-date="<?php echo e(\Carbon\Carbon::parse($row->date)->format('Y-m-d')); ?>"
+                                    data-gst_no="<?php echo e($row->gst_no); ?>"
+                                    data-vchtype="<?php echo e($row->vchType); ?>"
+                                    data-party="<?php echo e($row->party_name); ?>"
+                                    data-place="<?php echo e($row->place_of_supply); ?>"
+                                    data-ledger="<?php echo e($row->sales_ledger); ?>"
+                                    data-amount="<?php echo e($row->total_amount); ?>"
+                                    data-cgst="<?php echo e($row->cgst); ?>"
+                                    data-sgst="<?php echo e($row->sgst); ?>"
+                                    data-igst="<?php echo e($row->igst); ?>">
                                     <i class="fa-solid fa-pen action-icon"></i>
                                 </button>
-                                <button class="text-red-500 deleteRow" data-id="{{$row->id}}">
+                                <button class="text-red-500 deleteRow" data-id="<?php echo e($row->id); ?>">
                                     <i class="fa-solid fa-trash action-icon"></i>
                                 </button>
                             </td>
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
@@ -262,12 +272,12 @@
 <input type="hidden"
        class="slot_sales_ledger_id"
        value="${slot.ledger_id || slot.sales_ledger_id || ''}">
-@include('admin.bulkupload.sales.previewEditModel')
-@include('admin.bulkupload.sales.previewVewandLedger')
-@include('admin.bulkupload.sales.previewStyle')
+<?php echo $__env->make('admin.bulkupload.sales.previewEditModel', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('admin.bulkupload.sales.previewVewandLedger', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+<?php echo $__env->make('admin.bulkupload.sales.previewStyle', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
-@endsection
-@section('scripts')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('scripts'); ?>
 <script>
     $(document).ready(function() {
         $('#selectAll').click(function() {
@@ -378,7 +388,7 @@
         let formData = $(this).serialize();
 
         $.ajax({
-            url: "{{ route('sales.ledger.store') }}",
+            url: "<?php echo e(route('sales.ledger.store')); ?>",
             type: "POST",
             data: formData,
             success: function(response) {
@@ -409,12 +419,12 @@
         });
     });
 
-    const ledgers = @json(collect($ledgers)->pluck('name'));
-    const states = @json($states);
-    const vouchers = @json($vchTypes);
-    const ITEM_MASTER = @json($stockItems);
-    const SALES_LEDGERS = @json($salesLedgers);
-    const SALES_GST_MAPPINGS = @json($salesGstMappings ?? []);
+    const ledgers = <?php echo json_encode(collect($ledgers)->pluck('name'), 15, 512) ?>;
+    const states = <?php echo json_encode($states, 15, 512) ?>;
+    const vouchers = <?php echo json_encode($vchTypes, 15, 512) ?>;
+    const ITEM_MASTER = <?php echo json_encode($stockItems, 15, 512) ?>;
+    const SALES_LEDGERS = <?php echo json_encode($salesLedgers, 15, 512) ?>;
+    const SALES_GST_MAPPINGS = <?php echo json_encode($salesGstMappings ?? [], 15, 512) ?>;
 
     function normalizeLedgerName(name) {
         return String(name || '').replace(/["']/g, '').trim().toLowerCase();
@@ -489,7 +499,7 @@
         return Math.round(((parseFloat(value) || 0) + Number.EPSILON) * 100) / 100;
     }
 
-    const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
+    const ROUND_OFF_SIDE = <?php echo json_encode($roundOffSide ?? 'normal', 15, 512) ?>;
 
     function calculateRoundOffAmountForSummary(total) {
         total = roundCurrency(total);
@@ -758,7 +768,7 @@
     $('#saveBtn').click(function() {
         let formData = $('#salesForm').serialize();
         $.ajax({
-            url: "{{ route('sales.save') }}",
+            url: "<?php echo e(route('sales.save')); ?>",
             type: "POST",
             data: formData,
             success: function(response) {
@@ -780,10 +790,10 @@
         let id = $(this).data('id');
         if (!confirm('Delete this row?')) return;
         $.ajax({
-            url: "{{ route('sales.delete', ':id') }}".replace(':id', id),
+            url: "<?php echo e(route('sales.delete', ':id')); ?>".replace(':id', id),
             type: "POST",
             data: {
-                _token: "{{ csrf_token() }}"
+                _token: "<?php echo e(csrf_token()); ?>"
             },
             success: function(response) {
                 showToast('Deleted Successfully','success');
@@ -862,7 +872,7 @@
 
         // Load data
         $.ajax({
-            url: "{{ route('sales.show', ':id') }}".replace(':id', id),
+            url: "<?php echo e(route('sales.show', ':id')); ?>".replace(':id', id),
             type: "GET",
             success: function(res) {
                 // console.log(res);
@@ -977,9 +987,9 @@
 
                 // Handle custom GST mode display
                 if (res.gst_mode === 'custom' && res.custom_gst && res.custom_gst.length) {
-                    let iGstLedgers = @json($iGstLedgers);
-                    let cGstLedgers = @json($cGstLedgers);
-                    let sGstLedgers = @json($sGstLedgers);
+                    let iGstLedgers = <?php echo json_encode($iGstLedgers, 15, 512) ?>;
+                    let cGstLedgers = <?php echo json_encode($cGstLedgers, 15, 512) ?>;
+                    let sGstLedgers = <?php echo json_encode($sGstLedgers, 15, 512) ?>;
                     let html = '';
 
                     res.custom_gst.forEach(slot => {
@@ -1112,7 +1122,7 @@
         openEditModal();
 
         $.ajax({
-            url: "{{ route('sales.show',':id') }}".replace(':id', id),
+            url: "<?php echo e(route('sales.show',':id')); ?>".replace(':id', id),
             type: "GET",
             success: function(res) {
                 $('#edit_address').val(res.address || '');
@@ -1189,9 +1199,9 @@
                     tbody.html(''); // clear table
                 }
                 if (res.gst_mode === 'custom' && res.custom_gst && res.custom_gst.length) {
-                    let iGstLedgers = @json($iGstLedgers);
-                    let cGstLedgers = @json($cGstLedgers);
-                    let sGstLedgers = @json($sGstLedgers);
+                    let iGstLedgers = <?php echo json_encode($iGstLedgers, 15, 512) ?>;
+                    let cGstLedgers = <?php echo json_encode($cGstLedgers, 15, 512) ?>;
+                    let sGstLedgers = <?php echo json_encode($sGstLedgers, 15, 512) ?>;
                     let html = '';
 
                     res.custom_gst.forEach(slot => {
@@ -1442,11 +1452,11 @@
         });
 
         $.ajax({
-            url: "{{ route('sales.update') }}",
+            url: "<?php echo e(route('sales.update')); ?>",
             type: "POST",
             // contentType: "application/json",
             data: {
-                _token: "{{ csrf_token() }}",
+                _token: "<?php echo e(csrf_token()); ?>",
                 id: $('#edit_id').val(),
 
                 invoice_no: $('#edit_invoice').val(),
@@ -1923,9 +1933,9 @@
     // ledger dropdowns and auto-computed tax amounts.
     // ═══════════════════════════════════════════════════════════════
     function renderCustomSlots(rateMap, grandTotal) {
-        let sGstLedgers = @json($sGstLedgers ?? []);
-        let cGstLedgers = @json($cGstLedgers ?? []);
-        let iGstLedgers = @json($iGstLedgers ?? []);
+        let sGstLedgers = <?php echo json_encode($sGstLedgers ?? [], 15, 512) ?>;
+        let cGstLedgers = <?php echo json_encode($cGstLedgers ?? [], 15, 512) ?>;
+        let iGstLedgers = <?php echo json_encode($iGstLedgers ?? [], 15, 512) ?>;
 
         // 🔥 PRESERVE EXISTING LEDGER SELECTIONS
         let existingSelections = {};
@@ -2220,4 +2230,6 @@
     });
 
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/bulkupload/sales/preview.blade.php ENDPATH**/ ?>

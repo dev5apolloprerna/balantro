@@ -140,12 +140,12 @@
                                     <td class="px-4 py-3">
                                         {{ ucfirst(str_replace('_',' ',$upload->type)) }}
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <!-- <td class="px-4 py-3">
                                         {{ $upload->statement_date ?? '-' }}
                                     </td>
                                     <td class="px-4 py-3">
                                         {{ $upload->synced_date ?? '-' }}
-                                    </td>
+                                    </td> -->
                                     <td class="px-4 py-3">
                                         {{ $upload->total ?? '-' }}
                                     </td>

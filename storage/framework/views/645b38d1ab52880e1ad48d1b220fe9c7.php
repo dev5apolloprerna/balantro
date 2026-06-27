@@ -118,12 +118,12 @@
                                     <th class="px-4 py-3 ">Sr.No.</th>
                                     <th class="px-4 py-3">File Name</th>
                                     <th class="px-4 py-3">Type</th>
-                                    <th class="px-4 py-3">Statement Date</th>
-                                    <th class="px-4 py-3">Synced Date</th>
+                                    <!-- <th class="px-4 py-3">Statement Date</th>
+                                    <th class="px-4 py-3">Synced Date</th> -->
                                     <th class="px-4 py-3">Total</th>
                                     <th class="px-4 py-3">Pending</th>
-                                    <th class="px-4 py-3">Saved</th>
-                                    <th class="px-4 py-3">Synced</th>
+                                    <th class="px-4 py-3">TM</th>
+                                    <th class="px-4 py-3">Accounted</th>
                                     <th class="px-4 py-3">Status</th>
                                     <th class="px-4 py-3 text-right">Action</th>
                                 </tr>
@@ -144,14 +144,14 @@
                                         <?php echo e(ucfirst(str_replace('_',' ',$upload->type))); ?>
 
                                     </td>
-                                    <td class="px-4 py-3">
+                                    <!-- <td class="px-4 py-3">
                                         <?php echo e($upload->statement_date ?? '-'); ?>
 
                                     </td>
                                     <td class="px-4 py-3">
                                         <?php echo e($upload->synced_date ?? '-'); ?>
 
-                                    </td>
+                                    </td> -->
                                     <td class="px-4 py-3">
                                         <?php echo e($upload->total ?? '-'); ?>
 
