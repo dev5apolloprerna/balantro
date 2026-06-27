@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\ReportsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use App\Models\UserDevice;
 use App\Models\BankTransaction;
 use App\Models\GstSetting;
@@ -233,13 +234,7 @@ class ClientsController extends Controller
         }
 
         if ($client->save()) {
-            try {
-                // Mail::to($client->email)->send(new WelcomeMail($client));
-                Mail::to($client->email)->queue(new WelcomeMail($client, $generatedPassword));
-                // Password::sendResetLink(['email' => $client->email]);
-            } catch (\Throwable $e) {
-                report($e);
-            }
+            $this->sendWelcomeEmail($client, $generatedPassword, true);
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['status' => 'success', 'message' => __('admin.clients.flash.client_update_msg')], 422);
             }
@@ -336,11 +331,7 @@ class ClientsController extends Controller
         // }
 
         // Optional: send welcome email & reset link (wrap to avoid hard-fails)
-        try {
-            Mail::to($client->email)->send(new WelcomeMail($client, $plainPassword));
-        } catch (\Throwable $e) {
-            report($e);
-        }
+        $welcomeEmailSent = $this->sendWelcomeEmail($client, $plainPassword);
 
         // Respond
         if ($request->expectsJson()) {
@@ -348,10 +339,45 @@ class ClientsController extends Controller
                 'status'  => 'success',
                 'message' => __('admin.clients.flash.client_update_msg'),
                 'client'  => $client->load(['profile', 'groups', 'managers', 'supervisors', 'dataEntryOperators']),
+                'mail_sent' => $welcomeEmailSent,
+                'mail_warning' => $welcomeEmailSent ? null : __('Welcome email could not be sent. Please verify SMTP settings.'),
             ]);
         }
 
-        return redirect()->route('clients.index')->with('notice', __('admin.clients.flash.client_update_msg'));
+        $redirect = redirect()->route('clients.index')->with('notice', __('admin.clients.flash.client_update_msg'));
+
+        if (!$welcomeEmailSent) {
+            $redirect->with('alert', __('Client was saved, but the welcome email could not be sent. Please verify SMTP settings.'));
+        }
+
+        return $redirect;
+    }
+
+
+    /**
+     * Send or queue a client welcome email without letting mail transport failures break the request.
+     */
+    protected function sendWelcomeEmail(Client $client, ?string $plainPassword = null, bool $queue = false): bool
+    {
+        try {
+            $pendingMail = Mail::to($client->email);
+            $welcomeMail = new WelcomeMail($client, $plainPassword);
+
+            $queue ? $pendingMail->queue($welcomeMail) : $pendingMail->send($welcomeMail);
+
+            return true;
+        } catch (Throwable $e) {
+            report($e);
+
+            Log::warning('Unable to send client welcome email.', [
+                'client_id' => $client->id,
+                'email' => $client->email,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     public function edit(Request $request, $id)
