@@ -450,36 +450,41 @@
                     url = R.clientStore;
                 }
 
-                const res = await fetch(url, opts);
-                if (!res.ok) {
-                    const data = await res.json(); // Assuming the server returns a JSON response
+                try {
+                    const res = await fetch(url, opts);
+                    if (!res.ok) {
+                        const data = await res.json(); // Assuming the server returns a JSON response
 
-                    // Clear previous error messages
-                    document.getElementById('cf-name-error').textContent = '';
-                    document.getElementById('cf-email-error').textContent = '';
-                    document.getElementById('cf-guid-error').textContent = '';
-                    document.getElementById('cf-mobile-error').textContent = '';
-                    document.getElementById('cf-whatsapp-error').textContent = '';
+                        // Clear previous error messages
+                        document.getElementById('cf-name-error').textContent = '';
+                        document.getElementById('cf-email-error').textContent = '';
+                        document.getElementById('cf-guid-error').textContent = '';
+                        document.getElementById('cf-mobile-error').textContent = '';
+                        document.getElementById('cf-whatsapp-error').textContent = '';
 
-                    // Display errors for each field
-                    if (data.errors) {
-                        if (data.errors.name) document.getElementById('cf-name-error').textContent =
-                            data.errors.name[0];
-                        if (data.errors.email) document.getElementById('cf-email-error').textContent =
-                            data.errors.email[0];
-                        if (data.errors.guid) document.getElementById('cf-guid-error').textContent =
-                            data.errors.guid[0];
-                        if (data.errors.mobile_no) document.getElementById('cf-mobile-error')
-                            .textContent = data.errors.mobile_no[0];
-                        if (data.errors.whatsapp_no) document.getElementById('cf-whatsapp-error')
-                            .textContent = data.errors.whatsapp_no[0];
+                        // Display errors for each field, including Laravel's nested profile keys.
+                        if (data.errors) {
+                            if (data.errors.name) document.getElementById('cf-name-error').textContent =
+                                data.errors.name[0];
+                            if (data.errors.email) document.getElementById('cf-email-error').textContent =
+                                data.errors.email[0];
+                            if (data.errors.guid) document.getElementById('cf-guid-error').textContent =
+                                data.errors.guid[0];
+                            if (data.errors['profile.mobile_no']) document.getElementById('cf-mobile-error')
+                                .textContent = data.errors['profile.mobile_no'][0];
+                            if (data.errors['profile.whatsapp_no']) document.getElementById('cf-whatsapp-error')
+                                .textContent = data.errors['profile.whatsapp_no'][0];
+                        }
+                        return;
                     }
-                    return;
+                    cfDlg.close();
+                    location.reload();
+                } catch (error) {
+                    showToast('Unable to save client. Please try again.', 'error');
+                } finally {
+                    cfSave.disabled = false;
+                    cfSave.innerHTML = originalText;
                 }
-                cfSave.disabled = false;
-                cfSave.innerHTML = originalText;
-                cfDlg.close();
-                location.reload();
             });
         }
     })();

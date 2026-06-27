@@ -332,7 +332,7 @@ class ClientsController extends Controller
 
         // Optional: send welcome email & reset link (wrap to avoid hard-fails)
         $welcomeEmailSent = $this->sendWelcomeEmail($client, $plainPassword);
-
+        dd($welcomeEmailSent);
         // Respond
         if ($request->expectsJson()) {
             return response()->json([

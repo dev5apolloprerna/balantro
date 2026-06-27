@@ -22,7 +22,6 @@ class WelcomeMail extends Mailable
     public function build()
     {
         return $this->subject('Your Balantro Account Setup Details')
-            ->to($this->user->email)
             ->view('emails.welcome')
             ->with([
                 'plainPassword' => $this->plainPassword,
