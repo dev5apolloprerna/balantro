@@ -160,8 +160,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="w-full">
-                        <table id="bankTable" class="w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200">
+                    <div class="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                        <table id="bankTable" class="min-w-full table-fixed text-sm text-left text-gray-600 dark:text-gray-200">
                             <!-- Table Header -->
                             <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
                                 <tr>
@@ -182,9 +182,9 @@
                                 </tr>
                             </thead>
                             <!-- Table Body -->
-                            <tbody class="divide-y">
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                                 <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
+                                <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
                                     <td class="px-4 py-3">
                                         <input type="checkbox" class="rowCheckbox" value="<?php echo e($upload->id); ?>">
                                     </td>

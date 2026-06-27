@@ -41,9 +41,9 @@
         </div>
 
         <!-- TABLE -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
-                <thead class="bg-gray-100 dark:bg-neutral-800 text-xs text-gray-700 dark:text-gray-400 uppercase">
+        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+            <table id="salesTable" class="min-w-[1100px] w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
+                <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-xs text-gray-700 dark:text-gray-300 uppercase sticky top-0 z-10">
                     <tr>
                         <th class="px-3 py-2 w-8"><input type="checkbox" id="selectAll"></th>
                         <th class="px-3 py-2 w-8">SR</th>
@@ -68,9 +68,9 @@
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                     <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <tr class="border-b border-neutral-700 hover:bg-neutral-800">
+                    <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
 
                         <td class="px-3 py-2">
                             <input type="checkbox" class="rowCheckbox" value="<?php echo e($row->id); ?>">
@@ -384,8 +384,8 @@
 <script>
     function normalize(str) {
         return (str || '')
-            .replace(/["']/g, '')       // remove quotes
-            .replace(/\s+/g, ' ')       // fix multiple spaces
+            .replace(/["']/g, '') // remove quotes
+            .replace(/\s+/g, ' ') // fix multiple spaces
             .trim()
             .toLowerCase();
     }
@@ -419,7 +419,7 @@
             });
 
             initLedgerSelect();
-            
+
             // $('#itemsBody tr').each(function(i){
             //     let item = res.items[i];
 
@@ -428,7 +428,7 @@
             //     $(this).find('.credit').val(item.credit);
             // });
             setTimeout(() => {
-                $('#itemsBody tr').each(function(i){
+                $('#itemsBody tr').each(function(i) {
                     let item = res.items[i];
 
                     let select = $(this).find('.ledger');
@@ -534,7 +534,7 @@
         recalc();
     });
 
-    
+
 
     function recalc() {
 
@@ -631,7 +631,7 @@
             narration: $('#edit_narration').val(),
             items: items
         }, function(res) {
-            showToast(res.message || 'Updated Successfully','success');
+            showToast(res.message || 'Updated Successfully', 'success');
             $('#editModal').removeClass('show');
             location.reload();
         });
@@ -652,7 +652,7 @@
             _token: '<?php echo e(csrf_token()); ?>',
             selected: selected
         }, function(res) {
-            showToast(res.message,'success');
+            showToast(res.message, 'success');
             location.reload();
         });
     }
@@ -665,7 +665,7 @@
             _token: '<?php echo e(csrf_token()); ?>',
             selected: selected
         }, function(res) {
-            showToast(res.message,'success');
+            showToast(res.message, 'success');
             location.reload();
         });
     }

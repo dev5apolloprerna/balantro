@@ -84,25 +84,24 @@
             </div>
 
             <!-- TABLE -->
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm text-left">
-
-                    <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-700 dark:text-gray-200 text-xs uppercase">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                <table id="salesTable" class="min-w-[1100px] w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
+                    <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-xs text-gray-700 dark:text-gray-300 uppercase sticky top-0 z-10">
                         <tr>
                             <th class="px-4 py-3"><input type="checkbox"></th>
                             <th class="px-4 py-3">Sr.No</th>
                             <th class="px-4 py-3">File Name</th>
                             <th class="px-4 py-3">Total</th>
                             <th class="px-4 py-3">Pending</th>
-                            <th class="px-4 py-3">Saved</th>
+                            <th class="px-4 py-3">TM</th>
                             <th class="px-4 py-3">Status</th>
                             <th class="px-4 py-3 text-right">Action</th>
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y text-gray-700 dark:text-gray-200">
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         <?php $__currentLoopData = $uploads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $upload): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
+                        <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
 
                             <td class="px-4 py-3"><input type="checkbox"></td>
 

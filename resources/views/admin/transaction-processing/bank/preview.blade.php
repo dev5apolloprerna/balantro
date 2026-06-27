@@ -112,8 +112,8 @@
             @csrf
             
             <div class="h-full overflow-auto pb-6">
-                <table id="bankTable" class="min-w-full text-sm text-gray-700 dark:text-gray-200">
-                    <thead class="bg-gray-100 dark:bg-neutral-800 text-xs uppercase text-gray-700 dark:text-gray-400">
+                <div class="h-full overflow-auto pb-6 rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                    <table id="bankTable" class="min-w-[1100px] text-sm text-gray-700 dark:text-gray-200">
                         <tr>
                             <th class="px-3 py-2">
                                 <input type="checkbox" id="selectAll">
@@ -156,11 +156,11 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         @foreach($rows as $index=>$row)
                         <tr data-cheque="{{ $row->cheque_no }}"
                             data-ref="{{ $row->ref_no }}"
-                            data-cost="{{ $row->cost_center }}" class="border-b border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 {{ $row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : '' }}">
+                            data-cost="{{ $row->cost_center }}" class="group border-b border-gray-200 dark:border-neutral-700 transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black {{ $row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : '' }}">
                             <td class="px-3 py-2">
                                 <input type="checkbox"
                                     name="selected[]"
@@ -202,12 +202,12 @@
                             <td class="px-3 py-2">
                                 @if($row->debit>0)
                                 <span class="text-red-400">
-                                    {{number_format($row->debit,2)}}
+                                    <strong>{{number_format($row->debit,2)}}</strong>
                                 </span>
                                 @endif
                                 @if($row->credit>0)
                                 <span class="text-green-400">
-                                    {{number_format($row->credit,2)}}
+                                    <strong>{{number_format($row->credit,2)}}</strong>
                                 </span>
                                 @endif
                             </td>
@@ -489,7 +489,8 @@
         height: calc(100vh - 180px);
         /* 🔥 adjust if needed */
         overflow-y: auto;
-        overflow-x: hidden;
+        /* overflow-x: hidden; */
+        overflow-x: auto;
     }
 
     /* =========================

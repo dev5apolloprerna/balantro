@@ -14,10 +14,10 @@
 
 </div>
 <?php endif; ?>
-<div class="w-full px-4">
-    <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700">
+<div class="w-full px-4 h-[calc(100vh-110px)] min-h-0 flex flex-col">
+    <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700 flex flex-col flex-1 min-h-0">
         <!-- HEADER -->
-        <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
+        <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700 shrink-0">
             <!-- <div class="flex items-center gap-3">
                 <h2 class="text-white text-lg font-semibold">
                     Transactions
@@ -64,7 +64,7 @@
             </div>
         </div>
         <!-- FILTER BAR -->
-        <div class="flex justify-between px-5 py-3 border-b border-neutral-700 text-sm">
+        <div class="flex justify-between px-5 py-3 border-b border-neutral-700 text-sm shrink-0">
             <div class="flex gap-6">
                 <div>
                     <label class="text-gray-700 dark:text-gray-300 text-sm">Transaction Type</label>
@@ -120,11 +120,11 @@
             </div>
         </div>
 
-        <form id="bankForm">
+        <form id="bankForm" class="flex-1 min-h-0">
             <?php echo csrf_field(); ?>
 
-            <div class="table-container">
-                <table id="bankTable" class="min-w-full text-sm text-gray-700 dark:text-gray-200">
+            <div class="table-container rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                <table id="bankTable" class="min-w-[1100px] text-sm text-gray-700 dark:text-gray-200">
                     <thead class="bg-gray-100 dark:bg-neutral-800 text-xs uppercase text-gray-700 dark:text-gray-400">
                         <tr>
                             <th class="px-3 py-2">
@@ -168,12 +168,12 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         
                         <tr data-cheque="<?php echo e($row->cheque_no); ?>"
                             data-ref="<?php echo e($row->ref_no); ?>"
-                            data-cost="<?php echo e($row->cost_center); ?>" class="border-b border-gray-200 dark:border-neutral-700 hover:bg-gray-100 dark:hover:bg-neutral-800 <?php echo e($row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : ''); ?>">
+                            data-cost="<?php echo e($row->cost_center); ?>" class="group border-b border-gray-200 dark:border-neutral-700 transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black <?php echo e($row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : ''); ?>">
                             <td class="px-3 py-2">
                                 <input type="checkbox"
                                     name="selected[]"
@@ -218,14 +218,12 @@
                             <td class="px-3 py-2">
                                 <?php if($row->debit>0): ?>
                                 <span class="text-red-400">
-                                    <?php echo e(number_format($row->debit,2)); ?>
-
+                                    <strong><?php echo e(number_format($row->debit,2)); ?></strong>
                                 </span>
                                 <?php endif; ?>
                                 <?php if($row->credit>0): ?>
                                 <span class="text-green-400">
-                                    <?php echo e(number_format($row->credit,2)); ?>
-
+                                    <strong><?php echo e(number_format($row->credit,2)); ?></strong>
                                 </span>
                                 <?php endif; ?>
                             </td>
@@ -590,10 +588,9 @@
    TABLE CONTAINER (ONLY SCROLL)
 ========================= */
     .table-container {
-        height: calc(100vh - 180px);
-        /* 🔥 adjust if needed */
-        overflow-y: auto;
-        overflow-x: hidden;
+        height: 100%;
+        overflow: auto;
+        padding-bottom: 1.5rem;
     }
 
     /* =========================
