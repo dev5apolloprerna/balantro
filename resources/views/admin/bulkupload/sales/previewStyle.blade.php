@@ -32,7 +32,55 @@
     #purchaseTable tbody tr:hover {
         background: #f3f4f6;
     }
+.sales-preview-table th,
+    .sales-preview-table td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
 
+    .sales-preview-table .searchInput {
+        width: 100%;
+        min-width: 90px;
+        padding: 5px 7px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .sales-preview-table .select2-container {
+        min-width: 100%;
+    }
+
+    .sales-preview-table .select2-container--default .select2-selection--single {
+        min-height: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+    }
+
+    .sales-preview-table .select2-container--default .select2-selection--single .select2-selection__rendered {
+        width: 100%;
+        padding-right: 28px;
+        line-height: 32px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sales-preview-table .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px;
+    }
+
+    @media (max-width: 640px) {
+        .sales-preview-table {
+            font-size: 12px;
+        }
+
+        .sales-preview-table th,
+        .sales-preview-table td {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+    }
     .dark #purchaseTable tbody tr:hover {
         background: #1f2937;
     }

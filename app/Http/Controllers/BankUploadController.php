@@ -457,7 +457,7 @@ class BankUploadController extends Controller
         $rows = BankTransaction::where('upload_id', $id)
             ->whereIn('status', ['pending','suspense'])
             ->where('iPartyId', $iPartyId)
-            ->get();
+            ->paginate(50);
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
             ->whereIn('vchType', ['Contra', 'Payment', 'Receipt'])

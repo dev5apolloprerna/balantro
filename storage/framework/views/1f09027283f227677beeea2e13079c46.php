@@ -8,7 +8,14 @@
 
         <!-- HEADER -->
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold dark:text-white">Journal Uploads</h6>
+            <h6 class="font-semibold dark:text-white">Journal Uploads
+                <!-- Client Name -->
+                <?php if(session('client_name')): ?>
+                <span class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
+                    (<?php echo e(session('client_name')); ?>)
+                </span>
+                <?php endif; ?>
+            </h6>
         </div>
 
         <div class="card bg-white dark:bg-neutral-800 rounded-lg overflow-hidden">
@@ -19,13 +26,6 @@
                 <?php echo $__env->make('admin.bulkupload.bulk-upload-tabs', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
                 <div class="bulk-toolbar-actions flex items-center justify-end gap-2 mt-0 w-full flex-nowrap">
-                    <!-- Client Name -->
-                    <?php if(session('client_name')): ?>
-                     <span class="bulk-client-name text-green-500 text-sm font-semibold whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
-                        <?php echo e(session('client_name')); ?>
-
-                    </span>
-                    <?php endif; ?>
                     <!-- Divider -->
                     <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                     <!-- Year Dropdown -->

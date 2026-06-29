@@ -5,7 +5,16 @@
     x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold mb-0 dark:text-white">{{ __("Sales") }}</h6>
+            <div>
+                <h6 class="font-semibold mb-0 dark:text-white">{{ __("Sales") }} 
+                    <!-- Client Name -->
+                    @if(session('client_name'))
+                    <span class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
+                        ({{ session('client_name') }})
+                    </span>
+                    @endif
+                </h6>
+            </div>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-12">
@@ -23,12 +32,7 @@
                                         <!-- LEFT GROUP (Client + Dropdown) -->
                                         <div class="bulk-meta-group flex items-center gap-2 bg-gray-100 dark:bg-neutral-700 px-3 py-2 rounded-md min-w-0">
 
-                                            <!-- Client Name -->
-                                            @if(session('client_name'))
-                                            <span class="bulk-client-name text-xs font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
-                                                {{ session('client_name') }}
-                                            </span>
-                                            @endif
+                                            
                                             <!-- Divider -->
                                             <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                                             <!-- Year Dropdown -->
@@ -230,7 +234,7 @@
                                                 type="submit"
                                                 title="Re-Match pending entries"
                                                 class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
-                                                Re-Match
+                                                <i class="fa-solid fa-repeat"></i>
                                             </button>
                                         </form>
                                         @endif

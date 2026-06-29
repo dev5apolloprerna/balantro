@@ -40,6 +40,11 @@
                 </span>
             </div>
             <div class="flex gap-2">
+                @if(session('client_name'))
+                    <div class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
+                        {{ session('client_name') }}
+                    </div>
+                @endif
                 <button onclick="openConfigModal()" class="border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded text-sm">
                     Settings
                 </button>
@@ -264,6 +269,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                <div class="mt-3">
+                    {{ $rows->links() }}
+                </div>
             </div>
         </form>
     </div>

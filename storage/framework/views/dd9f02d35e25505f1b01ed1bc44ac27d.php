@@ -33,7 +33,7 @@
 
             <div class="flex gap-2">
                 <?php if(session('client_name')): ?>
-                <div class="text-sm text-green-600 font-semibold">
+                <div class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
                     <?php echo e(session('client_name')); ?>
 
                 </div>
@@ -286,6 +286,10 @@
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
+                <div class="mt-3">
+                    <?php echo e($rows->links()); ?>
+
+                </div>
             </div>
         </form>
     </div>

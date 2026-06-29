@@ -47,7 +47,7 @@
 
             <div class="flex gap-2">
                 <?php if(session('client_name')): ?>
-                <div class="text-sm text-green-600 font-semibold">
+                <div class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
                     <?php echo e(session('client_name')); ?>
 
                 </div>
@@ -121,9 +121,10 @@
         <!-- <form id="purchaseForm" method="POST" action="<?php echo e(route('purchase.save')); ?>"> -->
         <form id="purchaseForm">
             <?php echo csrf_field(); ?>
-            <div class="overflow-x-auto">
-                <table id="purchaseTable" class="min-w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
-                    <thead class="bg-gray-100 dark:bg-neutral-800 text-xs text-gray-700 dark:text-gray-400 uppercase">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                <table class="min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                    <!-- Table Header -->
+                    <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 text-xs uppercase sticky top-0 z-10">
                         <tr>
                             <th class="px-3 py-2 w-8">
                                 <input type="checkbox" id="selectAll">
@@ -161,9 +162,9 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <tr class="border-b border-neutral-700 hover:bg-neutral-800 transition">
+                        <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
                             <td class="px-3 py-2">
                                 <input type="checkbox" name="selected[]" value="<?php echo e($row->id); ?>">
                             </td>
@@ -300,6 +301,10 @@
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
+                <div class="mt-3">
+                    <?php echo e($rows->links()); ?>
+
+                </div>
             </div>
         </form>
     </div>

@@ -1,10 +1,10 @@
 @extends('layouts.super_admin')
 @section('content')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
-<div class="container mx-auto">
+<div class="container mx-auto px-2 sm:px-4">
     <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700">
         <!-- HEADER -->
-        <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
+        <div class="flex flex-col gap-3 px-4 py-3 border-b border-neutral-700 lg:flex-row lg:items-center lg:justify-between lg:px-5">
             <!-- <div class="flex items-center gap-3">
                 <h2 class="text-white text-lg font-semibold">
                     Sales Transactions
@@ -28,9 +28,9 @@
                     {{ $rows->count() }}
                 </span>
             </div>
-            <div class="flex gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 @if(session('client_name'))
-                <div class="text-sm text-green-600 font-semibold">
+                <div class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
                     {{ session('client_name') }}
                 </div>
                 @endif
@@ -49,9 +49,9 @@
             </div>
         </div>
         <!-- FILTERS -->
-        <div class="flex gap-10 px-5 py-3 text-sm border-b border-neutral-700">
+        <div class="flex flex-col gap-4 px-4 py-3 text-sm border-b border-neutral-700 xl:flex-row xl:items-end xl:gap-10 lg:px-5">
             <div>
-                <div class="flex gap-4 items-end">
+                <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                     <div>
                         <label class="flex gap-4 mt-2 text-gray-700 dark:text-gray-300 block">
                             Update Bulk Records
@@ -84,7 +84,7 @@
             </div>
             <div>
                 <label class="flex gap-4 mt-2 text-gray-700 dark:text-gray-300">General Filters</label>
-                <div class="flex gap-4 mt-2 text-gray-700 dark:text-gray-300">
+                <div class="flex flex-wrap gap-4 mt-2 text-gray-700 dark:text-gray-300">
                     <label>
                         <input type="checkbox" class="generalFilter" value="synced"> Hide Synced
                     </label>
@@ -104,42 +104,45 @@
         <form id="salesForm">
             @csrf
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
-                <table id="salesTable" class="min-w-[1100px] w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
+                <table id="salesTable" class="sales-preview-table min-w-[1320px] w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
                     <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-xs text-gray-700 dark:text-gray-300 uppercase sticky top-0 z-10">
                         <tr>
                             <th class="px-3 py-2 w-8">
                                 <input type="checkbox" id="selectAll">
                             </th>
-                            <th class="px-3 py-2">SR</th>
-                            <th class="px-3 py-2">DATE</th>
-                            <th class="px-3 py-2">REFERENCE</th>
-                            <th class="px-3 py-2">VOUCHER</th>
-                            <th class="px-3 py-2">PARTY A/C NAME</th>
-                            <th class="px-3 py-2">GSTIN/UIN</th>
-                            <th class="px-3 py-2">PLACE</th>
+                            <th class="px-3 py-2 w-14">SR</th>
+                            <th class="px-3 py-2 min-w-[165px]">DATE</th>
+                            <th class="px-3 py-2 min-w-[170px]">REFERENCE</th>
+                            <th class="px-3 py-2 min-w-[170px]">VOUCHER</th>
+                            <th class="px-3 py-2 min-w-[230px]">PARTY A/C NAME</th>
+                            <th class="px-3 py-2 min-w-[150px]">GSTIN/UIN</th>
+                            <th class="px-3 py-2 min-w-[220px]">PLACE</th>
                             <!-- <th class="px-3 py-2">PARTICULARS</th> -->
-                            <th class="px-3 py-2 text-right">AMOUNT</th>
-                            <th class="px-3 py-2">STATUS</th>
-                            <th class="px-3 py-2">ACTION</th>
+                            <th class="px-3 py-2 min-w-[130px] text-right">AMOUNT</th>
+                            <th class="px-3 py-2 min-w-[110px]">STATUS</th>
+                            <th class="px-3 py-2 min-w-[110px]">ACTION</th>
                         </tr>
                         <tr class="bg-white dark:bg-neutral-900">
                             <th></th>
                             <th></th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput"  placeholder="Search date">
                             </th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" placeholder="Search reference">
                             </th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" placeholder="Search voucher">
                             </th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" placeholder="Search party">
                             </th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" placeholder="Search GSTIN">
                             </th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
                             <th></th>
                         </tr>
                     </thead>
@@ -178,6 +181,7 @@
                                     name="party_name[{{$row->id}}]"
                                     value="{{$row->party_name}}"
                                     class="inputCell mb-1">
+                                    <br />
                                 <!-- Ledger -->
                                 <select name="ledger[{{$row->id}}]"
                                     class="ledgerSelect inputCell">
@@ -195,7 +199,7 @@
                             </td>
                             <td class="px-3 py-2">
                                 <select name="place_of_supply[{{$row->id}}]"
-                                    class="inputCell">
+                                    class="placeSelect inputCell">
                                     <option value="">Select State</option>
                                     @foreach($states as $state)
                                     <option value="{{$state}}"
@@ -275,6 +279,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                <div class="mt-3">
+                    {{ $rows->links() }}
+                </div>
             </div>
         </form>
     </div>
@@ -755,6 +762,55 @@
     .searchInput { background:white; border:1px solid #d1d5db; color:#111827; }
     .dark .searchInput { background:#020617; border:1px solid #374151; color:white; }
     #purchaseTable tbody tr:hover { background:#f3f4f6; }
+    .sales-preview-table th,
+    .sales-preview-table td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .sales-preview-table .searchInput {
+        width: 100%;
+        min-width: 90px;
+        padding: 5px 7px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .sales-preview-table .select2-container {
+        min-width: 100%;
+    }
+
+    .sales-preview-table .select2-container--default .select2-selection--single {
+        min-height: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+    }
+
+    .sales-preview-table .select2-container--default .select2-selection--single .select2-selection__rendered {
+        width: 100%;
+        padding-right: 28px;
+        line-height: 32px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sales-preview-table .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px;
+    }
+
+    @media (max-width: 640px) {
+        .sales-preview-table {
+            font-size: 12px;
+        }
+
+        .sales-preview-table th,
+        .sales-preview-table td {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+    }
     .dark #purchaseTable tbody tr:hover { background:#1f2937; }
 
     /* SELECT2 */
@@ -939,15 +995,20 @@
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
-        $('.searchInput').on('keyup', function() {
+        $('.searchInput').on('keyup  change', function() {
             let column = $(this).closest('th').index();
             let value = $(this).val().toLowerCase();
             $('#salesTable tbody tr').each(function() {
                 let cell = $(this).find('td').eq(column);
                 let text = cell.text().toLowerCase();
-                let input = cell.find('input,select').val();
+                // let input = cell.find('input,select').val();
+                let input = cell.find('input,select').map(function() {
+                    const value = $(this).val();
+                    return Array.isArray(value) ? value.join(' ') : value;
+                }).get().join(' ');
                 if (input) {
-                    text += input.toLowerCase();
+                    // text += input.toLowerCase();
+                    text += ' ' + String(input).toLowerCase();
                 }
                 $(this).toggle(text.indexOf(value) > -1);
             });
@@ -956,6 +1017,13 @@
         $('.ledgerSelect').select2({
             width: '100%',
             placeholder: "Search Ledger...",
+            allowClear: true,
+            dropdownAutoWidth: true
+        });
+
+        $('.placeSelect').select2({
+            width: '100%',
+            placeholder: "Search Place...",
             allowClear: true,
             dropdownAutoWidth: true
         });
@@ -1195,7 +1263,8 @@
             }
 
             if (column === 'place') {
-                row.find('select[name^="place_of_supply"]').val(value);
+                // row.find('select[name^="place_of_supply"]').val(value);
+                row.find('select[name^="place_of_supply"]').val(value).trigger('change');
             }
             if (column === 'voucher') {
                 //row.find('.voucherSelect').val(value);

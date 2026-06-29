@@ -1,15 +1,17 @@
-@extends('layouts.super_admin')
-@section('content')
-@if(session('success'))
+
+<?php $__env->startSection('content'); ?>
+<?php if(session('success')): ?>
     <div class="bg-green-100 text-green-800 px-4 py-3 rounded mb-4">
-        {{ session('success') }}
+        <?php echo e(session('success')); ?>
+
     </div>
-@endif
-@if(session('error'))
+<?php endif; ?>
+<?php if(session('error')): ?>
     <div class="bg-red-100 text-red-800 px-4 py-3 rounded mb-4">
-        {{ session('error') }}
+        <?php echo e(session('error')); ?>
+
     </div>
-@endif
+<?php endif; ?>
 <div class="w-full px-4 h-[calc(100vh-110px)] min-h-0 flex flex-col">
     <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700 flex flex-col flex-1 min-h-0">
         <!-- HEADER -->
@@ -19,7 +21,8 @@
                     Transactions
                 </h2>
                 <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                    {{ $rows->count() }}
+                    <?php echo e($rows->count()); ?>
+
                 </span>
             </div> -->
             <div class="flex items-center gap-3">
@@ -34,15 +37,17 @@
                 </h2>
 
                 <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                    {{ $rows->count() }}
+                    <?php echo e($rows->count()); ?>
+
                 </span>
             </div>
             <div class="flex gap-2">
-                @if(session('client_name'))
+                <?php if(session('client_name')): ?>
                 <div class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
-                    {{ session('client_name') }}
+                    <?php echo e(session('client_name')); ?>
+
                 </div>
-                @endif
+                <?php endif; ?>
                 <button onclick="openConfigModal()" class="border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded text-sm">
                     Settings
                 </button>
@@ -64,9 +69,9 @@
                     <label class="text-gray-700 dark:text-gray-300 text-sm">Transaction Type</label>
                     <select id="typeFilter" class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-800 dark:text-white rounded px-3 py-1 mt-1">
                         <option value="">Select Type</option>
-                        @foreach($vchTypes as $vchType)
-                            <option value="{{ $vchType }}">{{ $vchType }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($vchType); ?>"><?php echo e($vchType); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
 
                 </div>
@@ -88,11 +93,12 @@
                         class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-800 dark:text-white rounded px-3 py-1 mt-1">
                         <option value="">Select Ledger</option>
 
-                        @foreach($ledgers as $ledger)
-                        <option value="{{ $ledger->name }}">
-                            {{ $ledger->name }}
+                        <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($ledger->name); ?>">
+                            <?php echo e($ledger->name); ?>
+
                         </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
                     </select>
                 </div>
@@ -114,7 +120,7 @@
         </div>
 
         <form id="bankForm" class="flex-1 min-h-0">
-            @csrf
+            <?php echo csrf_field(); ?>
             
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
                 <table class="min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
@@ -163,106 +169,115 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums"><tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
-                        @foreach($rows as $index=>$row)
-                        <tr data-cheque="{{ $row->cheque_no }}"
-                            data-ref="{{ $row->ref_no }}"
-                            data-cost="{{ $row->cost_center }}" class="group border-b border-gray-200 dark:border-neutral-700 transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black {{ $row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : '' }}">
+                        <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <tr data-cheque="<?php echo e($row->cheque_no); ?>"
+                            data-ref="<?php echo e($row->ref_no); ?>"
+                            data-cost="<?php echo e($row->cost_center); ?>" class="group border-b border-gray-200 dark:border-neutral-700 transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black <?php echo e($row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : ''); ?>">
                             <td class="px-3 py-2">
                                 <input type="checkbox"
                                     name="selected[]"
-                                    value="{{$row->id}}" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
+                                    value="<?php echo e($row->id); ?>" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>>
                             </td>
                             <td class="px-3 py-2">
-                                {{ $index+1 }}
-                            </td>
-                            <td class="px-3 py-2">
-                                <input type="date"
-                                    name="txn_date[{{$row->id}}]"  {{ $row->is_suspense == 1 ? 'disabled' : '' }}
-                                    value="{{ \Carbon\Carbon::parse($row->txn_date)->format('Y-m-d') }}">
+                                <?php echo e($index+1); ?>
+
                             </td>
                             <td class="px-3 py-2">
                                 <input type="date"
-                                    name="value_date[{{$row->id}}]" {{ $row->is_suspense == 1 ? 'disabled' : '' }}
-                                    value="{{ \Carbon\Carbon::parse($row->value_date)->format('Y-m-d') }}">
+                                    name="txn_date[<?php echo e($row->id); ?>]"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
+                                    value="<?php echo e(\Carbon\Carbon::parse($row->txn_date)->format('Y-m-d')); ?>">
+                            </td>
+                            <td class="px-3 py-2">
+                                <input type="date"
+                                    name="value_date[<?php echo e($row->id); ?>]" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
+                                    value="<?php echo e(\Carbon\Carbon::parse($row->value_date)->format('Y-m-d')); ?>">
                             </td>
                             <td class="px-3 py-2">
                                 <input type="text"
-                                    name="narration[{{$row->id}}]" {{ $row->is_suspense == 1 ? 'disabled' : '' }}
-                                    value="{{$row->narration}}"
+                                    name="narration[<?php echo e($row->id); ?>]" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
+                                    value="<?php echo e($row->narration); ?>"
                                     class="inputCell">
                             </td>
                             <td class="px-3 py-2">
-                                <select name="type[{{$row->id}}]" class="inputCell" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
-                                    @foreach($vchTypes as $vchType)
-                                        <option value="{{ $vchType }}"
-                                            {{ 
-                                                ($row->credit > 0 && $vchType == 'Receipt') ||
+                                <select name="type[<?php echo e($row->id); ?>]" class="inputCell" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>>
+                                    <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($vchType); ?>"
+                                            <?php echo e(($row->credit > 0 && $vchType == 'Receipt') ||
                                                 ($row->debit > 0 && $vchType == 'Payment') 
-                                                ? 'selected' : '' 
-                                            }}>
-                                            {{ $vchType }}
+                                                ? 'selected' : ''); ?>>
+                                            <?php echo e($vchType); ?>
+
                                         </option>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
                             <td class="px-3 py-2">
-                                @if($row->debit>0)
+                                <?php if($row->debit>0): ?>
                                 <span class="text-red-400">
-                                    <strong>{{number_format($row->debit,2)}}</strong>
+                                    <strong><?php echo e(number_format($row->debit,2)); ?></strong>
                                 </span>
-                                @endif
-                                @if($row->credit>0)
+                                <?php endif; ?>
+                                <?php if($row->credit>0): ?>
                                 <span class="text-green-400">
-                                    <strong>{{number_format($row->credit,2)}}</strong>
+                                    <strong><?php echo e(number_format($row->credit,2)); ?></strong>
                                 </span>
-                                @endif
+                                <?php endif; ?>
                             </td>
                             <td class="px-3 py-2">
-                                <select name="ledger[{{$row->id}}]"  {{ $row->is_suspense == 1 ? 'disabled' : '' }} class="ledgerSelect inputCell" data-selected="{{$row->ledger_name}}">
+                                <select name="ledger[<?php echo e($row->id); ?>]"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?> class="ledgerSelect inputCell" data-selected="<?php echo e($row->ledger_name); ?>">
                                     <option value="">Select Ledger</option>
-                                    @foreach($ledgers as $ledger)
-                                    <option value="{{$ledger->name}}" {{ isset($row->ledger_name) && $row->ledger_name == $ledger->name ? 'selected' : '' }}>
-                                        {{$ledger->name}}
+                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->name); ?>" <?php echo e(isset($row->ledger_name) && $row->ledger_name == $ledger->name ? 'selected' : ''); ?>>
+                                        <?php echo e($ledger->name); ?>
+
                                     </option>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
                             <td class="px-3 py-2">
                                 <div class="flex items-center gap-2">
-                                    @if($row->is_suspense == 1)
+                                    <?php if($row->is_suspense == 1): ?>
                                         <span class="text-yellow-400 text-xs">Suspense</span>
-                                    @else
+                                    <?php else: ?>
                                         <button type="button"
-                                            class="text-yellow-400 suspenseBtn"  {{ $row->is_suspense == 1 ? 'disabled' : '' }}
-                                            data-id="{{$row->id}}">
+                                            class="text-yellow-400 suspenseBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
+                                            data-id="<?php echo e($row->id); ?>">
                                             <i class="fas fa-exclamation-triangle"></i>
                                         </button>
-                                    @endif
-                                    @if($row->resolution_remark)
+                                    <?php endif; ?>
+                                    <?php if($row->resolution_remark): ?>
                                         <button type="button"
-                                            class="text-blue-400 viewRemarkBtn"  {{ $row->is_suspense == 1 ? 'disabled' : '' }}
-                                            data-remark="{{ $row->resolution_remark }}">
+                                            class="text-blue-400 viewRemarkBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
+                                            data-remark="<?php echo e($row->resolution_remark); ?>">
                                             <i class="fas fa-eye action-icon"></i>
                                         </button>
-                                    @endif
+                                    <?php endif; ?>
                                     <button type="button"
-                                        class="text-green-500 saveRowBtn"  {{ $row->is_suspense == 1 ? 'disabled' : '' }}
-                                        data-id="{{$row->id}}">
+                                        class="text-green-500 saveRowBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
+                                        data-id="<?php echo e($row->id); ?>">
                                         <i class="fa-solid fa-check action-icon"></i>
                                     </button>
                                     <button type="button"
-                                        class="text-red-400 deleteBtn"  {{ $row->is_suspense == 1 ? 'disabled' : '' }}
-                                        data-id="{{$row->id}}">
+                                        class="text-red-400 deleteBtn"  <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>
+
+                                        data-id="<?php echo e($row->id); ?>">
                                         <i class="fa-solid fa-trash action-icon"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
                 <div class="mt-3">
-                    {{ $rows->links() }}
+                    <?php echo e($rows->links()); ?>
+
                 </div>
             </div>
         
@@ -274,7 +289,7 @@
     <div class="bg-neutral-900 w-[520px] rounded-lg shadow-lg p-6">
         <h2 class="text-lg text-white mb-4">Edit Transaction</h2>
         <form id="editForm">
-            @csrf
+            <?php echo csrf_field(); ?>
             <input type="hidden" id="edit_id">
             <div class="mb-3">
                 <label class="text-gray-300 text-sm">Transfer Date</label>
@@ -303,11 +318,12 @@
                 <label class="text-gray-300 text-sm">Ledger</label>
                 <select id="edit_ledger" class="inputCell">
                     <option value="">Select Ledger</option>
-                    @foreach($ledgers as $ledger)
-                    <option value="{{$ledger->name}}">
-                        {{$ledger->name}}
+                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($ledger->name); ?>">
+                        <?php echo e($ledger->name); ?>
+
                     </option>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
             </div>
             <div class="flex justify-end gap-3 mt-4">
@@ -332,7 +348,7 @@
         <!-- BODY -->
         <div class="modal-body">
             <form id="ledgerForm">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Name</label>
@@ -342,9 +358,9 @@
                         <label>Parent</label>
                         <select name="Parent">
                             <option>Select Parent</option>
-                            @foreach($parents as $parent)
-                            <option value="{{ $parent->strParents }}">{{ $parent->strParents }}</option>
-                            @endforeach
+                            <?php $__currentLoopData = $parents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($parent->strParents); ?>"><?php echo e($parent->strParents); ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                     <div class="form-group">
@@ -371,9 +387,9 @@
                         <label>State</label>
                         <select id="State" class="inputCell">
                             <option value="">Select State</option>
-                            @foreach($states as $state)
-                            <option value="{{$state}}">{{$state}}</option>
-                            @endforeach
+                            <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($state); ?>"><?php echo e($state); ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                         
                     </div>
@@ -449,7 +465,7 @@
     </div>
 </div>
 
-@include('admin.transaction-processing.bank.suspense_modal')
+<?php echo $__env->make('admin.transaction-processing.bank.suspense_modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 
 <style>
@@ -821,11 +837,11 @@
         animation: fadeIn 0.2s ease-in-out;
     }
 </style>
-@endsection
-@section('scripts')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('scripts'); ?>
 <script>
-let ALL_LEDGERS = @json($allLedgers);
-let BANK_LEDGERS = @json($bankLedgers);
+let ALL_LEDGERS = <?php echo json_encode($allLedgers, 15, 512) ?>;
+let BANK_LEDGERS = <?php echo json_encode($bankLedgers, 15, 512) ?>;
 
 function getLedgerOptions(type) {
     let list = [];
@@ -1083,7 +1099,7 @@ $(document).on('keyup change', '.searchInput', function () {
             amount = parseFloat(credit);
         }
         let data = {
-            _token: "{{ csrf_token() }}",
+            _token: "<?php echo e(csrf_token()); ?>",
             id: row.find('input[name^="selected"]').val(),
             txn_date: row.find('input[name^="txn_date"]').val(),
             value_date: row.find('input[name^="value_date"]').val(),
@@ -1100,7 +1116,7 @@ $(document).on('keyup change', '.searchInput', function () {
         console.log('AMOUNT:', amount);
 
         $.ajax({
-            url: "{{ route('bank.update') }}",
+            url: "<?php echo e(route('bank.update')); ?>",
             type: "POST",
             data: data,
             success: function (res) {
@@ -1142,7 +1158,7 @@ $(document).on('keyup change', '.searchInput', function () {
         hiddenFields.prop('disabled', false);
 
         $.ajax({
-            url: "{{ route('bank.save') }}",
+            url: "<?php echo e(route('bank.save')); ?>",
             type: "POST",
             data: formData,
             headers: {
@@ -1187,7 +1203,7 @@ $(document).on('keyup change', '.searchInput', function () {
         let formData = $(this).serialize();
 
         $.ajax({
-            url: "{{ route('purchase.ledger.store') }}",
+            url: "<?php echo e(route('purchase.ledger.store')); ?>",
             type: "POST",
             data: formData,
             success: function(response) {
@@ -1279,10 +1295,10 @@ $(document).on('keyup change', '.searchInput', function () {
         let row = $(this).closest('tr');
         let id = $(this).data('id');
         $.ajax({
-            url: "{{ route('bank.delete', ':id') }}".replace(':id', id),
+            url: "<?php echo e(route('bank.delete', ':id')); ?>".replace(':id', id),
             type: "POST",
             data: {
-                _token: "{{ csrf_token() }}"
+                _token: "<?php echo e(csrf_token()); ?>"
             },
             success: function(response) {
                 if (response.status) {
@@ -1322,10 +1338,10 @@ $(document).on('keyup change', '.searchInput', function () {
 
     $('#updateBtn').click(function() {
         $.ajax({
-            url: "{{ route('bank.update') }}",
+            url: "<?php echo e(route('bank.update')); ?>",
             type: "POST",
             data: {
-                _token: "{{ csrf_token() }}",
+                _token: "<?php echo e(csrf_token()); ?>",
                 id: $('#edit_id').val(),
                 txn_date: $('#edit_txn_date').val(),
                 value_date: $('#edit_value_date').val(),
@@ -1472,10 +1488,10 @@ $(document).on('keyup change', '.searchInput', function () {
         }
 
         $.ajax({
-            url: "{{ route('bank.markSuspense') }}",
+            url: "<?php echo e(route('bank.markSuspense')); ?>",
             type: "POST",
             data: {
-                _token: "{{ csrf_token() }}",
+                _token: "<?php echo e(csrf_token()); ?>",
                 id: id,
                 remark: remark
             },
@@ -1499,4 +1515,5 @@ $(document).on('keyup change', '.searchInput', function () {
         $('#remarkModal').removeClass('flex').addClass('hidden');
     }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/bank/preview.blade.php ENDPATH**/ ?>

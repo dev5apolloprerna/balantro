@@ -1,14 +1,20 @@
 @extends('layouts.super_admin')
 @section('content')
-
-<div x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
+<div data-controller="confirm-delete"
+    x-data="{ openUpload:false, openClient: {{ session('iPartyId') ? 'false' : 'true' }} }"
     x-init="openUpload = false">
-
     <div class="container mx-auto">
-
-        <!-- HEADER -->
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold dark:text-white">Journal Uploads</h6>
+            <div>
+                <h6 class="font-semibold mb-0 dark:text-white">{{ __("Journal Uploads") }} 
+                    <!-- Client Name -->
+                    @if(session('client_name'))
+                    <span class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
+                        ({{ session('client_name') }})
+                    </span>
+                    @endif
+                </h6>
+            </div>
         </div>
 
         <div class="card bg-white dark:bg-neutral-800 rounded-lg overflow-hidden">
@@ -19,12 +25,6 @@
                 @include('admin.transaction-processing.bulk-upload-tabs')
 
                 <div class="flex items-center gap-3">
-
-                    @if(session('client_name'))
-                    <div class="text-green-600 font-semibold" style="font-size: 1.0rem;font-variant-caps: small-caps;">
-                        {{ session('client_name') }}
-                    </div>
-                    @endif
                     <!-- Divider -->        
                     <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                     <!-- Year Dropdown -->
@@ -56,10 +56,10 @@
             </div>
 
             <!-- TABLE -->
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm text-left">
-
-                    <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-700 dark:text-gray-200 text-xs uppercase">
+            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                <table class="min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                    <!-- Table Header -->
+                    <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 text-xs uppercase sticky top-0 z-10">
                         <tr>
                             <th class="px-4 py-3"><input type="checkbox"></th>
                             <th class="px-4 py-3">Sr.No</th>
@@ -72,9 +72,9 @@
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y text-gray-700 dark:text-gray-200">
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         @foreach($uploads as $upload)
-                        <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
+                        <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
 
                             <td class="px-4 py-3"><input type="checkbox"></td>
 

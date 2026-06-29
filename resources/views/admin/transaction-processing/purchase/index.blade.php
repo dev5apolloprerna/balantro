@@ -5,7 +5,16 @@
     x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold mb-0 dark:text-white">{{ __("Purchase") }}</h6>
+            <div>
+                <h6 class="font-semibold mb-0 dark:text-white">{{ __("Purchase") }} 
+                    <!-- Client Name -->
+                    @if(session('client_name'))
+                    <span class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
+                        ({{ session('client_name') }})
+                    </span>
+                    @endif
+                </h6>
+            </div>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-12">
@@ -19,11 +28,6 @@
                                     @include('admin.transaction-processing.bulk-upload-tabs')
                                     <!-- Right Side Actions -->
                                      <div class="bulk-toolbar-actions flex items-center justify-end gap-2 mt-0 w-full flex-nowrap">
-                                        @if(session('client_name'))
-                                        <div class="bulk-client-name text-sm text-green-600 font-semibold whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
-                                            {{ session('client_name') }}
-                                        </div>
-                                        @endif
                                         <!-- Divider -->
                                         <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                                         <!-- Year Dropdown -->
@@ -105,10 +109,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                        <table class="min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
                             <!-- Table Header -->
-                            <thead class="bg-gray-200 dark:bg-neutral-700 text-gray-600 dark:text-gray-200 text-xs uppercase">
+                            <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 text-xs uppercase sticky top-0 z-10">
                                 <tr>
                                     <th class="px-4 py-3">
                                         <input type="checkbox" id="selectAllUploads">
@@ -127,9 +131,9 @@
                                 </tr>
                             </thead>
                             <!-- Table Body -->
-                            <tbody class="divide-y">
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                                 @foreach($uploads as $upload)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
+                                <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
                                     <td class="px-4 py-3">
                                         <input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}">
                                     </td>
@@ -405,6 +409,7 @@
             /* 🔥 IMPORTANT FIX */
         }
     </style>
+</div>
     @endsection
     @section('scripts')
     <script>

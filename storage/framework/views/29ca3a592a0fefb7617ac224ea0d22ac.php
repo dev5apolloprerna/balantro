@@ -44,6 +44,12 @@
                 </span>
             </div>
             <div class="flex gap-2">
+                <?php if(session('client_name')): ?>
+                    <div class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
+                        <?php echo e(session('client_name')); ?>
+
+                    </div>
+                <?php endif; ?>
                 <button onclick="openConfigModal()" class="border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded text-sm">
                     Settings
                 </button>
@@ -277,6 +283,10 @@
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
+                <div class="mt-3">
+                    <?php echo e($rows->links()); ?>
+
+                </div>
             </div>
         </form>
     </div>

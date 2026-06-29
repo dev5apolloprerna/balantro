@@ -5,7 +5,16 @@
     x-init="openUpload = false">
     <div class="container mx-auto">
         <div class="flex justify-between items-center mb-3">
-            <h6 class="font-semibold mb-0 dark:text-white">{{ __("Sales") }}</h6>
+            <div>
+                <h6 class="font-semibold mb-0 dark:text-white">{{ __("Sales") }} 
+                    <!-- Client Name -->
+                    @if(session('client_name'))
+                    <span class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
+                        ({{ session('client_name') }})
+                    </span>
+                    @endif
+                </h6>
+            </div>
         </div>
         
         <div class="grid grid-cols-1 lg:grid-cols-12">
@@ -19,11 +28,6 @@
                                     @include('admin.transaction-processing.bulk-upload-tabs')
                                     <!-- Right Side Actions -->
                                     <div class="bulk-toolbar-actions flex items-center justify-end gap-2 mt-0 w-full flex-nowrap">
-                                        @if(session('client_name'))
-                                        <div class="bulk-client-name text-sm text-green-600 font-semibold whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
-                                            {{ session('client_name') }}
-                                        </div>
-                                        @endif
                                         <!-- Divider -->
                                         <div class="h-4 w-px bg-gray-300 dark:bg-neutral-600"></div>
                                         <!-- Year Dropdown -->
@@ -401,6 +405,7 @@
             /* 🔥 IMPORTANT FIX */
         }
     </style>
+</div>
     @endsection
     @section('scripts')
     <script>

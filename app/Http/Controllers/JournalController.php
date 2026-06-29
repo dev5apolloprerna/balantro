@@ -150,7 +150,7 @@ class JournalController extends Controller
         $rows = JournalTransaction::with('items')
             ->where('upload_id', $uploadId)
             ->where('status', 'pending')
-            ->get();
+            ->paginate(50);
 
         
         $ledgers = Ledger::getAllLedgers($iPartyId);

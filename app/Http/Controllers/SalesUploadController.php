@@ -1308,7 +1308,7 @@ class SalesUploadController extends Controller
         $rows = SalesTransaction::where('upload_id', $id)
             ->where('status', 'pending')
             ->where('iPartyId', $iPartyId)
-            ->get();
+            ->paginate(50);
 
         $commonData = $this->getCommonData();
         $commonData['iGstLedgers'] = Ledger::mergeLedgersByIds(

@@ -23,7 +23,7 @@
             </div>
             <div class="flex gap-2">
                 @if(session('client_name'))
-                <div class="text-sm text-green-600 font-semibold">
+                <div class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
                     {{ session('client_name') }}
                 </div>
                 @endif
@@ -240,6 +240,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                <div class="mt-3">
+                    {{ $rows->links() }}
+                </div>
             </div>
         </form>
     </div>

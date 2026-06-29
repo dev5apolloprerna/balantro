@@ -1540,7 +1540,7 @@ class CreditNoteController extends Controller
         $rows = CreditNoteTransaction::where('upload_id', $id)
             ->where('status', 'pending') // or 'pending' if using string
             ->where('iPartyId', $iPartyId)
-            ->get();
+            ->paginate(50);
 
         // ✅ Voucher Types
         $vchTypes = DB::table('VchHistory')

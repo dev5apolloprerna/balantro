@@ -1,5 +1,5 @@
-@extends('layouts.super_admin')
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 
 <div class="container mx-auto">
     <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700">
@@ -18,7 +18,8 @@
                 </h2>
 
                 <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                    {{ count($rows) }}
+                    <?php echo e(count($rows)); ?>
+
                 </span>
             </div>
 
@@ -26,11 +27,12 @@
                 <!-- <button onclick="saveSelected()" class="bg-green-600 text-white px-3 py-1 rounded text-sm">
                     Save
                 </button> -->
-                @if(session('client_name'))
+                <?php if(session('client_name')): ?>
                 <div class="bulk-client-name text-xl font-semibold text-green-600 whitespace-nowrap truncate max-w-[140px]" style="font-variant-caps: small-caps;">
-                    {{ session('client_name') }}
+                    <?php echo e(session('client_name')); ?>
+
                 </div>
-                @endif
+                <?php endif; ?>
 
                 <button onclick="submitSelected()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
                     Submit
@@ -74,44 +76,47 @@
                 </thead>
 
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
-                    @foreach($rows as $index => $row)
+                    <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
 
                         <td  class="px-3 py-2">
-                            <input type="checkbox" class="rowCheckbox" value="{{ $row->id }}">
+                            <input type="checkbox" class="rowCheckbox" value="<?php echo e($row->id); ?>">
                         </td>
 
-                        <td  class="px-3 py-2">{{ $index+1 }}</td>
+                        <td  class="px-3 py-2"><?php echo e($index+1); ?></td>
 
                         <td  class="px-3 py-2">
                             <input type="text"
-                                value="{{ $row->journal_no }}"
+                                value="<?php echo e($row->journal_no); ?>"
                                 class="inputCell">
                         </td>
 
                         <td  class="px-3 py-2">
                             <input type="date"
-                                value="{{ \Carbon\Carbon::parse($row->date)->format('Y-m-d') }}"
+                                value="<?php echo e(\Carbon\Carbon::parse($row->date)->format('Y-m-d')); ?>"
                                 class="inputCell">
                         </td>
 
                         <td class="text-green-400 px-3 py-2">
-                            {{ number_format($row->total_debit,2) }}
+                            <?php echo e(number_format($row->total_debit,2)); ?>
+
                         </td>
 
                         <td class="text-blue-400 px-3 py-2">
-                            {{ number_format($row->total_credit,2) }}
+                            <?php echo e(number_format($row->total_credit,2)); ?>
+
                         </td>
 
                         <td  class="px-3 py-2">
-                            <span class="{{ $row->status=='saved'?'text-green-400':'text-yellow-400' }}">
-                                {{ $row->status }}
+                            <span class="<?php echo e($row->status=='saved'?'text-green-400':'text-yellow-400'); ?>">
+                                <?php echo e($row->status); ?>
+
                             </span>
                         </td>
 
                         <td class="flex gap-2">
                             <button type="button"
-                                onclick="editRow({{ $row->id }})"
+                                onclick="editRow(<?php echo e($row->id); ?>)"
                                 class="text-blue-400 hover:text-blue-300"
                                 title="Edit">
                                 <i class="fa-solid fa-pen action-icon"></i>
@@ -119,46 +124,47 @@
 
                             <button type="button"
                                 class="text-red-500"
-                                onclick="deleteRow({{ $row->id }})">
+                                onclick="deleteRow(<?php echo e($row->id); ?>)">
                                 <i class="fa-solid fa-trash action-icon"></i>
                             </button>
-                            <!-- <button type="button" onclick="editRow({{ $row->id }})"
+                            <!-- <button type="button" onclick="editRow(<?php echo e($row->id); ?>)"
                                 class="text-blue-400 hover:text-blue-300 editRow"
                                 title="Edit"
-                                data-id="{{ $row->id }}"
-                                data-invoice="{{ $row->invoice_no }}"
-                                data-date="{{ \Carbon\Carbon::parse($row->date)->format('Y-m-d') }}"
-                                data-gst_no="{{ $row->gst_no }}"
-                                data-vchtype="{{ $row->vchType }}"
-                                data-party="{{ $row->party_name }}"
-                                data-place="{{ $row->place_of_supply }}"
-                                data-ledger="{{ $row->purchase_ledger }}"
-                                data-amount="{{ $row->total_amount }}"
-                                data-cgst="{{ $row->cgst }}"
-                                data-sgst="{{ $row->sgst }}"
-                                data-igst="{{ $row->igst }}">
+                                data-id="<?php echo e($row->id); ?>"
+                                data-invoice="<?php echo e($row->invoice_no); ?>"
+                                data-date="<?php echo e(\Carbon\Carbon::parse($row->date)->format('Y-m-d')); ?>"
+                                data-gst_no="<?php echo e($row->gst_no); ?>"
+                                data-vchtype="<?php echo e($row->vchType); ?>"
+                                data-party="<?php echo e($row->party_name); ?>"
+                                data-place="<?php echo e($row->place_of_supply); ?>"
+                                data-ledger="<?php echo e($row->purchase_ledger); ?>"
+                                data-amount="<?php echo e($row->total_amount); ?>"
+                                data-cgst="<?php echo e($row->cgst); ?>"
+                                data-sgst="<?php echo e($row->sgst); ?>"
+                                data-igst="<?php echo e($row->igst); ?>">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
 
-                            <button class="text-red-500 deleteRow" onclick="deleteRow({{ $row->id }})" data-id="{{$row->id}}">
+                            <button class="text-red-500 deleteRow" onclick="deleteRow(<?php echo e($row->id); ?>)" data-id="<?php echo e($row->id); ?>">
                                 <i class="fa-solid fa-trash"></i>
                             </button> -->
                         </td>
 
                     </tr>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </tbody>
 
             </table>
             <div class="mt-3">
-                {{ $rows->links() }}
+                <?php echo e($rows->links()); ?>
+
             </div>
         </div>
 
     </div>
 </div>
 
-@include('admin.bulkupload.journal.edit_modal')
+<?php echo $__env->make('admin.bulkupload.journal.edit_modal', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <style>
     .inputCell {
         background: white;
@@ -381,14 +387,14 @@
         background: #fef9c3;
     }
 </style>
-@endsection
-@section('scripts')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('scripts'); ?>
 <script>
-    let ledgers = @json($ledgers);
+    let ledgers = <?php echo json_encode($ledgers, 15, 512) ?>;
 </script>
 <script>
  function editRow(id) {
-        let url = "{{ route('journal.show', ':id') }}";
+        let url = "<?php echo e(route('journal.show', ':id')); ?>";
         url = url.replace(':id', id);
         $('#editModal').addClass('show'); // ⚡ instant open
         $.get(url, function(res) {
@@ -603,8 +609,8 @@ function updateJournal() {
         });
     });
 
-    $.post("{{ route('journal.update') }}", {
-        _token: '{{ csrf_token() }}',
+    $.post("<?php echo e(route('journal.update')); ?>", {
+        _token: '<?php echo e(csrf_token()); ?>',
         id: $('#edit_id').val(),
         journal_no: $('#edit_journal_no').val(),
         date: $('#edit_date').val(),
@@ -632,8 +638,8 @@ function saveSelected() {
     let selected = $('.rowCheckbox:checked').map(function(){
         return this.value;
     }).get();
-    $.post("{{ route('journal.save') }}", {
-        _token: '{{ csrf_token() }}',
+    $.post("<?php echo e(route('journal.save')); ?>", {
+        _token: '<?php echo e(csrf_token()); ?>',
         selected: selected
     }, function(res){
         showToast(res.message,'success');
@@ -649,8 +655,8 @@ function submitSelected() {
         showToast('Please select at least one journal row before submitting.','success');
         return;
     }
-    $.post("{{ route('journal.submit') }}", {
-        _token: '{{ csrf_token() }}',
+    $.post("<?php echo e(route('journal.submit')); ?>", {
+        _token: '<?php echo e(csrf_token()); ?>',
         selected: selected
     }, function(res){
         showToast(res.message || (res.status ? 'Submitted successfully' : 'Unable to submit selected journal rows'),(res.status ? 'success' : 'error'));
@@ -665,7 +671,7 @@ function submitSelected() {
 function deleteRow(id) {
 
     if(confirm('Are you sure you want to delete?')) {
-        let url = "{{ route('journal.delete', ':id') }}";
+        let url = "<?php echo e(route('journal.delete', ':id')); ?>";
         url = url.replace(':id', id);
 
         $.get(url, function(){
@@ -708,4 +714,5 @@ $('.filterStatus').on('change', function () {
 });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/transaction-processing/journal/preview.blade.php ENDPATH**/ ?>
