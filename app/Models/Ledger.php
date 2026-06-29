@@ -71,7 +71,13 @@ class Ledger extends Model
                 '' AS city,
                 StateName AS state
             FROM LedgerMaster
-            WHERE strParents like 'Sundry Debtors' and iPartyId = ?
+            WHERE iPartyId = ? AND iPrimaryGroupId IN (
+                    SELECT iGroupId
+                    FROM GroupMaster
+                    WHERE IsReserved = 1
+                    AND IsRevenue = 0
+                    AND iPartyId = ?
+            )
             UNION
 
             SELECT 
@@ -85,7 +91,7 @@ class Ledger extends Model
             FROM ledgers
             WHERE Parent like 'Sundry Debtors' and  iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]);
     }
     
     public static function getAllCreditorsLedgers($companyId)
@@ -100,7 +106,13 @@ class Ledger extends Model
                 '' AS city,
                 StateName AS state
             FROM LedgerMaster
-            WHERE (strParents='Sundry Creditors' or strParents='Creditor for Goods' or strParents='Creditor for Other') and iPartyId = ?
+            WHERE iPartyId = ? AND iPrimaryGroupId IN (
+                    SELECT iGroupId
+                    FROM GroupMaster
+                    WHERE IsReserved = 1
+                    AND IsRevenue = 0
+                    AND iPartyId = ?
+            )
             UNION
 
             SELECT
@@ -114,7 +126,7 @@ class Ledger extends Model
             FROM ledgers
             WHERE Parent like 'Sundry Creditors' and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]);
     }
 
     public static function getAllBankLedgers($companyId)

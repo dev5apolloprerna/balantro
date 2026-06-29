@@ -110,7 +110,7 @@
                 <table id="salesTable" class="sales-preview-table min-w-[1120px] xl:min-w-0 w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
                     <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-xs text-gray-700 dark:text-gray-300 uppercase sticky top-0 z-10">
                         <tr>
-                            <th class=" w-8">
+                            <th class="px-2 py-1 w-8">
                                 <input type="checkbox" id="selectAll">
                             </th>
                             <th class="w-10">SR</th>
@@ -152,7 +152,7 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
-                            <td class="">
+                            <td class="px-2 py-1">
                                 <input type="checkbox" name="selected[]" value="<?php echo e($row->id); ?>">
                             </td>
                             <td class="">
@@ -192,7 +192,7 @@
                                     <option value="">Select Ledger</option>
                                     <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($ledger->name); ?>"
-                                        <?php echo e($row->party_name==$ledger->name?'selected':''); ?>>
+                                        <?php echo e($row->party_name==$ledger->name ? 'selected' : ''); ?>>
                                         <?php echo e($ledger->name); ?>
 
                                     </option>

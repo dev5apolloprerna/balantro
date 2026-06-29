@@ -264,7 +264,7 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
         Route::match(['post', 'delete'], '/clients/item-gst-mapping/delete/{id}',[\App\Http\Controllers\ClientsController::class,'deleteItemGstMapping'])->name('clients.deleteItemGstMapping');
 
         Route::get('/documents/index',        [\App\Http\Controllers\DocumentsController::class, 'index'])->name('documents.index');
-
+        Route::get('/documents/{document}/financial-management', [\App\Http\Controllers\DocumentsController::class, 'redirectToFinancialManagement'])->name('documents.financial-management');
         Route::delete('/documents/{document}', [\App\Http\Controllers\DocumentsController::class, 'destroy'])->name('documents.destroy');
         Route::get('/documents/{id}/download', [\App\Http\Controllers\DocumentsController::class, 'download'])->name('documents.download');
         Route::post('/documents', [\App\Http\Controllers\DocumentsController::class, 'store'])->name('documents.store'); // ← NEW

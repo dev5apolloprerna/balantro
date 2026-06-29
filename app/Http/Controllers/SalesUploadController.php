@@ -1085,14 +1085,15 @@ class SalesUploadController extends Controller
                     'message' => 'Duplicate voucher found for the selected VnchType, VnchNo, and Year.'
                 ], 422);
             }
-            $row->update([
+            $row->fill([
                 'invoice_no' => $request->invoice_no[$id],
                 'date' => $request->date[$id],
                 'party_name' => $request->party_name[$id] ?: ($request->ledger[$id] ?? null),
                 'place_of_supply' => $request->place_of_supply[$id],
-                'status' => 'saved',
                 'vchType' => $request->voucher_type[$id]
             ]);
+            $row->status = $this->rematchPendingSalesTransaction($row) ? 'saved' : 'pending';
+            $row->save();
         }
         if ($uploadId) {
             $saved = SalesTransaction::where('upload_id', $uploadId)
@@ -1200,8 +1201,10 @@ class SalesUploadController extends Controller
             ? $transaction->date->format('Y-m-d')
             : $transaction->date;
 
-        return $hasGstLedgers
+        return $this->hasSalesLedgerMatch($salesLedger)
+            && $hasGstLedgers
             && $this->hasUploadPartyMatch($partyLookup)
+            && $this->hasUploadedGstNoMatch($partyLookup, $transaction->gst_no)
             && $this->isUploadDateInSelectedYear($invoiceDate)
             && $this->hasOnlyValidGstSlabs($this->salesTransactionGstRates($transaction))
             && !$this->salesVoucherExists($partyId, $transaction->vchType, $transaction->invoice_no, $transaction->strYear ?? session('year'), $transaction->id);

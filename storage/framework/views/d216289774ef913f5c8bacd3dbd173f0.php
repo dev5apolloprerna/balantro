@@ -537,6 +537,14 @@
                             <?php endif; ?>
                             <?php endif; ?>
 
+                            <?php if($user->role === \App\Models\User::ROLES['data_entry_operator']): ?>
+                            <a href="<?php echo e(route('documents.financial-management', $doc->id)); ?>"
+                                class="rounded-full bg-cyan-100 p-1.5 sm:p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800"
+                                title="Open Financial Management">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                            </a>
+                            <?php endif; ?>
+
                             
                             <?php if($user->role === \App\Models\User::ROLES['data_entry_operator']): ?>
                             <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('documents.verify')): ?>
@@ -812,7 +820,8 @@
                         <option value="rejected">Rejected</option>
                         <option value="data_entry_in_progress">Data Entry In Progress</option>
                         <option value="data_entry_completed">Data Entry Completed</option>
-                        <option value="query_resolved">Query Resolved</option>
+                        <option value="query_raised">Query Raised</option>
+                        <!-- <option value="query_resolved">Query Resolved</option> -->
                     </select>
                 </div>
 
@@ -823,14 +832,14 @@
                         class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                         rows="3"></textarea>
                 </div>
-
-                <!-- Query Resolved Description -->
-                <div id="descriptionWrapper" class="hidden">
+                <!-- Description (only for Query Raised) -->
+                <div id="sup_description_wrapper" class="hidden">
                     <label class="block text-sm font-medium">Description <span class="text-red-500">*</span></label>
-                    <textarea name="description" id="description" placeholder="Please provide some details..."
-                        class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
-                        rows="3"></textarea>
+                    <textarea name="description" id="sup_description" rows="3"
+                        class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"></textarea>
                 </div>
+
+                
 
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="closeVerifyModal()"
@@ -864,16 +873,21 @@
                         class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white">
                         <option value="">-- Select --</option>
                         <option value="approved">Approved</option>
-                        <option value="query_raised">Query Raised</option>
+                        <!-- <option value="query_raised">Query Raised</option> -->
+                         <option value="query_resolved">Query Resolved</option>
+                        
                     </select>
                 </div>
 
-                <!-- Description (only for Query Raised) -->
-                <div id="sup_description_wrapper" class="hidden">
+                <!-- Query Resolved Description -->
+                <div id="descriptionWrapper" class="hidden">
                     <label class="block text-sm font-medium">Description <span class="text-red-500">*</span></label>
-                    <textarea name="description" id="sup_description" rows="3"
-                        class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"></textarea>
+                    <textarea name="description" id="description" placeholder="Please provide some details..."
+                        class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
+                        rows="3"></textarea>
                 </div>
+
+                
 
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="closeSupVerifyModal()"

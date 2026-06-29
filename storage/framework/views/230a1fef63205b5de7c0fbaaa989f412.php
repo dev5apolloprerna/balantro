@@ -192,7 +192,7 @@
                                     <option value="">Select Ledger</option>
                                     <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($ledger->name); ?>"
-                                        <?php echo e($row->sales_ledger==$ledger->name?'selected':''); ?>>
+                                        <?php echo e($row->party_name==$ledger->name?'selected':''); ?>>
                                         <?php echo e($ledger->name); ?>
 
                                     </option>
@@ -328,7 +328,7 @@
             
             <div class="receipt-meta-block">
                 <div class="receipt-block-title"><i class="fa-solid fa-file-invoice text-blue-400 mr-1"></i> Invoice Details</div>
-                <div class="receipt-field-row">
+                <div id="invoice_sales_ledger_wrap" class="receipt-field-row">
                     <label>Sales Ledger</label>
                     <select id="noitem_sales_ledger" class="receipt-input ledgerSelect">
                         <option value="">Select Ledger</option>
@@ -1474,6 +1474,7 @@
 
                     $('#standard_items_section').show();
                     $('#no_item_section').hide();
+                    $('#invoice_sales_ledger_wrap').hide();
                     $('#addItemRow').hide();
                     $('#addNoItemRow').hide();
                     (res.items || []).forEach(item => {
@@ -1488,6 +1489,7 @@
 
                     $('#standard_items_section').hide();
                     $('#no_item_section').show();
+                    $('#invoice_sales_ledger_wrap').show();
                     $('#addItemRow').hide();
                     $('#addNoItemRow').hide();
                     $('#noItemBody').empty();
@@ -1694,6 +1696,7 @@
                 if (res.items && res.items.length > 0) {
                     $('#standard_items_section').show();
                     $('#no_item_section').hide();
+                    $('#invoice_sales_ledger_wrap').hide();
                     $('#addItemRow').show();
                     $('#addNoItemRow').hide();
                     // res.items.forEach(item => tbody.append(buildItemRow(item)));
@@ -1705,6 +1708,7 @@
                 } else {
                     $('#standard_items_section').hide();
                     $('#no_item_section').show();
+                    $('#invoice_sales_ledger_wrap').show();
                     $('#addItemRow').hide();
                     $('#addNoItemRow').show();
                     $('#noItemBody').empty();

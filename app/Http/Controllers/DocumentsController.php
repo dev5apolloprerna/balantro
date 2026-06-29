@@ -16,6 +16,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Models\DocumentComment;
+use App\Models\Client;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -218,6 +219,57 @@ class DocumentsController extends Controller
             ->get(['id', 'name']);
         
         return view('client.documents.index', compact('documents', 'statuses', 'user', 'clients','uploaded_count','in_progress_count','completed_count','rejected_count','accepted_count'));
+    }
+
+    public function redirectToFinancialManagement(Document $document)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+        $visibleClientIds = match ($user->role) {
+            \App\Models\User::ROLES['data_entry_operator'] => $user->clientsAsDataEntryOperator()->pluck('id')->all(),
+            \App\Models\User::ROLES['super_admin']         => \App\Models\User::query()->where('role', \App\Models\User::ROLES['client'])->pluck('id')->all(),
+            \App\Models\User::ROLES['manager']             => method_exists($user, 'managedClientIds') ? $user->managedClientIds() : [],
+            \App\Models\User::ROLES['supervisor']          => method_exists($user, 'supervisedClientIds') ? $user->supervisedClientIds() : [],
+            \App\Models\User::ROLES['client']              => [$user->id],
+            default                                        => [],
+        };
+        if (!in_array((int) $document->user_id, array_map('intval', $visibleClientIds), true)) {
+            abort(403);
+        }
+
+        $client = Client::findOrFail($document->user_id);
+        session([
+            'iPartyId' => $client->id,
+            'client_name' => $client->name,
+            'guid' => $client->guid,
+        ]);
+
+        $documentDate = $document->created_at ?: now();
+        $startYear = $documentDate->month >= 4 ? $documentDate->year : $documentDate->year - 1;
+        $documentFinancialYear = sprintf('%d-%04d', $startYear, $startYear + 1);
+
+        $year = DB::table('YearMaster')
+            ->where('iPartyId', $client->id)
+            ->where('strYear', $documentFinancialYear)
+            ->first();
+
+        if (!$year) {
+            $year = DB::table('YearMaster')
+                ->where('iPartyId', $client->id)
+                ->orderByDesc('iYearId')
+                ->first();
+        }
+        if ($year) {
+            [$yearStart, $yearEnd] = explode('-', $year->strYear) + [1 => null];
+            session([
+                'year' => $year->strYear,
+                'year_from' => $yearStart . '-04-01',
+                'year_to' => ($yearEnd ?: ((int) $yearStart + 1)) . '-03-31',
+            ]);
+        }
+        return redirect()->route('data_entry_operators.bulkuploadsales');
     }
 
     public function create()
