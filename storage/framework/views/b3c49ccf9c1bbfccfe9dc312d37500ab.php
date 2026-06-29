@@ -107,68 +107,71 @@
         <form id="salesForm">
             <?php echo csrf_field(); ?>
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
-                <table id="salesTable" class="sales-preview-table min-w-[1320px] w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
+                <table id="salesTable" class="sales-preview-table min-w-[1120px] xl:min-w-0 w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
                     <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-xs text-gray-700 dark:text-gray-300 uppercase sticky top-0 z-10">
                         <tr>
-                            <th class="px-3 py-2 w-8">
+                            <th class=" w-8">
                                 <input type="checkbox" id="selectAll">
                             </th>
-                            <th class="px-3 py-2 w-14">SR</th>
-                            <th class="px-3 py-2 min-w-[165px]">DATE</th>
-                            <th class="px-3 py-2 min-w-[170px]">REFERENCE</th>
-                            <th class="px-3 py-2 min-w-[170px]">VOUCHER</th>
-                            <th class="px-3 py-2 min-w-[230px]">PARTY A/C NAME</th>
-                            <th class="px-3 py-2 min-w-[150px]">GSTIN/UIN</th>
-                            <th class="px-3 py-2 min-w-[220px]">PLACE</th>
-                            <!-- <th class="px-3 py-2">PARTICULARS</th> -->
-                            <th class="px-3 py-2 min-w-[130px] text-right">AMOUNT</th>
-                            <th class="px-3 py-2 min-w-[110px]">STATUS</th>
-                            <th class="px-3 py-2 min-w-[110px]">ACTION</th>
+                            <th class="w-10">SR</th>
+                            <th class="col-date">DATE</th>
+                            <th class="col-reference">REFERENCE</th>
+                            <th class="col-voucher">VOUCHER</th>
+                            <th class="col-party">PARTY A/C NAME</th>
+                            <th class="col-gstin">GSTIN/UIN</th>
+                            <th class="col-place">PLACE</th>
+                            <!-- <th class="">PARTICULARS</th> -->
+                            <th class="col-amount text-right">AMOUNT</th>
+                            <th class="col-status">STATUS</th>
+                            <th class="col-action">ACTION</th>
                         </tr>
                         <tr class="bg-white dark:bg-neutral-900">
                             <th></th>
                             <th></th>
                             <th>
-                                <input class="searchInput" placeholder="Search date">
+                                <input class="searchInput" type="search" inputmode="numeric" placeholder="Search date">
                             </th>
                             <th>
-                                <input class="searchInput" placeholder="Search reference">
+                                <input class="searchInput" type="search" placeholder="Search reference">
                             </th>
                             <th>
-                                <input class="searchInput" placeholder="Search voucher">
+                                <input class="searchInput" type="search" placeholder="Search voucher">
                             </th>
                             <th>
-                                <input class="searchInput" placeholder="Search party">
+                                <input class="searchInput" type="search" placeholder="Search party">
                             </th>
                             <th>
-                                <input class="searchInput" placeholder="Search GSTIN">
+                                <input class="searchInput" type="search" placeholder="Search GSTIN">
                             </th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <input type="checkbox" name="selected[]" value="<?php echo e($row->id); ?>">
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <?php echo e($index+1); ?>
 
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <input type="date"
                                     name="date[<?php echo e($row->id); ?>]"
                                     value="<?php echo e(\Carbon\Carbon::parse($row->date)->format('Y-m-d')); ?>"
                                     class="inputCell">
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <input type="text"
                                     name="invoice_no[<?php echo e($row->id); ?>]"
                                     value="<?php echo e($row->invoice_no); ?>"
                                     class="inputCell">
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <select name="voucher_type[<?php echo e($row->id); ?>]" class="inputCell voucherSelect">
                                     <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($vchType); ?>"
@@ -176,7 +179,7 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <!-- Party Name -->
                                 <input type="text"
                                     name="party_name[<?php echo e($row->id); ?>]"
@@ -196,11 +199,11 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <?php echo e($row->gst_no); ?>
 
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <select name="place_of_supply[<?php echo e($row->id); ?>]"
                                     class="placeSelect inputCell">
                                     <option value="">Select State</option>
@@ -213,29 +216,17 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
-                            <!-- <td class="px-3 py-2">
-                                <select name="ledger[<?php echo e($row->id); ?>]" class="ledgerSelect inputCell">
-                                    <option value="">Select Ledger</option>
-                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($ledger->name); ?>"
-                                        <?php echo e($row->sales_ledger==$ledger->name?'selected':''); ?>>
-                                        <?php echo e($ledger->name); ?>
-
-                                    </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                </select>
-                            </td> -->
-                            <td class="px-3 py-2 text-right">
+                            <td class=" text-right">
                                 <?php echo e(number_format((float) ($row->total_amount ?? 0), 2)); ?>
 
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 <span class="text-yellow-400">
                                     <?php echo e($row->status); ?>
 
                                 </span>
                             </td>
-                            <td class="px-3 py-2">
+                            <td class="">
                                 
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300"
                                     title="View" data-id="<?php echo e($row->id); ?>">
@@ -288,24 +279,31 @@
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
-        $('.searchInput').on('keyup change', function() {
-            let column = $(this).closest('th').index();
-            let value = $(this).val().toLowerCase();
+        function applySalesTableFilters() {
+            const filters = $('.searchInput').map(function() {
+                const value = $(this).val().trim().toLowerCase();
+                return value ? { column: $(this).closest('th').index(), value } : null;
+            }).get();
             $('#salesTable tbody tr').each(function() {
-                let cell = $(this).find('td').eq(column);
-                let text = cell.text().toLowerCase();
-                // let input = cell.find('input,select').val();
-                let input = cell.find('input,select').map(function() {
-                    const value = $(this).val();
-                    return Array.isArray(value) ? value.join(' ') : value;
-                }).get().join(' ');
-                if (input) {
-                    // text += input.toLowerCase();
-                    text += ' ' + String(input).toLowerCase();
-                }
-                $(this).toggle(text.indexOf(value) > -1);
+                const row = $(this);
+                const matches = filters.every(function(filter) {
+                    const cell = row.find('td').eq(filter.column);
+                    let text = cell.text().toLowerCase();
+                    const input = cell.find('input,select').map(function() {
+                        const value = $(this).val();
+                        return Array.isArray(value) ? value.join(' ') : value;
+                    }).get().join(' ');
+
+                    if (input) {
+                        text += ' ' + String(input).toLowerCase();
+                    }
+                    return text.indexOf(filter.value) > -1;
+                });
+                row.toggle(matches);
             });
-        });
+        }
+
+        $('.searchInput').on('input change', applySalesTableFilters);
 
         $('.placeSelect').select2({
             width: '100%',

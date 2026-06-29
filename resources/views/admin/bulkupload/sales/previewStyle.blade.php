@@ -8,6 +8,7 @@
         padding: 6px 8px;
         font-size: 12px;
         width: 100%;
+        min-width: 0;
         border-radius: 4px;
     }
 
@@ -32,22 +33,37 @@
     #purchaseTable tbody tr:hover {
         background: #f3f4f6;
     }
-.sales-preview-table th,
+    .sales-preview-table {
+        table-layout: fixed;
+    }
+
+    .sales-preview-table th,
     .sales-preview-table td {
         vertical-align: middle;
         white-space: nowrap;
     }
+    
+    .sales-preview-table .col-date { width: 105px; }
+    .sales-preview-table .col-reference { width: 100px; }
+    .sales-preview-table .col-voucher { width: 100px; }
+    .sales-preview-table .col-party { width: 210px; }
+    .sales-preview-table .col-gstin { width: 138px; }
+    .sales-preview-table .col-place { width: 140px; }
+    .sales-preview-table .col-amount { width: 100px; }
+    .sales-preview-table .col-status { width: 65px; }
+    .sales-preview-table .col-action { width: 92px; }
 
     .sales-preview-table .searchInput {
         width: 100%;
-        min-width: 90px;
+        min-width: 0;
         padding: 5px 7px;
         border-radius: 4px;
         font-size: 12px;
     }
 
     .sales-preview-table .select2-container {
-        min-width: 100%;
+        min-width: 0;
+        width: 100% !important;
     }
 
     .sales-preview-table .select2-container--default .select2-selection--single {
