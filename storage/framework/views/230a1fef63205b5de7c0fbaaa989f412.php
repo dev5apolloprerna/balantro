@@ -985,7 +985,7 @@
         });
         function applySalesTableFilters() {
             const filters = $('.searchInput').map(function() {
-                const value = $(this).val().trim().toLowerCase();
+                const value = String($(this).val() || '').trim().toLowerCase();
                 return value ? { column: $(this).closest('th').index(), value } : null;
             }).get();
             $('#salesTable tbody tr').each(function() {
@@ -1054,7 +1054,7 @@
         }
 
         const matchingState = $('#edit_place option').filter(function() {
-            return String($(this).val()).trim().toLowerCase() === state.toLowerCase();
+            return String($(this).val() || '').trim().toLowerCase() === state.toLowerCase();
         }).first();
 
         $('#edit_place').val(matchingState.length ? matchingState.val() : state).trigger('change');
@@ -1425,13 +1425,13 @@
                 // setSelectValueByTextOrValue($('#edit_party'), res.party_name);
                 // $('#edit_place').val(res.place_of_supply);
                 $('#edit_place option').each(function () {
-                    if ($(this).val().toLowerCase().trim() === String(res.place_of_supply).toLowerCase().trim()) {
+                    if (String($(this).val() || '').toLowerCase().trim() === String(res.place_of_supply || '').toLowerCase().trim()) {
                         $(this).prop('selected', true);
                     }
                 });
                 // $('#edit_voucher_type').val(res.vchType);
                 $('#edit_voucher_type option').each(function () {
-                    if ($(this).val().toLowerCase().trim() === String(res.vchType).toLowerCase().trim()) {
+                    if (String($(this).val() || '').toLowerCase().trim() === String(res.vchType || '').toLowerCase().trim()) {
                         $(this).prop('selected', true);
                     }
                 });
@@ -1474,7 +1474,7 @@
 
                     $('#standard_items_section').show();
                     $('#no_item_section').hide();
-                    $('#invoice_sales_ledger_wrap').hide();
+                    $('#invoice_sales_ledger_wrap').show();
                     $('#addItemRow').hide();
                     $('#addNoItemRow').hide();
                     (res.items || []).forEach(item => {
@@ -1489,7 +1489,7 @@
 
                     $('#standard_items_section').hide();
                     $('#no_item_section').show();
-                    $('#invoice_sales_ledger_wrap').show();
+                    $('#invoice_sales_ledger_wrap').hide();
                     $('#addItemRow').hide();
                     $('#addNoItemRow').hide();
                     $('#noItemBody').empty();
@@ -1648,7 +1648,7 @@
         // $('#edit_place').val(btn.data('place'));
         let vch = btn.data('vchtype');
         $('#edit_voucher_type option').each(function() {
-            if ($(this).val().toLowerCase().trim() === String(vch).toLowerCase().trim()) {
+            if (String($(this).val() || '').toLowerCase().trim() === String(vch || '').toLowerCase().trim()) {
                 $(this).prop('selected', true);
             }
         });
@@ -1656,7 +1656,7 @@
         // Place of Supply (case-insensitive match)
         let place = btn.data('place');
         $('#edit_place option').each(function() {
-            if ($(this).val().toLowerCase().trim() === String(place).toLowerCase().trim()) {
+            if (String($(this).val() || '').toLowerCase().trim() === String(place || '').toLowerCase().trim()) {
                 $(this).prop('selected', true);
             }
         });
@@ -1696,7 +1696,7 @@
                 if (res.items && res.items.length > 0) {
                     $('#standard_items_section').show();
                     $('#no_item_section').hide();
-                    $('#invoice_sales_ledger_wrap').hide();
+                    $('#invoice_sales_ledger_wrap').show();
                     $('#addItemRow').show();
                     $('#addNoItemRow').hide();
                     // res.items.forEach(item => tbody.append(buildItemRow(item)));
@@ -1708,7 +1708,7 @@
                 } else {
                     $('#standard_items_section').hide();
                     $('#no_item_section').show();
-                    $('#invoice_sales_ledger_wrap').show();
+                    $('#invoice_sales_ledger_wrap').hide();
                     $('#addItemRow').hide();
                     $('#addNoItemRow').show();
                     $('#noItemBody').empty();
@@ -2059,7 +2059,7 @@
     });
 
     $('#edit_place').on('change', function () {
-        let place = $(this).val().toLowerCase();
+        let place = String($(this).val() || '').trim().toLowerCase();
         let companyState = 'gujarat'; // set dynamically
 
         if (place === companyState) {

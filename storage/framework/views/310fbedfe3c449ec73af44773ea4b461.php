@@ -236,7 +236,7 @@
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
-                                        <?php if($upload->status == 'Pending' && ($upload->pending ?? 0) > 0): ?>
+                                        <?php if(($upload->status == 'Pending' || $upload->status == 'pending') && ($upload->pending ?? 0) > 0): ?>
                                         <form method="POST" action="<?php echo e(route('sales.rematch', $upload->id)); ?>" class="inline">
                                             <?php echo csrf_field(); ?>
                                             <button

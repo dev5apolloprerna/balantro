@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\DocumentActivityNotification;
 use App\Models\Document;
+use App\Models\User;
 use App\Services\FilterService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -77,14 +78,15 @@ class DocumentsController extends Controller
         $q      = trim((string) $request->get('q', ''));
         $cid    = $request->integer('client_id') ?: null;
 
-        $visibleClientIds = match ($user->role) {
-            \App\Models\User::ROLES['data_entry_operator'] => $user->clientsAsDataEntryOperator()->pluck('id')->all(),
-            \App\Models\User::ROLES['super_admin']         => \App\Models\User::query()->where('role', \App\Models\User::ROLES['client'])->pluck('id')->all(),
-            \App\Models\User::ROLES['manager']             => method_exists($user, 'managedClientIds') ? $user->managedClientIds() : [],
-            \App\Models\User::ROLES['supervisor']          => method_exists($user, 'supervisedClientIds') ? $user->supervisedClientIds() : [],
-            \App\Models\User::ROLES['client']              => [$user->id],
-            default                                        => [$user->id],
-        };
+        // $visibleClientIds = match ($user->role) {
+        //     \App\Models\User::ROLES['data_entry_operator'] => $user->clientsAsDataEntryOperator()->pluck('id')->all(),
+        //     \App\Models\User::ROLES['super_admin']         => \App\Models\User::query()->where('role', \App\Models\User::ROLES['client'])->pluck('id')->all(),
+        //     \App\Models\User::ROLES['manager']             => method_exists($user, 'managedClientIds') ? $user->managedClientIds() : [],
+        //     \App\Models\User::ROLES['supervisor']          => method_exists($user, 'supervisedClientIds') ? $user->supervisedClientIds() : [],
+        //     \App\Models\User::ROLES['client']              => [$user->id],
+        //     default                                        => [$user->id],
+        // };
+        $visibleClientIds = $this->visibleClientIdsForDocuments($user);
         if (empty($visibleClientIds) && $user->role === \App\Models\User::ROLES['client']) {
             $visibleClientIds = [$user->id];
         }
@@ -221,20 +223,27 @@ class DocumentsController extends Controller
         return view('client.documents.index', compact('documents', 'statuses', 'user', 'clients','uploaded_count','in_progress_count','completed_count','rejected_count','accepted_count'));
     }
 
+    private function visibleClientIdsForDocuments(User $user): array
+    {
+        $ids = match ((int) $user->role) {
+            User::ROLES['data_entry_operator'] => $user->clientsAsDataEntryOperator()->pluck('users.id')->all(),
+            User::ROLES['super_admin']         => User::query()->where('role', User::ROLES['client'])->pluck('id')->all(),
+            User::ROLES['manager']             => method_exists($user, 'managedClientIds') ? $user->managedClientIds() : [],
+            User::ROLES['supervisor']          => method_exists($user, 'supervisedClientIds') ? $user->supervisedClientIds() : [],
+            User::ROLES['client']              => [$user->id],
+            default                            => [],
+        };
+
+        return array_values(array_unique(array_map('intval', $ids)));
+    }
+
     public function redirectToFinancialManagement(Document $document)
     {
         $user = auth()->user();
         if (!$user) {
             return redirect()->route('login');
         }
-        $visibleClientIds = match ($user->role) {
-            \App\Models\User::ROLES['data_entry_operator'] => $user->clientsAsDataEntryOperator()->pluck('id')->all(),
-            \App\Models\User::ROLES['super_admin']         => \App\Models\User::query()->where('role', \App\Models\User::ROLES['client'])->pluck('id')->all(),
-            \App\Models\User::ROLES['manager']             => method_exists($user, 'managedClientIds') ? $user->managedClientIds() : [],
-            \App\Models\User::ROLES['supervisor']          => method_exists($user, 'supervisedClientIds') ? $user->supervisedClientIds() : [],
-            \App\Models\User::ROLES['client']              => [$user->id],
-            default                                        => [],
-        };
+        $visibleClientIds = $this->visibleClientIdsForDocuments($user);
         if (!in_array((int) $document->user_id, array_map('intval', $visibleClientIds), true)) {
             abort(403);
         }
@@ -271,6 +280,8 @@ class DocumentsController extends Controller
         }
         return redirect()->route('data_entry_operators.bulkuploadsales');
     }
+
+    
 
     public function create()
     {

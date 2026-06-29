@@ -1,10 +1,9 @@
-@extends('layouts.super_admin')
-@section('title', 'Profit & Loss A/C')
+<?php $__env->startSection('title', 'Profit & Loss A/C'); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
     <div class="container py-3">
         <div class="flex items-center justify-between">
-            @php
+            <?php
             
                 $queryParams = array_merge(request()->query(), [
                     'from' => request('from', $from ?? ''),
@@ -30,16 +29,17 @@
                     // Add more cases as needed
                     return '';
                 };
-            @endphp
+            ?>
             <div>
                 <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Profit & Loss </h1>
                 <p class="text-xs text-black-500 dark:text-gray-400 mt-0.5">
-                        • {{ $periodText() }}
+                        • <?php echo e($periodText()); ?>
+
                 </p>
             </div>
             
             <div>
-                <a href="{{ route('reports.pl.pdf', $queryParams) }}" title="Export into PDF"
+                <a href="<?php echo e(route('reports.pl.pdf', $queryParams)); ?>" title="Export into PDF"
                     class="group btn inline-block relative text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                 transition duration-1000 ease-in-out
                                 transition-property: all;
@@ -51,7 +51,7 @@
                     <i class="fas fa-file-pdf text-black dark:text-white"></i>
                 </a>
                 &nbsp;
-                <a href="{{ route('reports.pl.excel', $queryParams) }}" title="Export into Excel"
+                <a href="<?php echo e(route('reports.pl.excel', $queryParams)); ?>" title="Export into Excel"
                     class="group btn inline-block relative text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                 transition duration-1000 ease-in-out
                                 transition-property: all;
@@ -65,17 +65,17 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('reports.pl') }}" id="filterForm"
+        <form method="POST" action="<?php echo e(route('reports.pl')); ?>" id="filterForm"
             class="mt-2 rounded-lg p-2 flex flex-wrap items-end gap-3">
-            @csrf
-            @php
+            <?php echo csrf_field(); ?>
+            <?php
                 
-            @endphp
+            ?>
             <div class="relative"
                 x-data="{
                     open: false,
-                    selected: '{{ $rangeSel ?? '' }}',
-                    options: @js(collect($financialYears ?? [])->mapWithKeys(fn ($year) => [(string) $year->iYearId => $year->strYear])->put('custom', 'Custom Date')->all())
+                    selected: '<?php echo e($rangeSel ?? ''); ?>',
+                    options: <?php echo \Illuminate\Support\Js::from(collect($financialYears ?? [])->mapWithKeys(fn ($year) => [(string) $year->iYearId => $year->strYear])->put('custom', 'Custom Date')->all())->toHtml() ?>
                 }">
 
                 <label class="block text-xs text-gray-600 dark:text-gray-300 mb-1">
@@ -120,26 +120,27 @@
                     shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
                     style="backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
 
-                    @forelse ($financialYears ?? [] as $financialYear)
+                    <?php $__empty_1 = true; $__currentLoopData = $financialYears ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <li>
                             <button type="button"
-                                @click="selected = '{{ $financialYear->iYearId }}'; open = false; handleRangeChange('{{ $financialYear->iYearId }}')"
+                                @click="selected = '<?php echo e($financialYear->iYearId); ?>'; open = false; handleRangeChange('<?php echo e($financialYear->iYearId); ?>')"
                                 class="w-full text-left px-4 py-2 text-sm
                             transition-all duration-200
                             text-gray-800 dark:text-white
                             hover:bg-black/10 dark:hover:bg-white/10
                             hover:text-[#22d3ee]"
-                                :class="selected == '{{ $financialYear->iYearId }}'
+                                :class="selected == '<?php echo e($financialYear->iYearId); ?>'
                                 ? 'bg-[#22d3ee]/20 text-[#22d3ee]'
                                 : ''">
-                                {{ $financialYear->strYear }}
+                                <?php echo e($financialYear->strYear); ?>
+
                             </button>
                         </li>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <li>
                             <span class="block px-4 py-2 text-sm text-gray-500 dark:text-gray-300">No financial years found</span>
                         </li>
-                    @endforelse
+                    <?php endif; ?>
 
 
                     <!-- Custom -->
@@ -161,23 +162,23 @@
 
                 </ul>
             </div>
-            <div id="customFromWrap" class="{{ $rangeSel === 'custom' ? '' : 'hidden' }}">
+            <div id="customFromWrap" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>">
                 <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">From Date</label>
-                <input type="date" name="from_custom" id="from_custom" value="{{ request('from') }}" min="1900-01-01" max="2099-12-31"
+                <input type="date" name="from_custom" id="from_custom" value="<?php echo e(request('from')); ?>" min="1900-01-01" max="2099-12-31"
                     class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
             </div>
             <div id="customToLabel"
-                class="pb-2 text-black-500 dark:text-gray-400 {{ $rangeSel === 'custom' ? '' : 'hidden' }}">TO</div>
-            <div id="customToWrap" class="{{ $rangeSel === 'custom' ? '' : 'hidden' }}">
+                class="pb-2 text-black-500 dark:text-gray-400 <?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>">TO</div>
+            <div id="customToWrap" class="<?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>">
                 <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">To Date</label>
-                <input type="date" name="to_custom" id="to_custom" value="{{ request('to') }}" min="1900-01-01" max="2099-12-31"
+                <input type="date" name="to_custom" id="to_custom" value="<?php echo e(request('to')); ?>" min="1900-01-01" max="2099-12-31"
                     class=" appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
             </div>
 
-            <input type="hidden" name="from" id="from" value="{{ request('from') }}">
-            <input type="hidden" name="to" id="to" value="{{ request('to') }}">
+            <input type="hidden" name="from" id="from" value="<?php echo e(request('from')); ?>">
+            <input type="hidden" name="to" id="to" value="<?php echo e(request('to')); ?>">
 
-            <div class="flex gap-2 {{ $rangeSel === 'custom' ? '' : 'hidden' }}"  id="searchBtn">
+            <div class="flex gap-2 <?php echo e($rangeSel === 'custom' ? '' : 'hidden'); ?>"  id="searchBtn">
                 <button type="submit"
                     class="rounded-md border border-gray-700 text-black dark:text-white  px-4 py-2 text-sm transition duration-1000 ease-in-out
                                 transition-property: all;
@@ -186,7 +187,7 @@
                                 hover:scale-105
                                 hover:-translate-y-1"
                                 style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">Search</button>
-                <a href="{{ route('reports.pl') }}"
+                <a href="<?php echo e(route('reports.pl')); ?>"
                     class="rounded-md border border-gray-700 text-black dark:text-white px-4 py-2 text-sm transition duration-1000 ease-in-out
                                 transition-property: all;
                                 hover:border-[#a78bfa]
@@ -197,12 +198,12 @@
             </div>
         </form>
 
-        @isset($data['error'])
-            <div class="alert alert-danger">{{ $data['error'] }}</div>
-        @endisset
+        <?php if(isset($data['error'])): ?>
+            <div class="alert alert-danger"><?php echo e($data['error']); ?></div>
+        <?php endif; ?>
 
-        {{-- Calculate all variables first to avoid undefined errors --}}
-        @php
+        
+        <?php
             // ---------------- BASIC DATA ----------------
             $cr = $pl['cr'] ?? [];
             $dr = $pl['dr'] ?? [];
@@ -342,195 +343,199 @@
             $totalIncomeForCharts = $directCr + $indirectCr;
             $totalExpensesForCharts = $directDr + $indirectDr;
             
-        @endphp
+        ?>
 
-        {{-- MAIN CONTENT: SIDE BY SIDE LAYOUT --}}
+        
         <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-            {{-- LEFT COLUMN: EXCEL FORMAT P&L REPORT --}}
+            
             <div class="space-y-6">
-                {{-- EXCEL FORMAT PROFIT & LOSS ACCOUNT --}}
+                
                 <div class="space-y-6">
-                    {{-- INCOME SECTION --}}
+                    
                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden  shadow-sm">
                         <div class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-b border-gray-200 dark:border-gray-700">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Income</h3>
                         </div>
                         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                            {{-- Sales Accounts --}}
+                            
                             <div
                                 class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                 <div class="flex items-center ">
-                                    <a href="{{ route('reports.ledger', ['group_id' => collect($cr)->where('strGroupName', 'Sales Accounts')->first()['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => collect($cr)->where('strGroupName', 'Sales Accounts')->first()['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                         class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black hover:underlin">
                                         Sales Accounts
                                     </a>
                                 </div>
-                                <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black">{{ $fmt($salesAccounts) }}</span>
+                                <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"><?php echo e($fmt($salesAccounts)); ?></span>
                             </div>
-                            {{-- Direct Incomes --}}
+                            
                             <div
                                 class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                 <div class="flex items-center">
-                                    <a href="{{ route('reports.ledger', ['group_id' => collect($cr)->where('strGroupName', 'Direct Incomes')->first()['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => collect($cr)->where('strGroupName', 'Direct Incomes')->first()['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                         class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black hover:underlin">
                                         Direct Incomes
                                     </a>
                                 </div>
-                                <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black">{{ $fmt($directIncomes) }}</span>
+                                <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"><?php echo e($fmt($directIncomes)); ?></span>
                             </div>
-                            {{-- Closing Stock --}}
-                            @if ($closingStock > 0)
+                            
+                            <?php if($closingStock > 0): ?>
                                 <div class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                     <div class="flex items-center">
                                         <span class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black">Closing Stock</span>
                                     </div>
-                                    <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black">{{ $fmt($closingStock) }}</span>
+                                    <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"><?php echo e($fmt($closingStock)); ?></span>
                                 </div>
-                            @endif
+                            <?php endif; ?>
 
-                            @if ($openingStock < 0)
+                            <?php if($openingStock < 0): ?>
                                 <div class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                     <div class="flex items-center">
                                         <span class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black">Opening Stock</span>
                                     </div>
-                                    <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black">{{ $fmt(abs($openingStock)) }}</span>
+                                    <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"><?php echo e($fmt(abs($openingStock))); ?></span>
                                 </div>
-                            @endif
-                            {{-- Total Income --}}
+                            <?php endif; ?>
+                            
                             <div
                                 class="flex justify-between px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] !mt-0 items-center border-t border-gray-300 dark:border-gray-600 pt-2 font-semibold">
                                 <span>I. Total Income</span>
-                                <span>{{ $fmt($totalIncome) }}</span>
+                                <span><?php echo e($fmt($totalIncome)); ?></span>
                             </div>
                         </div>
                     </div>
-                    {{-- EXPENSES SECTION --}}
+                    
                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden  shadow-sm ">
                         <div class="px-4 py-3 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md  border-b border-gray-200 dark:border-gray-700">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Expenses</h3>
                         </div>
                         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @if ($openingStock > 0)
+                            <?php if($openingStock > 0): ?>
                                 <div class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                     <div class="flex items-center">
                                         <span class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black">Opening Stock</span>
                                     </div>
-                                    <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black">{{ $fmt($openingStock) }}</span>
+                                    <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"><?php echo e($fmt($openingStock)); ?></span>
                                 </div>
-                            @endif
+                            <?php endif; ?>
 
-                            @if ($closingStock < 0)
+                            <?php if($closingStock < 0): ?>
                                 <div class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                     <div class="flex items-center">
                                         <span class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black">Closing Stock</span>
                                     </div>
-                                    <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black">{{ $fmt(abs($closingStock)) }}</span>
+                                    <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"><?php echo e($fmt(abs($closingStock))); ?></span>
                                 </div>
-                            @endif
+                            <?php endif; ?>
                             
-                            {{-- Purchase Accounts --}}
+                            
                             <div
                                 class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                 <div class="flex items-center">
-                                    <a href="{{ route('reports.ledger', ['group_id' => collect($dr)->where('strGroupName', 'Purchase Accounts')->first()['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => collect($dr)->where('strGroupName', 'Purchase Accounts')->first()['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                         class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black hover:underlin">
                                         Purchase Accounts
                                     </a>
                                 </div>
-                                <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black">{{ $fmt($purchaseAccounts) }}</span>
+                                <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"><?php echo e($fmt($purchaseAccounts)); ?></span>
                             </div>
 
-                            {{-- Direct Expenses --}}
+                            
                             <div
                                 class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                 <div class="flex items-center">
-                                    <a href="{{ route('reports.ledger', ['group_id' => collect($dr)->where('strGroupName', 'Direct Expenses')->first()['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                    <a href="<?php echo e(route('reports.ledger', ['group_id' => collect($dr)->where('strGroupName', 'Direct Expenses')->first()['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                         class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black hover:underlin">
                                         Direct Expenses
                                     </a>
                                 </div>
-                                <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black">{{ $fmt($directExpenses) }}</span>
+                                <span class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"><?php echo e($fmt($directExpenses)); ?></span>
                             </div>
 
-                            {{-- Total Expenses --}}
+                            
                             <div
                                 class="flex justify-between bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] !mt-0 px-4 py-3 items-center border-t border-gray-300 dark:border-gray-600 pt-2 font-semibold">
                                 <span>II. Total Expenses</span>
-                                <span>{{ $fmt($totalExpenses) }}</span>
+                                <span><?php echo e($fmt($totalExpenses)); ?></span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- GROSS PROFIT/LOSS SECTION --}}
+                    
                     <div class="border border-gray-200 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] dark:border-gray-700 rounded-xl shadow px-4 py-3">
                         <div class="space-y-4">
                             <div class="flex justify-between items-center text-md font-semibold">
                                 <span>III. Gross Profit / Loss (I - II)</span>
                                 <span
-                                    class="{{ $grossIsProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                    {{ $grossIsProfit ? '+' : '-' }}{{ $fmt($grossAbs) }}
+                                    class="<?php echo e($grossIsProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'); ?>">
+                                    <?php echo e($grossIsProfit ? '+' : '-'); ?><?php echo e($fmt($grossAbs)); ?>
+
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- INDIRECT INCOME SECTION --}}
+                    
                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden  shadow-sm ">
                         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @foreach ($iInc as $row)
+                            <?php $__currentLoopData = $iInc; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 
                                 <div
                                     class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                     <div class="flex items-center">
-                                        <a href="{{ route('reports.ledger', ['group_id' => $row['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                        <a href="<?php echo e(route('reports.ledger', ['group_id' => $row['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                             class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black hover:underlin">
-                                            {{ $row['strGroupName'] ?? '—' }}
+                                            <?php echo e($row['strGroupName'] ?? '—'); ?>
+
                                         </a>
                                     </div>
-                                    <span class="class="font-medium group-hover:text-gray-900 dark:group-hover:text-black"">{{ $fmt($row['decMainAmount']) }}</span>
+                                    <span class="class="font-medium group-hover:text-gray-900 dark:group-hover:text-black""><?php echo e($fmt($row['decMainAmount'])); ?></span>
                                 </div>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             <div
                                 class="flex justify-between bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] !mt-0 px-4 py-3 items-center border-t border-gray-300 dark:border-gray-600 pt-2 font-semibold">
                                 <span>IV. Total Indirect Income</span>
-                                <span>{{ $fmt($indirectIncome) }}</span>
+                                <span><?php echo e($fmt($indirectIncome)); ?></span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- INDIRECT EXPENSES SECTION --}}
+                    
                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden  shadow-sm ">
                         <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                            @foreach ($iExp as $row)
+                            <?php $__currentLoopData = $iExp; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <div
                                     class="group flex px-4 py-3 justify-between items-center border-t border-b border-gray-100 dark:border-gray-700 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] transition-all duration-300">
                                     <div class="flex items-center">
-                                        <a href="{{ route('reports.ledger', ['group_id' => $row['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')]) }}"
+                                        <a href="<?php echo e(route('reports.ledger', ['group_id' => $row['iPrimaryGroupId'] ?? null, 'from' => request('from'), 'to' => request('to')])); ?>"
                                             class="text-black dark:text-white group-hover:text-gray-900 dark:group-hover:text-black hover:underlin">
-                                            {{ $row['strGroupName'] ?? '—' }}
+                                            <?php echo e($row['strGroupName'] ?? '—'); ?>
+
                                         </a>
                                     </div>
-                                    {{-- <span class="text-sm">{{ $fmt(abs((float) $row['decMainAmount'])) }}</span> --}}
-                                    <span class="text-md">{{ $fmt((float) $row['decMainAmount']) }}</span>
+                                    
+                                    <span class="text-md"><?php echo e($fmt((float) $row['decMainAmount'])); ?></span>
                                 </div>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             <div
                                 class="flex justify-between bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] !mt-0 px-4 py-3 items-center border-t border-gray-300 dark:border-gray-600 pt-2 font-semibold">
                                 <span>V. Total Indirect Expenses</span>
-                                <span>{{ $fmt($indirectExpenses) }}</span>
+                                <span><?php echo e($fmt($indirectExpenses)); ?></span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- NET PROFIT/LOSS SECTION --}}
+                    
                     <div class="border border-gray-200 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] dark:border-gray-700 rounded-xl shadow px-4 py-3">
                         <div class="space-y-4">
                             <div class="flex justify-between items-center text-md font-semibold">
                                 <span>VI. Net Profit / Loss (III + IV - V) </span>
                                 <span
-                                    class="{{ $netIsProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                    {{ $netIsProfit ? '+' : '-' }}{{ $fmt($netAbs) }}
+                                    class="<?php echo e($netIsProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'); ?>">
+                                    <?php echo e($netIsProfit ? '+' : '-'); ?><?php echo e($fmt($netAbs)); ?>
+
                                 </span>
                             </div>
                         </div>
@@ -538,11 +543,11 @@
                 </div>
             </div>
 
-            {{-- RIGHT COLUMN: GRAPHS (KEEP EXISTING) --}}
+            
             <div class="space-y-6">
                 <h2 class="text-[#22d3ee] font-semibold dark:text-[#22d3ee] mb-3">Profit & Loss Analysis</h2>
 
-                {{-- Income vs Expenses Pie Chart --}}
+                
                 <!-- <div class=" rounded-xl shadow p-4">
                     <h3 class="font-semibold mb-3 text-center">Income vs Expenses</h3>
                     <div class="h-64">
@@ -552,11 +557,13 @@
                         <div class="flex flex-col space-y-2">
                             <span class="flex items-center justify-center">
                                 <span class="inline-block w-3 h-3 bg-[#34d399] rounded-full mr-2"></span>
-                                Income: {{ $fmt($totalIncomeForCharts) }}
+                                Income: <?php echo e($fmt($totalIncomeForCharts)); ?>
+
                             </span>
                             <span class="flex items-center justify-center">
                                 <span class="inline-block w-3 h-3 bg-[#a78bfa] rounded-full mr-2"></span>
-                                Expenses: {{ $fmt($totalExpensesForCharts) }}
+                                Expenses: <?php echo e($fmt($totalExpensesForCharts)); ?>
+
                             </span>
                         </div>
                     </div>
@@ -569,7 +576,7 @@
                     <div id="plLegend" class="flex-1"></div>
                 </div>
 
-                {{-- Breakdown Chart with Dropdown --}}
+                
                 <div class="space-y-3">
 
                     <!-- HEADER -->
@@ -684,22 +691,22 @@
 
     </div>
 
-    {{-- Chart.js Library --}}
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
 
     <script>
-        window.financialYearOptions = @json(collect($financialYears ?? [])->mapWithKeys(fn ($year) => [(string) $year->iYearId => $year->strYear])->all());
+        window.financialYearOptions = <?php echo json_encode(collect($financialYears ?? [])->mapWithKeys(fn ($year) => [(string) $year->iYearId => $year->strYear])->all(), 15, 512) ?>;
 
-        const directCr = {{ $directCr ?? 0 }};
-        const salesAccountsCr = {{ $salesAccountsCr ?? 0 }};
+        const directCr = <?php echo e($directCr ?? 0); ?>;
+        const salesAccountsCr = <?php echo e($salesAccountsCr ?? 0); ?>;
        
-        const directDr = {{ $directDr ?? 0 }};
-        const purchaseAccounts = {{ $purchaseAccounts ?? 0 }};
-        const indirectCr = {{ $indirectCr ?? 0 }};
-        const indirectDr = {{ $indirectDr ?? 0 }};
-        //const totalIncome = {{ $totalIncomeForCharts ?? 0 }};
-        const totalExpenses = {{ $totalExpensesForCharts ?? 0 }};
+        const directDr = <?php echo e($directDr ?? 0); ?>;
+        const purchaseAccounts = <?php echo e($purchaseAccounts ?? 0); ?>;
+        const indirectCr = <?php echo e($indirectCr ?? 0); ?>;
+        const indirectDr = <?php echo e($indirectDr ?? 0); ?>;
+        //const totalIncome = <?php echo e($totalIncomeForCharts ?? 0); ?>;
+        const totalExpenses = <?php echo e($totalExpensesForCharts ?? 0); ?>;
 
         // Chart instances
         let incomeExpenseChart, breakdownChart;
@@ -831,7 +838,7 @@
             breakdownChart.update();
         }
        
-        let plData = @json($pl ?? []);
+        let plData = <?php echo json_encode($pl ?? [], 15, 512) ?>;
 
         // ===== SAFE FIND FUNCTION =====
         const getValue = (arr, name) => {
@@ -1288,4 +1295,6 @@
         }
     </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/reports/pl.blade.php ENDPATH**/ ?>

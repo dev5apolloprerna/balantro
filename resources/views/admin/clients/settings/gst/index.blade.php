@@ -82,19 +82,79 @@
 
 #mappingModal .gst-modal-panel,
 #itemMappingModal .gst-modal-panel {
-    max-height: min(88vh, 760px);
+    max-height: min(92vh, 820px);
 }
 
 #mappingModal .gst-modal-body,
 #itemMappingModal .gst-modal-body {
-    max-height: calc(88vh - 140px);
+    max-height: calc(92vh - 180px);
     overflow-y: auto;
+}
+
+.gst-modal-panel {
+    border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.gst-modal-hero {
+    background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.24), transparent 34%),
+        linear-gradient(135deg, #0f172a 0%, #0e7490 100%);
+}
+
+.gst-modal-step {
+    display: inline-flex;
+    height: 2rem;
+    width: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(8, 145, 178, 0.12);
+    color: #0e7490;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.dark .gst-modal-step {
+    background: rgba(34, 211, 238, 0.16);
+    color: #67e8f9;
+}
+
+.gst-field-card {
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    background: rgba(248, 250, 252, 0.88);
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.dark .gst-field-card {
+    border-color: rgba(51, 65, 85, 0.9);
+    background: rgba(15, 23, 42, 0.58);
 }
 
 #mappingModal .select2-container--default .select2-selection--multiple,
 #itemMappingModal .select2-container--default .select2-selection--multiple {
-    max-height: 132px;
+    min-height: 52px !important;
+    max-height: 148px;
     overflow-y: auto;
+    border-radius: 0.75rem !important;
+    border-color: #cbd5e1 !important;
+    padding: 0.35rem 0.5rem !important;
+}
+#mappingModal .select2-container--default.select2-container--focus .select2-selection--multiple,
+#itemMappingModal .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #06b6d4 !important;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.16);
+}
+
+#mappingModal .select2-container--default .select2-selection--multiple .select2-selection__choice,
+#itemMappingModal .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    border: 1px solid rgba(14, 116, 144, 0.22) !important;
+    border-radius: 9999px !important;
+    background: #ecfeff !important;
+    color: #155e75 !important;
+    margin-top: 4px !important;
+    padding: 2px 8px 2px 22px !important;
 }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -307,15 +367,16 @@
 </div>
 
 <div id="mappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
-    <div class="gst-modal-panel flex w-full max-w-3xl flex-col rounded-2xl bg-white dark:bg-slate-900 shadow-2xl">
+    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl">
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-xl font-semibold text-slate-800 dark:text-white">
-                GST Ledger Mapping
-            </h3>
+        <div class="gst-modal-hero flex items-start justify-between px-3 py-2 text-white">
+            <div>
+                <h3 class="mt-1 text-2xl font-bold">GST Ledger Mapping</h3>
+                <p class="mt-1 text-sm text-cyan-50/90">Select one or many ledgers, then assign matching GST ledgers.</p>
+            </div>
 
             <button type="button"
-                class="closeModal text-2xl text-slate-500 hover:text-red-500">
+                class="closeModal rounded-full bg-white/10 px-3 py-1 text-2xl text-white hover:bg-white/20">
                 ×
             </button>
         </div>
@@ -323,18 +384,22 @@
             @csrf
             <input type="hidden" name="guid" value="{{ $user->guid }}">
             <!-- Body -->
-            <div class="gst-modal-body p-6">
+            <div class="gst-modal-body space-y-5 bg-slate-50/70 p-3 dark:bg-slate-950/30">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <!-- Ledger -->
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Ledger Name
-                        </label>
+                    <div class="gst-field-card md:col-span-2">
+                        <div class="mb-1 flex items-center gap-3">
+                            <span class="gst-modal-step">01</span>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-800 dark:text-slate-100">Ledger Name</label>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Search and select multiple ledgers in one flow.</p>
+                            </div>
+                        </div>
 
                         <select id="ledger_id" name="ledger_id[]"  multiple="multiple"
                             class="select2-ledger w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
-                                text-slate-800 dark:text-white px-3 py-2">
+                                text-slate-800 dark:text-white px-2 py-1">
                             <!-- <option value="">Select Ledger</option> -->
 
                             @foreach($availableLedgers as $ledger)
@@ -345,15 +410,15 @@
                         </select>
                     </div>
                     <!-- CGST -->
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                            CGST Ledger
+                    <div class="gst-field-card">
+                        <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+                            <span class="gst-modal-step">02</span> CGST Ledger
                         </label>
 
                         <select id="cgst_id" name="cgst_id"
                             class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
-                                text-slate-800 dark:text-white px-3 py-2">
+                                text-slate-800 dark:text-white px-2 py-1">
                             <option value="">Select CGST</option>
 
                             @foreach($cgstLedgers as $ledger)
@@ -364,15 +429,15 @@
                         </select>
                     </div>
                     <!-- SGST -->
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                            SGST Ledger
+                    <div class="gst-field-card">
+                        <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+                            <span class="gst-modal-step">03</span> SGST Ledger
                         </label>
 
                         <select id="sgst_id" name="sgst_id"
                             class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
-                                text-slate-800 dark:text-white px-3 py-2">
+                                text-slate-800 dark:text-white px-2 py-1">
                             <option value="">Select SGST</option>
 
                             @foreach($sgstLedgers as $ledger)
@@ -383,15 +448,15 @@
                         </select>
                     </div>
                     <!-- IGST -->
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-                            IGST Ledger
+                    <div class="gst-field-card md:col-span-2">
+                        <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+                            <span class="gst-modal-step">04</span> IGST Ledger
                         </label>
 
                         <select id="igst_id" name="igst_id"
                             class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
-                                text-slate-800 dark:text-white px-3 py-2">
+                                text-slate-800 dark:text-white px-2 py-1">
                             <option value="">Select IGST</option>
 
                             @foreach($igstLedgers as $ledger)
@@ -407,13 +472,13 @@
             <div class="flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-b-2xl">
 
                 <button type="button"
-                    class="closeModal px-5 py-2 rounded-lg bg-slate-500 text-white hover:bg-slate-600">
+                    class="closeModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
                     Cancel
                 </button>
 
                 <button type="button"
                     id="saveMapping"
-                    class="px-5 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700">
+                    class="rounded-xl bg-cyan-600 px-6 py-2 font-semibold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-700">
                     Save Mapping
                 </button>
 
@@ -525,15 +590,17 @@ $(document).on('click','.accordion-btn',function(){
 
 $('#ledger_id').select2({
     dropdownParent: $('#mappingModal'),
-    placeholder: 'Search Ledger...',
+    placeholder: 'Search and select ledgers...',
     allowClear: true,
+    closeOnSelect: false,
     width:'100%'
 });
 
 $('#item_id').select2({
     dropdownParent: $('#itemMappingModal'),
-    placeholder: 'Search Item...',
+    placeholder: 'Search and select items...',
     allowClear: true,
+    closeOnSelect: false,
     width: '100%'
 });
 
