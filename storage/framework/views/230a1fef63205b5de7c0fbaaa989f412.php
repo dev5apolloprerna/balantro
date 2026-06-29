@@ -73,7 +73,7 @@
                             Value
                         </label>
                         <select id="bulkValue"
-                            class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-white">
+                            class="bg-white placeSelect dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-white">
                             <option value="">Select Value</option>
                         </select>
                     </div>
@@ -1031,6 +1031,12 @@
         $(document).on('focus', '.ledgerSelect', function() {
             $(this).select2('open');
         });
+    });
+
+    $(document).on('select2:open', function() {
+        setTimeout(function() {
+            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+        }, 0);
     });
 
     function fillPartyDetailsFromLedger() {

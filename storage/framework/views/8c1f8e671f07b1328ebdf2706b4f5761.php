@@ -73,7 +73,7 @@
                             Value
                         </label>
                         <select id="bulkValue"
-                            class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-white">
+                            class="bg-white placeSelect dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-white">
                             <option value="">Select Value</option>
                         </select>
                     </div>
@@ -106,70 +106,72 @@
         <!-- <form id="salesForm" method="POST" action="<?php echo e(route('sales.save')); ?>"> -->
         <form id="salesForm">
             <?php echo csrf_field(); ?>
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
-                <table class="min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
-                    <!-- Table Header -->
+            <div class="credit-note-table-wrap overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                <table class="credit-note-table min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                    <colgroup>
+                        <col class="col-select">
+                        <col class="col-sr">
+                        <col class="col-date">
+                        <col class="col-reference">
+                        <col class="col-voucher">
+                        <col class="col-party">
+                        <col class="col-gstin">
+                        <col class="col-place">
+                        <col class="col-amount">
+                        <col class="col-status">
+                        <col class="col-action">
+                    </colgroup>
                     <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 text-xs uppercase sticky top-0 z-10">
                         <tr>
                             <th class="px-3 py-2 w-8">
                                 <input type="checkbox" id="selectAll">
                             </th>
-                            <th class="px-3 py-2">SR</th>
-                            <th class="px-3 py-2">DATE</th>
-                            <th class="px-3 py-2">REFERENCE</th>
-                            <th class="px-3 py-2">VOUCHER</th>
-                            <th class="px-3 py-2">PARTY A/C NAME</th>
-                            <th class="px-3 py-2">GSTIN/UIN</th>
-                            <th class="px-3 py-2">PLACE</th>
-                            <!-- <th class="px-3 py-2">PARTICULARS</th> -->
-                            <th class="px-3 py-2 text-right">AMOUNT</th>
-                            <th class="px-3 py-2">STATUS</th>
-                            <th class="px-3 py-2">ACTION</th>
+                            <th>SR</th>
+                            <th>DATE</th>
+                            <th>REFERENCE</th>
+                            <th>VOUCHER</th>
+                            <th>PARTY A/C NAME</th>
+                            <th>GSTIN/UIN</th>
+                            <th>PLACE</th>
+                            <!-- <th>PARTICULARS</th> -->
+                            <th class="text-right">AMOUNT</th>
+                            <th>STATUS</th>
+                            <th>ACTION</th>
                         </tr>
-                        <tr class="bg-white dark:bg-neutral-900">
+                        <tr class="bg-white dark:bg-neutral-900 column-search-row">
                             <th></th>
                             <th></th>
-                            <th>
-                                <input class="searchInput">
-                            </th>
-                            <th>
-                                <input class="searchInput">
-                            </th>
-                            <th>
-                                <input class="searchInput">
-                            </th>
-                            <th>
-                                <input class="searchInput">
-                            </th>
-                            <th>
-                                <input class="searchInput">
-                            </th>
-                            <th></th>
+                            <th><input type="date" class="searchInput" aria-label="Search date"></th>
+                            <th><input class="searchInput" placeholder="Reference" aria-label="Search reference"></th>
+                            <th><input class="searchInput" placeholder="Voucher" aria-label="Search voucher"></th>
+                            <th><input class="searchInput" placeholder="Party / ledger" aria-label="Search party"></th>
+                            <th><input class="searchInput" placeholder="GSTIN" aria-label="Search GSTIN"></th>
+                            <th></th><th></th><th></th><th></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         <?php $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index=>$row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
-                            <td class="px-3 py-2">
+                            <td  class="px-3 py-2">
                                 <input type="checkbox" name="selected[]" value="<?php echo e($row->id); ?>">
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <?php echo e($index+1); ?>
 
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <input type="date"
                                     name="date[<?php echo e($row->id); ?>]"
                                     value="<?php echo e(\Carbon\Carbon::parse($row->note_date)->format('Y-m-d')); ?>"
                                     class="inputCell">
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <input type="text"
                                     name="invoice_no[<?php echo e($row->id); ?>]"
                                     value="<?php echo e($row->note_no); ?>"
                                     class="inputCell">
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <select name="voucher_type[<?php echo e($row->id); ?>]" class="inputCell voucherSelect">
                                     <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($vchType); ?>"
@@ -177,7 +179,7 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <!-- Party Name -->
                                 <input type="text"
                                     name="party_name[<?php echo e($row->id); ?>]"
@@ -196,13 +198,13 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <?php echo e($row->gst_no); ?>
 
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <select name="place_of_supply[<?php echo e($row->id); ?>]"
-                                    class="inputCell">
+                                    class="inputCell placeSelect">
                                     <option value="">Select State</option>
                                     <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option value="<?php echo e($state); ?>"
@@ -213,54 +215,22 @@
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </td>
-                            <!-- <td class="px-3 py-2">
-                                <select name="ledger[<?php echo e($row->id); ?>]" class="ledgerSelect inputCell">
-                                    <option value="">Select Ledger</option>
-                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($ledger->name); ?>"
-                                        <?php echo e($row->sales_ledger==$ledger->name?'selected':''); ?>>
-                                        <?php echo e($ledger->name); ?>
-
-                                    </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                                </select>
-                            </td> -->
-                            <td class="px-3 py-2 text-right">
+                            <td class="text-right">
                                 <?php echo e(number_format($row->total_amount,2)); ?>
 
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <span class="text-yellow-400">
                                     <?php echo e($row->status); ?>
 
                                 </span>
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300" 
                                     title="View" data-id="<?php echo e($row->id); ?>">
                                     <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
-                                <!-- <button
-                                    type="button"
-                                    class="text-blue-400 editRow"
-                                    data-id="<?php echo e($row->id); ?>"
-                                    data-invoice="<?php echo e($row->invoice_no); ?>"
-                                    data-date="<?php echo e(\Carbon\Carbon::parse($row->date)->format('Y-m-d')); ?>"
-                                    data-gst_no="<?php echo e($row->gst_no); ?>"
-                                    data-vchtype="<?php echo e($row->vchType); ?>"
-                                    data-party="<?php echo e($row->party_name); ?>"
-                                    data-place="<?php echo e($row->place_of_supply); ?>"
-                                    data-ledger="<?php echo e($row->sales_ledger); ?>"
-                                    data-amount="<?php echo e($row->total_amount); ?>"
-                                    data-item="<?php echo e($row->item_name); ?>"
-                                    data-qty="<?php echo e($row->quantity); ?>"
-                                    data-rate="<?php echo e($row->rate); ?>"
-                                    data-cgst="<?php echo e($row->cgst); ?>"
-                                    data-sgst="<?php echo e($row->sgst); ?>"
-                                    data-igst="<?php echo e($row->igst); ?>">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button> -->
                                 <button type="button"
                                     class="text-blue-400 hover:text-blue-300 editRow"
                                     title="Edit"
@@ -759,10 +729,39 @@
 
 <style>
     /* ── BASE ── */
-    .inputCell { background:white; border:1px solid #d1d5db; color:#111827; padding:6px 8px; font-size:12px; width:100%; border-radius:4px; }
+    .credit-note-table-wrap { width:100%; overflow-x:auto; }
+    .credit-note-table { width:100%; min-width:1060px; table-layout:fixed; }
+    /* .credit-note-table th, .credit-note-table td { padding:8px 6px; vertical-align:top; } */
+    .credit-note-table th { white-space:nowrap; }
+    .credit-note-table .col-select { width:34px; }
+    .credit-note-table .col-sr { width:42px; }
+    .credit-note-table .col-date { width:105px; }
+    .credit-note-table .col-reference { width:100px; }
+    .credit-note-table .col-voucher { width:100px; }
+    .credit-note-table .col-party { width:210px; }
+    .credit-note-table .col-gstin { width:138px; }
+    .credit-note-table .col-place { width:140px; }
+    .credit-note-table .col-amount { width:100px; }
+    .credit-note-table .col-status { width:65px; }
+    .credit-note-table .col-action { width:92px; }
+
+    .inputCell { background:white; border:1px solid #d1d5db; color:#111827; padding:6px 8px; font-size:12px; width:100%; min-width:0; border-radius:4px; }
+    .placeSelect { min-width:145px; }
     .dark .inputCell { background:#020617; border:1px solid #374151; color:white; }
-    .searchInput { background:white; border:1px solid #d1d5db; color:#111827; }
+    .searchInput { background:white; border:1px solid #d1d5db; color:#111827; width:100%; min-width:0; border-radius:4px; padding:5px 7px; font-size:11px; text-transform:none; }
+    .searchInput::placeholder { color:#9ca3af; text-transform:none; }
     .dark .searchInput { background:#020617; border:1px solid #374151; color:white; }
+    @media (max-width: 1280px) {
+        .container.mx-auto { max-width:100%; padding-left:8px; padding-right:8px; }
+        .credit-note-table { min-width:980px; font-size:12px; }
+        .credit-note-table th, .credit-note-table td { padding:7px 5px; }
+        .credit-note-table .col-party { width:220px; }
+        .credit-note-table .col-place { width:150px; }
+    }
+    @media (max-width: 768px) {
+        .credit-note-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .credit-note-table { min-width:920px; }
+    }
     #purchaseTable tbody tr:hover { background:#f3f4f6; }
     .dark #purchaseTable tbody tr:hover { background:#1f2937; }
 
@@ -933,18 +932,33 @@
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
-        $('.searchInput').on('keyup', function() {
-            let column = $(this).closest('th').index();
-            let value = $(this).val().toLowerCase();
+        function applyColumnSearch() {
+            const activeFilters = $('.searchInput').map(function() {
+                return {
+                    column: $(this).closest('th').index(),
+                    value: ($(this).val() || '').toString().toLowerCase().trim()
+                };
+            }).get().filter(filter => filter.value !== '');
+
             $('#salesTable tbody tr').each(function() {
-                let cell = $(this).find('td').eq(column);
-                let text = cell.text().toLowerCase();
-                let input = cell.find('input,select').val();
-                if (input) {
-                    text += input.toLowerCase();
-                }
-                $(this).toggle(text.indexOf(value) > -1);
+                const row = $(this);
+                const isMatch = activeFilters.every(filter => {
+                    const cell = row.find('td').eq(filter.column);
+                    const text = cell.text().toLowerCase();
+                    const input = (cell.find('input,select').val() || '').toString().toLowerCase();
+                    return (text + ' ' + input).includes(filter.value);
+                });
+                row.toggle(isMatch);
             });
+        }
+
+        $('.searchInput').on('input keyup change', applyColumnSearch);
+
+        $('.placeSelect').select2({
+            width: '100%',
+            placeholder: "Search Place...",
+            allowClear: true,
+            dropdownAutoWidth: true
         });
 
         $('.ledgerSelect').select2({
@@ -2468,6 +2482,12 @@
             dropdownAutoWidth: true
         });
     }
+
+    $(document).on('select2:open', function() {
+        setTimeout(function() {
+            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+        }, 0);
+    });
 </script>
 <?php $__env->stopSection(); ?>
 

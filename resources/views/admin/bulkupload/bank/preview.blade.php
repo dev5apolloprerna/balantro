@@ -1469,6 +1469,12 @@
         $('#editModal').removeClass('hidden').addClass('flex');
     });
 
+    $(document).on('select2:open', function() {
+        setTimeout(function() {
+            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+        }, 0);
+    });
+
     $('#updateBtn').click(function() {
         $.ajax({
             url: "{{ route('bank.update') }}",

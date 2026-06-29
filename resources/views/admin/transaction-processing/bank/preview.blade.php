@@ -1448,6 +1448,12 @@ $(document).on('keyup change', '.searchInput', function () {
         });
     }
 
+    $(document).on('select2:open', function() {
+        setTimeout(function() {
+            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+        }, 0);
+    });
+
     
     $(document).on('click', '.suspenseBtn', function() {
         let id = $(this).data('id');

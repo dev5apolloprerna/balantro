@@ -3053,48 +3053,53 @@
         });
 
         
-// ─── LEDGER FORM ──────────────────────────────────────────────────────────────
-$('#ledgerForm').on('submit', function (e) {
-    e.preventDefault();
-    $.ajax({
-        url: "{{ route('sales.ledger.store') }}", type:'POST', data:$(this).serialize(),
-        success: () => {
-            let name = $('input[name="Name"]').val();
-             PARTY_LEDGER_DETAILS.push({
-                id: name,
-                name: name,
-                gst_no: $('input[name="GstNo"]').val() || '',
-                address: [$('input[name="AddressLine1"]').val(), $('input[name="AddressLine2"]').val()].filter(Boolean).join(', '),
-                pincode: $('input[name="Pincode"]').val() || '',
-                city: $('input[name="City"]').val() || '',
-                state: $('select[name="State"]').val() || ''
-            });
-            ['#edit_party','#noitem_sales_ledger'].forEach(sel => {
-                $(sel).append(new Option(name, name)).trigger('change');
-            });
-            $('.ledgerSelect').each(function () { $(this).append(new Option(name, name)); });
-            closeLedgerModal();
-            $('#ledgerForm')[0].reset();
-        },
-        error: () => showToast('Error saving ledger', 'error')
+    // ─── LEDGER FORM ──────────────────────────────────────────────────────────────
+    $('#ledgerForm').on('submit', function (e) {
+        e.preventDefault();
+        $.ajax({
+            url: "{{ route('sales.ledger.store') }}", type:'POST', data:$(this).serialize(),
+            success: () => {
+                let name = $('input[name="Name"]').val();
+                PARTY_LEDGER_DETAILS.push({
+                    id: name,
+                    name: name,
+                    gst_no: $('input[name="GstNo"]').val() || '',
+                    address: [$('input[name="AddressLine1"]').val(), $('input[name="AddressLine2"]').val()].filter(Boolean).join(', '),
+                    pincode: $('input[name="Pincode"]').val() || '',
+                    city: $('input[name="City"]').val() || '',
+                    state: $('select[name="State"]').val() || ''
+                });
+                ['#edit_party','#noitem_sales_ledger'].forEach(sel => {
+                    $(sel).append(new Option(name, name)).trigger('change');
+                });
+                $('.ledgerSelect').each(function () { $(this).append(new Option(name, name)); });
+                closeLedgerModal();
+                $('#ledgerForm')[0].reset();
+            },
+            error: () => showToast('Error saving ledger', 'error')
+        });
     });
-});
 
-function openLedgerModal() {
-            let modal = document.getElementById('ledgerModal');
-            if (!modal) {
-                console.error('ledgerModal not found');
-                return;
-            }
-            modal.classList.add('show');
+    function openLedgerModal() {
+        let modal = document.getElementById('ledgerModal');
+        if (!modal) {
+            console.error('ledgerModal not found');
+            return;
         }
+        modal.classList.add('show');
+    }
 
-        function closeLedgerModal() {
-            let modal = document.getElementById('ledgerModal');
-            if (!modal) {
-                return;
-            }
-            modal.classList.remove('show');
+    function closeLedgerModal() {
+        let modal = document.getElementById('ledgerModal');
+        if (!modal) {
+            return;
         }
-    </script>
+        modal.classList.remove('show');
+    }
+    $(document).on('select2:open', function() {
+        setTimeout(function() {
+            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+        }, 0);
+    });
+</script>
     @endsection

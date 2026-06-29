@@ -5,14 +5,6 @@
     <div class="bg-white dark:bg-neutral-900 rounded-lg shadow border border-gray-200 dark:border-neutral-700">
         <!-- HEADER -->
         <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
-            <!-- <div class="flex items-center gap-3">
-                <h2 class="text-gray-900 dark:text-white text-lg font-semibold">
-                    Purchase Transactions
-                </h2>
-                <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                    {{ $rows->count() }}
-                </span>
-            </div> -->
             <div class="flex items-center gap-3">
                 <button type="button"
                     onclick="window.history.back()"
@@ -50,9 +42,9 @@
             </div>
         </div>
         <!-- FILTERS -->
-        <div class="flex gap-10 px-5 py-3 text-sm border-b border-neutral-700">
+        <div class="flex flex-wrap gap-6 px-5 py-3 text-sm border-b border-neutral-700">
             <div>
-                <div class="flex gap-4 items-end">
+                <div class="flex flex-wrap gap-4 items-end">
                     <div>
                         <label class="text-gray-700 dark:text-gray-300 text-sm block">
                             Update Bulk Records
@@ -71,7 +63,7 @@
                             Value
                         </label>
                         <select id="bulkValue"
-                            class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-800 dark:text-white rounded px-3 py-1 mt-1">
+                            class="bg-white placeSelect dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-800 dark:text-white rounded px-3 py-1 mt-1">
                             <option value="">Select Value</option>
                         </select>
                     </div>
@@ -85,7 +77,7 @@
             </div>
             <div>
                 <label class="text-gray-700 dark:text-gray-300 text-sm">General Filters</label>
-                <div class="flex gap-4 mt-2 text-gray-700 dark:text-gray-300">
+                <div class="flex flex-wrap gap-4 mt-2 text-gray-700 dark:text-gray-300">
                     <label>
                         <input type="checkbox" class="generalFilter" value="synced"> Hide Synced
                     </label>
@@ -104,69 +96,84 @@
         <!-- <form id="purchaseForm" method="POST" action="{{ route('purchase.save') }}"> -->
         <form id="purchaseForm">
             @csrf
-            <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
-                <table class="min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
-                    <!-- Table Header -->
+            <div class="debit-table-wrap overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+                <table class="debit-preview-table min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                    <colgroup>
+                        <col class="col-select">
+                        <col class="col-sr">
+                        <col class="col-date">
+                        <col class="col-reference">
+                        <col class="col-voucher">
+                        <col class="col-party">
+                        <col class="col-gst">
+                        <col class="col-place">
+                        <col class="col-amount">
+                        <col class="col-status">
+                        <col class="col-action">
+                    </colgroup>
                     <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 text-xs uppercase sticky top-0 z-10">
                         <tr>
-                            <th class="px-3 py-2 w-8">
+                            <th class="w-8">
                                 <input type="checkbox" id="selectAll">
                             </th>
-                            <th class="px-3 py-2">SR</th>
-                            <th class="px-3 py-2">DATE</th>
-                            <th class="px-3 py-2">REFERENCE</th>
-                            <th class="px-3 py-2">VOUCHER</th>
-                            <th class="px-3 py-2">PARTY A/C NAME</th>
-                            <th class="px-3 py-2">GSTIN/UIN</th>
-                            <th class="px-3 py-2">PLACE</th>
-                            <!-- <th class="px-3 py-2">PARTICULARS</th> -->
-                            <th class="px-3 py-2 text-right">AMOUNT</th>
-                            <th class="px-3 py-2">STATUS</th>
-                            <th class="px-3 py-2">ACTION</th>
+                            <th>SR</th>
+                            <th>DATE</th>
+                            <th>REFERENCE</th>
+                            <th>VOUCHER</th>
+                            <th>PARTY A/C NAME</th>
+                            <th>GSTIN/UIN</th>
+                            <th>PLACE</th>
+                            <!-- <th>PARTICULARS</th> -->
+                            <th class="text-right">AMOUNT</th>
+                            <th>STATUS</th>
+                            <th>ACTION</th>
                         </tr>
                         <tr class="bg-white dark:bg-neutral-900">
                             <th></th>
                             <th></th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" type="search" data-column="2" placeholder="Date" aria-label="Search date">
                             </th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" type="search" data-column="3" placeholder="Ref" aria-label="Search reference">
                             </th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" type="search" data-column="4" placeholder="Voucher" aria-label="Search voucher">
                             </th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" type="search" data-column="5" placeholder="Party / Ledger" aria-label="Search party or ledger">
                             </th>
                             <th>
-                                <input class="searchInput">
+                                <input class="searchInput" type="search" data-column="6" placeholder="GSTIN" aria-label="Search GSTIN">
                             </th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         @foreach($rows as $index=>$row)
                         <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
-                            <td class="px-3 py-2">
+                            <td>
                                 <input type="checkbox" name="selected[]" value="{{$row->id}}">
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 {{ $index+1 }}
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <input type="date"
                                     name="date[{{$row->id}}]"
                                     value="{{ \Carbon\Carbon::parse($row->note_date)->format('Y-m-d') }}"
                                     class="inputCell">
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <input type="text"
                                     name="invoice_no[{{$row->id}}]"
                                     value="{{$row->note_no}}"
                                     class="inputCell">
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <select name="voucher_type[{{$row->id}}]" class="inputCell voucherSelect">
                                     @foreach($vchTypes as $vchType)
                                     <option value="{{$vchType}}"
@@ -174,7 +181,7 @@
                                     @endforeach
                                 </select>
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <!-- Party Name -->
                                 <input type="text"
                                     name="party_name[{{$row->id}}]"
@@ -192,12 +199,12 @@
                                     @endforeach
                                 </select>
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 {{$row->gst_no}}
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <select name="place_of_supply[{{$row->id}}]"
-                                    class="inputCell">
+                                    class="inputCell placeSelect">
                                     <option value="">Select State</option>
                                     @foreach($states as $state)
                                     <option value="{{$state}}"
@@ -207,50 +214,21 @@
                                     @endforeach
                                 </select>
                             </td>
-                            <!-- <td class="px-3 py-2">
-                                <select name="ledger[{{$row->id}}]" class="ledgerSelect inputCell">
-                                    <option>Select Ledger</option>
-                                    @foreach($ledgers as $ledger)
-                                    <option value="{{$ledger->name}}"
-                                        {{ trim($ledger->name) == trim($row->purchase_ledger) ? 'selected':''}}>{{$ledger->name}}</option>
-                                    @endforeach
-                                </select>
-                            </td> -->
-                            <td class="px-3 py-2 text-right">
+                            <td class="text-right">
                                 {{ number_format($row->total_amount,2) }}
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 <span class="text-yellow-400">
                                     {{$row->status}}
                                 </span>
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 {{-- VIEW BUTTON --}}
                                 <button type="button" class="viewRow text-green-400 hover:text-green-300" 
                                     title="View" data-id="{{ $row->id }}">
                                     <i class="fa-solid fa-eye action-icon"></i>
                                 </button>
 
-                                <!-- <button
-                                    type="button"
-                                    class="text-blue-400 editRow"
-                                    data-id="{{$row->id}}"
-                                    data-invoice="{{$row->invoice_no}}"
-                                    data-date="{{$row->date}}"
-                                    data-gst_no="{{$row->gst_no}}"
-                                    data-vchtype="{{$row->vchType}}"
-                                    data-party="{{$row->party_name}}"
-                                    data-place="{{$row->place_of_supply}}"
-                                    data-ledger="{{$row->purchase_ledger}}"
-                                    data-amount="{{$row->total_amount}}"
-                                    data-item="{{$row->item_name}}"
-                                    data-qty="{{$row->quantity}}"
-                                    data-rate="{{$row->rate}}"
-                                    data-cgst="{{$row->cgst}}"
-                                    data-sgst="{{$row->sgst}}"
-                                    data-igst="{{$row->igst}}">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button> -->
                                 {{-- EDIT BUTTON --}}
                                 <button type="button"
                                     class="text-blue-400 hover:text-blue-300 editRow"
@@ -756,6 +734,41 @@
 </div>
 
 <style>
+    .debit-table-wrap { width:100%; }
+    .debit-preview-table { width:100%; table-layout:fixed; min-width:1040px; }
+    .debit-preview-table th,
+    .debit-preview-table td { vertical-align:top; overflow-wrap:anywhere; }
+    .debit-preview-table th { white-space:normal; line-height:1.15; }
+    /* .debit-preview-table td { padding-left:.45rem; padding-right:.45rem; } */
+    .debit-preview-table .col-select { width:34px; }
+    .debit-preview-table .col-sr { width:42px; }
+    .debit-preview-table .col-date { width:105px; }
+    .debit-preview-table .col-reference { width:100px; }
+    .debit-preview-table .col-voucher { width:100px; }
+    .debit-preview-table .col-party { width:210px; }
+    .debit-preview-table .col-gst { width:138px; }
+    .debit-preview-table .col-place { width:140px; }
+    .debit-preview-table .col-amount { width:100px; }
+    .debit-preview-table .col-status { width:65px; }
+    .debit-preview-table .col-action { width:92px; }
+
+    .debit-preview-table .inputCell { min-width:0; height:32px; }
+    .debit-preview-table input[type="date"].inputCell { min-width:106px; padding-left:5px; padding-right:3px; }
+    .debit-preview-table .voucherSelect { min-width:0; }
+    .debit-preview-table select[name^="place_of_supply"] { min-width:112px; }
+    .debit-preview-table .select2-container { max-width:100%; }
+    .debit-preview-table .select2-selection__rendered { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .searchInput { width:100%; min-width:0; height:28px; padding:4px 6px; border-radius:4px; font-size:11px; }
+    .searchInput::placeholder { color:#9ca3af; }
+    @media (max-width: 1280px) {
+        .container.mx-auto { max-width:100%; padding-left:.5rem; padding-right:.5rem; }
+        .debit-preview-table { min-width:980px; font-size:12px; }
+        .debit-preview-table .col-party { width:235px; }
+        .debit-preview-table .col-gst { width:124px; }
+        .debit-preview-table .col-place { width:118px; }
+        .debit-preview-table td, .debit-preview-table th { padding-left:.35rem; padding-right:.35rem; }
+    }
+
     #purchaseTable {
         width: 100%;
         table-layout: fixed;
@@ -771,7 +784,7 @@
     #purchaseTable th:nth-child(3) { width: 120px; }  /* DATE */
     #purchaseTable th:nth-child(5) { width: 120px; }  /* VOUCHER */
     #purchaseTable th:nth-child(9) { width: 100px; }  /* AMOUNT */
-    #purchaseTable th:nth-child(11) { width: 120px; } /* ACTION */
+    #purchaseTable th:nth-child(11) { width: 90px; } /* ACTION */
     /* ── BASE ── */
     .inputCell { background:white; border:1px solid #d1d5db; color:#111827; padding:6px 8px; font-size:12px; width:100%; border-radius:4px; }
     .dark .inputCell { background:#020617; border:1px solid #374151; color:white; }
@@ -948,18 +961,30 @@
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
-        $('.searchInput').on('keyup', function() {
-            let column = $(this).closest('th').index();
-            let value = $(this).val().toLowerCase();
+        const normalizeTableSearchText = function(value) {
+            value = (value || '').toString().toLowerCase().trim();
+            return value + ' ' + value.replace(/-/g, '/') + ' ' + value.split('-').reverse().join('-');
+        };
+
+        $('.searchInput').on('input keyup', function() {
+            let column = Number($(this).data('column'));
+            let value = normalizeTableSearchText($(this).val());
             $('#purchaseTable tbody tr').each(function() {
                 let cell = $(this).find('td').eq(column);
-                let text = cell.text().toLowerCase();
-                let input = cell.find('input,select').val();
-                if (input) {
-                    text += input.toLowerCase();
-                }
+                let text = normalizeTableSearchText(cell.text());
+                cell.find('input,select').each(function() {
+                    text += ' ' + normalizeTableSearchText($(this).val());
+                    text += ' ' + normalizeTableSearchText($(this).find('option:selected').text());
+                });
                 $(this).toggle(text.indexOf(value) > -1);
             });
+        });
+
+        $('.placeSelect').select2({
+            width: '100%',
+            placeholder: "Search Place...",
+            allowClear: true,
+            dropdownAutoWidth: true
         });
 
         $('.ledgerSelect').select2({
@@ -3273,5 +3298,11 @@
 
         renderCustomSlots(slots);
     }
+
+    $(document).on('select2:open', function() {
+        setTimeout(function() {
+            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+        }, 0);
+    });
 </script>
 @endsection
