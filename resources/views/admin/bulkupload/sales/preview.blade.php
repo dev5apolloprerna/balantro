@@ -70,7 +70,7 @@
                             Value
                         </label>
                         <select id="bulkValue"
-                            class="bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-white">
+                            class="bg-white placeSelect dark:bg-neutral-800 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-white">
                             <option value="">Select Value</option>
                         </select>
                     </div>
