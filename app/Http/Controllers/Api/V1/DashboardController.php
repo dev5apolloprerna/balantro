@@ -663,20 +663,8 @@ class DashboardController extends BaseApiController
                 'Direct Expenses',
             ];
             $allGroups = collect($this->reportsService->getAllGroupsWithBalances($userId, $from, $to));
-            
-
-            $groups = $allGroups->map(function ($group) {
-                return [
-                    'iGroupId' => (int) $group->iGroupId,
-                    'strGroupName' => $group->strGroupName,
-                    'Closing' => (float) ($group->Closing ?? 0),
-                    'Opening' => (float) ($group->Opening ?? 0),
-                    'accent' => $this->getAccentColor($group->strGroupName),
-                    'icon' => $this->getGroupIcon($group->strGroupName),
-                ];
-            })->values()->toArray();
-
-           $defaultGroupIds = $allGroups
+           
+            $defaultGroupIds = $allGroups
                 ->whereIn('strGroupName', $defaultGroupNames)
                 ->pluck('iGroupId')
                 ->map(fn($groupId) => (int) $groupId)
@@ -716,7 +704,7 @@ class DashboardController extends BaseApiController
                 $validSelectedGroups = $defaultGroupIds;
             }
 
-            $selectedGroupsWithBalances = $allGroups
+            $groups = $allGroups
                 ->whereIn('iGroupId', $validSelectedGroups)
                 ->map(function ($group) {
                     return [
@@ -724,20 +712,31 @@ class DashboardController extends BaseApiController
                         'strGroupName' => $group->strGroupName,
                         'Closing' => (float) ($group->Closing ?? 0),
                         'Opening' => (float) ($group->Opening ?? 0),
+                        'accent' => $this->getAccentColor($group->strGroupName),
+                        'icon' => $this->getGroupIcon($group->strGroupName),
                     ];
                 })
                 ->values()
                 ->toArray();
 
-            $groupCards = collect($selectedGroupsWithBalances)->map(function ($group) {
+            $selectedGroupsWithBalances = collect($groups)->map(function ($group) {
+                return [
+                    'iGroupId' => $group['iGroupId'],
+                    'strGroupName' => $group['strGroupName'],
+                    'Closing' => $group['Closing'],
+                    'Opening' => $group['Opening'],
+                ];
+            })->values()->toArray();
+
+            $groupCards = collect($groups)->map(function ($group) {
                 return [
                     'key' => 'group_' . $group['iGroupId'],
                     'iGroupId' => $group['iGroupId'],
                     'value' => $group['Closing'],
                     'name' => $group['strGroupName'],
                     'label' => $group['strGroupName'],
-                    'accent' => $this->getAccentColor($group['strGroupName']),
-                    'icon' => $this->getGroupIcon($group['strGroupName']),
+                    'accent' => $group['accent'],
+                    'icon' => $group['icon'],
                     'opening_balance' => $group['Opening'],
                     'closing_balance' => $group['Closing'],
                 ];
@@ -795,102 +794,139 @@ class DashboardController extends BaseApiController
     {
         $iconMap = [
             // Financial & Banking
-            'bank' => 'fa-solid fa-building-columns',
-            'cash' => 'fa-solid fa-money-bill-wave',
-            'bank accounts' => 'fa-solid fa-building-columns',
-            'cash-in-hand' => 'fa-solid fa-money-bill-wave',
-            'current assets' => 'fa-solid fa-chart-line',
-            'fixed assets' => 'fa-solid fa-industry',
-            'investments' => 'fa-solid fa-chart-pie',
+            // 'bank' => 'fa-solid fa-building-columns',
+            // 'cash' => 'fa-solid fa-money-bill-wave',
+            // 'bank accounts' => 'fa-solid fa-building-columns',
+            // 'cash-in-hand' => 'fa-solid fa-money-bill-wave',
+            // 'current assets' => 'fa-solid fa-chart-line',
+            // 'fixed assets' => 'fa-solid fa-industry',
+            // 'investments' => 'fa-solid fa-chart-pie',
             
-            // Sales & Revenue
-            'sales' => 'fa-solid fa-tags',
-            'sales accounts' => 'fa-solid fa-tags',
-            'income' => 'fa-solid fa-money-bill-trend-up',
-            'revenue' => 'fa-solid fa-money-bill-wave',
+            // // Sales & Revenue
+            // 'sales' => 'fa-solid fa-tags',
+            // 'sales accounts' => 'fa-solid fa-tags',
+            // 'income' => 'fa-solid fa-money-bill-trend-up',
+            // 'revenue' => 'fa-solid fa-money-bill-wave',
             
-            // Purchases & Expenses
-            'purchase' => 'fa-solid fa-cart-shopping',
-            'purchase accounts' => 'fa-solid fa-cart-shopping',
-            'expenses' => 'fa-solid fa-receipt',
-            'direct expenses' => 'fa-solid fa-truck',
-            'indirect expenses' => 'fa-solid fa-file-invoice-dollar',
+            // // Purchases & Expenses
+            // 'purchase' => 'fa-solid fa-cart-shopping',
+            // 'purchase accounts' => 'fa-solid fa-cart-shopping',
+            // 'expenses' => 'fa-solid fa-receipt',
+            // 'direct expenses' => 'fa-solid fa-truck',
+            // 'indirect expenses' => 'fa-solid fa-file-invoice-dollar',
             
-            // Debtors & Creditors
-            'debtors' => 'fa-solid fa-hand-holding-dollar',
-            'creditors' => 'fa-solid fa-hand-holding-hand',
-            'sundry debtors' => 'fa-solid fa-hand-holding-dollar',
-            'sundry creditors' => 'fa-solid fa-hand-holding-hand',
-            'receivables' => 'fa-solid fa-arrow-down-to-line',
-            'payables' => 'fa-solid fa-arrow-up-from-line',
+            // // Debtors & Creditors
+            // 'debtors' => 'fa-solid fa-hand-holding-dollar',
+            // 'creditors' => 'fa-solid fa-hand-holding-hand',
+            // 'sundry debtors' => 'fa-solid fa-hand-holding-dollar',
+            // 'sundry creditors' => 'fa-solid fa-hand-holding-hand',
+            // 'receivables' => 'fa-solid fa-arrow-down-to-line',
+            // 'payables' => 'fa-solid fa-arrow-up-from-line',
             
-            // Capital & Liabilities
-            'capital' => 'fa-solid fa-landmark',
-            'liabilities' => 'fa-solid fa-scale-balanced',
-            'current liabilities' => 'fa-solid fa-clock-rotate-left',
-            'long term liabilities' => 'fa-solid fa-calendar-day',
+            // // Capital & Liabilities
+            // 'capital' => 'fa-solid fa-landmark',
+            // 'liabilities' => 'fa-solid fa-scale-balanced',
+            // 'current liabilities' => 'fa-solid fa-clock-rotate-left',
+            // 'long term liabilities' => 'fa-solid fa-calendar-day',
             
-            // Stock & Inventory
-            'stock' => 'fa-solid fa-boxes-stacked',
-            'inventory' => 'fa-solid fa-warehouse',
-            'stock-in-hand' => 'fa-solid fa-boxes-stacked',
+            // // Stock & Inventory
+            // 'stock' => 'fa-solid fa-boxes-stacked',
+            // 'inventory' => 'fa-solid fa-warehouse',
+            // 'stock-in-hand' => 'fa-solid fa-boxes-stacked',
             
-            // Loans & Advances
-            'loans' => 'fa-solid fa-hand-holding-dollar',
-            'advances' => 'fa-solid fa-forward',
-            'loan' => 'fa-solid fa-hand-holding-dollar',
-            'advance' => 'fa-solid fa-forward',
+            // // Loans & Advances
+            // 'loans' => 'fa-solid fa-hand-holding-dollar',
+            // 'advances' => 'fa-solid fa-forward',
+            // 'loan' => 'fa-solid fa-hand-holding-dollar',
+            // 'advance' => 'fa-solid fa-forward',
             
-            // Tax
-            'tax' => 'fa-solid fa-percent',
-            'duties' => 'fa-solid fa-scale-balanced',
-            'taxes' => 'fa-solid fa-percent',
+            // // Tax
+            // 'tax' => 'fa-solid fa-percent',
+            // 'duties' => 'fa-solid fa-scale-balanced',
+            // 'taxes' => 'fa-solid fa-percent',
             
-            // General
-            'accounts' => 'fa-solid fa-book',
-            'ledger' => 'fa-solid fa-book-open',
-            'general' => 'fa-solid fa-gear',
-            'miscellaneous' => 'fa-solid fa-cube',
-            'profit' => 'fa-solid fa-chart-line',
-            'loss' => 'fa-solid fa-chart-line-down',
+            // // General
+            // 'accounts' => 'fa-solid fa-book',
+            // 'ledger' => 'fa-solid fa-book-open',
+            // 'general' => 'fa-solid fa-gear',
+            // 'miscellaneous' => 'fa-solid fa-cube',
+            // 'profit' => 'fa-solid fa-chart-line',
+            // 'loss' => 'fa-solid fa-chart-line-down',
             
-            // Default fallbacks
-            'assets' => 'fa-solid fa-chart-line',
-            'equity' => 'fa-solid fa-scale-balanced',
-            'revenue' => 'fa-solid fa-money-bill-wave',
+            // // Default fallbacks
+            // 'assets' => 'fa-solid fa-chart-line',
+            // 'equity' => 'fa-solid fa-scale-balanced',
+            // 'revenue' => 'fa-solid fa-money-bill-wave',
+
+            'bank' => 'bank-od.png',
+            'cash' => 'cash.png',
+            'bank accounts' => 'bank-account.png',
+            'cash-in-hand' => 'cash-in-hand.png',
+            'current assets' => 'current-assets.png',
+            'fixed assets' => 'fixed-assets.png',
+            'investments' => 'investment.png',
+            'current liabilities' => 'current-laibities.png',
+            'deposits (asset)' => 'deposit.png',
+            'provisions' => 'provision.png',
+            'reserves & surplus' => 'reserve.png',
+            'stock-in-hand' => 'stock-in-hand.png',
+            'sundry creditors' => 'sundry-creditors.png',
+            'sundry debtors' => 'sundry-debitors.png',
+            'sales' => 'sales.png',
+            'income' => 'income.png',
+            'suspense a/c' => 'suspense-acc.png',
+            'purchase' => 'purchase.png',
+            'expenses' => 'expenses.png',
+            'secured loans' => 'secured-loan.png',
+            'unsecured loans' => 'unsecured-loan.png',
+            'debtors' => 'debtors.png',
+            'creditors' => 'creditors.png',
+            'capital' => 'capital.png',
+            'stock' => 'stock.png',
+            'loans' => 'loan(laibility).png',
+            'loans & advances (asset)' => 'loans_advance.png',
+            'tax' => 'tax.png',
+            'duties & taxes' => 'duties&taxes.png',
+            'direct expenses' => 'direct_expense.png',
+            'direct incomes' => 'direct_income.png',
+            'indirect expense' => 'indirect_expense.png',
+            'indirect incomes' => 'indirect_income.png',
         ];
 
         $groupName = strtolower(trim($groupName));
         
         // Exact match
         if (isset($iconMap[$groupName])) {
-            return $iconMap[$groupName];
+            //return $iconMap[$groupName];
+            return asset('assets/images/' . $iconMap[$groupName]);
         }
         
         // Partial match
         foreach ($iconMap as $key => $icon) {
             if (str_contains($groupName, $key)) {
-                return $icon;
+                //return $icon;
+                return asset('assets/images/' . $icon);
             }
         }
         
         // Default icon based on group type
-        if (str_contains($groupName, 'asset')) {
-            return 'fa-solid fa-chart-line';
-        } elseif (str_contains($groupName, 'liabilit')) {
-            return 'fa-solid fa-scale-balanced';
-        } elseif (str_contains($groupName, 'income') || str_contains($groupName, 'revenue')) {
-            return 'fa-solid fa-money-bill-wave';
-        } elseif (str_contains($groupName, 'expense') || str_contains($groupName, 'cost')) {
-            return 'fa-solid fa-receipt';
-        } elseif (str_contains($groupName, 'capital')) {
-            return 'fa-solid fa-landmark';
-        } elseif (str_contains($groupName, 'bank') || str_contains($groupName, 'cash')) {
-            return 'fa-solid fa-building-columns';
-        }
+        // if (str_contains($groupName, 'asset')) {
+        //     return 'fa-solid fa-chart-line';
+        // } elseif (str_contains($groupName, 'liabilit')) {
+        //     return 'fa-solid fa-scale-balanced';
+        // } elseif (str_contains($groupName, 'income') || str_contains($groupName, 'revenue')) {
+        //     return 'fa-solid fa-money-bill-wave';
+        // } elseif (str_contains($groupName, 'expense') || str_contains($groupName, 'cost')) {
+        //     return 'fa-solid fa-receipt';
+        // } elseif (str_contains($groupName, 'capital')) {
+        //     return 'fa-solid fa-landmark';
+        // } elseif (str_contains($groupName, 'bank') || str_contains($groupName, 'cash')) {
+        //     return 'fa-solid fa-building-columns';
+        // }
         
         // Ultimate fallback
-        return 'fa-solid fa-cube';
+        // return 'fa-solid fa-cube';
+        return asset('assets/images/document.png');
     }
 
     private function resolveDashboardDateRange(Request $request): array

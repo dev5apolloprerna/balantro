@@ -311,6 +311,7 @@ class PandLAccountController extends Controller
                         'OpeningStock' => '0.00',
                         'ClosingStock' => '0.00',
                         'COGS' => '0.00',
+                        'web' => $this->buildWebPandLResponse([], [], [], [], 0, 0, 0, 0, 0, 0, 0, 0),
                     ]
                 ], 200);
             }
@@ -522,6 +523,20 @@ class PandLAccountController extends Controller
 
             $netProfit = $grossProfit + $totII - $totIE;
 
+            $webResponse = $this->buildWebPandLResponse(
+                $data['cr'],
+                $data['dr'],
+                $data['IndirectIncomes'],
+                $data['IndirectExpenses'],
+                $salesAccounts,
+                $directIncomes,
+                $purchaseAccounts,
+                $directExpenses,
+                $openingStock,
+                $closingStock,
+                $grossProfit,
+                $netProfit
+            );
             /*
             |--------------------------------------------------------------------------
             | RESPONSE
@@ -548,6 +563,11 @@ class PandLAccountController extends Controller
                 'DirectExpenses' => $this->fmt($directExpenses),
                 'TotalIndirectIncome' => $this->fmt($totII),
                 'TotalIndirectExpenses' => $this->fmt($totIE),
+                'grossIsProfit' => $grossProfit >= 0,
+                'netIsProfit' => $netProfit >= 0,
+                'grossAbs' => $this->fmt(abs($grossProfit)),
+                'netAbs' => $this->fmt(abs($netProfit)),
+                'web' => $webResponse,
             ];
             return response()->json([
                 'success' => true,
@@ -581,8 +601,162 @@ class PandLAccountController extends Controller
 
         return number_format($num, 2);
     }
+    
+    private function moneyFmt(float $value): string
+    {
+        return ($value < 0 ? '- ₹ ' : '₹ ') . number_format(abs($value), 2);
+    }
 
-   
+    private function buildWebPandLResponse(
+        array $cr,
+        array $dr,
+        array $indirectIncomes,
+        array $indirectExpenses,
+        float $salesAccounts,
+        float $directIncomes,
+        float $purchaseAccounts,
+        float $directExpenses,
+        float $openingStock,
+        float $closingStock,
+        float $grossProfitLoss,
+        float $netProfit
+    ): array {
+        $row = function (string $key, string $label, float $amount, ?array $source = null): array {
+            return [
+                'key' => $key,
+                'label' => $label,
+                'amount' => $amount,
+                'formatted_amount' => $this->moneyFmt($amount),
+                'iPrimaryGroupId' => $source['iPrimaryGroupId'] ?? null,
+                'strGroupName' => $source['strGroupName'] ?? $label,
+                'iPartyId' => $source['iPartyId'] ?? null,
+                'iYearId' => $source['iYearId'] ?? null,
+            ];
+        };
+
+        $findByGroup = function (array $rows, string $groupName): ?array {
+            foreach ($rows as $item) {
+                if (($item['strGroupName'] ?? '') === $groupName) {
+                    return $item;
+                }
+            }
+
+            return null;
+        };
+
+        $incomeRows = [
+            $row('sales_accounts', 'Sales Accounts', $salesAccounts, $findByGroup($cr, 'Sales Accounts')),
+            $row('direct_incomes', 'Direct Incomes', $directIncomes, $findByGroup($cr, 'Direct Incomes')),
+        ];
+
+        if ($closingStock > 0) {
+            $incomeRows[] = $row('closing_stock', 'Closing Stock', $closingStock);
+        }
+
+        if ($openingStock < 0) {
+            $incomeRows[] = $row('opening_stock', 'Opening Stock', abs($openingStock));
+        }
+
+        $expenseRows = [];
+
+        if ($openingStock > 0) {
+            $expenseRows[] = $row('opening_stock', 'Opening Stock', $openingStock);
+        }
+
+        if ($closingStock < 0) {
+            $expenseRows[] = $row('closing_stock', 'Closing Stock', abs($closingStock));
+        }
+
+        $expenseRows[] = $row('purchase_accounts', 'Purchase Accounts', $purchaseAccounts, $findByGroup($dr, 'Purchase Accounts'));
+        $expenseRows[] = $row('direct_expenses', 'Direct Expenses', $directExpenses, $findByGroup($dr, 'Direct Expenses'));
+
+        $sumAmount = fn(array $rows): float => array_reduce(
+            $rows,
+            fn(float $carry, array $item): float => $carry + (float) ($item['amount'] ?? 0),
+            0.0
+        );
+
+        $totalIncome = $sumAmount($incomeRows);
+        $totalExpenses = $sumAmount($expenseRows);
+        $indirectIncome = array_reduce(
+            $indirectIncomes,
+            fn(float $carry, array $item): float => $carry + (float) ($item['decMainAmount'] ?? 0),
+            0.0
+        );
+        $indirectExpense = array_reduce(
+            $indirectExpenses,
+            fn(float $carry, array $item): float => $carry + (float) ($item['decMainAmount'] ?? 0),
+            0.0
+        );
+
+        $formatIndirectRows = function (array $rows): array {
+            return array_map(function (array $item): array {
+                $amount = (float) ($item['decMainAmount'] ?? 0);
+
+                return [
+                    'key' => strtolower(str_replace(' ', '_', (string) ($item['strGroupName'] ?? ''))),
+                    'label' => $item['strGroupName'] ?? '—',
+                    'amount' => $amount,
+                    'formatted_amount' => $this->moneyFmt($amount),
+                    'iPrimaryGroupId' => $item['iPrimaryGroupId'] ?? null,
+                    'strGroupName' => $item['strGroupName'] ?? null,
+                    'iPartyId' => $item['iPartyId'] ?? null,
+                    'iYearId' => $item['iYearId'] ?? null,
+                ];
+            }, $rows);
+        };
+
+        return [
+            'income' => [
+                'title' => 'Income',
+                'rows' => $incomeRows,
+                'total' => $totalIncome,
+                'formatted_total' => $this->moneyFmt($totalIncome),
+            ],
+            'expenses' => [
+                'title' => 'Expenses',
+                'rows' => $expenseRows,
+                'total' => $totalExpenses,
+                'formatted_total' => $this->moneyFmt($totalExpenses),
+            ],
+            'gross_profit_loss' => [
+                'label' => 'Gross Profit / Loss (I - II)',
+                'amount' => $grossProfitLoss,
+                'abs_amount' => abs($grossProfitLoss),
+                'formatted_amount' => $this->moneyFmt(abs($grossProfitLoss)),
+                'is_profit' => $grossProfitLoss >= 0,
+            ],
+            'indirect_income' => [
+                'title' => 'Indirect Income',
+                'rows' => $formatIndirectRows($indirectIncomes),
+                'total' => $indirectIncome,
+                'formatted_total' => $this->moneyFmt($indirectIncome),
+            ],
+            'indirect_expenses' => [
+                'title' => 'Indirect Expenses',
+                'rows' => $formatIndirectRows($indirectExpenses),
+                'total' => $indirectExpense,
+                'formatted_total' => $this->moneyFmt($indirectExpense),
+            ],
+            'net_profit_loss' => [
+                'label' => 'Net Profit / Loss (III + IV - V)',
+                'amount' => $netProfit,
+                'abs_amount' => abs($netProfit),
+                'formatted_amount' => $this->moneyFmt(abs($netProfit)),
+                'is_profit' => $netProfit >= 0,
+            ],
+            'chart_totals' => [
+                'direct_income' => abs($directIncomes),
+                'sales_accounts' => abs($salesAccounts),
+                'direct_expense' => abs($directExpenses),
+                'purchase_accounts' => abs($purchaseAccounts),
+                'indirect_income' => abs($indirectIncome),
+                'indirect_expense' => abs($indirectExpense),
+                'total_income' => abs($directIncomes) + abs($indirectIncome),
+                'total_expenses' => abs($directExpenses) + abs($indirectExpense),
+            ],
+        ];
+    }
 	
 	private function getPandLData($partyId, $startDate, $endDate)
     {
