@@ -167,9 +167,22 @@ class HomeController extends Controller
                 ->orderBy('iYearId', 'desc')
                 ->get();
             // Restore from session if empty
+            $defaultRange = $financialYears->first()->strYear ?? null;
+            $selectedRange = $range ?: session('selectedRange', $defaultRange);
             $from = $r->input('from', session('selectedFrom'));
             $to   = $r->input('to', session('selectedTo'));
-            $selectedRange = $range ?: session('selectedRange', 'current_year');
+            if ((! $from || ! $to) && preg_match('/^(\d{4})-(\d{4})$/', (string) $selectedRange, $matches)) {
+                $from = $matches[1] . '-04-01';
+                $to = $matches[2] . '-03-31';
+            }
+
+            if ($selectedRange || $from || $to) {
+                session([
+                    'selectedRange' => $selectedRange,
+                    'selectedFrom'  => $from,
+                    'selectedTo'    => $to,
+                ]);
+            }
 
             $activeTab = $r->get('tab') === 'documents' ? 'documents' : 'financial';
             $type = (int) $r->input('type', 1);
@@ -289,9 +302,9 @@ class HomeController extends Controller
             // $from = $r->input('from');
             // $to   = $r->input('to');
 
-            // Use session values
-            $from = session('selectedFrom', $from);
-            $to   = session('selectedTo', $to);
+            // Use the resolved range dates so dashboard charts and P&L load on first visit.
+            $from = $from ?: session('selectedFrom');
+            $to   = $to ?: session('selectedTo');
 
             $titles = [
                 1 => 'Sales vs Purchase',

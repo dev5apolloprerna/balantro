@@ -724,9 +724,9 @@
             <form id="ledgerForm">
                 @csrf
                 <div class="form-grid">
-                    <div class="form-group"><label>Name</label><input type="text" name="Name"></div>
-                    <div class="form-group"><label>Parent</label>
-                        <select name="Parent"><option>Select Parent</option>
+                    <div class="form-group"><label>Name <span style="color: red;">*</span></label><input type="text" name="Name" required></div>
+                    <div class="form-group"><label>Parent <span style="color: red;">*</span></label>
+                        <select name="Parent" required><option>Select Parent</option>
                             @foreach($parents as $p)<option value="{{ $p->strParents }}">{{ $p->strParents }}</option>@endforeach
                         </select>
                     </div>
@@ -735,8 +735,8 @@
                     <div class="form-group"><label>Address Line 2</label><input type="text" name="AddressLine2"></div>
                     <div class="form-group"><label>City</label><input type="text" name="City"></div>
                     <div class="form-group"><label>Pincode</label><input type="text" name="Pincode"></div>
-                    <div class="form-group"><label>State</label>
-                        <select name="State"><option value="">Select State</option>
+                    <div class="form-group"><label>State <span style="color: red;">*</span></label>
+                        <select name="State" required><option value="">Select State</option>
                             @foreach($states as $s)<option value="{{$s}}">{{$s}}</option>@endforeach
                         </select>
                     </div>

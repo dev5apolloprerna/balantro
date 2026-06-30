@@ -668,6 +668,7 @@
         $('#noItemBody tr').each(function() {
             rows.push({
                 ledger: $(this).find('.noitem-ledger').val(),
+                ledger_name: $(this).find('.noitem-ledger option:selected').text(),
                 gst: $(this).find('.noitem-gst').val(),
                 amount: $(this).find('.noitem-amount').val()
             });
@@ -1457,6 +1458,9 @@
                 });
             });
         }
+        const noItemRows = collectNoItemRows();
+        const primaryNoItemLedger = noItemRows.find(row => row.ledger);
+
         console.log({
             gst_mode: $('#gst_calc_mode').val(),
             custom_slots: collectCustomSlots(),
@@ -1499,9 +1503,9 @@
                 sgst_ledger: $('#sgst_ledger').val(),
 
                 noitem_amount: $('#noitem_amount').val(),
-                noitem_rows: collectNoItemRows(),
-                sales_ledger_id: $('#noitem_sales_ledger').val(),
-                sales_ledger_name: $('#noitem_sales_ledger option:selected').text(),
+                noitem_rows: noItemRows,
+                sales_ledger_id: primaryNoItemLedger?.ledger || $('#noitem_sales_ledger').val(),
+                sales_ledger_name: primaryNoItemLedger?.ledger_name || $('#noitem_sales_ledger option:selected').text(),
                 // gst_rate: $('#noitem_gst_rate').val(),
                 gst_rate: $('#no_item_section').is(':visible') ? $('#noitem_gst_rate').val() : null,
                 items: items,

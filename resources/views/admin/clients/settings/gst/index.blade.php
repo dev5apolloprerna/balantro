@@ -9,13 +9,13 @@
 }
 
 .dark .select2-container--default .select2-selection--single{
-    background:#1e293b !important;
+    background:#000 !important;
     color:#fff !important;
-    border:1px solid #334155 !important;
+    border:1px solid #374151 !important;
 }
 
 .dark .select2-dropdown{
-    background:#1e293b !important;
+    background:#000 !important;
     color:#fff !important;
 }
 
@@ -24,15 +24,15 @@
 }
 /* Multi Select Container */
 .dark .select2-container--default .select2-selection--multiple{
-    background:#1e293b !important;
-    border:1px solid #334155 !important;
+    background:#000 !important;
+    border:1px solid #374151 !important;
     min-height:42px !important;
 }
 
 /* Selected Tag */
 .dark .select2-container--default .select2-selection--multiple .select2-selection__choice{
-    background:#334155 !important;
-    border:1px solid #475569 !important;
+    background:#111827 !important;
+    border:1px solid #374151 !important;
     color:#fff !important;
     padding:2px 8px !important;
 }
@@ -60,8 +60,8 @@
 
 /* Dropdown */
 .dark .select2-dropdown{
-    background:#0f172a !important;
-    border:1px solid #334155 !important;
+    background:#000 !important;
+    border:1px solid #374151 !important;
 }
 
 /* Options */
@@ -101,6 +101,12 @@
         linear-gradient(135deg, #0f172a 0%, #0e7490 100%);
 }
 
+.dark .gst-modal-hero {
+    background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 34%),
+        linear-gradient(135deg, #000 0%, #111827 100%);
+}
+
 .gst-modal-step {
     display: inline-flex;
     height: 2rem;
@@ -128,8 +134,8 @@
 }
 
 .dark .gst-field-card {
-    border-color: rgba(51, 65, 85, 0.9);
-    background: rgba(15, 23, 42, 0.58);
+    border-color: rgba(55, 65, 81, 0.9);
+    background: rgba(0, 0, 0, 0.72);
 }
 
 #mappingModal .select2-container--default .select2-selection--multiple,
@@ -367,7 +373,7 @@
 </div>
 
 <div id="mappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
-    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl">
+    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-black shadow-2xl">
         <!-- Header -->
         <div class="gst-modal-hero flex items-start justify-between px-3 py-2 text-white">
             <div>
@@ -384,7 +390,7 @@
             @csrf
             <input type="hidden" name="guid" value="{{ $user->guid }}">
             <!-- Body -->
-            <div class="gst-modal-body space-y-5 bg-slate-50/70 p-3 dark:bg-slate-950/30">
+            <div class="gst-modal-body space-y-5 bg-slate-50/70 p-3 dark:bg-black">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <!-- Ledger -->
                     <div class="gst-field-card md:col-span-2">
@@ -469,7 +475,7 @@
                 </div>
             </div>
             <!-- Footer -->
-            <div class="flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-b-2xl">
+            <div class="flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-black rounded-b-2xl">
 
                 <button type="button"
                     class="closeModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
@@ -488,20 +494,32 @@
 </div>
 
 <div id="itemMappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
-    <div class="gst-modal-panel flex w-full max-w-3xl flex-col rounded-2xl bg-white dark:bg-slate-900 shadow-2xl">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 class="text-xl font-semibold text-slate-800 dark:text-white">
-                Item GST Mapping
-            </h3>
-            <button type="button" class="closeItemModal text-2xl text-slate-500 hover:text-red-500">
+    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-black shadow-2xl">
+        <!-- Header -->
+        <div class="gst-modal-hero flex items-start justify-between px-3 py-2 text-white">
+            <div>
+                <h3 class="mt-1 text-2xl font-bold">Item GST Mapping</h3>
+                <p class="mt-1 text-sm text-cyan-50/90">Select one or many items, then assign matching GST ledgers.</p>
+            </div>
+
+            <button type="button"
+                class="closeItemModal rounded-full bg-white/10 px-3 py-1 text-2xl text-white hover:bg-white/20">
                 ×
             </button>
         </div>
-        <div class="gst-modal-body p-6">
+        <!-- Body -->
+        <div class="gst-modal-body space-y-5 bg-slate-50/70 p-3 dark:bg-black">
             <input type="hidden" id="item_mapping_id">
-            <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                    <label>Item</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Item -->
+                <div class="gst-field-card md:col-span-2">
+                    <div class="mb-1 flex items-center gap-3">
+                        <span class="gst-modal-step">01</span>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-800 dark:text-slate-100">Item</label>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Search and select multiple items in one flow.</p>
+                        </div>
+                    </div>
                     <select id="item_id" name="item_id[]" multiple="multiple" class="select2-item w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
                                 text-slate-800 dark:text-white px-3 py-2">
@@ -513,12 +531,15 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <label>CGST</label>
+                <!-- CGST -->
+                <div class="gst-field-card">
+                    <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <span class="gst-modal-step">02</span> CGST Ledger
+                    </label>
                     <select id="item_cgst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
                                 text-slate-800 dark:text-white px-3 py-2">
-                        <option value="">Select</option>
+                        <option value="">Select CGST</option>
                         @foreach($cgstLedgers as $ledger)
                             <option value="{{ $ledger->iLedgerId }}">
                                 {{ $ledger->strCustomerName }}
@@ -526,12 +547,15 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <label>SGST</label>
+                <!-- SGST -->
+                <div class="gst-field-card">
+                    <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <span class="gst-modal-step">03</span> SGST Ledger
+                    </label>
                     <select id="item_sgst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
                                 text-slate-800 dark:text-white px-3 py-2">
-                        <option value="">Select</option>
+                        <option value="">Select SGST</option>
                         @foreach($sgstLedgers as $ledger)
                             <option value="{{ $ledger->iLedgerId }}">
                                 {{ $ledger->strCustomerName }}
@@ -539,12 +563,15 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <label>IGST</label>
+                <!-- IGST -->
+                <div class="gst-field-card md:col-span-2">
+                    <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
+                        <span class="gst-modal-step">04</span> IGST Ledger
+                    </label>
                     <select id="item_igst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
                                 text-slate-800 dark:text-white px-3 py-2">
-                        <option value="">Select</option>
+                        <option value="">Select IGST</option>
                         @foreach($igstLedgers as $ledger)
                             <option value="{{ $ledger->iLedgerId }}">
                                 {{ $ledger->strCustomerName }}
@@ -554,12 +581,15 @@
                 </div>
             </div>
         </div>
-        <div class="flex shrink-0 justify-end gap-3 border-t border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900 rounded-b-2xl">
-            <button type="button" class="closeItemModal bg-gray-500 text-white px-4 py-2 rounded">
+        <!-- Footer -->
+        <div class="flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-black rounded-b-2xl">
+            <button type="button"
+                class="closeItemModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
                 Cancel
             </button>
-            <button type="button" id="saveItemMapping" class="bg-emerald-600 text-white px-4 py-2 rounded">
-                Save
+            <button type="button" id="saveItemMapping"
+                class="rounded-xl bg-cyan-600 px-6 py-2 font-semibold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-700">
+                Save Mapping
             </button>
         </div>
     </div>

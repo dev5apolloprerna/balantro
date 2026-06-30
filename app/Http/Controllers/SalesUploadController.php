@@ -464,12 +464,7 @@ class SalesUploadController extends Controller
                 return false;
             }
 
-            $ledger = DB::table('LedgerMaster')
-                ->where('iPartyId', $partyId)
-                ->where('strCustomerName', $ledgerName)
-                ->first();
-
-            if (!$this->hasSalesLedgerMatch($ledger)) {
+            if (!$this->hasSalesLedgerMatch($this->resolveSalesLedgerValue($partyId, $ledgerName))) {
                 return false;
             }
         }
@@ -684,10 +679,7 @@ class SalesUploadController extends Controller
                     $sumIgst        = array_sum(array_column($items, 'igst'));
                     $sumTotalAmount = array_sum(array_column($items, 'total_amount'));
                     //$first = $items[0];
-                    $salesLedger = DB::table('LedgerMaster')
-                        ->where('iPartyId', $iPartyId)
-                        ->where('strCustomerName', $first['sales_ledger'])
-                        ->first();
+                    $salesLedger = $this->resolveSalesLedgerValue($iPartyId, $first['sales_ledger']);
                     //$partyLedgerDetails = $this->getCompletePartyLedgerDetails($iPartyId, $first['party_name']);
                     $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $partyLedgerDetails = $partyLookup['details'];
@@ -800,8 +792,8 @@ class SalesUploadController extends Controller
                         'pincode'           => $partyLedgerDetails['pincode'] ?? null,
 
                         'sales_ledger'      => $first['sales_ledger'],
-                        'sales_ledger_id'   => $salesLedger?->iLedgerId,
-                        'sales_ledger_name' => $salesLedger?->strCustomerName,
+                        'sales_ledger_id'   => $salesLedger?->id ?? $salesLedger?->iLedgerId,
+                        'sales_ledger_name' => $salesLedger?->name ?? $salesLedger?->strCustomerName,
 
                         'cgst_id'           => $mapping['cgst_id'],
                         'cgst_ledger_name'  => $mapping['cgst_name'],
@@ -943,10 +935,7 @@ class SalesUploadController extends Controller
                     $sumTotalAmount = array_sum(array_column($rows, 'total_amount'));
                     $isIgst = $sumIgst > 0;
 
-                    $salesLedger = DB::table('LedgerMaster')
-                        ->where('iPartyId', $iPartyId)
-                        ->where('strCustomerName', $first['sales_ledger'])
-                        ->first();
+                    $salesLedger = $this->resolveSalesLedgerValue($iPartyId, $first['sales_ledger']);
                     $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $partyLedgerDetails = $partyLookup['details'];
                     $partyMatched = $this->hasUploadPartyMatch($partyLookup);
@@ -1001,8 +990,8 @@ class SalesUploadController extends Controller
                         'pincode'           => $partyLedgerDetails['pincode'] ?? null,
 
                         'sales_ledger'      => $first['sales_ledger'],
-                        'sales_ledger_id'   => $salesLedger?->iLedgerId,
-                        'sales_ledger_name' => $salesLedger?->strCustomerName,
+                        'sales_ledger_id'   => $salesLedger?->id ?? $salesLedger?->iLedgerId,
+                        'sales_ledger_name' => $salesLedger?->name ?? $salesLedger?->strCustomerName,
 
                         'cgst_id'           => $mapping['cgst_id'],
                         'cgst_ledger_name'  => $mapping['cgst_name'],
@@ -1602,6 +1591,43 @@ class SalesUploadController extends Controller
         }
     }
 
+    private function resolveSalesLedgerValue($partyId, $ledgerValue)
+    {
+        if (blank($ledgerValue) || $ledgerValue === 'Select Ledger') {
+            return null;
+        }
+
+        return is_numeric($ledgerValue)
+            ? Ledger::getLedgerById($partyId, $ledgerValue)
+            : Ledger::getLedgerByName($partyId, $ledgerValue);
+    }
+
+    private function resolveSubmittedSalesLedger(SalesTransaction $transaction, Request $request)
+    {
+        $ledgerValue = null;
+
+        if ($request->entry_mode === 'noitem') {
+            $firstNoItemRow = collect((array) $request->input('noitem_rows', []))
+                ->first(fn ($row) => !blank($row['ledger'] ?? null));
+            $ledgerValue = $firstNoItemRow['ledger'] ?? null;
+        }
+
+        $ledgerValue = $ledgerValue
+            ?: $request->input('sales_ledger_id')
+            ?: $request->input('sales_ledger_name')
+            ?: $request->input('sales_ledger')
+            ?: $transaction->sales_ledger_name
+            ?: $transaction->sales_ledger;
+
+        if (blank($ledgerValue) || $ledgerValue === 'Select Ledger') {
+            return null;
+        }
+
+        return is_numeric($ledgerValue)
+            ? Ledger::getLedgerById($transaction->iPartyId, $ledgerValue)
+            : Ledger::getLedgerByName($transaction->iPartyId, $ledgerValue);
+    }
+
     // ── UPDATE (called by Edit modal save) ────────────────────────────────────────
     private function storeWithItemCustomGst(SalesTransaction $transaction, array $customSlots, array $gstMapping): void
     {
@@ -1724,9 +1750,9 @@ class SalesUploadController extends Controller
             // ===============================
             // HEADER UPDATE
             // ===============================
-            $sales_ledger = isset($request['sales_ledger_name']) && $request['sales_ledger_name'] != "Select Ledger" ? $request['sales_ledger_name'] : $transaction->sales_ledger;
-            $sales_ledger_id = $sales_ledger ? Ledger::getLedgerByName($transaction->iPartyId, $sales_ledger) : null;
-            $gstMapping = $this->getGstMapping($transaction->iPartyId, $sales_ledger_id->name ?? $sales_ledger);
+            $sales_ledger_id = $this->resolveSubmittedSalesLedger($transaction, $request);
+            $sales_ledger = $sales_ledger_id?->name ?? $transaction->sales_ledger;
+            $gstMapping = $this->getGstMapping($transaction->iPartyId, $sales_ledger);
             $transaction->update([
                 'invoice_no'      => $request['invoice_no'] ?? $transaction->invoice_no,
                 'date'            => $request['date'],
@@ -1734,7 +1760,7 @@ class SalesUploadController extends Controller
                 'gst_no'          => $request['gst_no'],
                 'place_of_supply' => $request['place_of_supply'],
                 //'sales_ledger'    => $request['sales_ledger_name'] ?? $transaction->sales_ledger_name,
-                'sales_ledger'    => isset($request['sales_ledger_name']) && $request['sales_ledger_name'] != "Select Ledger" ? $request['sales_ledger_name'] : $transaction->sales_ledger,
+                'sales_ledger'    => $sales_ledger,
                 'vchType'         => $request['vchType'],
                 'address'         => $request['address'],
                 'pincode'         => $request['pincode'],
@@ -2231,9 +2257,14 @@ class SalesUploadController extends Controller
                     'saved'     => 0
                 ]);
             }
-            $sales_ledger = isset($request['sales_ledger']) && $request['sales_ledger'] != "Select Ledger" ? $request['sales_ledger'] : null;
-            $sales_ledger_id = Ledger::getLedgerByName($iPartyId, $sales_ledger);
-            $gstMapping = $this->getGstMapping($iPartyId, $sales_ledger_id->name ?? $sales_ledger);
+            $primaryNoItemLedger = collect((array) $request->input('noitem_rows', []))
+                ->first(fn ($row) => !blank($row['ledger'] ?? null));
+            $submittedSalesLedger = $request->entry_mode === 'noitem'
+                ? ($primaryNoItemLedger['ledger'] ?? null)
+                : $request->input('sales_ledger');
+            $sales_ledger_id = $this->resolveSalesLedgerValue($iPartyId, $submittedSalesLedger);
+            $sales_ledger = $sales_ledger_id?->name;
+            $gstMapping = $this->getGstMapping($iPartyId, $sales_ledger);
             // ✅ CREATE TRANSACTION
             $transaction = SalesTransaction::create([
                 'iPartyId'     => $iPartyId,
@@ -2254,7 +2285,7 @@ class SalesUploadController extends Controller
                 'pincode'      => $request->pincode,
                 'city'         => $request->city,
                 // ✅ Ledger store (without item case)
-                'sales_ledger_id'   => $sales_ledger_id->id ?? 0, // $request->sales_ledger_id ?? null,
+                'sales_ledger_id'   => $sales_ledger_id?->id, // $request->sales_ledger_id ?? null,
                 'sales_ledger_name' => $sales_ledger_id->name ?? null,
                 'strYear'       => session('year'),
                 'year_from_date' => session('year_from'),
@@ -2437,7 +2468,31 @@ class SalesUploadController extends Controller
             // =====================================================
             $roundOffSetting = $this->getRoundOffSetting($iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
-            $transaction->update([
+            $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $request->party, $request->gst);
+            $gstLedgerSlots = ($request->gst_mode ?? 'standard') === 'custom' && !empty($request->custom_slots)
+                ? array_map(fn ($slot) => [
+                    'cgst_amount' => $slot['cgst_amount'] ?? 0,
+                    'sgst_amount' => $slot['sgst_amount'] ?? 0,
+                    'igst_amount' => $slot['igst_amount'] ?? 0,
+                    'cgst_ledger_id' => $slot['cgst_ledger_id'] ?? null,
+                    'sgst_ledger_id' => $slot['sgst_ledger_id'] ?? null,
+                    'igst_ledger_id' => $slot['igst_ledger_id'] ?? null,
+                ], (array) $request->custom_slots)
+                : [[
+                    'cgst_amount' => $sumCgst,
+                    'sgst_amount' => $sumSgst,
+                    'igst_amount' => $sumIgst,
+                    'cgst_ledger_id' => $transaction->cgst_id,
+                    'sgst_ledger_id' => $transaction->sgst_id,
+                    'igst_ledger_id' => $transaction->igst_id,
+                ]];
+            $canSave = $this->hasSalesLedgerMatch($sales_ledger_id) &&
+                $this->hasUploadPartyMatch($partyLookup) &&
+                $this->hasUploadedGstNoMatch($partyLookup, $request->gst) &&
+                $this->hasRequiredGstLedgers($gstLedgerSlots, ((int) ($request->is_igst ?? 0)) === 1) &&
+                $this->hasOnlyValidGstSlabs($this->extractSalesRequestGstRates($request, $sumAmount, $sumCgst, $sumSgst, $sumIgst));
+
+            $finalUpdateData = [
                 'amount'       => $sumAmount,
                 'sgst'         => $sumSgst,
                 'cgst'         => $sumCgst,
@@ -2447,7 +2502,10 @@ class SalesUploadController extends Controller
                 'roundoff_id'  => $roundOffLedger?->iLedgerId,
                 'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
                 'roundoff'     => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
-            ]);
+                'status'       => $canSave ? 'saved' : 'pending',
+            ];
+            $transaction->update($finalUpdateData);
+            $this->refreshSalesUploadCounts($upload->id);
 
             DB::commit();
             return response()->json([

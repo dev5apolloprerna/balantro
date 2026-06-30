@@ -277,14 +277,21 @@ class Ledger extends Model
         return DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
-            WHERE strParents like 'Purchase Accounts' and iPartyId = ?
+            WHERE iPartyId = ? and (strParents like 'Purchase Accounts'
+            or iPrimaryGroupId IN (
+                    SELECT iGroupId
+                    FROM GroupMaster
+                    WHERE IsReserved = 1
+                    AND IsRevenue = 1
+                    AND iPartyId = ?
+            ))
             UNION
 
             SELECT id, name
             FROM ledgers
             WHERE Parent like 'Purchase Accounts' and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]);
     }
 
     public static function getSalesLedgers($companyId)
@@ -292,33 +299,21 @@ class Ledger extends Model
         return DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
-            WHERE strParents like 'Sales Accounts' and iPartyId = ?
+            WHERE  iPartyId = ? and (iPrimaryGroupId IN (
+                    SELECT iGroupId
+                    FROM GroupMaster
+                    WHERE IsReserved = 1
+                    AND IsRevenue = 1
+                    AND iPartyId = ?
+            ))
             UNION
 
             SELECT id, name
             FROM ledgers
             WHERE Parent like 'Sales Accounts' and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]);
     }
-
-    // public static function getLedgerByName($companyId, $ledgerId)
-    // {
-    //     return DB::selectOne("
-    //         SELECT id, name FROM (
-    //             SELECT iLedgerId AS id, strCustomerName AS name
-    //             FROM LedgerMaster
-    //             WHERE iPartyId = ?
-
-    //             UNION
-
-    //             SELECT id, name
-    //             FROM ledgers
-    //             WHERE iPartyId = ?
-    //         ) AS L
-    //         WHERE name = ?
-    //     ", [$companyId, $companyId, $ledgerId]);
-    // }
 
     public static function getLedgerByName($companyId, $ledgerName)
     {

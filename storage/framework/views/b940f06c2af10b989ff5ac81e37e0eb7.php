@@ -829,12 +829,12 @@
                     <?php echo csrf_field(); ?>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>Name</label>
-                            <input type="text" name="Name">
+                            <label>Name <span style="color: red;">*</span></label>
+                            <input type="text" name="Name" required>
                         </div>
                         <div class="form-group">
-                            <label>Parent</label>
-                            <select name="Parent">
+                            <label>Parent <span style="color: red;">*</span></label>
+                            <select name="Parent" required>
                                 <option>Select Parent</option>
                                 <?php $__currentLoopData = $parents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $parent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <option value="<?php echo e($parent->strParents); ?>"><?php echo e($parent->strParents); ?></option>
@@ -862,8 +862,8 @@
                             <input type="text" name="Pincode">
                         </div>
                         <div class="form-group">
-                            <label>State</label>
-                            <select id="State" class="inputCell">
+                            <label>State <span style="color: red;">*</span></label>
+                            <select id="State" class="inputCell" required>
                                 <option value="">Select State</option>
                                 <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <option value="<?php echo e($state); ?>"><?php echo e($state); ?></option>
@@ -3122,6 +3122,12 @@
                 $('#no_item_section').show();
                 $('#invoice_purcashe_ledger_wrap').hide();
             }
+        });
+
+        $(document).on('select2:open', function() {
+            setTimeout(function() {
+                document.querySelector('.select2-container--open .select2-search__field')?.focus();
+            }, 0);
         });
     </script>
     <?php $__env->stopSection(); ?>

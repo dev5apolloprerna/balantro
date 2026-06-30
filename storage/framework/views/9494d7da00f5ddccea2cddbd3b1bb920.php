@@ -734,9 +734,9 @@
             <form id="ledgerForm">
                 <?php echo csrf_field(); ?>
                 <div class="form-grid">
-                    <div class="form-group"><label>Name</label><input type="text" name="Name"></div>
-                    <div class="form-group"><label>Parent</label>
-                        <select name="Parent"><option>Select Parent</option>
+                    <div class="form-group"><label>Name <span style="color: red;">*</span></label><input type="text" name="Name" required></div>
+                    <div class="form-group"><label>Parent <span style="color: red;">*</span></label>
+                        <select name="Parent" required><option>Select Parent</option>
                             <?php $__currentLoopData = $parents; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($p->strParents); ?>"><?php echo e($p->strParents); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
@@ -745,8 +745,8 @@
                     <div class="form-group"><label>Address Line 2</label><input type="text" name="AddressLine2"></div>
                     <div class="form-group"><label>City</label><input type="text" name="City"></div>
                     <div class="form-group"><label>Pincode</label><input type="text" name="Pincode"></div>
-                    <div class="form-group"><label>State</label>
-                        <select name="State"><option value="">Select State</option>
+                    <div class="form-group"><label>State <span style="color: red;">*</span></label>
+                        <select name="State" required><option value="">Select State</option>
                             <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><option value="<?php echo e($s); ?>"><?php echo e($s); ?></option><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
