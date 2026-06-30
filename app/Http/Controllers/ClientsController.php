@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\ReportsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 use App\Models\UserDevice;
 use App\Models\BankTransaction;
@@ -46,6 +47,41 @@ class ClientsController extends Controller
                 $this->setClients($request);
             }
             return $next($request);
+        });
+    }
+
+    private function cachedPandl(ReportsService $svc, int $partyId, ?string $from, ?string $to): array
+    {
+        return Cache::remember("clients:{$partyId}:pandl:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to) {
+            return $svc->pandl($partyId, $from, $to);
+        });
+    }
+
+    private function cachedBalanceSheet(ReportsService $svc, ?string $partyguid, int $partyId, ?string $from, ?string $to): array
+    {
+        return Cache::remember("clients:{$partyId}:balance_sheet:" . md5(($partyguid ?? '') . '|' . ($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyguid, $partyId, $from, $to) {
+            return $svc->balanceSheet($partyguid, $partyId, $from, $to);
+        });
+    }
+
+    private function cachedMonthlyGraph(ReportsService $svc, int $partyId, ?string $from, ?string $to, int $type, array $opts): array
+    {
+        return Cache::remember("clients:{$partyId}:monthly_graph:" . md5($type . '|' . ($from ?? '') . '|' . ($to ?? '') . '|' . json_encode($opts)), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to, $type, $opts) {
+            return $svc->monthlyGraph($partyId, $from, $to, $type, $opts);
+        });
+    }
+
+    private function cachedGroupsWithBalances(ReportsService $svc, int $partyId, ?string $from, ?string $to): array
+    {
+        return Cache::remember("clients:{$partyId}:groups_with_balances:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to) {
+            return $svc->getAllGroupsWithBalances($partyId, $from, $to);
+        });
+    }
+
+    private function cachedDocumentSummary(int $partyId): array
+    {
+        return Cache::remember("clients:{$partyId}:document_summary", now()->addMinutes(5), function () use ($partyId) {
+            return DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$partyId]);
         });
     }
 
@@ -710,7 +746,8 @@ class ClientsController extends Controller
             
             // $resp = $svc->pandl($user->id, $toDMY($r->input('from')), $toDMY($r->input('to')));
             [$financialYears, $rangeSel, $from, $to] = $this->resolveClientFinancialYear($r, $user);
-            $resp = $svc->pandl($user->id, $toDMY($from), $toDMY($to));
+            // $resp = $svc->pandl($user->id, $toDMY($from), $toDMY($to));
+            $resp = $this->cachedPandl($svc, $user->id, $toDMY($from), $toDMY($to));
             
             // $from = $r->input('from') ? date('d-m-Y',strtotime($r->input('from'))) : '';
             // $to = $r->input('to') ? date('d-m-Y',strtotime($r->input('to'))) : '';
@@ -783,7 +820,8 @@ class ClientsController extends Controller
             //         $to   = date('Y-m-d', strtotime(($startYear + 1) . "-03-31"));
             //     }
             // }
-            $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+            // $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+            $resp = $this->cachedBalanceSheet($svc, $partyguid, $partyId, $from, $to);
 
             $data = data_get($resp, 'data', []);
             // if (!$from && !$to) {
@@ -963,10 +1001,16 @@ class ClientsController extends Controller
 
     private function resolveClientFinancialYear(Request $request, Client $client): array
     {
-        $financialYears = DB::table('YearMaster')
-            ->where('iPartyId', $client->id)
-            ->orderBy('iYearId', 'desc')
-            ->get();
+        // $financialYears = DB::table('YearMaster')
+        //     ->where('iPartyId', $client->id)
+        //     ->orderBy('iYearId', 'desc')
+        //     ->get();
+        $financialYears = Cache::remember("clients:{$client->id}:financial_years", now()->addMinutes(30), function () use ($client) {
+            return DB::table('YearMaster')
+                ->where('iPartyId', $client->id)
+                ->orderBy('iYearId', 'desc')
+                ->get();
+        });
 
         $defaultRange = $financialYears->first()->strYear ?? null;
         $sessionPrefix = "client_{$client->id}";
@@ -1067,10 +1111,16 @@ class ClientsController extends Controller
             $type = (int) $r->input('type', 1);
             // $from = $r->input('from');
             // $to   = $r->input('to');
-            $financialYears = DB::table('YearMaster')
-                ->where('iPartyId', $user->id)
-                ->orderBy('iYearId', 'desc')
-                ->get();
+            // $financialYears = DB::table('YearMaster')
+            //     ->where('iPartyId', $user->id)
+            //     ->orderBy('iYearId', 'desc')
+            //     ->get();
+            $financialYears = Cache::remember("clients:{$user->id}:financial_years", now()->addMinutes(30), function () use ($user) {
+                return DB::table('YearMaster')
+                    ->where('iPartyId', $user->id)
+                    ->orderBy('iYearId', 'desc')
+                    ->get();
+            });
 
             $currentFinancialYear = $financialYears->first();
             $defaultRange = $currentFinancialYear->strYear ?? null;
@@ -1137,7 +1187,9 @@ class ClientsController extends Controller
 
                     foreach ($metrics as $metric) {
 
-                        $tmp = $svc->monthlyGraph(
+                        // $tmp = $svc->monthlyGraph(
+                        $tmp = $this->cachedMonthlyGraph(
+                            $svc,
                             $user->id,
                             $from,
                             $to,
@@ -1167,7 +1219,8 @@ class ClientsController extends Controller
                 }
                 
                 if ($t != 5) {
-                    $res = $svc->monthlyGraph($user->id, $from, $to, $t, [
+                    // $res = $svc->monthlyGraph($user->id, $from, $to, $t, [
+                    $res = $this->cachedMonthlyGraph($svc, $user->id, $from, $to, $t, [
                         'outflow_negative' => false,
                         'groups'           => $groups,
                         'exclude_types'    => null,
@@ -1239,7 +1292,8 @@ class ClientsController extends Controller
             ];
 
             try {
-                $allGroupsWithBalances = $svc->getAllGroupsWithBalances($user->id, $from, $to);
+                // $allGroupsWithBalances = $svc->getAllGroupsWithBalances($user->id, $from, $to);
+                $allGroupsWithBalances = $this->cachedGroupsWithBalances($svc, $user->id, $from, $to);
                 $allGroups = collect($allGroupsWithBalances);
 
                 if ($allGroups->isEmpty()) {
@@ -1334,7 +1388,8 @@ class ClientsController extends Controller
                 ->toArray();
 
             // Get document counts for the client
-            $rows = DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$user->id]);
+            // $rows = DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$user->id]);
+            $rows = $this->cachedDocumentSummary($user->id);
             $row  = $rows[0] ?? (object) [];
 
             $uploadedCount   = (int) ($row->uploaded_count    ?? 0);
@@ -1371,11 +1426,13 @@ class ClientsController extends Controller
                     'totalBank'     => ["iGroupId" => $allGroups->where('strGroupName', 'Bank Accounts')->first()->iGroupId ?? null, "value" => $allGroups->where('strGroupName', 'Bank Accounts')->first()->Closing ?? 0, "name" => "Bank"],
                 ];
             }
-            $resp = $svc->pandl($user->id, $from, $to);
+            // $resp = $svc->pandl($user->id, $from, $to);
+            $resp = $this->cachedPandl($svc, $user->id, $from, $to);
             $partyguid = $guid;                
             $partyId   = $user->id;
             
-            $respbalance = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+            // $respbalance = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+            $respbalance = $this->cachedBalanceSheet($svc, $partyguid, $partyId, $from, $to);
             $plData = $resp['data'] ?? [];
             $bsData = $respbalance['data'] ?? [];
 
@@ -1636,7 +1693,8 @@ class ClientsController extends Controller
         ];
 
         // ---- CALL STORED PROCEDURE ----
-        $rows = \DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$userId]);
+        // $rows = \DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$userId]);
+        $rows = $this->cachedDocumentSummary($userId);
         $row  = $rows[0] ?? (object) [];
 
         $uploadedCount   = (int) ($row->uploaded_count    ?? 0);
@@ -1661,7 +1719,8 @@ class ClientsController extends Controller
         $sum         = fn($arr) => array_sum(array_map('floatval', $arr ?? []));
 
         for ($t = 1; $t <= 4; $t++) {
-            $res = $svc->monthlyGraph($userId, $from, $to, $t, [
+            // $res = $svc->monthlyGraph($userId, $from, $to, $t, [
+            $res = $this->cachedMonthlyGraph($svc, $userId, $from, $to, $t, [
                 'outflow_negative' => false,
                 'groups'           => null,
                 'exclude_types'    => null,

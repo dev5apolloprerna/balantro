@@ -18,16 +18,44 @@ use App\Exports\VoucherHistoryExport;
 use App\Models\Client;
 use App\Exports\VoucherExport;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class ReportsController extends Controller
 {
 
     private function getFinancialYears(int $userId)
     {
-        return DB::table('YearMaster')
-            ->where('iPartyId', $userId)
-            ->orderBy('iYearId', 'desc')
-            ->get();
+        // return DB::table('YearMaster')
+        //     ->where('iPartyId', $userId)
+        //     ->orderBy('iYearId', 'desc')
+        //     ->get();
+        return Cache::remember("reports:{$userId}:financial_years", now()->addMinutes(30), function () use ($userId) {
+            return DB::table('YearMaster')
+                ->where('iPartyId', $userId)
+                ->orderBy('iYearId', 'desc')
+                ->get();
+        });
+    }
+
+    private function cachedPandl(ReportsService $svc, int $partyId, ?string $from, ?string $to): array
+    {
+        return Cache::remember("reports:{$partyId}:pandl:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to) {
+            return $svc->pandl($partyId, $from, $to);
+        });
+    }
+
+    private function cachedBalanceSheet(ReportsService $svc, ?string $partyguid, int $partyId, ?string $from, ?string $to): array
+    {
+        return Cache::remember("reports:{$partyId}:balance_sheet:" . md5(($partyguid ?? '') . '|' . ($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyguid, $partyId, $from, $to) {
+            return $svc->balanceSheet($partyguid, $partyId, $from, $to);
+        });
+    }
+
+    private function cachedMonthlyGraph(ReportsService $svc, int $partyId, ?string $from, ?string $to, int $type, array $opts): array
+    {
+        return Cache::remember("reports:{$partyId}:monthly_graph:" . md5($type . '|' . ($from ?? '') . '|' . ($to ?? '') . '|' . json_encode($opts)), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to, $type, $opts) {
+            return $svc->monthlyGraph($partyId, $from, $to, $type, $opts);
+        });
     }
 
     private function defaultFinancialYearRange($financialYears): string
@@ -108,7 +136,8 @@ class ReportsController extends Controller
     {
         $toDMY = fn($d) => $d ? \Carbon\Carbon::parse($d)->format('d-m-Y') : '';
         [$financialYears, $rangeSel, $from, $to] = $this->prepareFinancialYearFilter($r, $r->user()->id);
-        $resp = $svc->pandl($r->user()->id, $toDMY($from), $toDMY($to));
+        // $resp = $svc->pandl($r->user()->id, $toDMY($from), $toDMY($to));
+        $resp = $this->cachedPandl($svc, $r->user()->id, $toDMY($from), $toDMY($to));
         $pl = data_get($resp, 'data', []);
         
         return view('reports.pl', compact('resp', 'from', 'to', 'pl', 'rangeSel', 'financialYears'));
@@ -131,7 +160,8 @@ class ReportsController extends Controller
         $to = $r->input('to');
         $toDMY = fn($d) => $d ? \Carbon\Carbon::parse($d)->format('d-m-Y') : '';
 
-        $resp = $svc->pandl($partyId, $toDMY($from), $toDMY($to));
+        // $resp = $svc->pandl($partyId, $toDMY($from), $toDMY($to));
+        $resp = $this->cachedPandl($svc, $partyId, $toDMY($from), $toDMY($to));
         $pl = data_get($resp, 'data', []);
         $from = $r->input('from');
         $to = $r->input('to');
@@ -181,7 +211,8 @@ class ReportsController extends Controller
         
         [$financialYears, $rangeSel, $from, $to] = $this->prepareFinancialYearFilter($r, $partyId);
         
-        $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+        // $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+        $resp = $this->cachedBalanceSheet($svc, $partyguid, $partyId, $from, $to);
         $data = data_get($resp, 'data', []);
                 
         return view('reports.balance_sheet', compact('resp', 'from', 'to', 'data', 'partyguid', 'rangeSel', 'financialYears'));
@@ -206,7 +237,8 @@ class ReportsController extends Controller
             $userId = $r->user()->id;
         }
         
-        $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+        // $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+        $resp = $this->cachedBalanceSheet($svc, $partyguid, $partyId, $from, $to);
         $data = data_get($resp, 'data', []);
 
         $filename = 'balance_sheet_' . date('Y_m_d') . '.xlsx';
@@ -244,7 +276,8 @@ class ReportsController extends Controller
         $partyName = $r->user()->name;
         $companyAddress = $user->profile->address;
         $companyEmail = $r->user()->email;;
-        $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+        // $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+        $resp = $this->cachedBalanceSheet($svc, $partyguid, $partyId, $from, $to);
         $data = data_get($resp, 'data', []);
 
         $pdf = PDF::loadView('reports.pdf.balance_sheet_pdf', [
@@ -332,7 +365,8 @@ class ReportsController extends Controller
             'date_style'       => $r->input('date_style'),     // for type 4
         ];
 
-        $res = $svc->monthlyGraph($user->id, $from, $to, $type, $opts);
+        // $res = $svc->monthlyGraph($user->id, $from, $to, $type, $opts);
+        $res = $this->cachedMonthlyGraph($svc, $user->id, $from, $to, $type, $opts);
 
         // Unpack for Blade
         $months   = $res['months'];

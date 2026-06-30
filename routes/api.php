@@ -74,6 +74,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/', [\App\Http\Controllers\Api\V1\DashboardController::class, 'index']);
             Route::post('preferences', [\App\Http\Controllers\Api\V1\DashboardController::class, 'saveCardPreferences']);
             Route::post('financial-graphs', [\App\Http\Controllers\Api\V1\DashboardController::class, 'financialGraphs']);
+            Route::post('profit-loss-balance-sheet', [\App\Http\Controllers\Api\V1\DashboardController::class, 'profitLossBalanceSheet']);
+            Route::post('monthly-financial-columns', [\App\Http\Controllers\Api\V1\DashboardController::class, 'monthlyFinancialColumns']);
+            Route::post('year-listing', [\App\Http\Controllers\Api\V1\DashboardController::class, 'yearListing']);
             Route::post('group-balances', [\App\Http\Controllers\Api\V1\DashboardController::class, 'getGroupBalances']);
         });
 

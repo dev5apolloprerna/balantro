@@ -15,6 +15,7 @@ use App\Services\ReportsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use App\Models\UserCardPreference;
 use App\Models\Group;
 
@@ -162,10 +163,16 @@ class HomeController extends Controller
                     'selectedTo'    => $r->input('to'),
                 ]);
             }
-            $financialYears = DB::table('YearMaster')
-                ->where('iPartyId', $userId)
-                ->orderBy('iYearId', 'desc')
-                ->get();
+            // $financialYears = DB::table('YearMaster')
+            //     ->where('iPartyId', $userId)
+            //     ->orderBy('iYearId', 'desc')
+            //     ->get();
+            $financialYears = Cache::remember("client_dashboard:{$userId}:financial_years", now()->addMinutes(30), function () use ($userId) {
+                return DB::table('YearMaster')
+                    ->where('iPartyId', $userId)
+                    ->orderBy('iYearId', 'desc')
+                    ->get();
+            });
             // Restore from session if empty
             $defaultRange = $financialYears->first()->strYear ?? null;
             $selectedRange = $range ?: session('selectedRange', $defaultRange);
@@ -187,10 +194,16 @@ class HomeController extends Controller
             $activeTab = $r->get('tab') === 'documents' ? 'documents' : 'financial';
             $type = (int) $r->input('type', 1);
 
-            $documentCounts = Document::where('user_id', $userId)
-                ->selectRaw('status, COUNT(*) as count')
-                ->groupBy('status')
-                ->pluck('count', 'status');
+            // $documentCounts = Document::where('user_id', $userId)
+            //     ->selectRaw('status, COUNT(*) as count')
+            //     ->groupBy('status')
+            //     ->pluck('count', 'status');
+            $documentCounts = Cache::remember("client_dashboard:{$userId}:document_counts", now()->addMinutes(5), function () use ($userId) {
+                return Document::where('user_id', $userId)
+                    ->selectRaw('status, COUNT(*) as count')
+                    ->groupBy('status')
+                    ->pluck('count', 'status');
+            });
 
             $uploadedCount   = (int) ($documentCounts['uploaded'] ?? 0);
             $inProgressCount = (int) (($documentCounts['accepted'] ?? 0)
@@ -230,7 +243,10 @@ class HomeController extends Controller
 
             // Fetch ALL groups for this party (not just the 8 financial groups)
             try {
-                $allGroupsWithBalances = $svc->getAllGroupsWithBalances($userId, $from, $to);
+                // $allGroupsWithBalances = $svc->getAllGroupsWithBalances($userId, $from, $to);
+                $allGroupsWithBalances = Cache::remember("client_dashboard:{$userId}:groups:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $userId, $from, $to) {
+                    return $svc->getAllGroupsWithBalances($userId, $from, $to);
+                });
                 $allGroups = collect($allGroupsWithBalances);
                 
                 // If still no groups, create some default groups for demo
@@ -314,121 +330,218 @@ class HomeController extends Controller
                 5 => 'Income & Expense',
             ];
 
-            $charts      = [];
-            $selectedRes = null;
-            $sum         = fn($arr) => array_sum(array_map('floatval', $arr ?? []));
+            // $charts      = [];
+            // $selectedRes = null;
+            // $sum         = fn($arr) => array_sum(array_map('floatval', $arr ?? []));
 
-            for ($t = 1; $t <= 5; $t++) {
-                $groups = null;
-                $res = [];
-                if ($t == 4)
-                {
-                    $metric = $r->input('metric', 'cash');
+            // for ($t = 1; $t <= 5; $t++) {
+            //     $groups = null;
+            //     $res = [];
+            //     if ($t == 4)
+            //     {
+            //         $metric = $r->input('metric', 'cash');
 
-                    if ($metric == 'cash') {
-                        $groups = 'Cash-in-Hand';
-                    }
-                    elseif ($metric == 'bank') {
-                        $groups = 'Bank Accounts';
-                    }
-                } elseif ($t == 5) {
+            //         if ($metric == 'cash') {
+            //             $groups = 'Cash-in-Hand';
+            //         }
+            //         elseif ($metric == 'bank') {
+            //             $groups = 'Bank Accounts';
+            //         }
+            //     } elseif ($t == 5) {
 
-                    // $res = [
-                    //     'months' => [],
-                    //     'directIncome' => [],
-                    //     'directExpense' => [],
-                    //     'indirectIncome' => [],
-                    //     'indirectExpense' => [],
-                    // ];
+            //         // $res = [
+            //         //     'months' => [],
+            //         //     'directIncome' => [],
+            //         //     'directExpense' => [],
+            //         //     'indirectIncome' => [],
+            //         //     'indirectExpense' => [],
+            //         // ];
 
-                    $metrics = [
-                        'Direct Incomes',
-                        'Direct Expenses',
-                        'Indirect Incomes',
-                        'Indirect Expenses'
-                    ];
+            //         $metrics = [
+            //             'Direct Incomes',
+            //             'Direct Expenses',
+            //             'Indirect Incomes',
+            //             'Indirect Expenses'
+            //         ];
 
-                    foreach ($metrics as $metric) {
+            //         foreach ($metrics as $metric) {
 
-                        $tmp = $svc->monthlyGraph(
-                            $userId,
-                            $from,
-                            $to,
-                            5,
-                            [
-                                'metricType' => $metric
-                            ]
-                        );
+            //             $tmp = $svc->monthlyGraph(
+            //                 $userId,
+            //                 $from,
+            //                 $to,
+            //                 5,
+            //                 [
+            //                     'metricType' => $metric
+            //                 ]
+            //             );
                         
-                        $res['months'] = $tmp['months'] ?? [];
+            //             $res['months'] = $tmp['months'] ?? [];
 
-                        if ($metric == 'Direct Incomes') {
-                            //$res['directIncome'] = $tmp['closingBalance'] ?? [];
-                            $res['directIncome'] = $tmp['cashIn'] ?? [];
-                        } elseif ($metric == 'Direct Expenses') {
-                            //$res['directExpense'] = $tmp['closingBalance'] ?? [];
-                            $res['directExpense'] = $tmp['cashIn'] ?? [];
-                        } elseif ($metric == 'Indirect Incomes') {
-                            //$res['indirectIncome'] = $tmp['closingBalance'] ?? [];
-                            $res['indirectIncome'] = $tmp['cashIn'] ?? [];
-                        } elseif ($metric == 'Indirect Expenses') {
-                            // $res['indirectExpense'] = $tmp['closingBalance'] ?? [];
-                            $res['indirectExpense'] = $tmp['cashIn'] ?? [];
-                        }
+            //             if ($metric == 'Direct Incomes') {
+            //                 //$res['directIncome'] = $tmp['closingBalance'] ?? [];
+            //                 $res['directIncome'] = $tmp['cashIn'] ?? [];
+            //             } elseif ($metric == 'Direct Expenses') {
+            //                 //$res['directExpense'] = $tmp['closingBalance'] ?? [];
+            //                 $res['directExpense'] = $tmp['cashIn'] ?? [];
+            //             } elseif ($metric == 'Indirect Incomes') {
+            //                 //$res['indirectIncome'] = $tmp['closingBalance'] ?? [];
+            //                 $res['indirectIncome'] = $tmp['cashIn'] ?? [];
+            //             } elseif ($metric == 'Indirect Expenses') {
+            //                 // $res['indirectExpense'] = $tmp['closingBalance'] ?? [];
+            //                 $res['indirectExpense'] = $tmp['cashIn'] ?? [];
+            //             }
                         
-                    }
-                }
+            //         }
+            //     }
                 
-                if ($t != 5) {
-                    $res = $svc->monthlyGraph($userId, $from, $to, $t, [
-                        'outflow_negative' => false,
-                        'groups'           => $groups,
-                        'exclude_types'    => null,
-                        'date_style'       => null,
-                    ]);
-                }
+            //     if ($t != 5) {
+            //         $res = $svc->monthlyGraph($userId, $from, $to, $t, [
+            //             'outflow_negative' => false,
+            //             'groups'           => $groups,
+            //             'exclude_types'    => null,
+            //             'date_style'       => null,
+            //         ]);
+            //     }
 
-                if ($t === $type) {
-                    $selectedRes = $res;
-                }
+            //     if ($t === $type) {
+            //         $selectedRes = $res;
+            //     }
 
-                $charts[] = [
-                    'key'            => $t,
-                    'title'          => $titles[$t],
-                    'months'         => $res['months'] ?? [],
-                    'in'             => $res['cashIn']  ?? [],
-                    'out'            => $res['cashOut'] ?? [],
-                    'cash'           => $res['closingBalance'] ?? [],
-                    'bank'           => $res['closingBalance'] ?? [],
-                    // FIXED: Pass the monthly arrays, not the totals
-                    'prevMonthIn'    => $res['prevMonthIn'] ?? [],
-                    'prevMonthOut'   => $res['prevMonthOut'] ?? [],
-                    'prevQuarterIn'  => $res['prevQuarterIn'] ?? [],
-                    'prevQuarterOut' => $res['prevQuarterOut'] ?? [],
-                    'prevYearIn'     => $res['prevYearIn'] ?? [],
-                    'prevYearOut'    => $res['prevYearOut'] ?? [],
-                    'budgetIn'       => $res['budgetIn'] ?? [],
-                    'budgetOut'      => $res['budgetOut'] ?? [],
-                    'forecastIn'     => $res['forecastIn'] ?? [],
-                    'forecastOut'    => $res['forecastOut'] ?? [],
-                    'cashflowIn'     => $res['cashflowIn'] ?? [],
-                    'cashflowOut'    => $res['cashflowOut'] ?? [],
-                    'plIn'           => $res['plIn'] ?? [],
-                    'plOut'          => $res['plOut'] ?? [],
-                    'sumIn'          => $sum($res['cashIn'] ?? []),
-                    'sumOut'         => $sum($res['cashOut'] ?? []),
-                    'quarterLabels'  => $res['quarterLabels'] ?? [],
-                    'quarterIn'      => $res['quarterIn'] ?? [],
-                    'quarterOut'     => $res['quarterOut'] ?? [],
-                    'quarterCompare' => $res['quarterCompare'] ?? [],
-                    'directIncome'    => $res['directIncome'] ?? [],
-                    'directExpense'   => $res['directExpense'] ?? [],
-                    'indirectIncome'  => $res['indirectIncome'] ?? [],
-                    'indirectExpense' => $res['indirectExpense'] ?? [],
-                    // 'prevQuarterIn'  => $res['prevQuarterIn'] ?? [],
-                    // 'prevQuarterOut' => $res['prevQuarterOut'] ?? [],
-                ];
-            }
+            //     $charts[] = [
+            //         'key'            => $t,
+            //         'title'          => $titles[$t],
+            //         'months'         => $res['months'] ?? [],
+            //         'in'             => $res['cashIn']  ?? [],
+            //         'out'            => $res['cashOut'] ?? [],
+            //         'cash'           => $res['closingBalance'] ?? [],
+            //         'bank'           => $res['closingBalance'] ?? [],
+            //         // FIXED: Pass the monthly arrays, not the totals
+            //         'prevMonthIn'    => $res['prevMonthIn'] ?? [],
+            //         'prevMonthOut'   => $res['prevMonthOut'] ?? [],
+            //         'prevQuarterIn'  => $res['prevQuarterIn'] ?? [],
+            //         'prevQuarterOut' => $res['prevQuarterOut'] ?? [],
+            //         'prevYearIn'     => $res['prevYearIn'] ?? [],
+            //         'prevYearOut'    => $res['prevYearOut'] ?? [],
+            //         'budgetIn'       => $res['budgetIn'] ?? [],
+            //         'budgetOut'      => $res['budgetOut'] ?? [],
+            //         'forecastIn'     => $res['forecastIn'] ?? [],
+            //         'forecastOut'    => $res['forecastOut'] ?? [],
+            //         'cashflowIn'     => $res['cashflowIn'] ?? [],
+            //         'cashflowOut'    => $res['cashflowOut'] ?? [],
+            //         'plIn'           => $res['plIn'] ?? [],
+            //         'plOut'          => $res['plOut'] ?? [],
+            //         'sumIn'          => $sum($res['cashIn'] ?? []),
+            //         'sumOut'         => $sum($res['cashOut'] ?? []),
+            //         'quarterLabels'  => $res['quarterLabels'] ?? [],
+            //         'quarterIn'      => $res['quarterIn'] ?? [],
+            //         'quarterOut'     => $res['quarterOut'] ?? [],
+            //         'quarterCompare' => $res['quarterCompare'] ?? [],
+            //         'directIncome'    => $res['directIncome'] ?? [],
+            //         'directExpense'   => $res['directExpense'] ?? [],
+            //         'indirectIncome'  => $res['indirectIncome'] ?? [],
+            //         'indirectExpense' => $res['indirectExpense'] ?? [],
+            //         // 'prevQuarterIn'  => $res['prevQuarterIn'] ?? [],
+            //         // 'prevQuarterOut' => $res['prevQuarterOut'] ?? [],
+            //     ];
+            // }
+
+            $chartsCacheKey = "client_dashboard:{$userId}:charts:" . md5(($from ?? '') . '|' . ($to ?? '') . '|' . $type . '|' . $r->input('metric', 'cash'));
+            [$charts, $selectedRes] = Cache::remember($chartsCacheKey, now()->addMinutes(10), function () use ($svc, $userId, $from, $to, $type, $titles, $r) {
+                $charts = [];
+                $selectedRes = null;
+                $sum = fn($arr) => array_sum(array_map('floatval', $arr ?? []));
+
+                for ($t = 1; $t <= 5; $t++) {
+                    $groups = null;
+                    $res = [];
+                    if ($t == 4) {
+                        $metric = $r->input('metric', 'cash');
+
+                        if ($metric == 'cash') {
+                            $groups = 'Cash-in-Hand';
+                        } elseif ($metric == 'bank') {
+                            $groups = 'Bank Accounts';
+                        }
+                    } elseif ($t == 5) {
+                        $metrics = [
+                            'Direct Incomes',
+                            'Direct Expenses',
+                            'Indirect Incomes',
+                            'Indirect Expenses'
+                        ];
+
+                        foreach ($metrics as $metric) {
+                            $tmp = $svc->monthlyGraph(
+                                $userId,
+                                $from,
+                                $to,
+                                5,
+                                [
+                                    'metricType' => $metric
+                                ]
+                            );
+                            
+                            $res['months'] = $tmp['months'] ?? [];
+
+                            if ($metric == 'Direct Incomes') {
+                                $res['directIncome'] = $tmp['cashIn'] ?? [];
+                            } elseif ($metric == 'Direct Expenses') {
+                                $res['directExpense'] = $tmp['cashIn'] ?? [];
+                            } elseif ($metric == 'Indirect Incomes') {
+                                $res['indirectIncome'] = $tmp['cashIn'] ?? [];
+                            } elseif ($metric == 'Indirect Expenses') {
+                                $res['indirectExpense'] = $tmp['cashIn'] ?? [];
+                            }
+                        }
+                    }
+                    if ($t != 5) {
+                        $res = $svc->monthlyGraph($userId, $from, $to, $t, [
+                            'outflow_negative' => false,
+                            'groups'           => $groups,
+                            'exclude_types'    => null,
+                            'date_style'       => null,
+                        ]);
+                    }
+                    if ($t === $type) {
+                        $selectedRes = $res;
+                    }
+                    $charts[] = [
+                        'key'            => $t,
+                        'title'          => $titles[$t],
+                        'months'         => $res['months'] ?? [],
+                        'in'             => $res['cashIn']  ?? [],
+                        'out'            => $res['cashOut'] ?? [],
+                        'cash'           => $res['closingBalance'] ?? [],
+                        'bank'           => $res['closingBalance'] ?? [],
+                        'prevMonthIn'    => $res['prevMonthIn'] ?? [],
+                        'prevMonthOut'   => $res['prevMonthOut'] ?? [],
+                        'prevQuarterIn'  => $res['prevQuarterIn'] ?? [],
+                        'prevQuarterOut' => $res['prevQuarterOut'] ?? [],
+                        'prevYearIn'     => $res['prevYearIn'] ?? [],
+                        'prevYearOut'    => $res['prevYearOut'] ?? [],
+                        'budgetIn'       => $res['budgetIn'] ?? [],
+                        'budgetOut'      => $res['budgetOut'] ?? [],
+                        'forecastIn'     => $res['forecastIn'] ?? [],
+                        'forecastOut'    => $res['forecastOut'] ?? [],
+                        'cashflowIn'     => $res['cashflowIn'] ?? [],
+                        'cashflowOut'    => $res['cashflowOut'] ?? [],
+                        'plIn'           => $res['plIn'] ?? [],
+                        'plOut'          => $res['plOut'] ?? [],
+                        'sumIn'          => $sum($res['cashIn'] ?? []),
+                        'sumOut'         => $sum($res['cashOut'] ?? []),
+                        'quarterLabels'  => $res['quarterLabels'] ?? [],
+                        'quarterIn'      => $res['quarterIn'] ?? [],
+                        'quarterOut'     => $res['quarterOut'] ?? [],
+                        'quarterCompare' => $res['quarterCompare'] ?? [],
+                        'directIncome'    => $res['directIncome'] ?? [],
+                        'directExpense'   => $res['directExpense'] ?? [],
+                        'indirectIncome'  => $res['indirectIncome'] ?? [],
+                        'indirectExpense' => $res['indirectExpense'] ?? [],
+                    ];
+                }
+                return [$charts, $selectedRes];
+            });
             
             $basis = $selectedRes ?: ($charts[$type - 1] ?? []);
             $labelFY   = $selectedRes['fy_label']  ?? ($basis['fy_label'] ?? '');
@@ -495,12 +608,18 @@ class HomeController extends Controller
 
             if ($activeTab === 'financial') {
                 $svc = new ReportsService();
-                $resp = $svc->pandl($r->user()->id, $from, $to);
+                // $resp = $svc->pandl($r->user()->id, $from, $to);
+                $resp = Cache::remember("client_dashboard:{$userId}:pandl:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $r, $from, $to) {
+                    return $svc->pandl($r->user()->id, $from, $to);
+                });
                 $guid = Auth::user()->guid ?? '';
                 $partyguid = $guid;                
                 $partyId   = Auth::user()->id;
                 
-                $respbalance = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+                // $respbalance = $svc->balanceSheet($partyguid, $partyId, $from, $to);
+                $respbalance = Cache::remember("client_dashboard:{$userId}:balance_sheet:" . md5($partyguid . '|' . $partyId . '|' . ($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyguid, $partyId, $from, $to) {
+                    return $svc->balanceSheet($partyguid, $partyId, $from, $to);
+                });
                 
                 return view('home', [
                     'uploaded_count'    => $uploadedCount,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Models\User;
 use App\Models\UserCardPreference;
 use App\Models\Group;
@@ -34,11 +35,17 @@ class DashboardController extends BaseApiController
             $to = $request->input('to');
 
             // Get document summary
-            $rows = DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$userId]);
+            // $rows = DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$userId]);
+            $rows = Cache::remember("api_dashboard:{$userId}:document_summary", now()->addMinutes(5), function () use ($userId) {
+                return DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$userId]);
+            });
             $row = $rows[0] ?? (object) [];
 
             // Get groups with balances
-            $allGroupsWithBalances = $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
+            // $allGroupsWithBalances = $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
+            $allGroupsWithBalances = Cache::remember("api_dashboard:{$userId}:groups:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($userId, $from, $to) {
+                return $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
+            });
             $allGroups = collect($allGroupsWithBalances);
 
             // Default financial groups
@@ -139,6 +146,230 @@ class DashboardController extends BaseApiController
         }
     }
 
+    public function yearListing(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            if ($user->role != User::ROLES['client']) {
+                return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
+            }
+
+            $currentFinancialYearStart = Carbon::now()->month >= 4
+                ? Carbon::now()->year
+                : Carbon::now()->year - 1;
+            $currentFinancialYear = sprintf('%d-%04d', $currentFinancialYearStart, $currentFinancialYearStart + 1);
+
+            $years = DB::table('YearMaster')
+                ->where('iPartyId', (int) $user->id)
+                ->orderBy('iYearId', 'desc')
+                ->get()
+                ->map(function ($year) use ($currentFinancialYear) {
+                    $yearLabel = trim((string) $year->strYear);
+                    $from = null;
+                    $to = null;
+
+                    if (preg_match('/^(\d{4})-(\d{4})$/', $yearLabel, $matches)) {
+                        $from = $matches[1] . '-04-01';
+                        $to = $matches[2] . '-03-31';
+                    }
+
+                    return [
+                        'iYearId' => (int) $year->iYearId,
+                        'key' => $yearLabel,
+                        'value' => $yearLabel,
+                        'label' => $yearLabel,
+                        'from' => $from,
+                        'to' => $to,
+                        'is_current' => $yearLabel === $currentFinancialYear,
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            return $this->success(__("response_message.dashboard.year_listing"), [
+                'years' => $years,
+                'current_year' => $currentFinancialYear,
+            ]);
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.year_listing_error"), 500, $e->getMessage());
+        }
+    }
+
+    public function profitLossBalanceSheet(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            if ($user->role != User::ROLES['client']) {
+                return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'from' => 'nullable|date_format:Y-m-d',
+                'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+                'fySel' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
+            }
+
+            [$from, $to] = $this->resolveDashboardDateRange($request);
+            $partyId = (int) $user->id;
+
+            $plResponse = $this->reportsService->pandl($partyId, $from, $to);
+            $plData = $plResponse['data'] ?? [];
+
+            $sales = $this->amountFromRows($plData['cr'] ?? [], 'Sales Accounts');
+            $directIncome = $this->amountFromRows($plData['cr'] ?? [], 'Direct Incomes');
+            $purchase = $this->amountFromRows($plData['dr'] ?? [], 'Purchase Accounts');
+            $directExpense = $this->amountFromRows($plData['dr'] ?? [], 'Direct Expenses');
+            $indirectIncome = $this->amountFromRows($plData['IndirectIncomes'] ?? [], 'Indirect Incomes');
+            $indirectExpense = $this->amountFromRows($plData['IndirectExpenses'] ?? [], 'Indirect Expenses');
+            $openingStock = $this->toFloat($plData['OpeningStock'] ?? 0);
+            $closingStock = $this->toFloat($plData['ClosingStock'] ?? 0);
+            $cogs = $openingStock + $purchase - $closingStock;
+            $totalIncome = $sales + $directIncome + $closingStock;
+            $totalExpense = $openingStock + $purchase + $directExpense;
+            $gross = $totalIncome - $totalExpense;
+            $net = $gross + $indirectIncome - $indirectExpense;
+
+            $profitLossItems = [
+                ['key' => 'revenue', 'label' => 'Revenue', 'amount' => $sales],
+                ['key' => 'cost_of_revenue', 'label' => 'Cost of Revenue', 'amount' => $cogs],
+                ['key' => 'direct_income', 'label' => 'Direct Income', 'amount' => $directIncome],
+                ['key' => 'indirect_income', 'label' => 'Indirect Income', 'amount' => $indirectIncome],
+                ['key' => 'direct_expense', 'label' => 'Direct Expense', 'amount' => $directExpense],
+                ['key' => 'indirect_expense', 'label' => 'Indirect Expense', 'amount' => $indirectExpense],
+                ['key' => $net >= 0 ? 'profit' : 'loss', 'label' => $net >= 0 ? 'Profit' : 'Loss', 'amount' => abs($net)],
+            ];
+            $profitLossItems = $this->withPercentages($profitLossItems);
+
+            $bsResponse = $this->reportsService->balanceSheet($user->guid ?? null, $partyId, $from, $to);
+            $bsRows = collect($bsResponse['data']['rows'] ?? []);
+            $drRows = $bsRows->where('Side', 'DR');
+            $crRows = $bsRows->where('Side', 'CR');
+
+            $assets = 0.0;
+            foreach ($drRows as $row) {
+                $amount = (float) ($row->decMainAmount ?? 0);
+                $assets += $amount > 0 ? -1 * $amount : abs($amount);
+            }
+
+            $liabilities = 0.0;
+            $equity = 0.0;
+            foreach ($crRows as $row) {
+                $amount = (float) ($row->decMainAmount ?? 0);
+                if (in_array($row->strGroupName, ['Capital Account', 'Profit & Loss A/c'], true)) {
+                    $equity += $amount;
+                } else {
+                    $liabilities += $amount;
+                }
+            }
+
+            $balanceSheetItems = $this->withPercentages([
+                ['key' => 'assets', 'label' => 'Assets', 'amount' => abs($assets)],
+                ['key' => 'liabilities', 'label' => 'Liabilities', 'amount' => $liabilities],
+                ['key' => 'equity', 'label' => 'Equity', 'amount' => $equity],
+            ]);
+
+            return $this->success(__("response_message.dashboard.financial_summary"), [
+                'range' => ['from' => $from, 'to' => $to],
+                'profit_loss' => [
+                    'items' => $profitLossItems,
+                    'gross_amount' => round($gross, 2),
+                    'net_amount' => round($net, 2),
+                    'is_profit' => $net >= 0,
+                    'raw' => $plData,
+                ],
+                'balance_sheet' => [
+                    'items' => $balanceSheetItems,
+                    'total_assets' => round(abs($assets), 2),
+                    'total_liabilities' => round($liabilities, 2),
+                    'total_equity' => round($equity, 2),
+                    'raw' => $bsResponse['data'] ?? [],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.financial_summary_error"), 500, $e->getMessage());
+        }
+    }
+
+    public function monthlyFinancialColumns(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            if ($user->role != User::ROLES['client']) {
+                return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'from' => 'nullable|date_format:Y-m-d',
+                'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+                'fySel' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
+            }
+
+            [$from, $to] = $this->resolveDashboardDateRange($request);
+            $partyId = (int) $user->id;
+
+            $salesPurchase = $this->reportsService->monthlyGraph($partyId, $from, $to, 1, [
+                'outflow_negative' => false,
+                'groups' => null,
+                'exclude_types' => null,
+                'date_style' => null,
+            ]);
+
+            $columns = [
+                'sales' => $salesPurchase['cashIn'] ?? [],
+                'purchase' => $salesPurchase['cashOut'] ?? [],
+            ];
+
+            $metricMap = [
+                'direct_income' => 'Direct Incomes',
+                'direct_expense' => 'Direct Expenses',
+                'indirect_income' => 'Indirect Incomes',
+                'indirect_expense' => 'Indirect Expenses',
+            ];
+
+            foreach ($metricMap as $key => $metric) {
+                $metricData = $this->reportsService->monthlyGraph($partyId, $from, $to, 5, [
+                    'metricType' => $metric,
+                ]);
+                $columns[$key] = $metricData['cashIn'] ?? [];
+            }
+
+            $months = $salesPurchase['months'] ?? [];
+            $rows = [];
+            foreach ($months as $index => $month) {
+                $rows[] = [
+                    'month' => $month,
+                    'sales' => (float) ($columns['sales'][$index] ?? 0),
+                    'purchase' => (float) ($columns['purchase'][$index] ?? 0),
+                    'direct_income' => (float) ($columns['direct_income'][$index] ?? 0),
+                    'direct_expense' => (float) ($columns['direct_expense'][$index] ?? 0),
+                    'indirect_income' => (float) ($columns['indirect_income'][$index] ?? 0),
+                    'indirect_expense' => (float) ($columns['indirect_expense'][$index] ?? 0),
+                ];
+            }
+
+            return $this->success(__("response_message.dashboard.monthly_financial_columns"), [
+                'range' => ['from' => $from, 'to' => $to],
+                'months' => $months,
+                'columns' => $columns,
+                'rows' => $rows,
+                'totals' => array_map(fn($values) => round(array_sum(array_map('floatval', $values)), 2), $columns),
+            ]);
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.monthly_financial_columns_error"), 500, $e->getMessage());
+        }
+    }
+
     public function saveCardPreferences(Request $request)
     {
         try {
@@ -203,28 +434,36 @@ class DashboardController extends BaseApiController
             }
 
             $summary = [
-                'chart_types' => [
-                    ['key' => '1', 'value' => "Sales & Purchase"],
-                    ['key' => '2', 'value' => "Creditors & Debtors"],
-                    ['key' => '3', 'value' => "Receipt & Payment"],
-                    ['key' => '4', 'value' => "Cash & Bank balance"]
-                ],
-                'metric_options' => [
-                    ['key' => '', 'value' => "Select Metric", 'group' => 'All'],
-                    ['key' => 'Sales Accounts', 'value' => "Sales", 'group' => 'Sales & Purchase'],
-                    ['key' => 'Purchase Accounts', 'value' => "Purchase", 'group' => 'Sales & Purchase'],
-                    ['key' => 'Sundry Debtors', 'value' => "Debtors", 'group' => 'Credit & Debit'],
-                    ['key' => 'Sundry Creditors', 'value' => "Creditors", 'group' => 'Credit & Debit'],
-                    ['key' => 'Rcpt', 'value' => "Receipts", 'group' => 'Receipt & Payment'],
-                    ['key' => 'Pymt', 'value' => "Payments", 'group' => 'Receipt & Payment'],
-                    ['key' => 'Cash-in-Hand', 'value' => "Cash", 'group' => 'Cash & Bank'],
-                    ['key' => 'Bank Accounts', 'value' => "Bank Flow", 'group' => 'Cash & Bank']
-                ],
-                'comparison_options' => [
-                    ['key' => 'none', 'value' => "No Comparison"],
-                    ['key' => 'prev-month', 'value' => "Compare with Previous Month"],
-                    ['key' => 'prev-quarter', 'value' => "Compare with Previous Quarter"],
-                    ['key' => 'prev-year', 'value' => "Compare with Previous Year"]
+                // 'chart_types' => [
+                //     ['key' => '1', 'value' => "Sales & Purchase"],
+                //     ['key' => '2', 'value' => "Creditors & Debtors"],
+                //     ['key' => '3', 'value' => "Receipt & Payment"],
+                //     ['key' => '4', 'value' => "Cash & Bank balance"]
+                // ],
+                // 'metric_options' => [
+                //     ['key' => '', 'value' => "Select Metric", 'group' => 'All'],
+                //     ['key' => 'Sales Accounts', 'value' => "Sales", 'group' => 'Sales & Purchase'],
+                //     ['key' => 'Purchase Accounts', 'value' => "Purchase", 'group' => 'Sales & Purchase'],
+                //     ['key' => 'Sundry Debtors', 'value' => "Debtors", 'group' => 'Credit & Debit'],
+                //     ['key' => 'Sundry Creditors', 'value' => "Creditors", 'group' => 'Credit & Debit'],
+                //     ['key' => 'Rcpt', 'value' => "Receipts", 'group' => 'Receipt & Payment'],
+                //     ['key' => 'Pymt', 'value' => "Payments", 'group' => 'Receipt & Payment'],
+                //     ['key' => 'Cash-in-Hand', 'value' => "Cash", 'group' => 'Cash & Bank'],
+                //     ['key' => 'Bank Accounts', 'value' => "Bank Flow", 'group' => 'Cash & Bank']
+                // ],
+                // 'comparison_options' => [
+                //     ['key' => 'none', 'value' => "No Comparison"],
+                //     ['key' => 'prev-month', 'value' => "Compare with Previous Month"],
+                //     ['key' => 'prev-quarter', 'value' => "Compare with Previous Quarter"],
+                //     ['key' => 'prev-year', 'value' => "Compare with Previous Year"]
+                // ],
+                'Bargraph' => [
+                    ['key' => 'sales', 'value' => "Sales"],
+                    ['key' => 'purchase', 'value' => "Purchase"],
+                    ['key' => 'direct_income', 'value' => "Direct Income"],
+                    ['key' => 'direct_expense', 'value' => "Direct Expense"],
+                    ['key' => 'indirect_income', 'value' => "Indirect Income"],
+                    ['key' => 'indirect_expense', 'value' => "Indirect Expense"],
                 ]
             ];
 
@@ -326,7 +565,10 @@ class DashboardController extends BaseApiController
 				'fySel' => $fySel,
 			];
 
-			$graphData = $this->reportsService->monthlyGraph($userId, $from, $to, $type, $graphOptions);
+			// $graphData = $this->reportsService->monthlyGraph($userId, $from, $to, $type, $graphOptions);
+            $graphData = Cache::remember("api_dashboard:{$userId}:graph:" . md5($type . '|' . ($from ?? '') . '|' . ($to ?? '') . '|' . json_encode($graphOptions)), now()->addMinutes(10), function () use ($userId, $from, $to, $type, $graphOptions) {
+				return $this->reportsService->monthlyGraph($userId, $from, $to, $type, $graphOptions);
+			});
 
 			// TRANSFORM API RESPONSE TO MATCH DESKTOP STRUCTURE
 			$transformedData = [
@@ -408,53 +650,111 @@ class DashboardController extends BaseApiController
             $userId = (int) $user->id;
             $from = $request->input('from');
             $to = $request->input('to');
+            [$from, $to] = $this->resolveDashboardDateRange($request);
 
-            $groupsWithBalances = $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
+            $defaultGroupNames = [
+                'Sales Accounts',
+                'Purchase Accounts',
+                'Sundry Creditors',
+                'Sundry Debtors',
+                'Cash-in-Hand',
+                'Bank Accounts',
+                'Direct Incomes',
+                'Direct Expenses',
+            ];
+            $allGroups = collect($this->reportsService->getAllGroupsWithBalances($userId, $from, $to));
+            
 
-            $groups = collect($groupsWithBalances)->map(function ($group) {
+            $groups = $allGroups->map(function ($group) {
                 return [
-                    'iGroupId' => (int)$group->iGroupId,
+                    'iGroupId' => (int) $group->iGroupId,
                     'strGroupName' => $group->strGroupName,
-                    'Closing' => (float)($group->Closing ?? 0),
-                    'Opening' => (float)($group->Opening ?? 0),
+                    'Closing' => (float) ($group->Closing ?? 0),
+                    'Opening' => (float) ($group->Opening ?? 0),
                     'accent' => $this->getAccentColor($group->strGroupName),
-                    'icon' => $this->getGroupIcon($group->strGroupName)
+                    'icon' => $this->getGroupIcon($group->strGroupName),
                 ];
             })->values()->toArray();
 
-            return $this->success(__("response_message.dashboard.groups_loaded"), $groups);
+           $defaultGroupIds = $allGroups
+                ->whereIn('strGroupName', $defaultGroupNames)
+                ->pluck('iGroupId')
+                ->map(fn($groupId) => (int) $groupId)
+                ->values()
+                ->toArray();
+
+            if (empty($defaultGroupIds)) {
+                $defaultGroupIds = $allGroups
+                    ->take(8)
+                    ->pluck('iGroupId')
+                    ->map(fn($groupId) => (int) $groupId)
+                    ->values()
+                    ->toArray();
+            }
+
+            $preferences = UserCardPreference::where('user_id', $userId)
+                ->where('party_id', $userId)
+                ->first();
+
+            if ($preferences && $preferences->selected_groups) {
+                $selectedGroups = is_array($preferences->selected_groups)
+                    ? $preferences->selected_groups
+                    : json_decode($preferences->selected_groups, true);
+                $selectedGroups = array_map('intval', $selectedGroups ?? []);
+            } else {
+                $selectedGroups = $defaultGroupIds;
+            }
+
+            $validSelectedGroups = [];
+            foreach ($selectedGroups as $groupId) {
+                if ($allGroups->contains('iGroupId', $groupId)) {
+                    $validSelectedGroups[] = (int) $groupId;
+                }
+            }
+
+            if (empty($validSelectedGroups)) {
+                $validSelectedGroups = $defaultGroupIds;
+            }
+
+            $selectedGroupsWithBalances = $allGroups
+                ->whereIn('iGroupId', $validSelectedGroups)
+                ->map(function ($group) {
+                    return [
+                        'iGroupId' => (int) $group->iGroupId,
+                        'strGroupName' => $group->strGroupName,
+                        'Closing' => (float) ($group->Closing ?? 0),
+                        'Opening' => (float) ($group->Opening ?? 0),
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            $groupCards = collect($selectedGroupsWithBalances)->map(function ($group) {
+                return [
+                    'key' => 'group_' . $group['iGroupId'],
+                    'iGroupId' => $group['iGroupId'],
+                    'value' => $group['Closing'],
+                    'name' => $group['strGroupName'],
+                    'label' => $group['strGroupName'],
+                    'accent' => $this->getAccentColor($group['strGroupName']),
+                    'icon' => $this->getGroupIcon($group['strGroupName']),
+                    'opening_balance' => $group['Opening'],
+                    'closing_balance' => $group['Closing'],
+                ];
+            })->values()->toArray();
+
+            return $this->success(__("response_message.dashboard.groups_loaded"), [
+                'range' => ['from' => $from, 'to' => $to],
+                'groups' => $groups,
+                'selected_group_ids' => $validSelectedGroups,
+                'selected_groups_with_balances' => $selectedGroupsWithBalances,
+                'default_group_ids' => $defaultGroupIds,
+                'group_cards' => $groupCards,
+            ]);
         } catch (\Exception $e) {
             return $this->error(__("response_message.dashboard.groups_error"), 500, $e->getMessage());
         }
     }
-
-    // Helper methods from previous HomeController
-    // private function getAccentColor($groupName)
-    // {
-    //     $colors = [
-    //         'Sales Accounts' => 'blue',
-    //         'Purchase Accounts' => 'amber',
-    //         'Sundry Creditors' => 'violet',
-    //         'Sundry Debtors' => 'fuchsia',
-    //         'Cash-in-Hand' => 'teal',
-    //         'Bank Accounts' => 'indigo',
-    //         'Direct Incomes' => 'emerald',
-    //         'Direct Expenses' => 'rose',
-    //         'Duties & Taxes' => 'orange',
-    //         'Loans & Advances (Assets)' => 'purple',
-    //         'Current Assets' => 'cyan',
-    //         'Fixed Assets' => 'lime',
-    //         'Stock-in-Hand' => 'yellow',
-    //         'Investments' => 'pink',
-    //         'Mutual Fund' => 'sky',
-    //         'Indirect Incomes' => 'green',
-    //         'Indirect Expenses' => 'red',
-    //         'Loans & Advances' => 'purple',
-    //         'Capital Account' => 'gray',
-    //     ];
-
-    //     return $colors[$groupName] ?? 'gray';
-    // }
 
     protected function getAccentColor($groupName)
     {
@@ -490,32 +790,6 @@ class DashboardController extends BaseApiController
         return $defaultColors[$hash % count($defaultColors)];
     }
 
-    // private function getGroupIcon($groupName)
-    // {
-    //     $icons = [
-    //         'Sales Accounts' => 'fa-solid fa-chart-line',
-    //         'Purchase Accounts' => 'fa-solid fa-cart-shopping',
-    //         'Sundry Creditors' => 'fa-solid fa-people-group',
-    //         'Sundry Debtors' => 'fa-solid fa-user-group',
-    //         'Cash-in-Hand' => 'fa-solid fa-wallet',
-    //         'Bank Accounts' => 'fa-solid fa-building-columns',
-    //         'Direct Incomes' => 'fa-solid fa-money-bill-trend-up',
-    //         'Direct Expenses' => 'fa-solid fa-money-bill-transfer',
-    //         'Indirect Incomes' => 'fa-solid fa-money-bill-wave',
-    //         'Indirect Expenses' => 'fa-solid fa-receipt',
-    //         'Duties & Taxes' => 'fa-solid fa-scale-balanced',
-    //         'Loans & Advances' => 'fa-solid fa-hand-holding-dollar',
-    //         'Loans & Advances (Assets)' => 'fa-solid fa-hand-holding-dollar',
-    //         'Current Assets' => 'fa-solid fa-boxes-stacked',
-    //         'Fixed Assets' => 'fa-solid fa-building',
-    //         'Stock-in-Hand' => 'fa-solid fa-warehouse',
-    //         'Investments' => 'fa-solid fa-chart-pie',
-    //         'Mutual Fund' => 'fa-solid fa-coins',
-    //         'Capital Account' => 'fa-solid fa-landmark',
-    //     ];
-
-    //     return $icons[$groupName] ?? 'fa-solid fa-circle-dollar';
-    // }
 
     protected function getGroupIcon($groupName)
     {
@@ -617,6 +891,62 @@ class DashboardController extends BaseApiController
         
         // Ultimate fallback
         return 'fa-solid fa-cube';
+    }
+
+    private function resolveDashboardDateRange(Request $request): array
+    {
+        $from = $request->input('from');
+        $to = $request->input('to');
+        $fySel = $request->input('fySel');
+
+        if ((!$from || !$to) && $fySel && preg_match('/^(\d{4})-(\d{4})$/', $fySel, $matches)) {
+            $from = $from ?: $matches[1] . '-04-01';
+            $to = $to ?: $matches[2] . '-03-31';
+        }
+
+        if (!$from || !$to) {
+            $today = Carbon::today();
+            $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
+            $from = $from ?: $startYear . '-04-01';
+            $to = $to ?: ($startYear + 1) . '-03-31';
+        }
+
+        return [$from, $to];
+    }
+
+    private function amountFromRows(array $rows, string $groupName): float
+    {
+        foreach ($rows as $row) {
+            $row = (array) $row;
+            if (($row['strGroupName'] ?? null) === $groupName) {
+                return $this->toFloat($row['decMainAmount'] ?? 0);
+            }
+        }
+
+        return 0.0;
+    }
+
+    private function toFloat($value): float
+    {
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        return (float) str_replace(',', '', (string) $value);
+    }
+
+    private function withPercentages(array $items): array
+    {
+        $total = array_sum(array_map(fn($item) => abs((float) ($item['amount'] ?? 0)), $items));
+
+        return array_map(function ($item) use ($total) {
+            $amount = (float) ($item['amount'] ?? 0);
+            $item['amount'] = round($amount, 2);
+            $item['formatted_amount'] = $this->fmt($amount);
+            $item['percentage'] = $total > 0 ? round((abs($amount) / $total) * 100, 2) : 0.0;
+
+            return $item;
+        }, $items);
     }
 
     // Keep your existing fmt method for number formatting

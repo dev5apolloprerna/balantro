@@ -508,7 +508,7 @@
             </button>
         </div>
         <!-- Body -->
-        <div class="gst-modal-body space-y-5 bg-slate-50/70 p-3 dark:bg-black">
+        <div class="gst-modal-body space-y-3 bg-slate-50/70 p-3 dark:bg-black">
             <input type="hidden" id="item_mapping_id">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <!-- Item -->
@@ -520,9 +520,7 @@
                             <p class="text-xs text-slate-500 dark:text-slate-400">Search and select multiple items in one flow.</p>
                         </div>
                     </div>
-                    <select id="item_id" name="item_id[]" multiple="multiple" class="select2-item w-full rounded-lg border border-slate-300 dark:border-slate-700
-                                bg-white dark:bg-slate-800
-                                text-slate-800 dark:text-white px-3 py-2">
+                    <select id="item_id" name="item_id[]" multiple="multiple" class="select2-item w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-2 select2-hidden-accessible">
                         <!-- <option value="">Select Item</option> -->
                         @foreach($availableItems as $item)
                             <option value="{{ $item->iStockIdtemId }}" data-available="true">
