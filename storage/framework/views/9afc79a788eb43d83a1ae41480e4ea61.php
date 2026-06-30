@@ -539,6 +539,7 @@
             }
         );
     </script>
+    <?php echo $__env->make('shared._loader', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 </body>
 
 </html><?php /**PATH D:\xampp\htdocs\balantro\resources\views/layouts/super_admin.blade.php ENDPATH**/ ?>

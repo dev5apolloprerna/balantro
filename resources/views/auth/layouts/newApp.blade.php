@@ -10,6 +10,7 @@
         </main>
     </div>
     @include('auth.includes.NewScripts')
+    @include('shared._loader')
 </body>
 
 </html>

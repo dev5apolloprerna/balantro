@@ -12,6 +12,7 @@
         </main>
     </div>
     @include('auth.includes.scripts')
+    @include('shared._loader')
 </body>
 
 </html>

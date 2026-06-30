@@ -1,7 +1,7 @@
-{{-- Global page loader. Hidden by default; shown for normal same-page form submits and same-window navigation. --}}
+
 <div id="globalPageLoader" class="fixed inset-0 z-[99999] hidden items-center justify-center bg-black/50" aria-hidden="true">
   <div class="flex flex-col items-center gap-3 rounded-xl bg-white/90 px-6 py-5 shadow-xl dark:bg-gray-900/90">
-    <img src="{{ asset('images/loader.svg') }}" class="h-14 w-14 animate-spin" alt="Loading indicator">
+    <img src="<?php echo e(asset('images/loader.svg')); ?>" class="h-14 w-14 animate-spin" alt="Loading indicator">
     <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Loading...</span>
   </div>
 </div>
@@ -61,4 +61,4 @@
     window.addEventListener('pageshow', hideLoader);
     window.addEventListener('load', hideLoader);
 })();
-</script>
+</script><?php /**PATH D:\xampp\htdocs\balantro\resources\views/shared/_loader.blade.php ENDPATH**/ ?>

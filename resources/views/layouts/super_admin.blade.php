@@ -537,6 +537,7 @@
             }
         );
     </script>
+    @include('shared._loader')
 </body>
 
 </html>

@@ -52,7 +52,7 @@
     @else
       @yield('content')
     @endauth
-    @include('shared.loader')
     @include('shared.common')
+    @include('shared._loader')
   </body>
 </html>

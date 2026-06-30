@@ -139,6 +139,7 @@
             // Remove the opacity initialization that causes blinking
         });
     </script>
+    @include('shared._loader')
 </body>
 
 </html>

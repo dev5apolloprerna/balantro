@@ -64,5 +64,6 @@
     @endauth
 
     @include('shared.common')
+    @include('shared._loader')
   </body>
 </html>
