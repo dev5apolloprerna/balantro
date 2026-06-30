@@ -25,11 +25,7 @@ class CodeMasterController extends Controller
         }
 
         try {
-            // Execute stored procedure
-            //$results = DB::select('select * from ');
-            DB::connection('sqlsrv')->getPdo();
-            dd($request);
-            $results = DB::select(
+            $results = DB::connection('sqlsrv')->select(
                 'EXEC sp_SearchCodeMaster ?', 
                 [$request->input('search')]
             );

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
 
 class LandingController extends Controller
 {
@@ -14,7 +13,6 @@ class LandingController extends Controller
 
     public function index()
     {
-        dd("Hi");
         if (Auth::check()) {
             return $this->redirectToDashboard();
         }
