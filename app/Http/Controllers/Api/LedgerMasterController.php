@@ -264,22 +264,22 @@ class LedgerMasterController extends Controller
     public function index_new(Request $request)
     {
         try {
-
             $user = auth()->user();
             if (!$user) {
                 return response()->json(['User not authenticated'], 401);
             }
-            $partyguid = $request->partyguid;
-            $validator = Validator::make([
-                'partyguid' => $request->partyguid,
-                'strCustomerName' => $request->strCustomerName,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date
-            ], [
+            $validator = Validator::make($request->all(), [
                 'partyguid' => 'required|uuid',
-                'strCustomerName' => 'nullable',
-                'start_date' => 'nullable|date|date_format:d-m-Y',
-                'end_date' => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date'
+                'iGroupId' => 'nullable|integer',
+                'group_id' => 'nullable|integer',
+                'strCustomerName' => 'nullable|string',
+                'range' => 'nullable',
+                'from' => 'nullable|date',
+                'to' => 'nullable|date|after_or_equal:from',
+                'from_custom' => 'nullable|date',
+                'to_custom' => 'nullable|date|after_or_equal:from_custom',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date',
             ]);
 
             if ($validator->fails()) {
@@ -289,45 +289,44 @@ class LedgerMasterController extends Controller
                 ], 422);
             }
 
-            // If validation passes, continue with your logic
             $partyguid = $request->partyguid;
-            $iGroupId = $request->iGroupId;
-            $strCustomerName = $request->strCustomerName;
-            $startDate = $request->start_date;
-            $endDate = $request->end_date;
             $partyId = auth('api')->id();
-            $results = DB::select(
-                'EXEC CheckPartyGUIDCount ?',
-                [$partyguid]
-            );
-
+            $results = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
             if (!$results) {
                 return response()->json([
                     'success' => false,
                     'partyguid' => $partyguid,
-                    'error' =>  'Invalid Party - not found in database'
+                    'error' => 'Invalid Party - not found in database'
                 ], 422);
             }
 
-            $groupId = $iGroupId;
-            $startDate = $startDate ? date('Y-m-d', strtotime($startDate)) : null;
-            $endDate = $endDate   ? date('Y-m-d', strtotime($endDate))   : null;
+            $groupId = (int) ($request->input('iGroupId', $request->input('group_id', 0)) ?: 0);
+            $strCustomerName = $request->input('strCustomerName');
+            [$financialYears, $rangeSel, $startDate, $endDate] = $this->resolveApiFinancialYearFilter($request, $partyId);
 
-			$LedgerMasters = collect(DB::select(
-                'EXEC dbo.GetLedgerMasters ?, ?, ?, ?, ?',
-                [$partyId, $iGroupId, $startDate, $endDate, $strCustomerName]
-            ));
+			$svc = app(ReportsService::class);
+            $ledgerResult = $svc->ledger($partyId, $groupId, $startDate, $endDate, $strCustomerName);
+
+            if (!$ledgerResult['success']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $ledgerResult['message'] ?? 'Failed to retrieve ledger data',
+                    'error' => $ledgerResult['error'] ?? 'Unknown error',
+                ], 500);
+            }
+
+            $LedgerMasters = collect(data_get($ledgerResult, 'data.rows', []));
 
             if ($LedgerMasters->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No Ledger data found for this PartyGUID'
+                    'message' => 'No Ledger data found for this PartyGUID',
+                    'meta' => $this->apiFinancialYearMeta($financialYears, $rangeSel, $startDate, $endDate),
                 ], 404);
             }
 
             $data = [];
             foreach ($LedgerMasters as $LedgerMaster) {
-
                 $data[] = array(
                     "iLedgerId" => $LedgerMaster->iLedgerId,
                     "strCustomerName" => trim($LedgerMaster->strCustomerName),
@@ -345,7 +344,11 @@ class LedgerMasterController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $data
+                'data' => $data,
+                'meta' => array_merge(
+                    $this->apiFinancialYearMeta($financialYears, $rangeSel, $startDate, $endDate),
+                    ['groupId' => $groupId, 'strCustomerName' => $strCustomerName]
+                ),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -359,136 +362,209 @@ class LedgerMasterController extends Controller
     public function vch_history_new(Request $request)
 	{
 		try {
-			$validator = Validator::make([
-				'partyguid' => $request->partyguid,
-				'iledgerid' => $request->iledgerid,
-				'start_date' => $request->start_date,
-				'end_date' => $request->end_date
-			], [
-				'partyguid' => 'required|uuid',
-				'iledgerid' => 'required',
-				'start_date' => 'nullable|date|date_format:d-m-Y',
-				'end_date' => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date'
-			]);
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json(['User not authenticated'], 401);
+            }
 
+			$validator = Validator::make($request->all(), [
+                'partyguid' => 'required|uuid',
+                'iledgerid' => 'required|integer',
+                'range' => 'nullable',
+                'from' => 'nullable|date',
+                'to' => 'nullable|date|after_or_equal:from',
+                'from_custom' => 'nullable|date',
+                'to_custom' => 'nullable|date|after_or_equal:from_custom',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date',
+            ]);
 			if ($validator->fails()) {
-				return response()->json([
-					'success' => false,
-					'error' => $validator->errors()
-				], 422);
-			}
+                return response()->json([
+                    'success' => false,
+                    'error' => $validator->errors()
+                ], 422);
+            }
 
-			// If validation passes, continue with your logic
 			$partyguid = $request->partyguid;
-			$iledgerid = $request->iledgerid;
-			$startDate = $request->start_date;
-			$endDate = $request->end_date;
+            $iledgerid = (int) $request->iledgerid;
+            $partyId = auth('api')->id();
 
-			$results = DB::select(
-				'EXEC CheckPartyGUIDCount ?',
-				[$partyguid]
-			);
+			$results = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
+            if (!$results) {
+                return response()->json([
+                    'success' => false,
+                    'partyguid' => $partyguid,
+                    'error' => 'Invalid PartyGUID - not found in database'
+                ], 422);
+            }
 
-			if (!$results) {
-				return response()->json([
-					'success' => false,
-					'partyguid' => $partyguid,
-					'error' =>  'Invalid PartyGUID - not found in database'
-				], 422);
-			}
-
-			$svc = app(ReportsService::class); 
-			$voucherHistoryResult = $svc->voucherHistory($partyguid, $iledgerid, $startDate, $endDate);
-
-			// Check if the service call was successful
+			[$financialYears, $rangeSel, $startDate, $endDate] = $this->resolveApiFinancialYearFilter($request, $partyId);
+			$svc = app(ReportsService::class);
+            $voucherHistoryResult = $svc->voucherHistory($partyguid, $iledgerid, $startDate, $endDate);
 			if (!$voucherHistoryResult['success']) {
-				return response()->json([
-					'success' => false,
-					'message' => $voucherHistoryResult['message'] ?? 'Failed to retrieve voucher history',
-					'error' => $voucherHistoryResult['error'] ?? 'Unknown error'
-				], 500);
-			}
+                return response()->json([
+                    'success' => false,
+                    'message' => $voucherHistoryResult['message'] ?? 'Failed to retrieve voucher history',
+                    'error' => $voucherHistoryResult['error'] ?? 'Unknown error'
+                ], 500);
+            }
 
-			// Get the actual rows from the response
-			$VchHistories = $voucherHistoryResult['data']['rows'];
+			$VchHistories = collect(data_get($voucherHistoryResult, 'data.rows', []));
 
-			// DEBUG: Check what fields are actually returned
-			if (!$VchHistories->isEmpty()) {
-				$firstRow = $VchHistories->first();
-				\Log::info('Voucher History Fields:', array_keys((array)$firstRow));
-			}
-
-			// Get opening balance from the day before the start date (like web code)
 			$openingBalanceData = ['balance' => 0.0, 'side' => 'Dr'];
-			if ($startDate) {
-				$previousDay = date('Y-m-d', strtotime($startDate . ' -1 day'));
-				$openingBalanceData = $svc->getOpeningBalance($partyguid, $iledgerid, $previousDay);
-			}
-
+            if ($startDate) {
+                $previousDay = date('Y-m-d', strtotime($startDate . ' -1 day'));
+                $openingBalanceData = $svc->getOpeningBalance($partyguid, $iledgerid, $previousDay);
+            }
 			$num = function ($v) {
-				if ($v === null) return 0.0;
-				$s = str_replace(',', '', (string)$v);
-				return is_numeric($s) ? (float)$s : 0.0;
-			};
+                if ($v === null) return 0.0;
+                $s = str_replace(',', '', (string)$v);
+                return is_numeric($s) ? (float)$s : 0.0;
+            };
 
-			// Handle empty result set
 			if ($VchHistories->isEmpty()) {
-				return response()->json([
-					'success' => true,
-					'data' => [],
-					'opening_balance'  => $this->fmt($openingBalanceData['balance']),
-					'opening_balance_side' => $openingBalanceData['side'],
-					'closing_balance'  => $this->fmt($openingBalanceData['balance']),
-					'closing_balance_side' => $openingBalanceData['side'],
-				]);
-			}
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                    'meta' => array_merge($this->apiFinancialYearMeta($financialYears, $rangeSel, $startDate, $endDate), ['ledgerId' => $iledgerid]),
+                    'opening_balance' => $this->fmt($openingBalanceData['balance']),
+                    'opening_balance_side' => $openingBalanceData['side'],
+                    'closing_balance' => $this->fmt($openingBalanceData['balance']),
+                    'closing_balance_side' => $openingBalanceData['side'],
+                ]);
+            }
 
-			$last  = $VchHistories->last();
-
-			// Calculate closing balance from the last record's running balance
-			$closingRunningBalance = property_exists($last, 'decRunningBalance') ? $num($last->decRunningBalance) : 
-									(property_exists($last, 'runningBalance') ? $num($last->runningBalance) : 0);
-
-			$closingBalance = abs($closingRunningBalance);
-			$closingSide = $closingRunningBalance >= 0 ? 'Dr' : 'Cr';
+			$last = $VchHistories->last();
+            $closingRunningBalance = property_exists($last, 'decRunningBalance') ? $num($last->decRunningBalance) :
+                (property_exists($last, 'runningBalance') ? $num($last->runningBalance) : 0);
+            $closingBalance = abs($closingRunningBalance);
+            $closingSide = $closingRunningBalance >= 0 ? 'Dr' : 'Cr';
 
 			$data = [];
-			foreach ($VchHistories as $VchHistory) {
-				// Use null-safe access with property_exists checks
-				$data[] = array(
-					"iVchId" => $VchHistory->iVchId ?? $VchHistory->vchId ?? 0,
-					"iLedgerId" => $VchHistory->iLedgerId ?? $VchHistory->ledgerId ?? 0,
-					"trnAccount" => trim($VchHistory->trnAccount ?? $VchHistory->accountName ?? ''),
-					"vchType" => $VchHistory->vchType ?? $VchHistory->voucherType ?? '',
-					"DRAmount" => $this->fmt($VchHistory->DRAmount ?? $VchHistory->drAmount ?? $VchHistory->DrAmount ?? 0),
-					"CRAmount" => $this->fmt($VchHistory->CRAmount ?? $VchHistory->crAmount ?? $VchHistory->CrAmount ?? 0),
-					"vchNo" => $VchHistory->vchNo ?? $VchHistory->voucherNo ?? '',
-					"strVchDate" => $VchHistory->strVchDate ?? $VchHistory->vchDate ?? $VchHistory->transactionDate ?? '',
-					"decRunningBalance" => $this->fmt($VchHistory->decRunningBalance ?? $VchHistory->runningBalance ?? 0),
-					"PartyGUID" => $VchHistory->PartyGUID ?? $partyguid,
-					"iYearId" => $VchHistory->iYearId ?? $VchHistory->yearId ?? 0
-				);
-			}
+            foreach ($VchHistories as $VchHistory) {
+                $data[] = array(
+                    "iVchId" => $VchHistory->iVchId ?? $VchHistory->vchId ?? 0,
+                    "iLedgerId" => $VchHistory->iLedgerId ?? $VchHistory->ledgerId ?? 0,
+                    "trnAccount" => trim($VchHistory->trnAccount ?? $VchHistory->accountName ?? ''),
+                    "vchType" => $VchHistory->vchType ?? $VchHistory->voucherType ?? '',
+                    "DRAmount" => $this->fmt($VchHistory->DRAmount ?? $VchHistory->drAmount ?? $VchHistory->DrAmount ?? 0),
+                    "CRAmount" => $this->fmt($VchHistory->CRAmount ?? $VchHistory->crAmount ?? $VchHistory->CrAmount ?? 0),
+                    "vchNo" => $VchHistory->vchNo ?? $VchHistory->voucherNo ?? '',
+                    "strVchDate" => $VchHistory->strVchDate ?? $VchHistory->vchDate ?? $VchHistory->transactionDate ?? '',
+                    "decRunningBalance" => $this->fmt($VchHistory->decRunningBalance ?? $VchHistory->runningBalance ?? 0),
+                    "PartyGUID" => $VchHistory->PartyGUID ?? $partyguid,
+                    "iYearId" => $VchHistory->iYearId ?? $VchHistory->yearId ?? 0
+                );
+            }
 
-			return response()->json([
-				'success' => true,
-				'data' => $data,
-				'opening_balance'  => $this->fmt($openingBalanceData['balance']),
-				'opening_balance_side' => $openingBalanceData['side'],
-				'closing_balance'  => $this->fmt($closingBalance),
-				'closing_balance_side' => $closingSide,
-			]);
-		} catch (\Exception $e) {
-			\Log::error('Voucher History Error: ' . $e->getMessage());
-			\Log::error('Voucher History Trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+                'meta' => array_merge($this->apiFinancialYearMeta($financialYears, $rangeSel, $startDate, $endDate), ['ledgerId' => $iledgerid]),
+                'opening_balance' => $this->fmt($openingBalanceData['balance']),
+                'opening_balance_side' => $openingBalanceData['side'],
+                'closing_balance' => $this->fmt($closingBalance),
+                'closing_balance_side' => $closingSide,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Voucher History Error: ' . $e->getMessage());
+            \Log::error('Voucher History Trace: ' . $e->getTraceAsString());
 
-			return response()->json([
-				'success' => false,
-				'message' => 'Failed to retrieve voucher history records',
-				'error' => $e->getMessage()
-			], 500);
-		}
-	}
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve voucher history records',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+	private function resolveApiFinancialYearFilter(Request $request, int $partyId): array
+    {
+        $financialYears = DB::table('YearMaster')
+            ->where('iPartyId', $partyId)
+            ->orderBy('iYearId', 'desc')
+            ->get();
+
+        $rangeSel = $request->input('range') ?: $this->defaultApiFinancialYearRange($financialYears);
+
+        if ($rangeSel !== 'custom' && $financialYears->isNotEmpty() && !$financialYears->firstWhere('iYearId', (int) $rangeSel)) {
+            $rangeSel = $this->defaultApiFinancialYearRange($financialYears);
+        }
+
+        if ($rangeSel === 'custom') {
+            $from = $request->input('from_custom') ?: $request->input('from') ?: $request->input('start_date');
+            $to = $request->input('to_custom') ?: $request->input('to') ?: $request->input('end_date');
+        } else {
+            $range = $this->apiFinancialYearDateRange((string) $rangeSel, $financialYears)
+                ?: $this->apiLegacyFinancialYearDateRange((string) $rangeSel);
+
+            $from = $range['from'] ?? ($request->input('from') ?: $request->input('start_date'));
+            $to = $range['to'] ?? ($request->input('to') ?: $request->input('end_date'));
+        }
+
+        return [$financialYears, $rangeSel, $this->normalizeApiDate($from), $this->normalizeApiDate($to)];
+    }
+
+    private function defaultApiFinancialYearRange($financialYears): string
+    {
+        $currentYear = $financialYears->firstWhere('isCurrentYear', 1);
+        $defaultYear = $currentYear ?: $financialYears->first();
+
+        return (string) ($defaultYear->iYearId ?? 'current_year');
+    }
+
+    private function apiFinancialYearDateRange(string $rangeSel, $financialYears): ?array
+    {
+        $selectedYear = $financialYears->firstWhere('iYearId', (int) $rangeSel);
+
+        if (!$selectedYear || !preg_match('/^(\d{4})-(\d{4})$/', (string) $selectedYear->strYear, $matches)) {
+            return null;
+        }
+
+        return [
+            'from' => $matches[1] . '-04-01',
+            'to' => $matches[2] . '-03-31',
+        ];
+    }
+
+    private function apiLegacyFinancialYearDateRange(string $rangeSel): ?array
+    {
+        $today = now();
+
+        if ($rangeSel === 'current_year') {
+            $startYear = $today->month >= 4 ? $today->year : $today->year - 1;
+        } elseif ($rangeSel === 'last_year') {
+            $startYear = $today->month >= 4 ? $today->year - 1 : $today->year - 2;
+        } else {
+            return null;
+        }
+
+        return [
+            'from' => date('Y-m-d', strtotime("$startYear-04-01")),
+            'to' => date('Y-m-d', strtotime(($startYear + 1) . '-03-31')),
+        ];
+    }
+
+    private function normalizeApiDate($date): ?string
+    {
+        return $date ? date('Y-m-d', strtotime((string) $date)) : null;
+    }
+
+    private function apiFinancialYearMeta($financialYears, $rangeSel, ?string $from, ?string $to): array
+    {
+        return [
+            'range' => $rangeSel,
+            'from' => $from,
+            'to' => $to,
+            'financialYears' => $financialYears->map(function ($year) {
+                return [
+                    'iYearId' => $year->iYearId,
+                    'strYear' => $year->strYear,
+                    'isCurrentYear' => $year->isCurrentYear ?? 0,
+                ];
+            })->values(),
+        ];
+    }
 
     private function fmt($v): string
 	{

@@ -530,8 +530,8 @@ class BalanceSheetController extends Controller
                 throw new \Exception('Failed to store Excel file');
             }
 
-            // Get file URL - use asset() for public disk
-            $fileUrl = asset('storage/' . $filePath);
+            // Get download route URL so exports work even when the public storage symlink is unavailable
+            $fileUrl = route('api.balance-sheet.export.download', ['filename' => $filename]);
 
             return response()->json([
                 'success' => true,
@@ -627,8 +627,8 @@ class BalanceSheetController extends Controller
             // Store PDF using public disk
             $disk->put($filePath, $pdf->output());
 
-            // Get file URL - use asset() for public disk
-            $fileUrl = asset('storage/' . $filePath);
+            // Get download route URL so exports work even when the public storage symlink is unavailable
+            $fileUrl = route('api.balance-sheet.export.download', ['filename' => $filename]);
 
             return response()->json([
                 'success' => true,
@@ -647,6 +647,22 @@ class BalanceSheetController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function downloadExportedFile(string $filename)
+    {
+        if (!preg_match('/\Abalance-sheet-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
+            abort(404);
+        }
+
+        $filePath = 'exports/' . $filename;
+        $disk = Storage::disk('public');
+
+        if (!$disk->exists($filePath)) {
+            abort(404, 'Export file not found');
+        }
+
+        return $disk->download($filePath, $filename);
     }
 
     // Direct download endpoints

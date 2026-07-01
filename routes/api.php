@@ -45,7 +45,13 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/password/resend-otp', [ForgotPasswordOtpController::class, 'resendOtp']);
     Route::post('refreshFcmToken', [\App\Http\Controllers\Api\V1\SessionsController::class, 'refreshFcmToken']);
     Route::post('emp_sign_in', [\App\Http\Controllers\Api\V1\SessionsController::class, 'emp_login']);
+    Route::get('/pl/export/download/{filename}', [PandLAccountController::class, 'downloadExportedFile'])
+        ->where('filename', '[A-Za-z0-9._-]+')
+        ->name('api.pl.export.download');
 
+    Route::get('/balance-sheet/export/download/{filename}', [BalanceSheetController::class, 'downloadExportedFile'])
+        ->where('filename', 'balance-sheet-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)')
+        ->name('api.balance-sheet.export.download');
     // Resource routes
     Route::middleware('auth:api')->group(function () {
         //Route::apiResource('client_profile', \App\Http\Controllers\Api\V1\\App\Http\Controllers\Api\V1\ClientProfilesController::class)->only(['show', 'update']);
