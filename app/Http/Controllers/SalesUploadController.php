@@ -232,37 +232,16 @@ class SalesUploadController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (!empty($mapping['cgst_id']))
-        {
-            $cgst = DB::table('LedgerMaster')
-                ->where('iPartyId', $partyId)
-                ->where('iLedgerId', $mapping['cgst_id'])
-                ->first();
-
-            $mapping['cgst_name'] =
-                $cgst->strCustomerName ?? null;
+        if (!empty($mapping['cgst_id'])) {
+            $mapping['cgst_name'] = $this->gstLedgerName($partyId, $mapping['cgst_id']);
         }
 
-        if (!empty($mapping['sgst_id']))
-        {
-            $sgst = DB::table('LedgerMaster')
-                ->where('iPartyId', $partyId)
-                ->where('iLedgerId', $mapping['sgst_id'])
-                ->first();
-
-            $mapping['sgst_name'] =
-                $sgst->strCustomerName ?? null;
+        if (!empty($mapping['sgst_id'])) {
+            $mapping['sgst_name'] = $this->gstLedgerName($partyId, $mapping['sgst_id']);
         }
 
-        if (!empty($mapping['igst_id']))
-        {
-            $igst = DB::table('LedgerMaster')
-                ->where('iPartyId', $partyId)
-                ->where('iLedgerId', $mapping['igst_id'])
-                ->first();
-
-            $mapping['igst_name'] =
-                $igst->strCustomerName ?? null;
+        if (!empty($mapping['igst_id'])) {
+            $mapping['igst_name'] = $this->gstLedgerName($partyId, $mapping['igst_id']);
         }
 
         return $mapping;
