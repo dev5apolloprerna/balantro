@@ -118,6 +118,7 @@ Route::prefix('v1')->group(function () {
 
 		// Direct Download Routes
 		Route::post('/ledger/download/excel', [LedgerMasterController::class, 'downloadLedgerExcel']);
+        Route::post('/ledger/download/pdf', [LedgerMasterController::class, 'downloadLedgerPdf']);
 		Route::post('/voucher-history/download/excel', [LedgerMasterController::class, 'downloadVoucherHistoryExcel']);
 		
         Route::post('/group_master', [LedgerMasterController::class, 'group_master']);

@@ -385,7 +385,7 @@ class SalesUploadController extends Controller
                         DB::table('ledgers')
                             ->selectRaw("name AS name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, State AS state")
                             ->where('iPartyId', $partyId)
-                            ->where('Parent', 'Sundry Debtors')
+                            //->where('Parent', 'Sundry Debtors')
                     );
             }, 'party_ledgers');
 

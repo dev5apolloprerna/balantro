@@ -1001,122 +1001,271 @@ class LedgerMasterController extends Controller
     }
 
     // LEDGER EXPORT METHODS - MODIFIED TO WORK WITH EXISTING EXPORT CLASSES
+    // public function exportLedgerExcel(Request $request)
+	// {
+	// 	try {
+	// 		$user = auth('api')->user();
+	// 		if (!$user) {
+	// 			return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+	// 		}
 
-    public function exportLedgerExcel(Request $request)
+	// 		$validator = Validator::make($request->all(), [
+	// 			'partyguid'  => 'required|uuid',
+	// 			'iGroupId' => 'nullable|integer', // Changed to nullable to match web code
+	// 			'start_date' => 'nullable|date|date_format:d-m-Y',
+	// 			'end_date'   => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date',
+	// 			'strCustomerName' => 'nullable|string',
+	// 		]);
+
+	// 		if ($validator->fails()) {
+	// 			return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+	// 		}
+
+	// 		$partyguid = $request->partyguid;
+	// 		$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
+	// 		$endDate   = $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null;
+
+	// 		// Verify party GUID - FIXED: Check if count > 0
+	// 		$exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
+	// 		if (!$exists || (isset($exists[0]) && $exists[0]->Count == 0)) {
+	// 			return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
+	// 		}
+
+	// 		// Get party ID from partyguid instead of user ID
+	// 		/*$party = DB::table('Client')->where('guid', $partyguid)->first();
+	// 		if (!$party) {
+	// 			return response()->json(['success' => false, 'message' => 'Party not found'], 422);
+	// 		}*/
+	// 		$partyId = $user->id;
+	// 		$groupId = $request->iGroupId ?? 0;
+	// 		$svc = app(ReportsService::class); 
+	// 		$ledgerData = $svc->ledger($partyId, $groupId, $startDate, $endDate, $request->strCustomerName);
+	// 		/*$ledgerData = $this->getLedgerData(
+	// 			$partyId, 
+	// 			$request->iGroupId, 
+	// 			$startDate, 
+	// 			$endDate, 
+	// 			$request->strCustomerName
+	// 		);*/
+
+	// 		if (!$ledgerData || empty($ledgerData['data'])) {
+	// 			return response()->json(['success' => false, 'message' => 'No Ledger data found'], 404);
+	// 		}
+
+	// 		// Get group name for display - ADDED THIS SECTION
+	// 		$groupName = '';
+	// 		if ($request->iGroupId) {
+	// 			$group = DB::table('GroupMaster')
+	// 				->where('iGroupId', $request->iGroupId)
+	// 				->where('PartyGUID', $partyguid)
+	// 				->first();
+	// 			$groupName = $group->strGroupName ?? '';
+	// 		}
+
+	// 		$filename = 'ledger-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+
+	// 		// Use public disk
+	// 		$disk = Storage::disk('public');
+	// 		$directory = 'exports';
+
+	// 		if (!$disk->exists($directory)) {
+	// 			$disk->makeDirectory($directory, 0755, true);
+	// 		}
+
+	// 		$filePath = $directory . '/' . $filename;
+
+	// 		// Store file using public disk - FIXED PARAMETERS
+	// 		$exportResult = Excel::store(
+	// 			new LedgerExport(
+	// 				$ledgerData['data'], // data
+	// 				$request->start_date, // from
+	// 				$request->end_date,   // to
+	// 				$groupName, // groupName - using the one we fetched
+	// 				$request->strCustomerName // customerName
+	// 			), 
+	// 			$filePath, 
+	// 			'public'
+	// 		);
+
+	// 		if (!$exportResult) {
+	// 			throw new \Exception('Failed to store Excel file');
+	// 		}
+
+	// 		if (!$disk->exists($filePath)) {
+	// 			throw new \Exception('Excel file was not created in storage');
+	// 		}
+
+	// 		// Get file URL
+	// 		$fileUrl = asset('storage/' . $filePath);
+
+	// 		return response()->json([
+	// 			'success' => true,
+	// 			'message' => 'Excel file generated successfully',
+	// 			'download_url' => $fileUrl,
+	// 			'filename' => $filename,
+	// 			'file_size' => $disk->size($filePath),
+	// 		], 200);
+
+	// 	} catch (\Throwable $e) {
+	// 		\Log::error('Ledger Excel Export Error: ' . $e->getMessage());
+
+	// 		return response()->json([
+	// 			'success' => false, 
+	// 			'message' => 'Failed to generate Excel file', 
+	// 			'error' => $e->getMessage()
+	// 		], 500);
+	// 	}
+	// }
+	private function prepareLedgerExportPayload(Request $request): array
+    {
+        $user = auth('api')->user();
+        if (!$user) {
+            return ['response' => response()->json(['success' => false, 'message' => 'Unauthenticated'], 401)];
+        }
+		$validator = Validator::make($request->all(), [
+            'partyguid' => 'required|uuid',
+            'iGroupId' => 'nullable|integer',
+            'group_id' => 'nullable|integer',
+            'strCustomerName' => 'nullable|string',
+            'range' => 'nullable',
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+            'from_custom' => 'nullable|date',
+            'to_custom' => 'nullable|date|after_or_equal:from_custom',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        if ($validator->fails()) {
+            return ['response' => response()->json(['success' => false, 'errors' => $validator->errors()], 422)];
+        }
+		$partyguid = $request->partyguid;
+        $exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
+        if (!$exists || (isset($exists[0]) && isset($exists[0]->Count) && (int) $exists[0]->Count === 0)) {
+            return ['response' => response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422)];
+        }
+
+		$partyId = $user->id;
+        $groupId = (int) ($request->input('iGroupId', $request->input('group_id', 0)) ?: 0);
+        $customerName = $request->input('strCustomerName');
+        [, , $startDate, $endDate] = $this->resolveApiFinancialYearFilter($request, $partyId);
+
+		$svc = app(ReportsService::class);
+        $ledgerResult = $svc->ledger($partyId, $groupId, $startDate, $endDate, $customerName);
+        $rows = collect(data_get($ledgerResult, 'data.rows', []))->filter(function ($r) {
+            $op = $this->num($r->decOpBl ?? 0);
+            $dr = $this->num($r->decDr ?? 0);
+            $cr = $this->num($r->decCr ?? 0);
+            $cl = $this->num($r->decClBl ?? 0);
+			return !($op == 0.0 && $dr == 0.0 && $cr == 0.0 && $cl == 0.0);
+        })->values();
+		if (!$ledgerResult['success'] || $rows->isEmpty()) {
+            return ['response' => response()->json(['success' => false, 'message' => 'No Ledger data found'], 404)];
+        }
+		$ledgerData = data_get($ledgerResult, 'data', []);
+        $ledgerData['rows'] = $rows;
+		$groupName = '';
+        if ($groupId) {
+            $group = DB::table('GroupMaster')
+                ->where('iGroupId', $groupId)
+                ->where('iPartyId', $partyId)
+                ->first();
+            $groupName = $group->strGroupName ?? '';
+        }
+        $profile = $user->profile ?? null;
+		return [
+            'data' => $ledgerData,
+            'from' => $startDate,
+            'to' => $endDate,
+            'fromDisplay' => $startDate ? date('d-m-Y', strtotime($startDate)) : '',
+            'toDisplay' => $endDate ? date('d-m-Y', strtotime($endDate)) : '',
+            'groupName' => $groupName,
+            'customerName' => $customerName,
+            'partyName' => $user->name ?? '',
+            'companyAddress' => $profile->address ?? '',
+            'companyEmail' => $user->email ?? '',
+        ];
+    }
+
+	private function ledgerExportFilename(string $prefix, Request $request, string $extension): string
+    {
+        $from = $request->input('start_date') ?: $request->input('from') ?: $request->input('from_custom') ?: 'start';
+        $to = $request->input('end_date') ?: $request->input('to') ?: $request->input('to_custom') ?: 'end';
+		return $prefix . '-' . str_replace('/', '-', $from) . '-to-' . str_replace('/', '-', $to) . '.' . $extension;
+    }
+
+	private function buildLedgerPdf(array $prepared)
+    {
+        return Pdf::setOptions([
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+            'isPhpEnabled' => true,
+        ])->loadView('reports.pdf.ledger_pdf', [
+            'data' => $prepared['data'],
+            'from' => $prepared['fromDisplay'],
+            'to' => $prepared['toDisplay'],
+            'groupName' => $prepared['groupName'],
+            'customerName' => $prepared['customerName'],
+            'partyName' => $prepared['partyName'],
+            'companyAddress' => $prepared['companyAddress'],
+            'companyEmail' => $prepared['companyEmail'],
+        ]);
+    }
+    // LEDGER EXPORT METHODS - MODIFIED TO WORK WITH EXISTING EXPORT CLASSES
+	public function exportLedgerExcel(Request $request)
 	{
 		try {
-			$user = auth('api')->user();
-			if (!$user) {
-				return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-			}
+            $prepared = $this->prepareLedgerExportPayload($request);
+            if (isset($prepared['response'])) {
+                return $prepared['response'];
+            }
+			$filename = $this->ledgerExportFilename('ledger-report', $request, 'xlsx');
+            $disk = Storage::disk('public');
+            $directory = 'exports';
 
-			$validator = Validator::make($request->all(), [
-				'partyguid'  => 'required|uuid',
-				'iGroupId' => 'nullable|integer', // Changed to nullable to match web code
-				'start_date' => 'nullable|date|date_format:d-m-Y',
-				'end_date'   => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date',
-				'strCustomerName' => 'nullable|string',
-			]);
+            if (!$disk->exists($directory)) {
+                $disk->makeDirectory($directory, 0755, true);
+            }
 
-			if ($validator->fails()) {
-				return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-			}
+            $filePath = $directory . '/' . $filename;
+            $exportResult = Excel::store(
+                new LedgerExport(
+                    $prepared['data'],
+                    $prepared['fromDisplay'],
+                    $prepared['toDisplay'],
+                    $prepared['groupName'],
+                    $prepared['customerName'],
+                    $prepared['partyName'],
+                    $prepared['companyAddress'],
+                    $prepared['companyEmail']
+                ),
+                $filePath,
+                'public'
+            );
 
-			$partyguid = $request->partyguid;
-			$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
-			$endDate   = $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null;
+            if (!$exportResult || !$disk->exists($filePath)) {
+                throw new \Exception('Excel file was not created in storage');
+            }
 
-			// Verify party GUID - FIXED: Check if count > 0
-			$exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
-			if (!$exists || (isset($exists[0]) && $exists[0]->Count == 0)) {
-				return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
-			}
-
-			// Get party ID from partyguid instead of user ID
-			/*$party = DB::table('Client')->where('guid', $partyguid)->first();
-			if (!$party) {
-				return response()->json(['success' => false, 'message' => 'Party not found'], 422);
-			}*/
-			$partyId = $user->id;
-			$groupId = $request->iGroupId ?? 0;
-			$svc = app(ReportsService::class); 
-			$ledgerData = $svc->ledger($partyId, $groupId, $startDate, $endDate, $request->strCustomerName);
-			/*$ledgerData = $this->getLedgerData(
-				$partyId, 
-				$request->iGroupId, 
-				$startDate, 
-				$endDate, 
-				$request->strCustomerName
-			);*/
-
-			if (!$ledgerData || empty($ledgerData['data'])) {
-				return response()->json(['success' => false, 'message' => 'No Ledger data found'], 404);
-			}
-
-			// Get group name for display - ADDED THIS SECTION
-			$groupName = '';
-			if ($request->iGroupId) {
-				$group = DB::table('GroupMaster')
-					->where('iGroupId', $request->iGroupId)
-					->where('PartyGUID', $partyguid)
-					->first();
-				$groupName = $group->strGroupName ?? '';
-			}
-
-			$filename = 'ledger-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
-
-			// Use public disk
-			$disk = Storage::disk('public');
-			$directory = 'exports';
-
-			if (!$disk->exists($directory)) {
-				$disk->makeDirectory($directory, 0755, true);
-			}
-
-			$filePath = $directory . '/' . $filename;
-
-			// Store file using public disk - FIXED PARAMETERS
-			$exportResult = Excel::store(
-				new LedgerExport(
-					$ledgerData['data'], // data
-					$request->start_date, // from
-					$request->end_date,   // to
-					$groupName, // groupName - using the one we fetched
-					$request->strCustomerName // customerName
-				), 
-				$filePath, 
-				'public'
-			);
-
-			if (!$exportResult) {
-				throw new \Exception('Failed to store Excel file');
-			}
-
-			if (!$disk->exists($filePath)) {
-				throw new \Exception('Excel file was not created in storage');
-			}
-
-			// Get file URL
-			$fileUrl = asset('storage/' . $filePath);
-
-			return response()->json([
-				'success' => true,
-				'message' => 'Excel file generated successfully',
-				'download_url' => $fileUrl,
-				'filename' => $filename,
-				'file_size' => $disk->size($filePath),
-			], 200);
+            return response()->json([
+                'success' => true,
+                'message' => 'Excel file generated successfully',
+                'download_url' => asset('storage/' . $filePath),
+                'filename' => $filename,
+                'file_size' => $disk->size($filePath),
+            ], 200);
 
 		} catch (\Throwable $e) {
 			\Log::error('Ledger Excel Export Error: ' . $e->getMessage());
 
 			return response()->json([
-				'success' => false, 
-				'message' => 'Failed to generate Excel file', 
+				'success' => false,
+				'message' => 'Failed to generate Excel file',
 				'error' => $e->getMessage()
 			], 500);
 		}
 	}
+				
 
     public function exportLedgerSummaryExcel(Request $request)
     {
@@ -1217,66 +1366,31 @@ class LedgerMasterController extends Controller
     public function downloadLedgerExcel(Request $request)
     {
         try {
-            $user = auth('api')->user();
-            if (!$user) {
-                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            $prepared = $this->prepareLedgerExportPayload($request);
+            if (isset($prepared['response'])) {
+                return $prepared['response'];
             }
-
-            $validator = Validator::make($request->all(), [
-                'partyguid'  => 'required|uuid',
-                'iGroupId' => 'required|integer',
-                'start_date' => 'nullable|date|date_format:d-m-Y',
-                'end_date'   => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date',
-                'strCustomerName' => 'nullable|string',
-            ]);
-
-            if ($validator->fails()) {
-                //return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-			    return response()->json(['success' => false, 'message' => 'Party not found'], 422); // FIXED: Added =>
-
-            }
-
-            $partyguid = $request->partyguid;
-            $startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
-            $endDate   = $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null;
-
-            $exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
-            if (!$exists) {
-                return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
-            }
-
-            $partyId = $user->id;
-            $ledgerData = $this->getLedgerData(
-                $partyId, 
-                $request->iGroupId, 
-                $startDate, 
-                $endDate, 
-                $request->strCustomerName
-            );
-
-            if (!$ledgerData) {
-                return response()->json(['success' => false, 'message' => 'No Ledger data found'], 404);
-            }
-
-            $filename = 'ledger-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
             return Excel::download(
                 new LedgerExport(
-                    $ledgerData['data'],
-                    $request->start_date,
-                    $request->end_date,
-                    $ledgerData['meta']['group_name'],
-                    $ledgerData['meta']['customer_name']
-                ), 
-                $filename
+                     $prepared['data'],
+                    $prepared['fromDisplay'],
+                    $prepared['toDisplay'],
+                    $prepared['groupName'],
+                    $prepared['customerName'],
+                    $prepared['partyName'],
+                    $prepared['companyAddress'],
+                    $prepared['companyEmail']
+				),
+                $this->ledgerExportFilename('ledger-report', $request, 'xlsx')
             );
 
         } catch (\Throwable $e) {
             \Log::error('Ledger Direct Excel Download Error: ' . $e->getMessage());
             
             return response()->json([
-                'success' => false, 
-                'message' => 'Failed to generate Excel file', 
+                'success' => false,
+                'message' => 'Failed to generate Excel file',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -1353,114 +1467,41 @@ class LedgerMasterController extends Controller
 	public function exportLedgerPdf(Request $request)
 	{
 		try {
-			$user = auth('api')->user();
-			if (!$user) {
-				return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-			}
+			$prepared = $this->prepareLedgerExportPayload($request);
+            if (isset($prepared['response'])) {
+                return $prepared['response'];
+            }
 
-			$validator = Validator::make($request->all(), [
-				'partyguid'  => 'required|uuid',
-				'iGroupId' => 'nullable|integer', // Changed to nullable
-				'start_date' => 'nullable|date|date_format:d-m-Y',
-				'end_date'   => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date',
-				'strCustomerName' => 'nullable|string',
-			]);
-
-			if ($validator->fails()) {
-				return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-			}
-
-			$partyguid = $request->partyguid;
-			$groupId = $request->iGroupId ?? 0;
-			$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
-			$endDate   = $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null;
-
-			// Verify party GUID - FIXED
-			$exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
-			if (!$exists || (isset($exists[0]) && $exists[0]->Count == 0)) {
-				return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
-			}
-
-			// Get party ID from partyguid
-			/*$party = DB::table('Client')->where('guid', $partyguid)->first();
-			if (!$party) {
-				return response()->json(['success' => false, 'message' => 'Party not found'], 422); // FIXED: Added =>
-			}*/
-			$partyId = $user->id;
-
-			/*$ledgerData = $this->getLedgerData(
-				$partyId, 
-				$request->iGroupId, 
-				$startDate, 
-				$endDate, 
-				$request->strCustomerName
-			);*/
-			$svc = app(ReportsService::class); 
-			$ledgerData = $svc->ledger($partyId, $groupId, $startDate, $endDate, $request->strCustomerName);
-			if (!$ledgerData || empty($ledgerData['data'])) {
-				return response()->json(['success' => false, 'message' => 'No Ledger data found'], 404);
-			}
-			$partyName = $user->name;
-			// Get group name for display - ADDED THIS SECTION
-			$groupName = '';
-			if ($request->iGroupId) {
-				$group = DB::table('GroupMaster')
-					->where('iGroupId', $request->iGroupId)
-					->where('PartyGUID', $partyguid)
-					->first();
-				$groupName = $group->strGroupName ?? '';
-			}
-
-			$filename = 'ledger-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
-
-			// Generate PDF
-			$pdf = Pdf::setOptions([
-				'isRemoteEnabled' => true,
-				'isHtml5ParserEnabled' => true,
-				'isPhpEnabled' => true,
-			])->loadView('reports.pdf.ledger_pdf', [
-				'data' => $ledgerData['data'],
-				'from' => $request->start_date,
-				'to' => $request->end_date,
-				'groupName' => $groupName, // Using the fetched group name
-				'customerName' => $request->strCustomerName, // Using direct input
-				'partyName' => $partyName
-			]);
-
-			// Use public disk
-			$disk = Storage::disk('public');
-			$directory = 'exports';
+			$pdf = $this->buildLedgerPdf($prepared);
+            $filename = $this->ledgerExportFilename('ledger-report', $request, 'pdf');
+            $disk = Storage::disk('public');
+            $directory = 'exports';
 
 			if (!$disk->exists($directory)) {
-				$disk->makeDirectory($directory, 0755, true);
-			}
+                $disk->makeDirectory($directory, 0755, true);
+            }
 
 			$filePath = $directory . '/' . $filename;
-
-			// Store PDF using public disk
-			$disk->put($filePath, $pdf->output());
+            $disk->put($filePath, $pdf->output());
 
 			if (!$disk->exists($filePath)) {
-				throw new \Exception('PDF file was not created in storage');
-			}
-
-			// Get file URL
-			$fileUrl = asset('storage/' . $filePath);
-
+                throw new \Exception('PDF file was not created in storage');
+            }
+			
 			return response()->json([
-				'success' => true,
-				'message' => 'PDF file generated successfully',
-				'download_url' => $fileUrl,
-				'filename' => $filename,
-				'file_size' => $disk->size($filePath),
-			], 200);
+                'success' => true,
+                'message' => 'PDF file generated successfully',
+                'download_url' => asset('storage/' . $filePath),
+                'filename' => $filename,
+                'file_size' => $disk->size($filePath),
+            ], 200);
 
 		} catch (\Throwable $e) {
 			\Log::error('Ledger PDF Export Error: ' . $e->getMessage());
 
 			return response()->json([
-				'success' => false, 
-				'message' => 'Failed to generate PDF file', 
+				'success' => false,
+				'message' => 'Failed to generate PDF file',
 				'error' => $e->getMessage()
 			], 500);
 		}
@@ -1470,136 +1511,92 @@ class LedgerMasterController extends Controller
 	public function downloadLedgerPdf(Request $request)
 	{
 		try {
-			$user = auth('api')->user();
-			if (!$user) {
-				return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-			}
+			$prepared = $this->prepareLedgerExportPayload($request);
+            if (isset($prepared['response'])) {
+                return $prepared['response'];
+            }
 
-			$validator = Validator::make($request->all(), [
-				'partyguid'  => 'required|uuid',
-				'iGroupId' => 'required|integer',
-				'start_date' => 'nullable|date|date_format:d-m-Y',
-				'end_date'   => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date',
-				'strCustomerName' => 'nullable|string',
-			]);
-
-			if ($validator->fails()) {
-				return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-			}
-
-			$partyguid = $request->partyguid;
-			$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
-			$endDate   = $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null;
-
-			$exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
-			if (!$exists) {
-				return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
-			}
-
-			$partyId = $user->id;
-			$ledgerData = $this->getLedgerData(
-				$partyId, 
-				$request->iGroupId, 
-				$startDate, 
-				$endDate, 
-				$request->strCustomerName
-			);
-
-			if (!$ledgerData) {
-				return response()->json(['success' => false, 'message' => 'No Ledger data found'], 404);
-			}
-
-			$filename = 'ledger-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
-
-			$pdf = Pdf::setOptions(['isRemoteEnabled' => true])
-					->loadView('reports.pdf.ledger_pdf', [
-						'data' => $ledgerData['data'],
-						'from' => $request->start_date,
-						'to' => $request->end_date,
-						'groupName' => $ledgerData['meta']['group_name'],
-						'customerName' => $ledgerData['meta']['customer_name']
-					]);
-
-			return $pdf->download($filename);
+			return $this->buildLedgerPdf($prepared)
+                ->download($this->ledgerExportFilename('ledger-report', $request, 'pdf'));
 
 		} catch (\Throwable $e) {
 			\Log::error('Ledger Direct PDF Download Error: ' . $e->getMessage());
 
 			return response()->json([
-				'success' => false, 
-				'message' => 'Failed to generate PDF file', 
+				'success' => false,
+				'message' => 'Failed to generate PDF file',
 				'error' => $e->getMessage()
 			], 500);
 		}
 	}
 
-	public function downloadVoucherHistoryPdf(Request $request)
-	{
-		try {
-			$user = auth('api')->user();
-			if (!$user) {
-				return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-			}
+	// public function downloadVoucherHistoryPdf(Request $request)
+	// {
+	// 	try {
+	// 		$user = auth('api')->user();
+	// 		if (!$user) {
+	// 			return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+	// 		}
 
-			$validator = Validator::make($request->all(), [
-				'partyguid'  => 'required|uuid',
-				'iledgerid' => 'required|integer',
-				'start_date' => 'nullable|date|date_format:d-m-Y',
-				'end_date'   => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date',
-			]);
+	// 		$validator = Validator::make($request->all(), [
+	// 			'partyguid'  => 'required|uuid',
+	// 			'iledgerid' => 'required|integer',
+	// 			'start_date' => 'nullable|date|date_format:d-m-Y',
+	// 			'end_date'   => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date',
+	// 		]);
 
-			if ($validator->fails()) {
-				return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-			}
+	// 		if ($validator->fails()) {
+	// 			return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+	// 		}
 
-			$partyguid = $request->partyguid;
-			$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
-			$endDate   = $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null;
+	// 		$partyguid = $request->partyguid;
+	// 		$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
+	// 		$endDate   = $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null;
 
-			$exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
-			if (!$exists) {
-				return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
-			}
+	// 		$exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
+	// 		if (!$exists) {
+	// 			return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
+	// 		}
 
-			$voucherData = $this->getVoucherHistoryData(
-				$partyguid, 
-				$request->iledgerid, 
-				$startDate, 
-				$endDate
-			);
+	// 		$voucherData = $this->getVoucherHistoryData(
+	// 			$partyguid, 
+	// 			$request->iledgerid, 
+	// 			$startDate, 
+	// 			$endDate
+	// 		);
 
-			if (!$voucherData) {
-				return response()->json(['success' => false, 'message' => 'No Voucher History data found'], 404);
-			}
+	// 		if (!$voucherData) {
+	// 			return response()->json(['success' => false, 'message' => 'No Voucher History data found'], 404);
+	// 		}
 
-			$filename = 'voucher-history-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
+	// 		$filename = 'voucher-history-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
 
-			$pdf = Pdf::setOptions(['isRemoteEnabled' => true])
-					->loadView('reports.pdf.voucher_history_pdf', [
-						'processedRows' => $voucherData['data']['processedRows'] ?? [],
-						'from' => $request->start_date,
-						'to' => $request->end_date,
-						'ledgerId' => $request->iledgerid,
-						'openingBalance' => $voucherData['meta']['opening_balance'] ?? 0,
-						'openingSide' => $voucherData['data']['closingSide'] ?? 'Dr',
-						'closingBalance' => $voucherData['data']['closingBalance'] ?? 0,
-						'closingSide' => $voucherData['data']['closingSide'] ?? 'Dr',
-						'totalDr' => $voucherData['meta']['total_dr'] ?? 0,
-						'totalCr' => $voucherData['meta']['total_cr'] ?? 0,
-					]);
+	// 		$pdf = Pdf::setOptions(['isRemoteEnabled' => true])
+	// 				->loadView('reports.pdf.voucher_history_pdf', [
+	// 					'processedRows' => $voucherData['data']['processedRows'] ?? [],
+	// 					'from' => $request->start_date,
+	// 					'to' => $request->end_date,
+	// 					'ledgerId' => $request->iledgerid,
+	// 					'openingBalance' => $voucherData['meta']['opening_balance'] ?? 0,
+	// 					'openingSide' => $voucherData['data']['closingSide'] ?? 'Dr',
+	// 					'closingBalance' => $voucherData['data']['closingBalance'] ?? 0,
+	// 					'closingSide' => $voucherData['data']['closingSide'] ?? 'Dr',
+	// 					'totalDr' => $voucherData['meta']['total_dr'] ?? 0,
+	// 					'totalCr' => $voucherData['meta']['total_cr'] ?? 0,
+	// 				]);
 
-			return $pdf->download($filename);
+	// 		return $pdf->download($filename);
 
-		} catch (\Throwable $e) {
-			\Log::error('Voucher History Direct PDF Download Error: ' . $e->getMessage());
+	// 	} catch (\Throwable $e) {
+	// 		\Log::error('Voucher History Direct PDF Download Error: ' . $e->getMessage());
 
-			return response()->json([
-				'success' => false, 
-				'message' => 'Failed to generate PDF file', 
-				'error' => $e->getMessage()
-			], 500);
-		}
-	}
+	// 		return response()->json([
+	// 			'success' => false, 
+	// 			'message' => 'Failed to generate PDF file', 
+	// 			'error' => $e->getMessage()
+	// 		], 500);
+	// 	}
+	// }
 	
 	public function exportVoucherHistoryExcel(Request $request, ReportsService $svc)
 	{
