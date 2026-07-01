@@ -150,13 +150,11 @@ class BalanceSheetController extends Controller
 	public function index_new(Request $request)
 	{
 		try {
-			// --- Auth check (kept as-is) ---
 			$user = auth()->user();
 			if (!$user) {
 				return response()->json(['User not authenticated'], 401);
 			}
 
-			// --- Validate inputs (kept as-is) ---
 			$validator = Validator::make([
 				'partyguid'  => $request->partyguid,
 				'start_date' => $request->start_date,
@@ -174,197 +172,135 @@ class BalanceSheetController extends Controller
 				], 422);
 			}
 
-			// --- Inputs ---
 			$partyguid = $request->partyguid;
 			$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
 			$endDate   = $request->end_date   ? date('Y-m-d', strtotime($request->end_date))   : null;
+            $partyId   = auth('api')->id();
 
-			// You were using the authenticated API id as PartyId
-			$partyId = auth('api')->id();
-
-			// --- Call the stored procedure and read multiple result sets ---
 			$pdo  = DB::connection()->getPdo();
-			$stmt = $pdo->prepare("EXEC dbo.GetBalanceSheetDataByParty :guid, :pid, :sd, :ed");
-
-			$stmt->bindValue(':guid', $partyguid);       // UNIQUEIDENTIFIER (string binding OK)
-			$stmt->bindValue(':pid',  (int) $partyId, \PDO::PARAM_INT);
-			$stmt->bindValue(':sd',   $startDate);
-			$stmt->bindValue(':ed',   $endDate);
+			$stmt = $pdo->prepare('EXEC dbo.GetBalanceSheetDataByParty :guid, :pid, :sd, :ed');
+			$stmt->bindValue(':guid', $partyguid);
+			$stmt->bindValue(':pid', (int) $partyId, \PDO::PARAM_INT);
+			$stmt->bindValue(':sd', $startDate);
+			$stmt->bindValue(':ed', $endDate);
 
 			$stmt->execute();
 
-			// 1) First result set: detail rows
 			$details = $stmt->fetchAll(\PDO::FETCH_OBJ);
-
-			// 2) Second result set: totals
-			$stmt->nextRowset();
-			$totals = $stmt->fetch(\PDO::FETCH_OBJ);
-
-			// --- Get Closing Stock amount separately ---
-			$closingStockAmount = 0;
-			try {
-				$closingStock = DB::table('ClosingStock')
-					->where('iPartyId', $partyId)
-					->where('ClosingStockDate', $endDate)
-					->first();
-
-				if ($closingStock) {
-					$closingStockAmount = $closingStock->ClosingStockAmount ?? 0;
-				} else {
-					// If no exact date match, get the latest closing stock before end date
-					$latestStock = DB::table('ClosingStock')
-						->where('iPartyId', $partyId)
-						->where('ClosingStockDate', '<=', $endDate)
-						->orderBy('ClosingStockDate', 'desc')
-						->first();
-
-					if ($latestStock) {
-						$closingStockAmount = $latestStock->ClosingStockAmount ?? 0;
-					}
-				}
-			} catch (\Exception $e) {
-				// Silently handle error - closing stock will be 0
-				$closingStockAmount = 0;
+            $procedureTotals = null;
+			if ($stmt->nextRowset()) {
+				$procedureTotals = $stmt->fetch(\PDO::FETCH_OBJ) ?: null;
 			}
 
-			// --- If no details, mirror your "no data" behavior ---
 			if (!$details || count($details) === 0) {
 				return response()->json([
 					'success' => false,
 					'message' => 'No Balance Sheet data found for this PartyGUID'
 				], 404);
 			}
-
-			// --- Organize data like web view ---
+			$closingStockAmount = $this->resolveClosingStockAmount($procedureTotals, $partyId, $endDate);
 			$data = [
+				'rows' => $details,
 				'cr' => [],
 				'dr' => [],
 			];
 
-			// Separate rows by Side for calculations
-			$drRows = array_filter($details, function($row) {
-				return isset($row->Side) && strtoupper($row->Side) === 'DR';
-			});
+            $totalAssets = 0.0;
+			$totalCr = 0.0;
+			$currentAssetsWithoutStock = 0.0;
+			$fixedAssets = 0.0;
+			$investments = 0.0;
+			$otherAssets = 0.0;
+			$currentLiabilities = 0.0;
+			$longTermLiabilities = 0.0;
+			$otherLiabilities = 0.0;
+			$equity = 0.0;
 
-			$crRows = array_filter($details, function($row) {
-				return isset($row->Side) && strtoupper($row->Side) === 'CR';
-			});
+            foreach ($details as $row) {
+                $side = strtoupper((string) ($row->Side ?? 'DR'));
+                $groupName = (string) ($row->strGroupName ?? '');
+                $rawAmount = (float) ($row->decMainAmount ?? 0);
+                $displayAmount = $side === 'DR'
+                    ? ($rawAmount > 0 ? -1 * $rawAmount : abs($rawAmount))
+                    : $rawAmount;
 
-			// Build individual entries
-			foreach ($details as $row) {
-				$amount = abs((float) $row->decMainAmount);
+                $entry = [
+                    'iPrimaryGroupId' => $row->iPrimaryGroupId ?? null,
+                    'strGroupName'    => $groupName,
+                    'decMainAmount'   => $this->fmt($displayAmount),
+                    'rawAmount'       => $this->fmt($rawAmount),
+                    'Side'            => $side,
+                    'iPartyId'        => $row->iPartyId ?? $partyId,
+                    'iYearId'         => $row->iYearId ?? 0,
+                ];
 
-				$entry = [
-					"iPrimaryGroupId" => $row->iPrimaryGroupId,
-					"strGroupName"    => $row->strGroupName,
-					"decMainAmount"   => $this->fmt($amount),
-					"iPartyId"        => $partyId,
-					"iYearId"         => $row->iYearId ?? 0,
-				];
-				if (isset($row->Side) && strtoupper($row->Side) === 'CR') {
-					$data['cr'][] = $entry;
+                if ($side === 'CR') {
+                    $data['cr'][] = $entry;
+                    $totalCr += $rawAmount;
+
+                    if (in_array($groupName, ['Capital Account', 'Profit & Loss A/c'])) {
+                        $equity += $rawAmount;
+                    } elseif (str_contains($groupName, 'Current Liabilities')) {
+                        $currentLiabilities += $rawAmount;
+                    } elseif (str_contains($groupName, 'Loans')) {
+                        $longTermLiabilities += $rawAmount;
+                    } else {
+                        $otherLiabilities += $rawAmount;
+                    }
+                    continue;
+                }
+
+                $data['dr'][] = $entry;
+				$totalAssets += $displayAmount;
+                if (str_contains($groupName, 'Current Assets')) {
+					$currentAssetsWithoutStock += abs($rawAmount);
+				} elseif (str_contains($groupName, 'Fixed Assets')) {
+					$fixedAssets += $displayAmount;
+				} elseif (str_contains($groupName, 'Investment')) {
+					$investments += $displayAmount;
 				} else {
-					$data['dr'][] = $entry;
+                    $otherAssets += $displayAmount;
 				}
 			}
+            $totalAssetsWithClosingStock = $totalAssets + $closingStockAmount;
+			$balanceDiff = round($totalAssets - $totalCr, 2);
+			$differenceAmount = abs($balanceDiff);
+			$showDiffOnAssetSide = $totalAssets < $totalCr;
+			$showDiffOnLiabilitySide = $totalCr < $totalAssets;
+			$totalAssetsResponse = $totalAssetsWithClosingStock + ($showDiffOnAssetSide ? $differenceAmount : 0);
+			$totalCrResponse = $totalCr + ($showDiffOnLiabilitySide ? $differenceAmount : 0);
 
-			// --- CALCULATE TOTALS LIKE WEB VIEW WITH CLOSING STOCK ---
-
-			// ASSETS (DR) - Manual grouping like web view
-			$currentAssetsRaw = 0;
-			$fixedAssetsRaw = 0;
-			$investmentsRaw = 0;
-			$otherAssetsRaw = 0;
-
-			foreach ($drRows as $row) {
-				$amount = abs((float) $row->decMainAmount);
-				$groupName = $row->strGroupName ?? '';
-
-				if ($groupName === 'Current Assets') {
-					$currentAssetsRaw += $amount;
-				} elseif ($groupName === 'Fixed Assets') {
-					$fixedAssetsRaw += $amount;
-				} elseif ($groupName === 'Investments') {
-					$investmentsRaw += $amount;
-				} else {
-					$otherAssetsRaw += $amount;
-				}
-			}
-
-			// Subtract closing stock from current assets to show separately
-			$currentAssetsWithoutStock = max(0, $currentAssetsRaw - $closingStockAmount);
-
-			// Calculate totals like web view (including closing stock as separate component)
-			$assetsTotal = $currentAssetsWithoutStock + $closingStockAmount + $fixedAssetsRaw + $investmentsRaw + $otherAssetsRaw;
-
-			// LIABILITIES & EQUITY (CR) - Manual grouping like web view
-			$capitalAccountRaw = 0;
-			$loansRaw = 0;
-			$currentLiabilitiesRaw = 0;
-			$otherLiabilitiesRaw = 0;
-
-			foreach ($crRows as $row) {
-				$amount = abs((float) $row->decMainAmount);
-				$groupName = $row->strGroupName ?? '';
-
-				if ($groupName === 'Capital Account') {
-					$capitalAccountRaw += $amount;
-				} elseif ($groupName === 'Loans (Liability)') {
-					$loansRaw += $amount;
-				} elseif ($groupName === 'Current Liabilities') {
-					$currentLiabilitiesRaw += $amount;
-				} else {
-					$otherLiabilitiesRaw += $amount;
-				}
-			}
-
-			// Calculate totals like web view
-			$liabilitiesTotal = $loansRaw + $currentLiabilitiesRaw + $otherLiabilitiesRaw;
-			$equityTotal = $capitalAccountRaw;
-			$liabsPlusEquityTotal = $liabilitiesTotal + $equityTotal;
-
-			// Use web view calculated totals instead of stored procedure totals
-			$data['totalDr'] = $this->fmt($assetsTotal);
-			$data['totalCr'] = $this->fmt($liabsPlusEquityTotal);
-
-			// Add closing stock to the data
-			$data['closing_stock'] = $this->fmt($closingStockAmount);
-			$data['closing_stock_date'] = $endDate;
-
-			// Add additional breakdown for clarity
+			$data['totalDr'] = $this->fmt($totalAssetsResponse);
+			$data['totalCr'] = $this->fmt($totalCrResponse);
+			$data['totals'] = [
+				'assets' => $this->fmt($totalAssets),
+				'assets_with_closing_stock' => $this->fmt($totalAssetsWithClosingStock),
+				'liabilities' => $this->fmt($totalCr - $equity),
+				'equity' => $this->fmt($equity),
+				'liabilities_and_equity' => $this->fmt($totalCr),
+				'closing_stock' => $this->fmt($closingStockAmount),
+				'balance_difference' => $this->fmt($differenceAmount),
+				'show_difference_on_asset_side' => $showDiffOnAssetSide,
+				'show_difference_on_liability_side' => $showDiffOnLiabilitySide,
+			];
 			$data['breakdown'] = [
 				'assets' => [
 					'current_assets_without_stock' => $this->fmt($currentAssetsWithoutStock),
 					'closing_stock' => $this->fmt($closingStockAmount),
-					'fixed_assets' => $this->fmt($fixedAssetsRaw),
-					'investments' => $this->fmt($investmentsRaw),
-					'other_assets' => $this->fmt($otherAssetsRaw),
-					'total_assets' => $this->fmt($assetsTotal)
+					'fixed_assets' => $this->fmt($fixedAssets),
+					'investments' => $this->fmt($investments),
+					'other_assets' => $this->fmt($otherAssets),
 				],
 				'liabilities' => [
-					'current_liabilities' => $this->fmt($currentLiabilitiesRaw),
-					'loans' => $this->fmt($loansRaw),
-					'other_liabilities' => $this->fmt($otherLiabilitiesRaw),
-					'total_liabilities' => $this->fmt($liabilitiesTotal)
+					'current_liabilities' => $this->fmt($currentLiabilities),
+					'loans' => $this->fmt($longTermLiabilities),
+					'other_liabilities' => $this->fmt($otherLiabilities),
 				],
 				'equity' => [
-					'capital_account' => $this->fmt($capitalAccountRaw),
-					'total_equity' => $this->fmt($equityTotal)
-				],
-				'summary' => [
-					'total_dr' => $this->fmt($assetsTotal),
-					'total_cr' => $this->fmt($liabsPlusEquityTotal),
-					'balance_difference' => $this->fmt(abs($assetsTotal - $liabsPlusEquityTotal)),
-					'is_balanced' => abs($assetsTotal - $liabsPlusEquityTotal) <= 0.01
+					'capital_and_profit_loss' => $this->fmt($equity),
 				]
 			];
 
-			// Add closing stock summary
-			$data['closing_stock_summary'] = [
-				'amount' => $this->fmt($closingStockAmount),
-				'date' => $endDate,
-				'percentage_of_assets' => $assetsTotal > 0 ? round(($closingStockAmount / $assetsTotal) * 100, 1) : 0
-			];
 
 			return response()->json([
 				'success' => true,
@@ -372,8 +308,9 @@ class BalanceSheetController extends Controller
 				'meta' => [
 					'from_date' => $startDate,
 					'to_date' => $endDate,
-					'party_id' => $partyId,
-					'closing_stock_available' => $closingStockAmount > 0
+                    'from' => $startDate,
+					'to' => $endDate,
+					'party_id' => $partyId
 				]
 			]);
 		} catch (\Throwable $e) {
@@ -384,193 +321,31 @@ class BalanceSheetController extends Controller
 			], 500);
 		}
 	}
-	
-	/*public function index_new(Request $request)
+
+	private function resolveClosingStockAmount($procedureTotals, int $partyId, ?string $endDate): float
 	{
-		try {
-			// --- Auth check (kept as-is) ---
-			$user = auth()->user();
-			if (!$user) {
-				return response()->json(['User not authenticated'], 401);
+		foreach (['closing_stock', 'ClosingStock', 'ClosingStockAmount', 'closingStock'] as $field) {
+			if ($procedureTotals && isset($procedureTotals->{$field})) {
+				return abs((float) $procedureTotals->{$field});
 			}
-
-			// --- Validate inputs (kept as-is) ---
-			$validator = Validator::make([
-				'partyguid'  => $request->partyguid,
-				'start_date' => $request->start_date,
-				'end_date'   => $request->end_date
-			], [
-				'partyguid'  => 'required|uuid',
-				'start_date' => 'nullable|date|date_format:d-m-Y',
-				'end_date'   => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date'
-			]);
-
-			if ($validator->fails()) {
-				return response()->json([
-					'success' => false,
-					'error'   => $validator->errors()
-				], 422);
-			}
-
-			// --- Inputs ---
-			$partyguid = $request->partyguid;
-			$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
-			$endDate   = $request->end_date   ? date('Y-m-d', strtotime($request->end_date))   : null;
-
-			// You were using the authenticated API id as PartyId
-			$partyId = auth('api')->id();
-
-			// --- Call the stored procedure and read multiple result sets ---
-			$pdo  = DB::connection()->getPdo();
-			$stmt = $pdo->prepare("EXEC dbo.GetBalanceSheetDataByParty :guid, :pid, :sd, :ed");
-
-			$stmt->bindValue(':guid', $partyguid);       // UNIQUEIDENTIFIER (string binding OK)
-			$stmt->bindValue(':pid',  (int) $partyId, \PDO::PARAM_INT);
-			$stmt->bindValue(':sd',   $startDate);
-			$stmt->bindValue(':ed',   $endDate);
-
-			$stmt->execute();
-
-			// 1) First result set: detail rows
-			$details = $stmt->fetchAll(\PDO::FETCH_OBJ);
-
-			// 2) Second result set: totals
-			$stmt->nextRowset();
-			$totals = $stmt->fetch(\PDO::FETCH_OBJ);
-
-			// --- If no details, mirror your "no data" behavior ---
-			if (!$details || count($details) === 0) {
-				return response()->json([
-					'success' => false,
-					'message' => 'No Balance Sheet data found for this PartyGUID'
-				], 404);
-			}
-
-			// --- Organize data like web view ---
-			$data = [
-				'cr' => [],
-				'dr' => [],
-			];
-
-			// Separate rows by Side for calculations
-			$drRows = array_filter($details, function($row) {
-				return isset($row->Side) && strtoupper($row->Side) === 'DR';
-			});
-
-			$crRows = array_filter($details, function($row) {
-				return isset($row->Side) && strtoupper($row->Side) === 'CR';
-			});
-
-			// Build individual entries
-			foreach ($details as $row) {
-				$amount = abs((float) $row->decMainAmount);
-
-				$entry = [
-					"iPrimaryGroupId" => $row->iPrimaryGroupId,
-					"strGroupName"    => $row->strGroupName,
-					"decMainAmount"   => $this->fmt($amount),
-					"iPartyId"        => $row->iPartyId,
-					"iYearId"         => $row->iYearId,
-				];
-				if (isset($row->Side) && strtoupper($row->Side) === 'CR') {
-					$data['cr'][] = $entry;
-				} else {
-					$data['dr'][] = $entry;
-				}
-			}
-
-			// --- CALCULATE TOTALS LIKE WEB VIEW ---
-
-			// ASSETS (DR) - Manual grouping like web view
-			$currentAssetsRaw = 0;
-			$fixedAssetsRaw = 0;
-			$investmentsRaw = 0;
-			$otherAssetsRaw = 0;
-
-			foreach ($drRows as $row) {
-				$amount = abs((float) $row->decMainAmount);
-				$groupName = $row->strGroupName ?? '';
-
-				if ($groupName === 'Current Assets') {
-					$currentAssetsRaw += $amount;
-				} elseif ($groupName === 'Fixed Assets') {
-					$fixedAssetsRaw += $amount;
-				} elseif ($groupName === 'Investments') {
-					$investmentsRaw += $amount;
-				} else {
-					$otherAssetsRaw += $amount;
-				}
-			}
-
-			// LIABILITIES & EQUITY (CR) - Manual grouping like web view
-			$capitalAccountRaw = 0;
-			$loansRaw = 0;
-			$currentLiabilitiesRaw = 0;
-			$otherLiabilitiesRaw = 0;
-
-			foreach ($crRows as $row) {
-				$amount = abs((float) $row->decMainAmount);
-				$groupName = $row->strGroupName ?? '';
-
-				if ($groupName === 'Capital Account') {
-					$capitalAccountRaw += $amount;
-				} elseif ($groupName === 'Loans (Liability)') {
-					$loansRaw += $amount;
-				} elseif ($groupName === 'Current Liabilities') {
-					$currentLiabilitiesRaw += $amount;
-				} else {
-					$otherLiabilitiesRaw += $amount;
-				}
-			}
-
-			// Calculate totals like web view
-			$assetsTotal = $currentAssetsRaw + $fixedAssetsRaw + $investmentsRaw + $otherAssetsRaw;
-			$liabilitiesTotal = $loansRaw + $currentLiabilitiesRaw + $otherLiabilitiesRaw;
-			$equityTotal = $capitalAccountRaw;
-			$liabsPlusEquityTotal = $liabilitiesTotal + $equityTotal;
-
-			// Use web view calculated totals instead of stored procedure totals
-			$data['totalDr'] = $this->fmt($assetsTotal);
-			$data['totalCr'] = $this->fmt($liabsPlusEquityTotal);
-
-			// Add additional breakdown for clarity
-			$data['breakdown'] = [
-				'assets' => [
-					'current_assets' => $this->fmt($currentAssetsRaw),
-					'fixed_assets' => $this->fmt($fixedAssetsRaw),
-					'investments' => $this->fmt($investmentsRaw),
-					'other_assets' => $this->fmt($otherAssetsRaw),
-					'total_assets' => $this->fmt($assetsTotal)
-				],
-				'liabilities' => [
-					'current_liabilities' => $this->fmt($currentLiabilitiesRaw),
-					'loans' => $this->fmt($loansRaw),
-					'other_liabilities' => $this->fmt($otherLiabilitiesRaw),
-					'total_liabilities' => $this->fmt($liabilitiesTotal)
-				],
-				'equity' => [
-					'capital_account' => $this->fmt($capitalAccountRaw),
-					'total_equity' => $this->fmt($equityTotal)
-				],
-				'summary' => [
-					'total_dr' => $this->fmt($assetsTotal),
-					'total_cr' => $this->fmt($liabsPlusEquityTotal),
-					'balance_difference' => $this->fmt(abs($assetsTotal - $liabsPlusEquityTotal))
-				]
-			];
-
-			return response()->json([
-				'success' => true,
-				'data'    => $data
-			]);
-		} catch (\Throwable $e) {
-			return response()->json([
-				'success' => false,
-				'message' => 'Failed to retrieve balance sheet data',
-				'error'   => $e->getMessage()
-			], 500);
 		}
-	}*/
+
+		if (!$endDate) {
+			return 0.0;
+		}
+
+		try {
+			$stock = DB::table('ClosingStock')
+				->where('iPartyId', $partyId)
+				->where('ClosingStockDate', '<=', $endDate)
+				->orderBy('ClosingStockDate', 'desc')
+				->first();
+
+			return $stock ? abs((float) ($stock->ClosingStockAmount ?? 0)) : 0.0;
+		} catch (\Throwable $e) {
+			return 0.0;
+		}
+	}
 
 
     private function fmt($v): string
@@ -711,15 +486,24 @@ class BalanceSheetController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
             }
 
-            $partyId = $user->id;
+            $indexResponse = $this->index_new($request);
+            if ($indexResponse->getStatusCode() !== 200) {
+                return $indexResponse;
+            }
 
-            // Use the SAME service as web
-            $resp = $svc->balanceSheet($partyguid, $partyId, $request->start_date, $request->end_date);
-            $data = data_get($resp, 'data', []);
+            $payload = $indexResponse->getData(true);
+            $data = $payload['data'] ?? [];
 
-            if (!$data) {
+            if (!empty($data['rows'])) {
+                $data['rows'] = array_map(fn($row) => (object) $row, $data['rows']);
+            }
+
+            if (empty($data['rows'])) {
                 return response()->json(['success' => false, 'message' => 'No Balance Sheet data found'], 404);
             }
+            $partyName = $user->name ?? '';
+            $companyAddress = $user->profile->address ?? '';
+            $companyEmail = $user->email ?? '';
 
             $filename = 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
@@ -736,7 +520,8 @@ class BalanceSheetController extends Controller
             
             // Store file using public disk - use same parameters as web
             $exportResult = Excel::store(
-                new BalanceSheetExport($data, $request->start_date, $request->end_date), 
+                // new BalanceSheetExport($data, $request->start_date, $request->end_date), 
+                new BalanceSheetExport($data, $request->start_date, $request->end_date, $partyName, $companyAddress, $companyEmail), 
                 $filePath, 
                 'public'
             );
@@ -793,17 +578,24 @@ class BalanceSheetController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
             }
 
-            $partyId = $user->id;
-			
-            // Use the SAME service as web
-            $resp = $svc->balanceSheet($partyguid, $partyId, $request->start_date, $request->end_date);
-            $data = data_get($resp, 'data', []);
-			
-			$partyName = $user->name;
-			
-            if (!$data) {
+            $indexResponse = $this->index_new($request);
+            if ($indexResponse->getStatusCode() !== 200) {
+                return $indexResponse;
+            }
+
+            $payload = $indexResponse->getData(true);
+            $data = $payload['data'] ?? [];
+
+            if (!empty($data['rows'])) {
+                $data['rows'] = array_map(fn($row) => (object) $row, $data['rows']);
+            }
+
+            if (empty($data['rows'])) {
                 return response()->json(['success' => false, 'message' => 'No Balance Sheet data found'], 404);
             }
+            $partyName = $user->name ?? '';
+            $companyAddress = $user->profile->address ?? '';
+            $companyEmail = $user->email ?? '';
 
             $filename = 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
 
@@ -816,8 +608,9 @@ class BalanceSheetController extends Controller
                 'data' => $data,  // Same structure as web
                 'from' => $request->start_date,
                 'to' => $request->end_date,
-				'partyName' => $partyName
-                // Remove 'totals' as web doesn't use it
+				'partyName' => $partyName,
+                'companyAddress' => $companyAddress,
+                'companyEmail' => $companyEmail,
             ]);
 
             // Use public disk

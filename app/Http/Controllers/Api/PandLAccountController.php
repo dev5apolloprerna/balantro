@@ -1021,7 +1021,8 @@ class PandLAccountController extends Controller
             }
 
             // Get file URL - use asset() for public disk
-            $fileUrl = asset('storage/' . $filePath);
+            // $fileUrl = asset('storage/' . $filePath);
+            $fileUrl = route('api.pl.export.download', ['filename' => $filename]);
 
             return response()->json([
                 'success' => true,
@@ -1119,13 +1120,16 @@ class PandLAccountController extends Controller
 			$disk->put($filePath, $pdf->output());
 
 			// Get file URL - use asset() for public disk
-			$fileUrl = asset('storage/' . $filePath);
+			// $fileUrl = asset('storage/' . $filePath);
+			$fileUrl = route('api.pl.export.download', ['filename' => $filename]);
 
 			return response()->json([
 				'success' => true,
 				'message' => 'PDF file generated successfully',
 				'download_url' => $fileUrl,
-				'filename' => $filename
+				'filename' => $filename,
+				'file_size' => $disk->size($filePath),
+				'file_path' => $filePath
 			], 200);
 
 		} catch (\Throwable $e) {
@@ -1139,6 +1143,22 @@ class PandLAccountController extends Controller
 			], 500);
 		}
 	}
+
+    public function downloadExportedFile(string $filename)
+    {
+        if (!preg_match('/\Aprofit-loss-report-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
+            abort(404);
+        }
+
+        $filePath = 'exports/' . $filename;
+        $disk = Storage::disk('public');
+
+        if (!$disk->exists($filePath)) {
+            abort(404, 'Export file not found');
+        }
+
+        return $disk->download($filePath, $filename);
+    }
 
     // Direct download endpoints (if preferred)
     public function downloadExcel(Request $request)
