@@ -326,25 +326,72 @@ class LedgerMasterController extends Controller
             }
 
             $data = [];
+            $groups = [];
             foreach ($LedgerMasters as $LedgerMaster) {
-                $data[] = array(
+                $op = $this->num($LedgerMaster->decOpBl ?? 0);
+                $dr = abs($this->num($LedgerMaster->decDr ?? 0));
+                $cr = abs($this->num($LedgerMaster->decCr ?? 0));
+                $cl = $this->num($LedgerMaster->decClBl ?? 0);
+
+                // Match the web ledger report: hide rows where opening, debit, credit, and closing are all zero.
+                if ($op == 0.0 && $dr == 0.0 && $cr == 0.0 && $cl == 0.0) {
+                    continue;
+                }
+
+                $row = array(
                     "iLedgerId" => $LedgerMaster->iLedgerId,
                     "strCustomerName" => trim($LedgerMaster->strCustomerName),
-                    "decOpBl" => $this->fmt($LedgerMaster->decOpBl),
-                    "decClBl" => $this->fmt($LedgerMaster->decClBl),
+                    "decOpBl" => $this->fmt($op),
+                    "decOpBlRaw" => $op,
+                    "decOpBlSide" => $this->balanceSideForLedger($op),
+                    "decDr" => $this->fmt($dr),
+                    "decDrRaw" => $dr,
+                    "decCr" => $this->fmt($cr),
+                    "decCrRaw" => $cr,
+                    "decClBl" => $this->fmt($cl),
+                    "decClBlRaw" => $cl,
+                    "decClBlSide" => $this->balanceSideForLedger($cl),
                     "strGUID" => $LedgerMaster->strGUID,
                     "strParents" => $LedgerMaster->strParents,
                     "PartyGUID" => $LedgerMaster->PartyGUID,
                     "iPrimaryGroupId" => $LedgerMaster->iPrimaryGroupId,
                     "iSubGroupId" => $LedgerMaster->iSubGroupId,
                     "iSubToSubGroupId" => $LedgerMaster->iSubToSubGroupId,
-                    "decRunningBalance" => $this->fmt($LedgerMaster->decRunningBalance)
+					"decRunningBalance" => $this->fmt($LedgerMaster->decRunningBalance ?? 0)
                 );
+				 $data[] = $row;
+                $parent = trim((string) ($LedgerMaster->strParents ?? '')) ?: 'Ungrouped';
+                if (!isset($groups[$parent])) {
+                    $groups[$parent] = [
+                        'parent' => $parent,
+                        'rows' => [],
+                        'total_opening_raw' => 0.0,
+                        'total_debit_raw' => 0.0,
+                        'total_credit_raw' => 0.0,
+                        'total_closing_raw' => 0.0,
+                    ];
+                }
+                $groups[$parent]['rows'][] = $row;
+                $groups[$parent]['total_opening_raw'] += $op;
+                $groups[$parent]['total_debit_raw'] += $dr;
+                $groups[$parent]['total_credit_raw'] += $cr;
+                $groups[$parent]['total_closing_raw'] += $cl;
             }
+
+			$groupedData = collect($groups)->map(function ($group) {
+                $group['total_opening'] = $this->fmt(abs($group['total_opening_raw']));
+                $group['total_opening_side'] = $this->balanceSideForLedger($group['total_opening_raw']);
+                $group['total_debit'] = $this->fmt($group['total_debit_raw']);
+                $group['total_credit'] = $this->fmt($group['total_credit_raw']);
+                $group['total_closing'] = $this->fmt(abs($group['total_closing_raw']));
+                $group['total_closing_side'] = $this->balanceSideForLedger($group['total_closing_raw']);
+                return $group;
+            })->values();
 
             return response()->json([
                 'success' => true,
                 'data' => $data,
+				'groups' => $groupedData,
                 'meta' => array_merge(
                     $this->apiFinancialYearMeta($financialYears, $rangeSel, $startDate, $endDate),
                     ['groupId' => $groupId, 'strCustomerName' => $strCustomerName]
@@ -416,55 +463,111 @@ class LedgerMasterController extends Controller
                 $previousDay = date('Y-m-d', strtotime($startDate . ' -1 day'));
                 $openingBalanceData = $svc->getOpeningBalance($partyguid, $iledgerid, $previousDay);
             }
-			$num = function ($v) {
-                if ($v === null) return 0.0;
-                $s = str_replace(',', '', (string)$v);
-                return is_numeric($s) ? (float)$s : 0.0;
-            };
-
-			if ($VchHistories->isEmpty()) {
-                return response()->json([
-                    'success' => true,
-                    'data' => [],
-                    'meta' => array_merge($this->apiFinancialYearMeta($financialYears, $rangeSel, $startDate, $endDate), ['ledgerId' => $iledgerid]),
-                    'opening_balance' => $this->fmt($openingBalanceData['balance']),
-                    'opening_balance_side' => $openingBalanceData['side'],
-                    'closing_balance' => $this->fmt($openingBalanceData['balance']),
-                    'closing_balance_side' => $openingBalanceData['side'],
-                ]);
-            }
-
-			$last = $VchHistories->last();
-            $closingRunningBalance = property_exists($last, 'decRunningBalance') ? $num($last->decRunningBalance) :
-                (property_exists($last, 'runningBalance') ? $num($last->runningBalance) : 0);
-            $closingBalance = abs($closingRunningBalance);
-            $closingSide = $closingRunningBalance >= 0 ? 'Dr' : 'Cr';
-
-			$data = [];
+			
+			$openingSigned = ($openingBalanceData['side'] ?? 'Dr') === 'Cr'
+                ? -abs($this->num($openingBalanceData['balance'] ?? 0))
+                : abs($this->num($openingBalanceData['balance'] ?? 0));
+            $previousBalance = $openingSigned;
+            $totalDebit = 0.0;
+            $totalCredit = 0.0;
+            $data = [[
+                'is_opening' => true,
+                'iVchId' => 0,
+                'iLedgerId' => $iledgerid,
+                'trnAccount' => 'Balance B/F',
+                'vchType' => 'Opening',
+                'DRAmount' => $this->fmt(0),
+                'DRAmountRaw' => 0.0,
+                'CRAmount' => $this->fmt(0),
+                'CRAmountRaw' => 0.0,
+                'vchNo' => 'OPENING BALANCE',
+                'strVchDate' => $startDate ? date('d-m-Y', strtotime($startDate)) : '',
+                'opening_balance' => $this->fmt(abs($previousBalance)),
+                'opening_balance_raw' => $previousBalance,
+                'opening_balance_side' => $this->balanceSideForVoucher($previousBalance),
+                'decRunningBalance' => $this->fmt(abs($previousBalance)),
+                'decRunningBalanceRaw' => $previousBalance,
+                'closing_balance_side' => $this->balanceSideForVoucher($previousBalance),
+                'PartyGUID' => $partyguid,
+                'iYearId' => 0,
+            ]];
+			
             foreach ($VchHistories as $VchHistory) {
+				$dr = abs($this->num($VchHistory->DRAmount ?? $VchHistory->drAmount ?? $VchHistory->DrAmount ?? 0));
+                $cr = abs($this->num($VchHistory->CRAmount ?? $VchHistory->crAmount ?? $VchHistory->CrAmount ?? 0));
+                $currentOpening = $previousBalance;
+                // Match the web report running balance formula.
+                $currentClosing = $previousBalance - $dr + $cr;
+                $totalDebit += $dr;
+                $totalCredit += $cr;
                 $data[] = array(
                     "iVchId" => $VchHistory->iVchId ?? $VchHistory->vchId ?? 0,
                     "iLedgerId" => $VchHistory->iLedgerId ?? $VchHistory->ledgerId ?? 0,
                     "trnAccount" => trim($VchHistory->trnAccount ?? $VchHistory->accountName ?? ''),
                     "vchType" => $VchHistory->vchType ?? $VchHistory->voucherType ?? '',
-                    "DRAmount" => $this->fmt($VchHistory->DRAmount ?? $VchHistory->drAmount ?? $VchHistory->DrAmount ?? 0),
-                    "CRAmount" => $this->fmt($VchHistory->CRAmount ?? $VchHistory->crAmount ?? $VchHistory->CrAmount ?? 0),
+                    "DRAmount" => $this->fmt($dr),
+                    "DRAmountRaw" => $dr,
+                    "CRAmount" => $this->fmt($cr),
+                    "CRAmountRaw" => $cr,
                     "vchNo" => $VchHistory->vchNo ?? $VchHistory->voucherNo ?? '',
                     "strVchDate" => $VchHistory->strVchDate ?? $VchHistory->vchDate ?? $VchHistory->transactionDate ?? '',
-                    "decRunningBalance" => $this->fmt($VchHistory->decRunningBalance ?? $VchHistory->runningBalance ?? 0),
+                    "opening_balance" => $this->fmt(abs($currentOpening)),
+                    "opening_balance_raw" => $currentOpening,
+                    "opening_balance_side" => $this->balanceSideForVoucher($currentOpening),
+                    "decRunningBalance" => $this->fmt(abs($currentClosing)),
+                    "decRunningBalanceRaw" => $currentClosing,
+                    "closing_balance_side" => $this->balanceSideForVoucher($currentClosing),
                     "PartyGUID" => $VchHistory->PartyGUID ?? $partyguid,
                     "iYearId" => $VchHistory->iYearId ?? $VchHistory->yearId ?? 0
                 );
+				$previousBalance = $currentClosing;
             }
+
+			$closingSigned = $previousBalance;
+            $data[] = [
+                'is_closing' => true,
+                'iVchId' => 0,
+                'iLedgerId' => $iledgerid,
+                'trnAccount' => 'Balance C/F',
+                'vchType' => 'Closing',
+                'DRAmount' => $this->fmt(0),
+                'DRAmountRaw' => 0.0,
+                'CRAmount' => $this->fmt(0),
+                'CRAmountRaw' => 0.0,
+                'vchNo' => 'CLOSING BALANCE',
+                'strVchDate' => $endDate ? date('d-m-Y', strtotime($endDate)) : date('d-m-Y'),
+                'opening_balance' => $this->fmt(abs($closingSigned)),
+                'opening_balance_raw' => $closingSigned,
+                'opening_balance_side' => $this->balanceSideForVoucher($closingSigned),
+                'decRunningBalance' => $this->fmt(abs($closingSigned)),
+                'decRunningBalanceRaw' => $closingSigned,
+                'closing_balance_side' => $this->balanceSideForVoucher($closingSigned),
+                'PartyGUID' => $partyguid,
+                'iYearId' => 0,
+            ];
 
             return response()->json([
                 'success' => true,
                 'data' => $data,
+				'summary' => [
+                    'opening_balance' => $this->fmt(abs($openingSigned)),
+                    'opening_balance_raw' => $openingSigned,
+                    'opening_balance_side' => $this->balanceSideForVoucher($openingSigned),
+                    'total_debit' => $this->fmt($totalDebit),
+                    'total_debit_raw' => $totalDebit,
+                    'total_credit' => $this->fmt($totalCredit),
+                    'total_credit_raw' => $totalCredit,
+                    'closing_balance' => $this->fmt(abs($closingSigned)),
+                    'closing_balance_raw' => $closingSigned,
+                    'closing_balance_side' => $this->balanceSideForVoucher($closingSigned),
+                ],
                 'meta' => array_merge($this->apiFinancialYearMeta($financialYears, $rangeSel, $startDate, $endDate), ['ledgerId' => $iledgerid]),
-                'opening_balance' => $this->fmt($openingBalanceData['balance']),
-                'opening_balance_side' => $openingBalanceData['side'],
-                'closing_balance' => $this->fmt($closingBalance),
-                'closing_balance_side' => $closingSide,
+                'opening_balance' => $this->fmt(abs($openingSigned)),
+                'opening_balance_side' => $this->balanceSideForVoucher($openingSigned),
+                'total_debit' => $this->fmt($totalDebit),
+                'total_credit' => $this->fmt($totalCredit),
+                'closing_balance' => $this->fmt(abs($closingSigned)),
+                'closing_balance_side' => $this->balanceSideForVoucher($closingSigned),
             ]);
         } catch (\Exception $e) {
             \Log::error('Voucher History Error: ' . $e->getMessage());
@@ -566,6 +669,27 @@ class LedgerMasterController extends Controller
         ];
     }
 
+	private function num($v): float
+    {
+        if ($v === null || $v === '' || $v === 'null' || $v === 'NULL') {
+            return 0.0;
+        }
+
+        $cleaned = preg_replace('/[^\d.-]/', '', trim((string) $v));
+
+        return ($cleaned === '' || $cleaned === '-' || $cleaned === '.') ? 0.0 : (float) $cleaned;
+    }
+
+    private function balanceSideForLedger(float $amount): string
+    {
+        return $amount < 0 ? 'Dr' : 'Cr';
+    }
+
+    private function balanceSideForVoucher(float $amount): string
+    {
+        return $amount >= 0 ? 'Dr' : 'Cr';
+    }
+	
     private function fmt($v): string
 	{
 		// Handle null, empty strings, or non-numeric values
