@@ -359,7 +359,7 @@ class LedgerMasterController extends Controller
                     "iSubToSubGroupId" => $LedgerMaster->iSubToSubGroupId,
 					"decRunningBalance" => $this->fmt($LedgerMaster->decRunningBalance ?? 0)
                 );
-				 $data[] = $row;
+				$data[] = $row;
                 $parent = trim((string) ($LedgerMaster->strParents ?? '')) ?: 'Ungrouped';
                 if (!isset($groups[$parent])) {
                     $groups[$parent] = [
@@ -689,7 +689,7 @@ class LedgerMasterController extends Controller
     {
         return $amount >= 0 ? 'Dr' : 'Cr';
     }
-	
+
     private function fmt($v): string
 	{
 		// Handle null, empty strings, or non-numeric values
