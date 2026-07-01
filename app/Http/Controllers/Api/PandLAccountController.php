@@ -431,12 +431,12 @@ class PandLAccountController extends Controller
                     $data['IndirectIncomes'][] = [
                         'iPrimaryGroupId' => $group->iGroupId ?? null,
                         'strGroupName'    => $r->strGroupName ?? '',
-                        'decMainAmount'   => abs($val),
-                        'formattedAmount' => $this->fmt(abs($val)),
+                        'decMainAmount'   => $val,
+                        'formattedAmount' => $this->fmt($val),
                         'iPartyId'        => $r->iPartyId ?? null,
                         'iYearId'         => $r->iYearId ?? null,
                     ];
-                    $totII += abs($val);
+                    $totII += $val;
                     continue;
                 }
                 /*
