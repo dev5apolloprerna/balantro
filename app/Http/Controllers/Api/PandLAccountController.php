@@ -946,6 +946,18 @@ class PandLAccountController extends Controller
 		}
 	} */
 	
+    private function pandlDataFromIndexNew(Request $request): ?array
+    {
+        $response = $this->index_new($request);
+        $payload = $response->getData(true);
+
+        if (($payload['success'] ?? false) !== true) {
+            return null;
+        }
+
+        return $payload['data'] ?? null;
+    }
+
 	public function exportExcel(Request $request)
     {
         try {
@@ -976,7 +988,11 @@ class PandLAccountController extends Controller
             
             // Use the SAME service and date format as web
             $svc = app(ReportsService::class);
-            
+            $pandlData = $this->pandlDataFromIndexNew($request);
+
+            if (!$pandlData) {
+                return response()->json(['success' => false, 'message' => 'No P&L data found'], 404);
+            }
             $filename = 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
             // Use public disk with explicit configuration
@@ -992,7 +1008,10 @@ class PandLAccountController extends Controller
 
             // Store file using public disk - WITHOUT custom data
             $exportResult = Excel::store(
-                new PandLExport($svc, $partyId, $request->start_date, $request->end_date), 
+                //new PandLExport($svc, $partyId, $request->start_date, $request->end_date), 
+                new PandLExport($svc, $partyId, $request->start_date, $request->end_date, $user->name, null, $user->email, [
+                    'data' => $pandlData,
+                ]),
                 $filePath, 
                 'public'
             );
@@ -1054,9 +1073,10 @@ class PandLAccountController extends Controller
 			}
 
 			$partyId = $user->id;
-			$svc = app(ReportsService::class); 
+			// $svc = app(ReportsService::class); 
 			//$pandlData = $this->getPandLData($partyId, $startDate, $endDate);
-			$pandlData = $svc->pandl($partyId, $startDate, $endDate);
+			// $pandlData = $svc->pandl($partyId, $startDate, $endDate);
+			$pandlData = $this->pandlDataFromIndexNew($request);
 			$partyName = $user->name;
 			if (!$pandlData) {
 				return response()->json(['success' => false, 'message' => 'No P&L data found'], 404);
@@ -1070,10 +1090,17 @@ class PandLAccountController extends Controller
 				'isHtml5ParserEnabled' => true,
 				'isPhpEnabled' => true,
 			])->loadView('reports.pdf.pl-pdf', [
-				'pl' => $pandlData['data'],
+				'pl' => $pandlData, //'pl' => $pandlData['data'],
 				'from' => $request->start_date,
 				'to' => $request->end_date,
-				'totals' => $pandlData['totals'] ?? 0,
+				'totals' => [
+                    'totalCr' => $pandlData['totalCr'] ?? 0,
+                    'totalDr' => $pandlData['totalDr'] ?? 0,
+                    'gross' => $pandlData['GrossPandL'] ?? 0,
+                    'net' => $pandlData['NetPandL'] ?? 0,
+                    'grossIsProfit' => $pandlData['grossIsProfit'] ?? false,
+                    'netIsProfit' => $pandlData['netIsProfit'] ?? false,
+                ], //'totals' => $pandlData['totals'] ?? 0,
 				'partyName' => $partyName
 			]);
 
