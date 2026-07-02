@@ -19,6 +19,7 @@ use App\Models\Client;
 use App\Exports\VoucherExport;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use App\Support\ReportCache;
 
 class ReportsController extends Controller
 {
@@ -29,7 +30,7 @@ class ReportsController extends Controller
         //     ->where('iPartyId', $userId)
         //     ->orderBy('iYearId', 'desc')
         //     ->get();
-        return Cache::remember("reports:{$userId}:financial_years", now()->addMinutes(30), function () use ($userId) {
+        return Cache::remember(ReportCache::key('reports', $userId, 'financial_years'), ReportCache::ttl(), function () use ($userId) {
             return DB::table('YearMaster')
                 ->where('iPartyId', $userId)
                 ->orderBy('iYearId', 'desc')
@@ -39,21 +40,21 @@ class ReportsController extends Controller
 
     private function cachedPandl(ReportsService $svc, int $partyId, ?string $from, ?string $to): array
     {
-        return Cache::remember("reports:{$partyId}:pandl:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to) {
+        return Cache::remember(ReportCache::key('reports', $partyId, 'pandl:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyId, $from, $to) {
             return $svc->pandl($partyId, $from, $to);
         });
     }
 
     private function cachedBalanceSheet(ReportsService $svc, ?string $partyguid, int $partyId, ?string $from, ?string $to): array
     {
-        return Cache::remember("reports:{$partyId}:balance_sheet:" . md5(($partyguid ?? '') . '|' . ($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyguid, $partyId, $from, $to) {
+        return Cache::remember(ReportCache::key('reports', $partyId, 'balance_sheet:' . md5(($partyguid ?? '') . '|' . ($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyguid, $partyId, $from, $to) {
             return $svc->balanceSheet($partyguid, $partyId, $from, $to);
         });
     }
 
     private function cachedMonthlyGraph(ReportsService $svc, int $partyId, ?string $from, ?string $to, int $type, array $opts): array
     {
-        return Cache::remember("reports:{$partyId}:monthly_graph:" . md5($type . '|' . ($from ?? '') . '|' . ($to ?? '') . '|' . json_encode($opts)), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to, $type, $opts) {
+        return Cache::remember(ReportCache::key('reports', $partyId, 'monthly_graph:' . md5($type . '|' . ($from ?? '') . '|' . ($to ?? '') . '|' . json_encode($opts))), ReportCache::ttl(), function () use ($svc, $partyId, $from, $to, $type, $opts) {
             return $svc->monthlyGraph($partyId, $from, $to, $type, $opts);
         });
     }

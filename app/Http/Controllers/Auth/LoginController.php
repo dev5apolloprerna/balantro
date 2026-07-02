@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Cache;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use App\Services\DeviceTokenService;
 use App\Models\UserDevice;
@@ -140,6 +141,7 @@ class LoginController extends Controller
         }
 
         Cookie::queue(Cookie::forget('jwt'));
+        Cache::flush();
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

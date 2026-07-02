@@ -22,6 +22,7 @@ use App\Services\ReportsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use App\Support\ReportCache;
 use Throwable;
 use App\Models\UserDevice;
 use App\Models\BankTransaction;
@@ -52,35 +53,35 @@ class ClientsController extends Controller
 
     private function cachedPandl(ReportsService $svc, int $partyId, ?string $from, ?string $to): array
     {
-        return Cache::remember("clients:{$partyId}:pandl:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to) {
+        return Cache::remember(ReportCache::key('clients', $partyId, 'pandl:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyId, $from, $to) {
             return $svc->pandl($partyId, $from, $to);
         });
     }
 
     private function cachedBalanceSheet(ReportsService $svc, ?string $partyguid, int $partyId, ?string $from, ?string $to): array
     {
-        return Cache::remember("clients:{$partyId}:balance_sheet:" . md5(($partyguid ?? '') . '|' . ($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyguid, $partyId, $from, $to) {
+        return Cache::remember(ReportCache::key('clients', $partyId, 'balance_sheet:' . md5(($partyguid ?? '') . '|' . ($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyguid, $partyId, $from, $to) {
             return $svc->balanceSheet($partyguid, $partyId, $from, $to);
         });
     }
 
     private function cachedMonthlyGraph(ReportsService $svc, int $partyId, ?string $from, ?string $to, int $type, array $opts): array
     {
-        return Cache::remember("clients:{$partyId}:monthly_graph:" . md5($type . '|' . ($from ?? '') . '|' . ($to ?? '') . '|' . json_encode($opts)), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to, $type, $opts) {
+        return Cache::remember(ReportCache::key('clients', $partyId, 'monthly_graph:' . md5($type . '|' . ($from ?? '') . '|' . ($to ?? '') . '|' . json_encode($opts))), ReportCache::ttl(), function () use ($svc, $partyId, $from, $to, $type, $opts) {
             return $svc->monthlyGraph($partyId, $from, $to, $type, $opts);
         });
     }
 
     private function cachedGroupsWithBalances(ReportsService $svc, int $partyId, ?string $from, ?string $to): array
     {
-        return Cache::remember("clients:{$partyId}:groups_with_balances:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyId, $from, $to) {
+                return Cache::remember(ReportCache::key('clients', $partyId, 'groups_with_balances:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyId, $from, $to) {
             return $svc->getAllGroupsWithBalances($partyId, $from, $to);
         });
     }
 
     private function cachedDocumentSummary(int $partyId): array
     {
-        return Cache::remember("clients:{$partyId}:document_summary", now()->addMinutes(5), function () use ($partyId) {
+        return Cache::remember(ReportCache::key('clients', $partyId, 'document_summary'), ReportCache::ttl(), function () use ($partyId) {
             return DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$partyId]);
         });
     }
@@ -1005,7 +1006,7 @@ class ClientsController extends Controller
         //     ->where('iPartyId', $client->id)
         //     ->orderBy('iYearId', 'desc')
         //     ->get();
-        $financialYears = Cache::remember("clients:{$client->id}:financial_years", now()->addMinutes(30), function () use ($client) {
+        $financialYears = Cache::remember(ReportCache::key('clients', (int) $client->id, 'financial_years'), ReportCache::ttl(), function () use ($client) {
             return DB::table('YearMaster')
                 ->where('iPartyId', $client->id)
                 ->orderBy('iYearId', 'desc')
@@ -1115,7 +1116,7 @@ class ClientsController extends Controller
             //     ->where('iPartyId', $user->id)
             //     ->orderBy('iYearId', 'desc')
             //     ->get();
-            $financialYears = Cache::remember("clients:{$user->id}:financial_years", now()->addMinutes(30), function () use ($user) {
+            $financialYears = Cache::remember(ReportCache::key('clients', (int) $user->id, 'financial_years'), ReportCache::ttl(), function () use ($user) {
                 return DB::table('YearMaster')
                     ->where('iPartyId', $user->id)
                     ->orderBy('iYearId', 'desc')

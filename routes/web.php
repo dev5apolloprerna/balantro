@@ -21,6 +21,7 @@ use App\Http\Controllers\GstSettingController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\BlogController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 
 /*
@@ -402,6 +403,7 @@ Route::get('/insight-detail/{slugname}', [FrontendController::class, 'insightDet
 
 
 Route::post('/logout-idle', function () {
+    Cache::flush();
     Auth::logout();
     Session::invalidate();
     Session::regenerateToken();

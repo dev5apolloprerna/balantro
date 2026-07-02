@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Models\Document;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class DocumentsController extends BaseApiController
 {
@@ -35,85 +38,17 @@ class DocumentsController extends BaseApiController
         }
 
         $document = auth()->user()->documents()->create($data);
-
         if ($document) {
             \App\Jobs\DocumentActivityNotificationJob::dispatch($document->id, auth()->id(), 'create');
             return $this->success(
                 __("response_message.document.create_success"),
                 $this->documentResponse($document)
+                
             );
         } else {
             return $this->error(['Unable to create document'], 617);
         }
     }
-
-    // public function index(Request $request)
-    // {
-    //     try {
-    //         $pageLimit = max(1, (int) $request->input('page_limit', 20));
-    //         $page      = max(1, (int) $request->input('page', 1));
-
-    //         // Centralize alias/meta-status logic
-    //         $statusAliases = [
-    //             // dashboard's "in progress" bucket
-    //             'in_progress' => [
-    //                 'accepted',
-    //                 'data_entry_in_progress',
-    //                 'data_entry_completed',
-    //                 'query_raised',
-    //                 'query_resolved',
-    //             ],
-    //             // convenience alias
-    //             'completed'   => 'approved',
-    //         ];
-
-    //         $documents = auth()->user()->documents()->latest();
-
-    //         // Status filtering (supports meta-status and aliases)
-    //         if ($request->filled('status')) {
-    //             $status = strtolower(trim((string) $request->input('status')));
-
-    //             if (array_key_exists($status, $statusAliases)) {
-    //                 $mapped = $statusAliases[$status];
-    //                 if (is_array($mapped)) {
-    //                     $documents->whereIn('status', $mapped);
-    //                 } else {
-    //                     $documents->where('status', $mapped);
-    //                 }
-    //             } else {
-    //                 // fall back to exact value (e.g., uploaded, approved, rejected, accepted, etc.)
-    //                 $documents->where('status', $status);
-    //             }
-    //         }
-
-    //         // Date filtering (treats boundaries as whole days)
-    //         if ($request->filled('start_date') && $request->filled('end_date')) {
-    //             $start = Carbon::parse($request->input('start_date'))->startOfDay();
-    //             $end   = Carbon::parse($request->input('end_date'))->endOfDay();
-    //             $documents->whereBetween('created_at', [$start, $end]);
-    //         } else {
-    //             if ($request->filled('start_date')) {
-    //                 $documents->where('created_at', '>=', Carbon::parse($request->input('start_date'))->startOfDay());
-    //             }
-    //             if ($request->filled('end_date')) {
-    //                 $documents->where('created_at', '<=', Carbon::parse($request->input('end_date'))->endOfDay());
-    //             }
-    //         }
-
-    //         $paginated = $documents->paginate($pageLimit, ['*'], 'page', $page);
-
-    //         $responseData = [
-    //             'documents'     => $paginated->getCollection()->map(fn($doc) => $this->documentResponse($doc)),
-    //             'current_page'  => $paginated->currentPage(),
-    //             'total_pages'   => $paginated->lastPage(),
-    //             'total_count'   => $paginated->total(),
-    //         ];
-
-    //         return $this->success(__("response_message.document.index_success"), $responseData);
-    //     } catch (\Exception $e) {
-    //         return $this->error(__("response_message.document.index_error"), 500, $e->getMessage());
-    //     }
-    // }
 
     public function index(Request $request)
     {
@@ -212,7 +147,10 @@ class DocumentsController extends BaseApiController
             }]);
 
             $paginated = $documents->paginate($pageLimit, ['*'], 'page', $page);
-
+            $rows = Cache::remember("api_dashboard:{$user->id}:document_summary", now()->addMinutes(5), function () use ($user) {
+                return DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$user->id]);
+            });
+            $row = $rows[0] ?? (object) [];
             // Enhanced document response with file info
             $responseData = [
                 'documents' => $paginated->getCollection()->map(function ($doc) {
@@ -242,7 +180,14 @@ class DocumentsController extends BaseApiController
                     'q' => $request->input('q', ''),
                     'start_date' => $request->input('start_date'),
                     'end_date' => $request->input('end_date'),
-                ]
+                ],
+                'document_summary' => [
+                    'uploaded_count'    => (int) ($row->uploaded_count    ?? 0),
+                    'in_progress_count' => (int) ($row->in_progress_count ?? 0),
+                    'completed_count'   => (int) ($row->completed_count   ?? 0),
+                    'rejected_count'    => (int) ($row->rejected_count    ?? 0),
+                    'accepted_count'    => (int) ($row->accepted_count    ?? 0),
+                ],
             ];
 
             return $this->success(__("response_message.document.index_success"), $responseData);

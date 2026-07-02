@@ -311,6 +311,13 @@
             </div>
         </div>
 
+        <div id="pendingIssueAlert" class="pending-issue-alert" style="display:none;">
+            <div class="pending-issue-title">
+                <i class="fa-solid fa-triangle-exclamation"></i> This purchase entry is still pending
+            </div>
+            <ul id="pendingIssueList" class="pending-issue-list"></ul>
+        </div>
+
         {{-- META GRID --}}
         <div class="receipt-meta-grid">
             {{-- Left: Supplier --}}
@@ -848,6 +855,11 @@
     #editModal.modal.show { align-items:flex-start; padding:16px; overflow-y:hidden; }
     .receipt-wrapper {  width: 95%;max-width: 1100px;max-height: 95vh; background:#fff; border-radius:8px; overflow:auto; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.4); border:1px solid #e2e8f0; }
     .dark #editModal input,.dark #editModal select,.dark #editModal textarea,.dark #editModal .receipt-input { background:#ffffff!important; color:#000000!important; border:1px solid #d1d5db!important; }
+    .pending-issue-alert { margin:0 8px 8px; padding:8px 10px; border:1px solid #fca5a5; border-left:4px solid #dc2626; border-radius:6px; background:#fef2f2; color:#991b1b; font-size:12px; }
+    .pending-issue-title { font-weight:700; margin-bottom:4px; }
+    .pending-issue-list { margin:0; padding-left:18px; }
+    #editModal .pending-field-error, #editModal .pending-field-error + .select2 .select2-selection, #editModal .pending-field-error.select2-hidden-accessible + .select2 .select2-selection { border-color:#dc2626!important; background:#fff1f2!important; box-shadow:0 0 0 1px rgba(220,38,38,.35)!important; }
+    #editModal .pending-field-error-row { outline:2px solid #dc2626; outline-offset:-2px; background:#fff1f2; }
     .receipt-head { display:flex; justify-content:space-between; align-items:flex-start; padding:4px 8px; background:#fff; }
     .receipt-company { font-size:12px; font-weight:700; color:#000; }
     .receipt-subtitle { font-size:8px; color:#000; text-transform:uppercase; letter-spacing:1px; }
@@ -1320,7 +1332,7 @@ window.addEventListener('load', function () {
     // ═══════════════════════════════════════════════════════════════════════
     $(document).on('click', '.viewRow', function () {
         let id = $(this).data('id');
-
+        clearPendingIssueHighlights();
         // Open same edit modal
         openEditModal();
 
@@ -1340,7 +1352,7 @@ window.addEventListener('load', function () {
             url: "{{ route('purchase.show', ':id') }}".replace(':id', id),
             type: "GET",
             success: function (res) {
-
+                applyPendingIssueHighlights(res.pending_issues, res.status);
                 // Fill header fields
                 $('#edit_id').val(res.id);
                 $('#edit_invoice').val(res.invoice_no);
@@ -1441,7 +1453,7 @@ window.addEventListener('load', function () {
                 } else if (res.gst_mode === 'custom') {
                     renderCustomSlotsFromPurchaseItems(res.items || [], res.is_igst == 1);
                 }
-                
+                applyPendingIssueHighlights(res.pending_issues, res.status);
 
                 //recalcTotals();
             }
@@ -1450,6 +1462,55 @@ window.addEventListener('load', function () {
 
     function openViewModal()  { document.getElementById('viewModal').classList.add('show'); }
     function closeViewModal() { document.getElementById('viewModal').classList.remove('show'); }
+
+    function clearPendingIssueHighlights() {
+        $('#pendingIssueAlert').hide();
+        $('#pendingIssueList').empty();
+        $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
+    }
+
+    function pendingIssueTargets(field) {
+        const targets = {
+            purchase_ledger: ['#noitem_purchase_ledger', '.noitem-ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger'],
+            party_name: ['#edit_party'],
+            gst_no: ['#edit_gst'],
+            date: ['#edit_date'],
+            gst_rate: ['.item-gst_rate', '.noitem-gst'],
+            invoice_no: ['#edit_invoice'],
+            amount: ['.item-quantity', '.item-rate', '.item-amount', '.noitem-amount'],
+            gst_ledger: ['#igst_ledger', '#cgst_ledger', '#sgst_ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger']
+        };
+
+        return targets[field] || [];
+    }
+
+    function applyPendingIssueHighlights(issues, status = '') {
+        clearPendingIssueHighlights();
+
+        const normalizedStatus = String(status || '').trim().toLowerCase();
+        const issueList = Array.isArray(issues) ? issues : [];
+
+        if (!issueList.length) {
+            if (normalizedStatus === 'pending') {
+                $('#pendingIssueList').html('<li>This purchase entry is pending. Please review the highlighted/required fields before updating.</li>');
+                $('#pendingIssueAlert').show();
+            }
+            return;
+        }
+
+        const list = issueList.map(issue => `<li>${$('<div>').text(issue.message || 'Please review this field.').html()}</li>`).join('');
+        $('#pendingIssueList').html(list);
+        $('#pendingIssueAlert').show();
+
+        issueList.forEach(issue => {
+            pendingIssueTargets(issue.field).forEach(selector => {
+                const field = $(selector);
+                field.addClass('pending-field-error');
+                field.closest('tr').addClass('pending-field-error-row');
+            });
+        });
+    }
 
     function renderCustomSlotsFromPurchaseItems(items, isIGST) {
         let rateMap = {};
@@ -1496,7 +1557,7 @@ window.addEventListener('load', function () {
    // ═══════ EDIT MODAL ═══════
     $(document).on('click', '.editRow', function () {
         let btn = $(this), id = btn.data('id');
-
+        clearPendingIssueHighlights();
         $('#updateRow').show();
         $('#addItemRow').show();
         $('#addNoItemRow').hide();
@@ -1545,6 +1606,7 @@ window.addEventListener('load', function () {
         $.ajax({
             url: "{{ route('purchase.show',':id') }}".replace(':id', id), type:"GET",
             success: function (res) {
+                applyPendingIssueHighlights(res.pending_issues, res.status);
                 $('#edit_address').val(res.address || '');
                 $('#edit_pincode').val(res.pincode || '');
                 $('#edit_city').val(res.city || '');
@@ -1688,7 +1750,7 @@ window.addEventListener('load', function () {
 
                     }, 200);
                 //}    
-                
+                applyPendingIssueHighlights(res.pending_issues, res.status);
             },
             error: () => $('#editItemsBody').html('<tr><td colspan="9" class="text-center py-3" style="color:#ef4444;">Failed to load.</td></tr>')
         });

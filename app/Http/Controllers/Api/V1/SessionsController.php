@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Validator;
@@ -38,7 +39,7 @@ class SessionsController extends Controller
         }
         $user = auth('api')->user();
         if ($user->type == "Client") {
-
+            Cache::flush();
             auth('api')->logout();
 
             return response()->json([
@@ -106,7 +107,7 @@ class SessionsController extends Controller
                     ->where('device_token', $request->device_token)
                     ->delete();
             }
-
+            Cache::flush();
             auth('api')->logout();
 
             return response()->json([
@@ -207,7 +208,7 @@ class SessionsController extends Controller
         ];
 
         if (!in_array($user->type, $allowedRoles)) {
-
+            Cache::flush();
             auth('api')->logout();
 
             return response()->json([

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use App\Support\ReportCache;
 use App\Models\UserCardPreference;
 use App\Models\Group;
 
@@ -167,7 +168,7 @@ class HomeController extends Controller
             //     ->where('iPartyId', $userId)
             //     ->orderBy('iYearId', 'desc')
             //     ->get();
-            $financialYears = Cache::remember("client_dashboard:{$userId}:financial_years", now()->addMinutes(30), function () use ($userId) {
+            $financialYears = Cache::remember(ReportCache::key('client_dashboard', $userId, 'financial_years'), ReportCache::ttl(), function () use ($userId) {
                 return DB::table('YearMaster')
                     ->where('iPartyId', $userId)
                     ->orderBy('iYearId', 'desc')
@@ -198,7 +199,7 @@ class HomeController extends Controller
             //     ->selectRaw('status, COUNT(*) as count')
             //     ->groupBy('status')
             //     ->pluck('count', 'status');
-            $documentCounts = Cache::remember("client_dashboard:{$userId}:document_counts", now()->addMinutes(5), function () use ($userId) {
+            $documentCounts = Cache::remember(ReportCache::key('client_dashboard', $userId, 'document_counts'), ReportCache::ttl(), function () use ($userId) {
                 return Document::where('user_id', $userId)
                     ->selectRaw('status, COUNT(*) as count')
                     ->groupBy('status')
@@ -244,7 +245,7 @@ class HomeController extends Controller
             // Fetch ALL groups for this party (not just the 8 financial groups)
             try {
                 // $allGroupsWithBalances = $svc->getAllGroupsWithBalances($userId, $from, $to);
-                $allGroupsWithBalances = Cache::remember("client_dashboard:{$userId}:groups:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $userId, $from, $to) {
+                $allGroupsWithBalances = Cache::remember(ReportCache::key('client_dashboard', $userId, 'groups:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $userId, $from, $to) {
                     return $svc->getAllGroupsWithBalances($userId, $from, $to);
                 });
                 $allGroups = collect($allGroupsWithBalances);
@@ -446,8 +447,8 @@ class HomeController extends Controller
             //     ];
             // }
 
-            $chartsCacheKey = "client_dashboard:{$userId}:charts:" . md5(($from ?? '') . '|' . ($to ?? '') . '|' . $type . '|' . $r->input('metric', 'cash'));
-            [$charts, $selectedRes] = Cache::remember($chartsCacheKey, now()->addMinutes(10), function () use ($svc, $userId, $from, $to, $type, $titles, $r) {
+            $chartsCacheKey = ReportCache::key('client_dashboard', $userId, 'charts:' . md5(($from ?? '') . '|' . ($to ?? '') . '|' . $type . '|' . $r->input('metric', 'cash')));
+            [$charts, $selectedRes] = Cache::remember($chartsCacheKey, ReportCache::ttl(), function () use ($svc, $userId, $from, $to, $type, $titles, $r) {
                 $charts = [];
                 $selectedRes = null;
                 $sum = fn($arr) => array_sum(array_map('floatval', $arr ?? []));
@@ -609,7 +610,7 @@ class HomeController extends Controller
             if ($activeTab === 'financial') {
                 $svc = new ReportsService();
                 // $resp = $svc->pandl($r->user()->id, $from, $to);
-                $resp = Cache::remember("client_dashboard:{$userId}:pandl:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $r, $from, $to) {
+                $resp = Cache::remember(ReportCache::key('client_dashboard', $userId, 'pandl:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $r, $from, $to) {
                     return $svc->pandl($r->user()->id, $from, $to);
                 });
                 $guid = Auth::user()->guid ?? '';
@@ -617,7 +618,7 @@ class HomeController extends Controller
                 $partyId   = Auth::user()->id;
                 
                 // $respbalance = $svc->balanceSheet($partyguid, $partyId, $from, $to);
-                $respbalance = Cache::remember("client_dashboard:{$userId}:balance_sheet:" . md5($partyguid . '|' . $partyId . '|' . ($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($svc, $partyguid, $partyId, $from, $to) {
+                $respbalance = Cache::remember(ReportCache::key('client_dashboard', $userId, 'balance_sheet:' . md5($partyguid . '|' . $partyId . '|' . ($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyguid, $partyId, $from, $to) {
                     return $svc->balanceSheet($partyguid, $partyId, $from, $to);
                 });
                 
