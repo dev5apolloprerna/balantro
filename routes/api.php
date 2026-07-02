@@ -52,6 +52,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/balance-sheet/export/download/{filename}', [BalanceSheetController::class, 'downloadExportedFile'])
         ->where('filename', 'balance-sheet-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)')
         ->name('api.balance-sheet.export.download');
+
+    Route::get('/ledger/export/download/{filename}', [LedgerMasterController::class, 'downloadExportedFile'])
+        ->where('filename', 'ledger-report-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)')
+        ->name('api.ledger.export.download');
     // Resource routes
     Route::middleware('auth:api')->group(function () {
         //Route::apiResource('client_profile', \App\Http\Controllers\Api\V1\\App\Http\Controllers\Api\V1\ClientProfilesController::class)->only(['show', 'update']);

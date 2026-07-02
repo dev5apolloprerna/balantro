@@ -1250,7 +1250,7 @@ class LedgerMasterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Excel file generated successfully',
-                'download_url' => asset('storage/' . $filePath),
+                'download_url' => route('api.ledger.export.download', ['filename' => $filename]),
                 'filename' => $filename,
                 'file_size' => $disk->size($filePath),
             ], 200);
@@ -1491,7 +1491,7 @@ class LedgerMasterController extends Controller
 			return response()->json([
                 'success' => true,
                 'message' => 'PDF file generated successfully',
-                'download_url' => asset('storage/' . $filePath),
+                'download_url' => route('api.ledger.export.download', ['filename' => $filename]),
                 'filename' => $filename,
                 'file_size' => $disk->size($filePath),
             ], 200);
@@ -1505,6 +1505,23 @@ class LedgerMasterController extends Controller
 				'error' => $e->getMessage()
 			], 500);
 		}
+	}
+
+    // EXPORTED FILE DOWNLOAD ROUTE
+	public function downloadExportedFile(string $filename)
+	{
+		if (!preg_match('/\Aledger-report-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
+			abort(404);
+		}
+
+		$filePath = 'exports/' . $filename;
+		$disk = Storage::disk('public');
+
+		if (!$disk->exists($filePath)) {
+			abort(404, 'Export file not found');
+		}
+
+		return $disk->download($filePath, $filename);
 	}
 
 	// DIRECT PDF DOWNLOAD METHODS
