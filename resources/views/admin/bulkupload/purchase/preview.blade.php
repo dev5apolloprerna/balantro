@@ -1479,14 +1479,14 @@ window.addEventListener('load', function () {
 
     function pendingIssueTargets(field) {
         const targets = {
-            purchase_ledger: ['#noitem_purchase_ledger', '.noitem-ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger'],
+            purchase_ledger: ['#noitem_purchase_ledger', '.noitem-ledger'],
             party_name: ['#edit_party'],
             gst_no: ['#edit_gst'],
             date: ['#edit_date'],
             gst_rate: ['.item-gst_rate', '.noitem-gst'],
             invoice_no: ['#edit_invoice'],
             amount: ['.item-quantity', '.item-rate', '.item-amount', '.noitem-amount'],
-            gst_ledger: ['#igst_ledger', '#cgst_ledger', '#sgst_ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger']
+            gst_ledger: []
         };
 
         return targets[field] || [];
@@ -1540,7 +1540,6 @@ window.addEventListener('load', function () {
                 const ledger = row.find(selector);
                 if (amount > 0 && !ledger.val()) {
                     ledger.addClass('pending-field-error');
-                    row.addClass('pending-field-error-row');
                 }
             });
         });
@@ -1555,7 +1554,6 @@ window.addEventListener('load', function () {
             $('#sgst_ledger').addClass('pending-field-error');
         }
     }
-
 
     function renderCustomSlotsFromPurchaseItems(items, isIGST) {
         let rateMap = {};

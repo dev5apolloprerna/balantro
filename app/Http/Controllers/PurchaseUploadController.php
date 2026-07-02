@@ -1579,6 +1579,7 @@ class PurchaseUploadController extends Controller
         return $issues;
     }
 
+
     // ── SHOW (used by both View and Edit modals via AJAX) ─────────────────────────
     public function show($id)
     {
