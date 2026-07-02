@@ -332,6 +332,7 @@
     });
 
     function resetSalesModalState() {
+        clearPendingIssueHighlights();
         $('#editItemsBody').empty();
         $('#noItemBody').empty();
         $('#customSlotsBody').empty();
@@ -899,7 +900,7 @@
             type: "GET",
             success: function(res) {
                 // console.log(res);
-
+                applyPendingIssueHighlights(res.pending_issues);
                 // Fill header fields
                 $('#edit_id').val(res.id);
                 $('#edit_invoice').val(res.invoice_no);
@@ -1046,6 +1047,7 @@
                     refreshCustomSummaryFromRows();
                 }
                 setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                applyPendingIssueHighlights(res.pending_issues);
 
                 $('#editModal input, #editModal select, #editModal textarea')
                     .prop('disabled', true)
@@ -1092,6 +1094,47 @@
         }
 
         $select.trigger('change.select2');
+    }
+
+    function clearPendingIssueHighlights() {
+        $('#pendingIssueAlert').hide();
+        $('#pendingIssueList').empty();
+        $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
+    }
+
+    function pendingIssueTargets(field) {
+        const targets = {
+            sales_ledger: ['#noitem_sales_ledger', '.noitem-ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger'],
+            party_name: ['#edit_party'],
+            gst_no: ['#edit_gst'],
+            date: ['#edit_date'],
+            gst_rate: ['.item-gst_rate', '.noitem-gst'],
+            invoice_no: ['#edit_invoice'],
+            gst_ledger: ['#igst_ledger', '#cgst_ledger', '#sgst_ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger']
+        };
+
+        return targets[field] || [];
+    }
+
+    function applyPendingIssueHighlights(issues) {
+        clearPendingIssueHighlights();
+
+        if (!issues || !issues.length) {
+            return;
+        }
+
+        const list = issues.map(issue => `<li>${$('<div>').text(issue.message || 'Please review this field.').html()}</li>`).join('');
+        $('#pendingIssueList').html(list);
+        $('#pendingIssueAlert').show();
+
+        issues.forEach(issue => {
+            pendingIssueTargets(issue.field).forEach(selector => {
+                const field = $(selector);
+                field.addClass('pending-field-error');
+                field.closest('tr').addClass('pending-field-error-row');
+            });
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -1148,6 +1191,7 @@
             url: "<?php echo e(route('sales.show',':id')); ?>".replace(':id', id),
             type: "GET",
             success: function(res) {
+                applyPendingIssueHighlights(res.pending_issues);
                 $('#edit_address').val(res.address || '');
                 $('#edit_pincode').val(res.pincode || '');
                 $('#edit_city').val(res.city || '');
@@ -1277,6 +1321,7 @@
                 // }
                 recalcTotals();
                 setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
+                applyPendingIssueHighlights(res.pending_issues);
                 // if (res.gst_mode !== 'custom') {
                 //     recalcTotals();
                 // }
@@ -2163,6 +2208,7 @@
     }
 
     function closeEditModal() {
+        clearPendingIssueHighlights();
         document.getElementById('editModal').classList.remove('show'); // 🔥 RESET STATE
         $('#updateRow').show();
         $('#addItemRow').show();

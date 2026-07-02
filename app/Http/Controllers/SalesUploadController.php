@@ -1140,6 +1140,122 @@ class SalesUploadController extends Controller
         );
     }
 
+    private function getSalesPendingIssues(SalesTransaction $transaction, ?array $gstMapping = null): array
+    {
+        if (strtolower((string) $transaction->status) !== 'pending') {
+            return [];
+        }
+
+        $issues = [];
+        $partyId = $transaction->iPartyId;
+        $salesLedgerName = $transaction->sales_ledger_name ?: $transaction->sales_ledger;
+        $salesLedger = $salesLedgerName ? Ledger::getLedgerByName($partyId, $salesLedgerName) : null;
+        $gstMapping = $gstMapping ?: $this->getGstMapping($partyId, $salesLedger?->name ?? $salesLedgerName);
+        $partyLookup = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
+        $invoiceDate = $transaction->date instanceof \DateTimeInterface
+            ? $transaction->date->format('Y-m-d')
+            : $transaction->date;
+
+        if (!$this->hasSalesLedgerMatch($salesLedger)) {
+            $issues[] = [
+                'field' => 'sales_ledger',
+                'message' => 'Sales ledger is missing or not matched with ledger master.',
+            ];
+        }
+
+        if (!$this->hasUploadPartyMatch($partyLookup)) {
+            $issues[] = [
+                'field' => 'party_name',
+                'message' => 'Party name/GSTIN does not match any sundry debtor ledger.',
+            ];
+        } elseif (!$this->hasUploadedGstNoMatch($partyLookup, $transaction->gst_no)) {
+            $issues[] = [
+                'field' => 'gst_no',
+                'message' => 'Uploaded GSTIN does not match the selected party ledger GSTIN.',
+            ];
+        }
+
+        if (!$this->isUploadDateInSelectedYear($invoiceDate)) {
+            $issues[] = [
+                'field' => 'date',
+                'message' => 'Invoice date is outside the selected financial year.',
+            ];
+        }
+
+        if (!$this->hasOnlyValidGstSlabs($this->salesTransactionGstRates($transaction))) {
+            $issues[] = [
+                'field' => 'gst_rate',
+                'message' => 'GST rate is not one of the allowed GST slabs.',
+            ];
+        }
+
+        if ($this->salesVoucherExists($partyId, $transaction->vchType, $transaction->invoice_no, $transaction->strYear ?? session('year'), $transaction->id)) {
+            $issues[] = [
+                'field' => 'invoice_no',
+                'message' => 'Invoice number already exists for this voucher type and financial year.',
+            ];
+        }
+
+        $hasGstLedgers = (int) $transaction->isWithItem === 1
+            ? $this->hasPendingItemGstLedgers($transaction)
+            : $this->hasPendingAccountingGstLedgers($transaction, $gstMapping);
+
+        if (!$hasGstLedgers) {
+            $issues[] = [
+                'field' => 'gst_ledger',
+                'message' => 'Required GST ledger mapping is missing for the GST amount.',
+            ];
+        }
+
+        return $issues;
+    }
+
+    private function hasPendingItemGstLedgers(SalesTransaction $transaction): bool
+    {
+        foreach ($transaction->items as $item) {
+            $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item->item_name);
+            if (!$this->hasRequiredGstLedgers([[
+                'cgst_amount' => $item->cgst,
+                'sgst_amount' => $item->sgst,
+                'igst_amount' => $item->igst,
+                'cgst_ledger_id' => $itemMapping['cgst_id'],
+                'sgst_ledger_id' => $itemMapping['sgst_id'],
+                'igst_ledger_id' => $itemMapping['igst_id'],
+            ]], (float) $item->igst > 0)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function hasPendingAccountingGstLedgers(SalesTransaction $transaction, array $mapping): bool
+    {
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            $slots = $transaction->customGst->map(function ($slot) {
+                return [
+                    'cgst_amount' => $slot->cgst_amount,
+                    'sgst_amount' => $slot->sgst_amount,
+                    'igst_amount' => $slot->igst_amount,
+                    'cgst_ledger_id' => $slot->cgst_ledger_id,
+                    'sgst_ledger_id' => $slot->sgst_ledger_id,
+                    'igst_ledger_id' => $slot->igst_ledger_id,
+                ];
+            })->all();
+
+            return $this->hasRequiredGstLedgers($slots, (float) $transaction->igst > 0);
+        }
+
+        return $this->hasRequiredGstLedgers([[
+            'cgst_amount' => $transaction->cgst,
+            'sgst_amount' => $transaction->sgst,
+            'igst_amount' => $transaction->igst,
+            'cgst_ledger_id' => $mapping['cgst_id'],
+            'sgst_ledger_id' => $mapping['sgst_id'],
+            'igst_ledger_id' => $mapping['igst_id'],
+        ]], (float) $transaction->igst > 0);
+    }
+
     private function rematchPendingSalesTransaction(SalesTransaction $transaction): bool
     {
         $partyId = $transaction->iPartyId;

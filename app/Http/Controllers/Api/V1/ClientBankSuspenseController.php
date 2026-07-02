@@ -34,7 +34,15 @@ class ClientBankSuspenseController extends Controller
             if ($request->to_date) {
                 $query->whereDate('txn_date','<=',$request->to_date);
             }
-            $transactions = $query->get();
+            $transactions = $query->get()->map(function ($transaction) {
+                if ($transaction->txn_type === 'Debit') {
+                    $transaction->txn_type = 'Payment';
+                } elseif ($transaction->txn_type === 'Credit') {
+                    $transaction->txn_type = 'Receipt';
+                }
+
+                return $transaction;
+            });
             // $transactions = $query->latest()
             //     ->paginate(
             //         $request->per_page ?? 10

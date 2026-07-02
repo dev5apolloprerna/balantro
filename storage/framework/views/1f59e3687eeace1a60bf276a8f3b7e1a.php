@@ -336,6 +336,41 @@
         border: 1px solid #d1d5db !important;
     }
 
+    .pending-issue-alert {
+        margin: 0 8px 8px;
+        padding: 8px 10px;
+        border: 1px solid #fca5a5;
+        border-left: 4px solid #dc2626;
+        border-radius: 6px;
+        background: #fef2f2;
+        color: #991b1b;
+        font-size: 12px;
+    }
+
+    .pending-issue-title {
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .pending-issue-list {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    #editModal .pending-field-error,
+    #editModal .pending-field-error + .select2 .select2-selection,
+    #editModal .pending-field-error.select2-hidden-accessible + .select2 .select2-selection {
+        border-color: #dc2626 !important;
+        background: #fff1f2 !important;
+        box-shadow: 0 0 0 1px rgba(220, 38, 38, .35) !important;
+    }
+
+    #editModal .pending-field-error-row {
+        outline: 2px solid #dc2626;
+        outline-offset: -2px;
+        background: #fff1f2;
+    }
+
     .receipt-head {
         display: flex;
         justify-content: space-between;

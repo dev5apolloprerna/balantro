@@ -16,6 +16,13 @@
             </div>
         </div>
 
+        <div id="pendingIssueAlert" class="pending-issue-alert" style="display:none;">
+            <div class="pending-issue-title">
+                <i class="fa-solid fa-triangle-exclamation"></i> This sales entry is still pending
+            </div>
+            <ul id="pendingIssueList" class="pending-issue-list"></ul>
+        </div>
+
         
         <div class="receipt-meta-grid">
             

@@ -1682,7 +1682,9 @@ class LedgerMasterController extends Controller
     // EXPORTED FILE DOWNLOAD ROUTE
 	public function downloadExportedFile(string $filename)
 	{
-		if (!preg_match('/\A(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
+		$allowedExportPattern = '/\A(?:(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+|voucher-[A-Za-z0-9._-]+)\.(xlsx|pdf)\z/';
+
+		if (!preg_match($allowedExportPattern, $filename)) {
 			abort(404);
 		}
 
