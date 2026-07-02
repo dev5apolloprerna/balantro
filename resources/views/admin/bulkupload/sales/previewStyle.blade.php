@@ -360,15 +360,23 @@
     #editModal .pending-field-error,
     #editModal .pending-field-error + .select2 .select2-selection,
     #editModal .pending-field-error.select2-hidden-accessible + .select2 .select2-selection {
-        border-color: #dc2626 !important;
-        background: #fff1f2 !important;
-        box-shadow: 0 0 0 1px rgba(220, 38, 38, .35) !important;
+        border-color: #ef4444 !important;
+        background: #fff7f7 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, .12) !important;
     }
 
+    #editModal .receipt-table .pending-field-error,
+    #editModal .receipt-table .pending-field-error + .select2 .select2-selection,
+    #editModal .receipt-table .pending-field-error.select2-hidden-accessible + .select2 .select2-selection,
+    #editModal .custom-slots-table .pending-field-error {
+        border-color: #f87171 !important;
+        background: #fffafa !important;
+        box-shadow: inset 0 0 0 1px rgba(248, 113, 113, .35) !important;
+    }
+
+
     #editModal .pending-field-error-row {
-        outline: 2px solid #dc2626;
-        outline-offset: -2px;
-        background: #fff1f2;
+        background: #fff7f7;
     }
 
     .receipt-head {
