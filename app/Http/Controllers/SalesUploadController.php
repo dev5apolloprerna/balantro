@@ -354,27 +354,28 @@ class SalesUploadController extends Controller
         $partyName = trim((string) $partyName);
         $normalizedGstNo = $this->normalizeGstNo($gstNo);
 
-        $baseQuery = fn () => DB::query()
-            ->fromSub(function ($query) use ($partyId) {
-                $query->selectRaw("strCustomerName AS name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, StateName AS state")
-                    ->from('LedgerMaster')
-                    ->where('iPartyId', $partyId)
-                    ->where('strParents', 'Sundry Debtors')
-                    ->unionAll(
-                        DB::table('ledgers')
-                            ->selectRaw("name AS name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, State AS state")
-                            ->where('iPartyId', $partyId)
-                            //->where('Parent', 'Sundry Debtors')
-                    );
-            }, 'party_ledgers');
+        // $baseQuery = fn () => DB::query()
+        //     ->fromSub(function ($query) use ($partyId) {
+        //         $query->selectRaw("strCustomerName AS name, GSTNo AS gst_no, LedgerAddress AS address, Pincode AS pincode, StateName AS state")
+        //             ->from('LedgerMaster')
+        //             ->where('iPartyId', $partyId)
+        //             ->where('strParents', 'Sundry Debtors')
+        //             ->unionAll(
+        //                 DB::table('ledgers')
+        //                     ->selectRaw("name AS name, GstNo AS gst_no, CONCAT_WS(', ', NULLIF(AddressLine1, ''), NULLIF(AddressLine2, '')) AS address, Pincode AS pincode, State AS state")
+        //                     ->where('iPartyId', $partyId)
+        //                     //->where('Parent', 'Sundry Debtors')
+        //             );
+        //     }, 'party_ledgers');
 
+        $debtorLedgers = collect(Ledger::getAllDebtorsLedgers($partyId));
         $ledger = null;
         $matchedBy = null;
 
         if ($normalizedGstNo !== '') {
-            $ledger = $baseQuery()
-                ->whereRaw('UPPER(TRIM(gst_no)) = ?', [$normalizedGstNo])
-                ->first();
+            $ledger = $debtorLedgers->first(function ($ledger) use ($normalizedGstNo) {
+                return $this->normalizeGstNo($ledger->gst_no ?? null) === $normalizedGstNo;
+            });
 
             if ($ledger) {
                 $matchedBy = 'gst_no';
@@ -382,9 +383,11 @@ class SalesUploadController extends Controller
         }
 
         if (!$ledger && $partyName !== '') {
-            $ledger = $baseQuery()
-                ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($partyName)])
-                ->first();
+            $normalizedPartyName = strtolower(trim($partyName));
+            $ledger = $debtorLedgers->first(function ($ledger) use ($normalizedPartyName) {
+                return strtolower(trim((string) ($ledger->name ?? ''))) === $normalizedPartyName;
+            });
+
 
             if ($ledger) {
                 $matchedBy = 'party_name';
