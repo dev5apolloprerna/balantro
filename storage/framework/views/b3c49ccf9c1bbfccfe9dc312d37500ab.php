@@ -900,7 +900,7 @@
             type: "GET",
             success: function(res) {
                 // console.log(res);
-                applyPendingIssueHighlights(res.pending_issues);
+                applyPendingIssueHighlights(res.pending_issues, res.status);
                 // Fill header fields
                 $('#edit_id').val(res.id);
                 $('#edit_invoice').val(res.invoice_no);
@@ -1047,7 +1047,7 @@
                     refreshCustomSummaryFromRows();
                 }
                 setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
-                applyPendingIssueHighlights(res.pending_issues);
+                applyPendingIssueHighlights(res.pending_issues, res.status);
 
                 $('#editModal input, #editModal select, #editModal textarea')
                     .prop('disabled', true)
@@ -1117,18 +1117,25 @@
         return targets[field] || [];
     }
 
-    function applyPendingIssueHighlights(issues) {
+    function applyPendingIssueHighlights(issues, status = '') {
         clearPendingIssueHighlights();
 
-        if (!issues || !issues.length) {
+        const normalizedStatus = String(status || '').trim().toLowerCase();
+        const issueList = Array.isArray(issues) ? issues : [];
+
+        if (!issueList.length) {
+            if (normalizedStatus === 'pending') {
+                $('#pendingIssueList').html('<li>This sales entry is pending. Please review the highlighted/required fields before updating.</li>');
+                $('#pendingIssueAlert').show();
+            }
             return;
         }
 
-        const list = issues.map(issue => `<li>${$('<div>').text(issue.message || 'Please review this field.').html()}</li>`).join('');
+        const list = issueList.map(issue => `<li>${$('<div>').text(issue.message || 'Please review this field.').html()}</li>`).join('');
         $('#pendingIssueList').html(list);
         $('#pendingIssueAlert').show();
 
-        issues.forEach(issue => {
+        issueList.forEach(issue => {
             pendingIssueTargets(issue.field).forEach(selector => {
                 const field = $(selector);
                 field.addClass('pending-field-error');
@@ -1191,7 +1198,7 @@
             url: "<?php echo e(route('sales.show',':id')); ?>".replace(':id', id),
             type: "GET",
             success: function(res) {
-                applyPendingIssueHighlights(res.pending_issues);
+                applyPendingIssueHighlights(res.pending_issues, res.status);
                 $('#edit_address').val(res.address || '');
                 $('#edit_pincode').val(res.pincode || '');
                 $('#edit_city').val(res.city || '');
@@ -1321,7 +1328,7 @@
                 // }
                 recalcTotals();
                 setRoundOffSummary(res.total_amount || 0, res.roundoff || 0);
-                applyPendingIssueHighlights(res.pending_issues);
+                applyPendingIssueHighlights(res.pending_issues, res.status);
                 // if (res.gst_mode !== 'custom') {
                 //     recalcTotals();
                 // }

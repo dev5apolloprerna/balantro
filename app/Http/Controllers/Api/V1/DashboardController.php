@@ -278,9 +278,21 @@ class DashboardController extends BaseApiController
                 ['key' => 'equity', 'label' => 'Equity', 'amount' => $equity],
             ]);
 
+            $rows = Cache::remember("api_dashboard:{$user->id}:document_summary", now()->addMinutes(5), function () use ($user) {
+                return DB::select('EXEC dbo.usp_GetClientDocumentSummary ?', [$user->id]);
+            });
+            $row = $rows[0] ?? (object) [];
+
             return $this->success(__("response_message.dashboard.financial_summary"), [
                 'range' => ['from' => $from, 'to' => $to],
                 'bank_suspense_count' => (int) $bankSuspenseCount,
+                'document_summary' => [
+                    'uploaded_count'    => (int) ($row->uploaded_count    ?? 0),
+                    'in_progress_count' => (int) ($row->in_progress_count ?? 0),
+                    'completed_count'   => (int) ($row->completed_count   ?? 0),
+                    'rejected_count'    => (int) ($row->rejected_count    ?? 0),
+                    'accepted_count'    => (int) ($row->accepted_count    ?? 0),
+                ],
                 'profit_loss' => [
                     'items' => $profitLossItems,
                     'gross_amount' => round($gross, 2),

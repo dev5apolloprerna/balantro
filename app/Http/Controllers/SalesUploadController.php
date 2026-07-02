@@ -1553,7 +1553,7 @@ class SalesUploadController extends Controller
             'pincode' => $transaction->pincode,
             'city'  => $transaction->city,
             'Remarks'  => $transaction->Remarks,
-
+            'pending_issues' => $this->getSalesPendingIssues($transaction, $gstMapping),
             'custom_gst' => $transaction->customGst->map(function ($slot) use ($gstMapping) {
                 return [
                     'gst_rate' => $slot->gst_rate,
