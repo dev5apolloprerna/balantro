@@ -15,6 +15,7 @@ use App\Exports\LedgerSummaryExport;
 use App\Exports\VoucherHistoryExport;
 use App\Services\ReportsService;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\VoucherExport;
 
 class LedgerMasterController extends Controller
 {
@@ -580,6 +581,177 @@ class LedgerMasterController extends Controller
             ], 500);
         }
     }
+
+    public function voucherDetails(Request $request, ReportsService $svc)
+	{
+		try {
+			$user = auth('api')->user();
+			if (!$user) {
+				return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+			}
+
+			$prepared = $this->prepareVoucherDetailsPayload($request, $svc);
+			if (isset($prepared['response'])) {
+				return $prepared['response'];
+			}
+
+			return response()->json([
+				'success' => true,
+				'data' => $this->formatVoucherDetailsResponse($prepared['voucher'], $prepared['header'], $prepared['totalDr'], $prepared['totalCr']),
+			], 200);
+		} catch (\Throwable $e) {
+			\Log::error('Voucher Details API Error: ' . $e->getMessage());
+
+			return response()->json([
+				'success' => false,
+				'message' => 'Failed to retrieve voucher details',
+				'error' => $e->getMessage(),
+			], 500);
+		}
+	}
+
+	public function exportVoucherDetailsPdf(Request $request, ReportsService $svc)
+	{
+		try {
+			$prepared = $this->prepareVoucherDetailsPayload($request, $svc);
+			if (isset($prepared['response'])) {
+				return $prepared['response'];
+			}
+
+			$filename = $this->voucherDetailsFilename($prepared['strGUID'], 'pdf');
+			$filePath = 'exports/' . $filename;
+			$disk = Storage::disk('public');
+			if (!$disk->exists('exports')) {
+				$disk->makeDirectory('exports', 0755, true);
+			}
+
+			$pdf = Pdf::setOptions([
+				'isRemoteEnabled' => true,
+				'isHtml5ParserEnabled' => true,
+			])->loadView('reports.pdf.voucher_pdf', [
+				'voucher' => $prepared['voucher'],
+				'header' => $prepared['header'],
+				'totalDr' => $prepared['totalDr'],
+				'totalCr' => $prepared['totalCr'],
+			]);
+
+			$disk->put($filePath, $pdf->output());
+
+			return response()->json([
+				'success' => true,
+				'message' => 'PDF file generated successfully',
+				'download_url' => route('api.ledger.export.download', ['filename' => $filename]),
+				'filename' => $filename,
+				'file_size' => $disk->size($filePath),
+			], 200);
+		} catch (\Throwable $e) {
+			\Log::error('Voucher Details PDF Export Error: ' . $e->getMessage());
+
+			return response()->json(['success' => false, 'message' => 'Failed to generate PDF file', 'error' => $e->getMessage()], 500);
+		}
+	}
+
+	public function exportVoucherDetailsExcel(Request $request, ReportsService $svc)
+	{
+		try {
+			$prepared = $this->prepareVoucherDetailsPayload($request, $svc);
+			if (isset($prepared['response'])) {
+				return $prepared['response'];
+			}
+
+			$filename = $this->voucherDetailsFilename($prepared['strGUID'], 'xlsx');
+			$filePath = 'exports/' . $filename;
+			$disk = Storage::disk('public');
+			if (!$disk->exists('exports')) {
+				$disk->makeDirectory('exports', 0755, true);
+			}
+
+			Excel::store(new VoucherExport($prepared['voucher'], $prepared['header'], $prepared['total']), $filePath, 'public');
+
+			if (!$disk->exists($filePath)) {
+				throw new \Exception('Excel file was not created in storage');
+			}
+
+			return response()->json([
+				'success' => true,
+				'message' => 'Excel file generated successfully',
+				'download_url' => route('api.ledger.export.download', ['filename' => $filename]),
+				'filename' => $filename,
+				'file_size' => $disk->size($filePath),
+			], 200);
+		} catch (\Throwable $e) {
+			\Log::error('Voucher Details Excel Export Error: ' . $e->getMessage());
+
+			return response()->json(['success' => false, 'message' => 'Failed to generate Excel file', 'error' => $e->getMessage()], 500);
+		}
+	}
+
+
+	private function prepareVoucherDetailsPayload(Request $request, ReportsService $svc): array
+	{
+		$user = auth('api')->user();
+		if (!$user) {
+			return ['response' => response()->json(['success' => false, 'message' => 'Unauthenticated'], 401)];
+		}
+
+		$validator = Validator::make($request->all(), [
+			'partyguid' => 'required|uuid',
+			'strGUID' => 'required|string',
+			'vchType' => 'required|string',
+		]);
+
+		if ($validator->fails()) {
+			return ['response' => response()->json(['success' => false, 'errors' => $validator->errors()], 422)];
+		}
+
+		$partyguid = $request->input('partyguid');
+		$exists = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
+		if (!$exists) {
+			return ['response' => response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422)];
+		}
+
+		$strGUID = $request->input('strGUID');
+		$vchType = $request->input('vchType');
+		$voucher = collect($svc->voucherDetails($partyguid, $strGUID, $vchType));
+
+		if ($voucher->isEmpty()) {
+			return ['response' => response()->json(['success' => false, 'message' => 'No voucher details found'], 404)];
+		}
+
+		$header = $voucher->first();
+		$totalDr = $voucher->sum(fn ($row) => abs((float) ($row->DRAmount ?? 0)));
+		$totalCr = $voucher->sum(fn ($row) => abs((float) ($row->CRAmount ?? 0)));
+
+		return [
+			'voucher' => $voucher,
+			'header' => $header,
+			'totalDr' => $totalDr,
+			'totalCr' => $totalCr,
+			'total' => abs($totalDr ?: $totalCr),
+			'partyguid' => $partyguid,
+			'strGUID' => $strGUID,
+			'vchType' => $vchType,
+		];
+	}
+
+	private function formatVoucherDetailsResponse($voucher, $header, float $totalDr, float $totalCr): array
+	{
+		return [
+			'header' => $header,
+			'rows' => $voucher->values(),
+			'total_dr' => $this->fmt($totalDr),
+			'total_dr_raw' => $totalDr,
+			'total_cr' => $this->fmt($totalCr),
+			'total_cr_raw' => $totalCr,
+		];
+	}
+
+	private function voucherDetailsFilename(string $strGUID, string $extension): string
+	{
+		$safe = preg_replace('/[^A-Za-z0-9._-]+/', '-', $strGUID) ?: 'voucher';
+
+		return 'voucher-' . trim($safe, '-') . '.' . $extension;
+	}
 
 	private function resolveApiFinancialYearFilter(Request $request, int $partyId): array
     {

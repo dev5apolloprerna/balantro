@@ -54,7 +54,7 @@ Route::prefix('v1')->group(function () {
         ->name('api.balance-sheet.export.download');
 
     Route::get('/ledger/export/download/{filename}', [LedgerMasterController::class, 'downloadExportedFile'])
-         ->where('filename', '(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)')
+        ->where('filename', '(?:(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+|voucher-[A-Za-z0-9._-]+)\.(xlsx|pdf)')
         ->name('api.ledger.export.download');
     // Resource routes
     Route::middleware('auth:api')->group(function () {
@@ -120,6 +120,11 @@ Route::prefix('v1')->group(function () {
 		Route::post('/voucher-history/export/excel', [LedgerMasterController::class, 'exportVoucherHistoryExcel']);
 		Route::post('/voucher-history/export/pdf', [LedgerMasterController::class, 'exportVoucherHistoryPdf']);
 
+        // Voucher Details Routes
+		Route::post('/voucher/details', [LedgerMasterController::class, 'voucherDetails']);
+		Route::post('/voucher/export/excel', [LedgerMasterController::class, 'exportVoucherDetailsExcel']);
+		Route::post('/voucher/export/pdf', [LedgerMasterController::class, 'exportVoucherDetailsPdf']);
+        
 		// Direct Download Routes
 		Route::post('/ledger/download/excel', [LedgerMasterController::class, 'downloadLedgerExcel']);
         Route::post('/ledger/download/pdf', [LedgerMasterController::class, 'downloadLedgerPdf']);
