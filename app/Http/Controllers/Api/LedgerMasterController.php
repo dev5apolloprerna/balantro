@@ -1510,7 +1510,7 @@ class LedgerMasterController extends Controller
     // EXPORTED FILE DOWNLOAD ROUTE
 	public function downloadExportedFile(string $filename)
 	{
-		if (!preg_match('/\Aledger-report-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
+		if (!preg_match('/\A(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
 			abort(404);
 		}
 
@@ -1653,6 +1653,10 @@ class LedgerMasterController extends Controller
 				$ledger = DB::table('LedgerMaster')->where('iLedgerId', $ledgerId)->first();
 				$ledgerName = $ledger->strCustomerName ?? '';
 			}
+            $profile = $user->profile ?? null;
+			$partyName = $user->name ?? '';
+			$companyAddress = $profile->address ?? '';
+			$companyEmail = $user->email ?? '';
 
 			// Get opening balance - SAME logic as web
 			$openingBalanceData = [];
@@ -1662,11 +1666,7 @@ class LedgerMasterController extends Controller
 			} else {
 				$openingBalanceData = ['balance' => 0.0, 'side' => 'Dr'];
 			}
-			$ledgerName = '';
-			if ($ledgerId) {
-				$ledger = DB::table('LedgerMaster')->where('iLedgerId', $ledgerId)->first();
-				$ledgerName = $ledger->strCustomerName ?? '';
-			}
+			
 			// Process data for export - SAME logic as web
 			$processedData = $this->processVoucherHistoryData($data, $openingBalanceData, $request->start_date, $request->end_date);
 
@@ -1687,13 +1687,14 @@ class LedgerMasterController extends Controller
 					$processedData, // Use processed data from web method
 					$request->start_date,
 					$request->end_date,
-					$ledgerId,
-					$ledgerName,
+					$ledgerId,					
 					$openingBalanceData['balance'] ?? 0,
 					$processedData['closingBalance'] ?? 0,
 					$data['raw_total_dr'] ?? 0,
 					$data['raw_total_cr'] ?? 0,
-					$ledgerName
+					$partyName,
+					$companyAddress,
+					$companyEmail
 				), 
 				$filePath, 
 				'public'
@@ -1703,7 +1704,11 @@ class LedgerMasterController extends Controller
 				throw new \Exception('Failed to store Excel file');
 			}
 
-			$fileUrl = asset('storage/' . $filePath);
+			// $fileUrl = asset('storage/' . $filePath);
+            if (!$disk->exists($filePath)) {
+				throw new \Exception('Excel file was not created in storage');
+			}
+            $fileUrl = route('api.ledger.export.download', ['filename' => $filename]);
 
 			$message = empty($processedData['processedRows']) ? 
 				'Excel file generated successfully (No data found for the selected period)' : 
@@ -1756,7 +1761,10 @@ class LedgerMasterController extends Controller
 			if (!$exists) {
 				return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
 			}
-			$partyName = $user->name;
+			$profile = $user->profile ?? null;
+			$partyName = $user->name ?? '';
+			$companyAddress = $profile->address ?? '';
+			$companyEmail = $user->email ?? '';
 			// Use the SAME service as web
 			$resp = $svc->voucherHistory($partyguid, $ledgerId, $request->start_date, $request->end_date);
 			$data = data_get($resp, 'data', []);
@@ -1798,7 +1806,9 @@ class LedgerMasterController extends Controller
 				'totalDr' => $data['raw_total_dr'] ?? 0,
 				'totalCr' => $data['raw_total_cr'] ?? 0,
 				'partyName' => $partyName,
-				'ledgerName' => $ledgerName
+				'ledgerName' => $ledgerName,
+				'companyAddress' => $companyAddress,
+				'companyEmail' => $companyEmail
 			]);
 
 			$disk = Storage::disk('public');
@@ -1812,7 +1822,12 @@ class LedgerMasterController extends Controller
 
 			$disk->put($filePath, $pdf->output());
 
-			$fileUrl = asset('storage/' . $filePath);
+			// $fileUrl = asset('storage/' . $filePath);
+            if (!$disk->exists($filePath)) {
+				throw new \Exception('PDF file was not created in storage');
+			}
+
+			$fileUrl = route('api.ledger.export.download', ['filename' => $filename]);
 
 			return response()->json([
 				'success' => true,
