@@ -170,8 +170,8 @@ class DashboardController extends BaseApiController
                     $to = null;
 
                     if (preg_match('/^(\d{4})-(\d{4})$/', $yearLabel, $matches)) {
-                        $from = $matches[1] . '-04-01';
-                        $to = $matches[2] . '-03-31';
+                        $from = '01-04-' . $matches[1];
+                        $to =  '31-03-' . $matches[2];
                     }
 
                     return [
@@ -217,6 +217,10 @@ class DashboardController extends BaseApiController
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
             $partyId = (int) $user->id;
+            $bankSuspenseCount = DB::table('bank_transactions')
+                ->where('is_suspense', 1)
+                ->where('iPartyId', $partyId)
+                ->count();
 
             $plResponse = $this->reportsService->pandl($partyId, $from, $to);
             $plData = $plResponse['data'] ?? [];
@@ -276,6 +280,7 @@ class DashboardController extends BaseApiController
 
             return $this->success(__("response_message.dashboard.financial_summary"), [
                 'range' => ['from' => $from, 'to' => $to],
+                'bank_suspense_count' => (int) $bankSuspenseCount,
                 'profit_loss' => [
                     'items' => $profitLossItems,
                     'gross_amount' => round($gross, 2),
@@ -306,8 +311,8 @@ class DashboardController extends BaseApiController
             }
 
             $validator = Validator::make($request->all(), [
-                'from' => 'nullable|date_format:Y-m-d',
-                'to' => 'nullable|date_format:Y-m-d|after_or_equal:from',
+                'from' => 'nullable|date_format:d-m-Y',
+                'to' => 'nullable|date_format:d-m-Y|after_or_equal:from',
                 'fySel' => 'nullable|string',
             ]);
 
@@ -434,29 +439,29 @@ class DashboardController extends BaseApiController
             }
 
             $summary = [
-                // 'chart_types' => [
-                //     ['key' => '1', 'value' => "Sales & Purchase"],
-                //     ['key' => '2', 'value' => "Creditors & Debtors"],
-                //     ['key' => '3', 'value' => "Receipt & Payment"],
-                //     ['key' => '4', 'value' => "Cash & Bank balance"]
-                // ],
-                // 'metric_options' => [
-                //     ['key' => '', 'value' => "Select Metric", 'group' => 'All'],
-                //     ['key' => 'Sales Accounts', 'value' => "Sales", 'group' => 'Sales & Purchase'],
-                //     ['key' => 'Purchase Accounts', 'value' => "Purchase", 'group' => 'Sales & Purchase'],
-                //     ['key' => 'Sundry Debtors', 'value' => "Debtors", 'group' => 'Credit & Debit'],
-                //     ['key' => 'Sundry Creditors', 'value' => "Creditors", 'group' => 'Credit & Debit'],
-                //     ['key' => 'Rcpt', 'value' => "Receipts", 'group' => 'Receipt & Payment'],
-                //     ['key' => 'Pymt', 'value' => "Payments", 'group' => 'Receipt & Payment'],
-                //     ['key' => 'Cash-in-Hand', 'value' => "Cash", 'group' => 'Cash & Bank'],
-                //     ['key' => 'Bank Accounts', 'value' => "Bank Flow", 'group' => 'Cash & Bank']
-                // ],
-                // 'comparison_options' => [
-                //     ['key' => 'none', 'value' => "No Comparison"],
-                //     ['key' => 'prev-month', 'value' => "Compare with Previous Month"],
-                //     ['key' => 'prev-quarter', 'value' => "Compare with Previous Quarter"],
-                //     ['key' => 'prev-year', 'value' => "Compare with Previous Year"]
-                // ],
+                'chart_types' => [
+                    ['key' => '1', 'value' => "Sales & Purchase"],
+                    ['key' => '2', 'value' => "Creditors & Debtors"],
+                    ['key' => '3', 'value' => "Receipt & Payment"],
+                    ['key' => '4', 'value' => "Cash & Bank balance"]
+                ],
+                'metric_options' => [
+                    ['key' => '', 'value' => "Select Metric", 'group' => 'All'],
+                    ['key' => 'Sales Accounts', 'value' => "Sales", 'group' => 'Sales & Purchase'],
+                    ['key' => 'Purchase Accounts', 'value' => "Purchase", 'group' => 'Sales & Purchase'],
+                    ['key' => 'Sundry Debtors', 'value' => "Debtors", 'group' => 'Credit & Debit'],
+                    ['key' => 'Sundry Creditors', 'value' => "Creditors", 'group' => 'Credit & Debit'],
+                    ['key' => 'Rcpt', 'value' => "Receipts", 'group' => 'Receipt & Payment'],
+                    ['key' => 'Pymt', 'value' => "Payments", 'group' => 'Receipt & Payment'],
+                    ['key' => 'Cash-in-Hand', 'value' => "Cash", 'group' => 'Cash & Bank'],
+                    ['key' => 'Bank Accounts', 'value' => "Bank Flow", 'group' => 'Cash & Bank']
+                ],
+                'comparison_options' => [
+                    ['key' => 'none', 'value' => "No Comparison"],
+                    ['key' => 'prev-month', 'value' => "Compare with Previous Month"],
+                    ['key' => 'prev-quarter', 'value' => "Compare with Previous Quarter"],
+                    ['key' => 'prev-year', 'value' => "Compare with Previous Year"]
+                ],
                 'Bargraph' => [
                     ['key' => 'sales', 'value' => "Sales"],
                     ['key' => 'purchase', 'value' => "Purchase"],
@@ -629,6 +634,50 @@ class DashboardController extends BaseApiController
 		}
 	}
 
+    // public function getGroupBalances(Request $request)
+    // {
+    //     try {
+    //         $user = auth()->user();
+
+    //         if ($user->role != User::ROLES['client']) {
+    //             return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
+    //         }
+
+    //         $validator = Validator::make($request->all(), [
+    //             'from' => 'nullable|date_format:Y-m-d',
+    //             'to' => 'nullable|date_format:Y-m-d|after_or_equal:from'
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
+    //         }
+
+    //         $userId = (int) $user->id;
+    //         $from = $request->input('from');
+    //         $to = $request->input('to');
+
+    //         // $groupsWithBalances = $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
+    //         $groupsWithBalances = Cache::remember("api_dashboard:{$userId}:group_balances:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($userId, $from, $to) {
+    //             return $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
+    //         });
+
+    //         $groups = collect($groupsWithBalances)->map(function ($group) {
+    //             return [
+    //                 'iGroupId' => (int)$group->iGroupId,
+    //                 'strGroupName' => $group->strGroupName,
+    //                 'Closing' => (float)($group->Closing ?? 0),
+    //                 'Opening' => (float)($group->Opening ?? 0),
+    //                 'accent' => $this->getAccentColor($group->strGroupName),
+    //                 'icon' => $this->getGroupIcon($group->strGroupName)
+    //             ];
+    //         })->values()->toArray();
+
+    //         return $this->success(__("response_message.dashboard.groups_loaded"), $groups);
+    //     } catch (\Exception $e) {
+    //         return $this->error(__("response_message.dashboard.groups_error"), 500, $e->getMessage());
+    //     }
+    // }
+
     public function getGroupBalances(Request $request)
     {
         try {
@@ -639,8 +688,8 @@ class DashboardController extends BaseApiController
             }
 
             $validator = Validator::make($request->all(), [
-                'from' => 'nullable|date_format:Y-m-d',
-                'to' => 'nullable|date_format:Y-m-d|after_or_equal:from'
+                'from' => 'nullable|date_format:d-m-Y',
+                'to' => 'nullable|date_format:d-m-Y|after_or_equal:from'
             ]);
 
             if ($validator->fails()) {
@@ -788,7 +837,6 @@ class DashboardController extends BaseApiController
         $hash = crc32($groupName);
         return $defaultColors[$hash % count($defaultColors)];
     }
-
 
     protected function getGroupIcon($groupName)
     {
