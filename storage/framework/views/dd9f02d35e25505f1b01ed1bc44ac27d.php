@@ -108,7 +108,7 @@
         <form id="purchaseForm">
             <?php echo csrf_field(); ?>
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
-                <table id="salesTable" class="sales-preview-table min-w-[1120px] xl:min-w-0 w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
+                <table id="purchaseTable" class="purchase-preview-table min-w-[1120px] xl:min-w-0 w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
                     <colgroup>
                         <col class="col-select">
                         <col class="col-sr">
