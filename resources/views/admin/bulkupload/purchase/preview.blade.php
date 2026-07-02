@@ -1017,6 +1017,18 @@ function ensureSelectOption(selector, value, label = value) {
     }
 }
 
+function showPurchasePreviewLoader() {
+    if (typeof window.showGlobalLoader === 'function') {
+        window.showGlobalLoader();
+    }
+}
+
+function hidePurchasePreviewLoader() {
+    if (typeof window.hideGlobalLoader === 'function') {
+        window.hideGlobalLoader();
+    }
+}
+
 $(document).on('change', '#edit_party', function () {
     applyPartyLedgerDetails($(this).val());
 });
@@ -1036,6 +1048,22 @@ window.addEventListener('load', function () {
     });
 
     $(document).ready(function() {
+        let pendingPreviewAjaxRequests = 0;
+        $(document)
+            .ajaxSend(function() {
+                pendingPreviewAjaxRequests += 1;
+                showPurchasePreviewLoader();
+            })
+            .ajaxComplete(function() {
+                pendingPreviewAjaxRequests = Math.max(0, pendingPreviewAjaxRequests - 1);
+
+                if (pendingPreviewAjaxRequests === 0) {
+                    hidePurchasePreviewLoader();
+                }
+            });
+
+        window.addEventListener('beforeunload', showPurchasePreviewLoader);
+
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
@@ -1332,6 +1360,7 @@ window.addEventListener('load', function () {
     // ═══════════════════════════════════════════════════════════════════════
     $(document).on('click', '.viewRow', function () {
         let id = $(this).data('id');
+        showPurchasePreviewLoader();
         clearPendingIssueHighlights();
         // Open same edit modal
         openEditModal();
@@ -1600,6 +1629,7 @@ window.addEventListener('load', function () {
    // ═══════ EDIT MODAL ═══════
     $(document).on('click', '.editRow', function () {
         let btn = $(this), id = btn.data('id');
+        showPurchasePreviewLoader();
         clearPendingIssueHighlights();
         $('#updateRow').show();
         $('#addItemRow').show();

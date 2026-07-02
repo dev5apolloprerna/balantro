@@ -996,8 +996,37 @@
     $(document).on('change', '#edit_party', function () {
         applyPartyLedgerDetails($(this).val());
     });
+
+    function showPurchasePreviewLoader() {
+        if (typeof window.showGlobalLoader === 'function') {
+            window.showGlobalLoader();
+        }
+    }
+
+    function hidePurchasePreviewLoader() {
+        if (typeof window.hideGlobalLoader === 'function') {
+            window.hideGlobalLoader();
+        }
+    }
     
     $(document).ready(function() {
+        let pendingPreviewAjaxRequests = 0;
+
+        $(document)
+            .ajaxSend(function() {
+                pendingPreviewAjaxRequests += 1;
+                showPurchasePreviewLoader();
+            })
+            .ajaxComplete(function() {
+                pendingPreviewAjaxRequests = Math.max(0, pendingPreviewAjaxRequests - 1);
+
+                if (pendingPreviewAjaxRequests === 0) {
+                    hidePurchasePreviewLoader();
+                }
+            });
+
+        window.addEventListener('beforeunload', showPurchasePreviewLoader);
+
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
@@ -1384,7 +1413,7 @@
 
     $(document).on('click', '.viewRow', function () {
         let id = $(this).data('id');
-
+        showPurchasePreviewLoader();
         // Open same edit modal
         openEditModal();
 
@@ -1816,6 +1845,7 @@
     // ═══════════════════════════════════════════════════════════════════════
     $(document).on('click', '.editRow', function () {
         let btn = $(this), id = btn.data('id');
+        showPurchasePreviewLoader();
 
         // Show update button and hide view-specific buttons
         $('#updateRow').show();

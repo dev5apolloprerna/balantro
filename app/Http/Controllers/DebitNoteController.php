@@ -1796,6 +1796,178 @@ class DebitNoteController extends Controller
         ]);
     }
 
+    private function getDebitNotePendingIssues(DebitNoteTransaction $transaction, ?array $gstMapping = null): array
+    {
+        if (!in_array(strtolower((string) $transaction->status), ['pending'], true)) {
+            return [];
+        }
+
+        $issues = [];
+        $partyId = $transaction->iPartyId;
+        $purchaseLedgerName = $transaction->purchase_ledger_name ?: $transaction->purchase_ledger;
+        $purchaseLedger = $purchaseLedgerName ? Ledger::getLedgerByName($partyId, $purchaseLedgerName) : null;
+        $gstMapping = $gstMapping ?: $this->getGstMapping($partyId, $purchaseLedger?->name ?? $purchaseLedgerName);
+        $partyLedgerDetails = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
+
+        if (!$this->hasAcceptedDebitPartyLedger($partyLedgerDetails, $transaction->gst_no)) {
+            $issues[] = [
+                'field' => 'party_name',
+                'message' => 'Party name/GSTIN does not match any creditor ledger.',
+            ];
+        }
+
+        if (empty($purchaseLedger)) {
+            $issues[] = [
+                'field' => 'purchase_ledger',
+                'message' => 'Purchase ledger is missing or not matched with ledger master.',
+            ];
+        }
+
+        $noteDate = $transaction->note_date instanceof \DateTimeInterface
+            ? $transaction->note_date->format('Y-m-d')
+            : $transaction->note_date;
+
+        if ($noteDate && session('year_from') && session('year_to') && ($noteDate < session('year_from') || $noteDate > session('year_to'))) {
+            $issues[] = [
+                'field' => 'date',
+                'message' => 'Debit note date is outside the selected financial year.',
+            ];
+        }
+
+        if (!$this->allGstRatesAreApplicable($this->debitNoteTransactionGstRates($transaction))) {
+            $issues[] = [
+                'field' => 'gst_rate',
+                'message' => 'GST rate is not one of the allowed GST slabs.',
+            ];
+        }
+
+        if ($this->voucherCombinationExists('debit_note_transactions', [
+            'iPartyId' => $partyId,
+            'voucher_column' => 'vch_type',
+            'voucher_value' => $transaction->vch_type,
+            'number_column' => 'note_no',
+            'number_value' => $transaction->note_no,
+            'party_column' => 'party_name',
+            'party_value' => $transaction->party_name,
+            'date_column' => 'note_date',
+            'date_value' => $transaction->note_date,
+            'year_column' => 'strYear',
+            'year_value' => $transaction->strYear ?? session('year'),
+        ], $transaction->id)) {
+            $issues[] = [
+                'field' => 'invoice_no',
+                'message' => 'Debit note number already exists for this voucher type and financial year.',
+            ];
+        }
+
+        if (!$this->debitNoteHasRequiredGstLedgers($transaction, $gstMapping)) {
+            $issues[] = [
+                'field' => 'gst_ledger',
+                'message' => 'Required GST ledger mapping is missing for the GST amount.',
+            ];
+        }
+
+        if (!$this->debitNoteAmountMatchesTotal($transaction)) {
+            $issues[] = [
+                'field' => 'amount',
+                'message' => 'Total amount does not match taxable amount plus GST.',
+            ];
+        }
+
+        return $issues;
+    }
+
+    private function hasAcceptedDebitPartyLedger(?array $partyLedgerDetails, ?string $gstNo): bool
+    {
+        if (empty($partyLedgerDetails)) {
+            return false;
+        }
+
+        $uploadedGst = $this->normalizeGstNo($gstNo);
+        if ($uploadedGst === '') {
+            return true;
+        }
+
+        return $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null) === $uploadedGst;
+    }
+
+    private function debitNoteTransactionGstRates(DebitNoteTransaction $transaction): array
+    {
+        $rates = [];
+
+        foreach ($transaction->items as $item) {
+            $rates[] = $item->gst_rate;
+        }
+
+        foreach ($transaction->customGst as $slot) {
+            $rates[] = $slot->gst_rate;
+        }
+
+        if (empty(array_filter($rates, fn ($rate) => $rate !== null && $rate !== ''))) {
+            $rates[] = $transaction->gst_rate;
+        }
+
+        return $rates;
+    }
+
+    private function debitNoteHasRequiredGstLedgers(DebitNoteTransaction $transaction, array $gstMapping): bool
+    {
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            $slots = $transaction->customGst->map(fn ($slot) => [
+                'igst_amount' => (float) $slot->igst_amount,
+                'igst_ledger_id' => $slot->igst_ledger_id ?: ($gstMapping['igst_id'] ?? null),
+                'cgst_amount' => (float) $slot->cgst_amount,
+                'cgst_ledger_id' => $slot->cgst_ledger_id ?: ($gstMapping['cgst_id'] ?? null),
+                'sgst_amount' => (float) $slot->sgst_amount,
+                'sgst_ledger_id' => $slot->sgst_ledger_id ?: ($gstMapping['sgst_id'] ?? null),
+            ])->all();
+
+            return $this->hasRequiredGstLedgers($slots, (bool) $transaction->is_igst);
+        }
+
+        if ($transaction->items->isNotEmpty()) {
+            foreach ($transaction->items as $item) {
+                $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
+                if (!$this->hasRequiredGstLedgers([[
+                    'igst_amount' => (float) $item->igst,
+                    'igst_ledger_id' => $itemMapping['igst_id'] ?? null,
+                    'cgst_amount' => (float) $item->cgst,
+                    'cgst_ledger_id' => $itemMapping['cgst_id'] ?? null,
+                    'sgst_amount' => (float) $item->sgst,
+                    'sgst_ledger_id' => $itemMapping['sgst_id'] ?? null,
+                ]], (float) $item->igst > 0)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $this->hasRequiredGstLedgers([[
+            'igst_amount' => (float) $transaction->igst,
+            'igst_ledger_id' => $transaction->igst_id ?: ($gstMapping['igst_id'] ?? null),
+            'cgst_amount' => (float) $transaction->cgst,
+            'cgst_ledger_id' => $transaction->cgst_id ?: ($gstMapping['cgst_id'] ?? null),
+            'sgst_amount' => (float) $transaction->sgst,
+            'sgst_ledger_id' => $transaction->sgst_id ?: ($gstMapping['sgst_id'] ?? null),
+        ]], (float) $transaction->igst > 0 || (bool) $transaction->is_igst);
+    }
+
+    private function debitNoteAmountMatchesTotal(DebitNoteTransaction $transaction): bool
+    {
+        if ($transaction->total_amount === null || $transaction->total_amount === '') {
+            return true;
+        }
+
+        $calculated = round((float) $transaction->taxable_amount + (float) $transaction->sgst + (float) $transaction->cgst + (float) $transaction->igst, 2);
+        $submitted = round((float) $transaction->total_amount, 2);
+
+        return $this->valuesMatch($calculated, $submitted)
+            || $this->valuesMatch(round($calculated), $submitted)
+            || $this->valuesMatch(ceil($calculated), $submitted)
+            || $this->valuesMatch(floor($calculated), $submitted);
+    }
+
     public function show($id)
     {
         $transaction = DebitNoteTransaction::with(['items', 'customGst'])->findOrFail($id);
@@ -1865,7 +2037,8 @@ class DebitNoteController extends Controller
             'roundoff_id'     => $transaction->roundoff_id,
             'roundoff_ledger_name' => $transaction->roundoff_ledger_name,
             'status'          => $transaction->status,
-
+            'pending_issues' => $this->getDebitNotePendingIssues($transaction, $gstMapping),
+            
             // ✅ GST
             'gst_mode' => $transaction->gst_mode ?? 'standard',
             'is_igst'  => $transaction->is_igst ?? 0,

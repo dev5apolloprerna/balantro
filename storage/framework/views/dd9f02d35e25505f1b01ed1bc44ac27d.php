@@ -1042,6 +1042,35 @@ window.addEventListener('load', function () {
     });
 
     $(document).ready(function() {
+        let pendingPreviewAjaxRequests = 0;
+
+        const showPreviewLoader = () => {
+            if (typeof window.showGlobalLoader === 'function') {
+                window.showGlobalLoader();
+            }
+        };
+
+        const hidePreviewLoader = () => {
+            if (typeof window.hideGlobalLoader === 'function') {
+                window.hideGlobalLoader();
+            }
+        };
+
+        $(document)
+            .ajaxSend(function() {
+                pendingPreviewAjaxRequests += 1;
+                showPreviewLoader();
+            })
+            .ajaxComplete(function() {
+                pendingPreviewAjaxRequests = Math.max(0, pendingPreviewAjaxRequests - 1);
+
+                if (pendingPreviewAjaxRequests === 0) {
+                    hidePreviewLoader();
+                }
+            });
+
+        window.addEventListener('beforeunload', showPreviewLoader);
+
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });

@@ -2089,6 +2089,139 @@ class CreditNoteController extends Controller
         ]);
     }
     
+    private function getCreditNotePendingIssues(CreditNoteTransaction $transaction, ?array $gstMapping = null): array
+    {
+        if (strtolower((string) $transaction->status) !== 'pending') {
+            return [];
+        }
+
+        $issues = [];
+        $partyId = $transaction->iPartyId;
+        $salesLedgerName = $transaction->sales_ledger_name ?: $transaction->sales_ledger;
+        $salesLedger = $salesLedgerName ? Ledger::getLedgerByName($partyId, $salesLedgerName) : null;
+        $gstMapping = $gstMapping ?: $this->getGstMapping($partyId, $salesLedger?->name ?? $salesLedgerName);
+        $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($partyId, [
+            'gst_no' => $transaction->gst_no,
+            'party_name' => $transaction->party_name,
+        ]);
+
+        if (!$this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $transaction->gst_no)) {
+            $issues[] = [
+                'field' => 'party_name',
+                'message' => 'Party name/GSTIN does not match any creditor ledger.',
+            ];
+        }
+
+        if (empty($salesLedger)) {
+            $issues[] = [
+                'field' => 'sales_ledger',
+                'message' => 'Sales ledger is missing or not matched with ledger master.',
+            ];
+        }
+
+        $noteDate = $transaction->note_date instanceof \DateTimeInterface
+            ? $transaction->note_date->format('Y-m-d')
+            : $transaction->note_date;
+
+        if ($noteDate && session('year_from') && session('year_to') && ($noteDate < session('year_from') || $noteDate > session('year_to'))) {
+            $issues[] = [
+                'field' => 'date',
+                'message' => 'Credit note date is outside the selected financial year.',
+            ];
+        }
+
+        if (!$this->hasOnlyValidGstSlabs($this->creditNoteTransactionGstRates($transaction))) {
+            $issues[] = [
+                'field' => 'gst_rate',
+                'message' => 'GST rate is not one of the allowed GST slabs.',
+            ];
+        }
+
+        if ($this->creditNoteVoucherExists($partyId, $transaction->vch_type, $transaction->note_no, $transaction->strYear ?? session('year'), $transaction->id)) {
+            $issues[] = [
+                'field' => 'invoice_no',
+                'message' => 'Credit note number already exists for this voucher type and financial year.',
+            ];
+        }
+
+        if (!$this->creditNoteHasRequiredGstLedgers($transaction, $gstMapping)) {
+            $issues[] = [
+                'field' => 'gst_ledger',
+                'message' => 'Required GST ledger mapping is missing for the GST amount.',
+            ];
+        }
+
+        if (!$this->amountsMatchCalculatedTotal((float) $transaction->taxable_amount, (float) $transaction->sgst, (float) $transaction->cgst, (float) $transaction->igst, $transaction->total_amount)) {
+            $issues[] = [
+                'field' => 'amount',
+                'message' => 'Total amount does not match taxable amount plus GST.',
+            ];
+        }
+
+        return $issues;
+    }
+
+    private function creditNoteTransactionGstRates(CreditNoteTransaction $transaction): array
+    {
+        $rates = [];
+
+        foreach ($transaction->items as $item) {
+            $rates[] = $item->gst_rate;
+        }
+
+        foreach ($transaction->customGst as $slot) {
+            $rates[] = $slot->gst_rate;
+        }
+
+        if (empty(array_filter($rates, fn ($rate) => $rate !== null && $rate !== ''))) {
+            $rates[] = $transaction->gst_rate;
+        }
+
+        return $rates;
+    }
+
+    private function creditNoteHasRequiredGstLedgers(CreditNoteTransaction $transaction, array $gstMapping): bool
+    {
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            $slots = $transaction->customGst->map(fn ($slot) => [
+                'igst_amount' => (float) $slot->igst_amount,
+                'igst_ledger_id' => $slot->igst_ledger_id ?: ($gstMapping['igst_id'] ?? null),
+                'cgst_amount' => (float) $slot->cgst_amount,
+                'cgst_ledger_id' => $slot->cgst_ledger_id ?: ($gstMapping['cgst_id'] ?? null),
+                'sgst_amount' => (float) $slot->sgst_amount,
+                'sgst_ledger_id' => $slot->sgst_ledger_id ?: ($gstMapping['sgst_id'] ?? null),
+            ])->all();
+
+            return $this->hasRequiredGstLedgers($slots, (bool) $transaction->is_igst);
+        }
+
+        if ($transaction->items->isNotEmpty()) {
+            foreach ($transaction->items as $item) {
+                $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item->item_name);
+                if (!$this->hasRequiredGstLedgers([[
+                    'igst_amount' => (float) $item->igst,
+                    'igst_ledger_id' => $itemMapping['igst_id'] ?? null,
+                    'cgst_amount' => (float) $item->cgst,
+                    'cgst_ledger_id' => $itemMapping['cgst_id'] ?? null,
+                    'sgst_amount' => (float) $item->sgst,
+                    'sgst_ledger_id' => $itemMapping['sgst_id'] ?? null,
+                ]], (float) $item->igst > 0)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $this->hasRequiredGstLedgers([[
+            'igst_amount' => (float) $transaction->igst,
+            'igst_ledger_id' => $transaction->igst_id ?: ($gstMapping['igst_id'] ?? null),
+            'cgst_amount' => (float) $transaction->cgst,
+            'cgst_ledger_id' => $transaction->cgst_id ?: ($gstMapping['cgst_id'] ?? null),
+            'sgst_amount' => (float) $transaction->sgst,
+            'sgst_ledger_id' => $transaction->sgst_id ?: ($gstMapping['sgst_id'] ?? null),
+        ]], (float) $transaction->igst > 0 || (bool) $transaction->is_igst);
+    }
 
     public function show($id)
     {
@@ -2171,6 +2304,7 @@ class CreditNoteController extends Controller
             'pincode'    => $transaction->pincode,
             'city'  => $transaction->city,
             'status'          => $transaction->status,
+            'pending_issues' => $this->getCreditNotePendingIssues($transaction, $gstMapping),
             'gst_rate' => $transaction->gst_rate,
             'against_invoice' => $transaction->against_invoice,
             'noitem_rows' => $noItemRows,
