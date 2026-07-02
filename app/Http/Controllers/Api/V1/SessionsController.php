@@ -38,7 +38,7 @@ class SessionsController extends Controller
             ], 401);
         }
         $user = auth('api')->user();
-        if ($user->type == "Client") {
+        if ($user->type != "Client") {
             Cache::flush();
             auth('api')->logout();
 

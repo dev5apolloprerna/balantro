@@ -1463,7 +1463,14 @@ window.addEventListener('load', function () {
     function openViewModal()  { document.getElementById('viewModal').classList.add('show'); }
     function closeViewModal() { document.getElementById('viewModal').classList.remove('show'); }
 
-    function clearPendingIssueHighlights() {
+    let currentPurchasePendingIssues = [];
+    let currentPurchasePendingStatus = '';
+
+    function clearPendingIssueHighlights(clearStoredIssues = true) {
+        if (clearStoredIssues) {
+            currentPurchasePendingIssues = [];
+            currentPurchasePendingStatus = '';
+        }
         $('#pendingIssueAlert').hide();
         $('#pendingIssueList').empty();
         $('#editModal .pending-field-error').removeClass('pending-field-error');
@@ -1486,10 +1493,12 @@ window.addEventListener('load', function () {
     }
 
     function applyPendingIssueHighlights(issues, status = '') {
-        clearPendingIssueHighlights();
-
         const normalizedStatus = String(status || '').trim().toLowerCase();
         const issueList = Array.isArray(issues) ? issues : [];
+
+        currentPurchasePendingIssues = issueList;
+        currentPurchasePendingStatus = normalizedStatus;
+        clearPendingIssueHighlights(false);
 
         if (!issueList.length) {
             if (normalizedStatus === 'pending') {
@@ -1509,8 +1518,44 @@ window.addEventListener('load', function () {
                 field.addClass('pending-field-error');
                 field.closest('tr').addClass('pending-field-error-row');
             });
+
+            if (issue.field === 'gst_ledger') {
+                highlightMissingPurchaseGstLedgerInputs();
+            }
         });
     }
+
+    function highlightMissingPurchaseGstLedgerInputs() {
+        $('#customSlotsBody tr').each(function () {
+            const row = $(this);
+            const igstAmount = parseFloat(row.find('.slot-igst-amt').val()) || 0;
+            const cgstAmount = parseFloat(row.find('.slot-cgst-amt').val()) || 0;
+            const sgstAmount = parseFloat(row.find('.slot-sgst-amt').val()) || 0;
+
+            [
+                { amount: igstAmount, selector: '.slot-igst-ledger' },
+                { amount: cgstAmount, selector: '.slot-cgst-ledger' },
+                { amount: sgstAmount, selector: '.slot-sgst-ledger' }
+            ].forEach(({ amount, selector }) => {
+                const ledger = row.find(selector);
+                if (amount > 0 && !ledger.val()) {
+                    ledger.addClass('pending-field-error');
+                    row.addClass('pending-field-error-row');
+                }
+            });
+        });
+
+        if ((parseFloat($('#sum_igst').text()) || parseFloat($('#edit_igst').val()) || 0) > 0 && !$('#igst_ledger').val()) {
+            $('#igst_ledger').addClass('pending-field-error');
+        }
+        if ((parseFloat($('#sum_cgst').text()) || parseFloat($('#edit_cgst').val()) || 0) > 0 && !$('#cgst_ledger').val()) {
+            $('#cgst_ledger').addClass('pending-field-error');
+        }
+        if ((parseFloat($('#sum_sgst').text()) || parseFloat($('#edit_sgst').val()) || 0) > 0 && !$('#sgst_ledger').val()) {
+            $('#sgst_ledger').addClass('pending-field-error');
+        }
+    }
+
 
     function renderCustomSlotsFromPurchaseItems(items, isIGST) {
         let rateMap = {};
@@ -1747,6 +1792,7 @@ window.addEventListener('load', function () {
                         }
 
                         recalcTotals();
+                        applyPendingIssueHighlights(currentPurchasePendingIssues, currentPurchasePendingStatus);
 
                     }, 200);
                 //}    
@@ -2632,6 +2678,9 @@ window.addEventListener('load', function () {
         });
 
         $('#customSlotsBody').html(slotHtml);
+        if (currentPurchasePendingIssues.length || currentPurchasePendingStatus === 'pending') {
+            applyPendingIssueHighlights(currentPurchasePendingIssues, currentPurchasePendingStatus);
+        }
 
         // Render custom mode summary
         let customSummaryHtml = `
