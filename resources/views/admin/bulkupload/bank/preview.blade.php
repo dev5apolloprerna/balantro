@@ -173,7 +173,8 @@
                         
                         <tr data-cheque="{{ $row->cheque_no }}"
                             data-ref="{{ $row->ref_no }}"
-                            data-cost="{{ $row->cost_center }}" class="group border-b border-gray-200 dark:border-neutral-700 transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black {{ $row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : '' }}">
+                            data-cost="{{ $row->cost_center }}"
+                            data-pending-issues='@json($row->pending_issues ?? [])'  class="group border-b border-gray-200 dark:border-neutral-700 transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black {{ $row->is_suspense == 1 ? 'opacity-50 pointer-events-none' : '' }}">
                             <td class="px-3 py-2">
                                 <input type="checkbox"
                                     name="selected[]"
@@ -904,6 +905,15 @@
     .animate-fadeIn {
         animation: fadeIn 0.2s ease-in-out;
     }
+
+    .pending-issue-alert { margin:0 0 12px; padding:8px 10px; border:1px solid #fca5a5; border-left:4px solid #dc2626; border-radius:6px; background:#fef2f2; color:#991b1b; font-size:12px; }
+    .pending-issue-title { font-weight:700; margin-bottom:4px; }
+    .pending-issue-list { margin:0; padding-left:18px; }
+    #editModal .pending-field-error,
+    #editModal .pending-field-error + .select2 .select2-selection { border-color:#ef4444!important; background:#fff7f7!important; box-shadow:0 0 0 2px rgba(239,68,68,.12)!important; }
+    #bankTable .pending-field-error,
+    #bankTable .pending-field-error + .select2 .select2-selection { border-color:#f87171!important; background:#fffafa!important; box-shadow:inset 0 0 0 1px rgba(248,113,113,.35)!important; }
+    #bankTable tr.pending-field-error-row { background:#fff7f7; }
 </style>
 @endsection
 @section('scripts')
@@ -955,7 +965,7 @@
     });
 
     $(document).ready(function() {
-
+        applyBankPendingIssuesToRows();
         if (!$.fn.select2) {
             console.error('Select2 not loaded');
             return;
@@ -1287,6 +1297,60 @@
         });
     });
 
+    function bankPendingIssueTargets(field, context) {
+        const selectors = {
+            ledger: ['#edit_ledger', 'select[name^="ledger"]'],
+            type: ['#edit_type', 'select[name^="type"]'],
+            date: ['#edit_txn_date', 'input[name^="txn_date"]'],
+            amount: ['#edit_amount'],
+        };
+
+        return (selectors[field] || []).map(selector => context.find(selector)).filter(field => field.length);
+    }
+
+    function clearPendingIssueHighlights(context = $(document)) {
+        $('#pendingIssueAlert').hide();
+        $('#pendingIssueList').empty();
+        context.find('.pending-field-error').removeClass('pending-field-error');
+        context.find('.pending-field-error-row').removeClass('pending-field-error-row');
+    }
+
+    function applyPendingIssueHighlights(issues, context = $('#editModal')) {
+        clearPendingIssueHighlights(context);
+        const issueList = Array.isArray(issues) ? issues : [];
+
+        if (!issueList.length) {
+            return;
+        }
+
+        const list = issueList.map(issue => `<li>${$('<div>').text(issue.message || 'Please review this field.').html()}</li>`).join('');
+        $('#pendingIssueList').html(list);
+        $('#pendingIssueAlert').show();
+
+        issueList.forEach(issue => {
+            bankPendingIssueTargets(issue.field, context).forEach(field => {
+                field.addClass('pending-field-error');
+                field.closest('tr').addClass('pending-field-error-row');
+            });
+        });
+    }
+
+    function applyBankPendingIssuesToRows() {
+        $('#bankTable tbody tr').each(function() {
+            const row = $(this);
+            const issues = row.data('pendingIssues') || [];
+            if (!Array.isArray(issues) || !issues.length) {
+                return;
+            }
+            issues.forEach(issue => {
+                bankPendingIssueTargets(issue.field, row).forEach(field => {
+                    field.addClass('pending-field-error');
+                    row.addClass('pending-field-error-row');
+                });
+            });
+        });
+    }
+
     $('#saveBtn').click(function() {
         let missingLedgerRows = [];
 
@@ -1448,9 +1512,12 @@
 
     $('#closeModal').click(function() {
         $('#editModal').addClass('hidden');
+        clearPendingIssueHighlights($('#editModal'));
     });
 
     $('.editBtn').click(function() {
+        const row = $(this).closest('tr');
+        const issues = row.data('pendingIssues') || [];
         $('#edit_id').val($(this).data('id'));
         $('#edit_txn_date').val($(this).data('txn'));
         $('#edit_value_date').val($(this).data('value'));
@@ -1467,6 +1534,7 @@
             $('#edit_amount').val(credit);
         }
         $('#editModal').removeClass('hidden').addClass('flex');
+        applyPendingIssueHighlights(issues);
     });
 
     $(document).on('select2:open', function() {

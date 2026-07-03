@@ -45,7 +45,9 @@ class BankUploadController extends Controller
         if ($this->bankTransactionsHaveYearColumn()) {
             $query->where('strYear', $year);
         }
-
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
         if ($query->exists()) {
             return true;
         }
@@ -62,6 +64,80 @@ class BankUploadController extends Controller
             ->where('strVchDate', $this->historyDate($txnDate))
             ->where('iYearId', $yearId)
             ->exists();
+    }
+
+    private function getBankPendingIssues(BankTransaction $transaction): array
+    {
+        if (!in_array(strtolower((string) $transaction->status), ['pending', 'suspense'], true)) {
+            return [];
+        }
+
+        $issues = [];
+        $ledgerName = trim((string) $transaction->ledger_name);
+        $voucherType = trim((string) $transaction->vch_type);
+        $txnDate = $transaction->txn_date instanceof \DateTimeInterface
+            ? $transaction->txn_date->format('Y-m-d')
+            : $transaction->txn_date;
+        $amount = max((float) $transaction->debit, (float) $transaction->credit);
+
+        if ($ledgerName === '') {
+            $issues[] = [
+                'field' => 'ledger',
+                'message' => 'Ledger is missing for this bank transaction.',
+            ];
+        }
+
+        if ($voucherType === '') {
+            $issues[] = [
+                'field' => 'type',
+                'message' => 'Voucher type is missing.',
+            ];
+        }
+
+        if (!$txnDate) {
+            $issues[] = [
+                'field' => 'date',
+                'message' => 'Transaction date is missing.',
+            ];
+        } elseif (session('year_from') && session('year_to') && ($txnDate < session('year_from') || $txnDate > session('year_to'))) {
+            $issues[] = [
+                'field' => 'date',
+                'message' => 'Transaction date is outside the selected financial year.',
+            ];
+        }
+
+        if ($amount <= 0) {
+            $issues[] = [
+                'field' => 'amount',
+                'message' => 'Amount must be greater than zero.',
+            ];
+        }
+
+        if ($ledgerName !== '' && $voucherType !== '' && $txnDate && $this->bankVoucherCombinationExists($voucherType, $ledgerName, $txnDate, $transaction->id)) {
+            $issues[] = [
+                'field' => 'ledger',
+                'message' => 'Duplicate bank voucher combination already exists for this date, type, and ledger.',
+            ];
+        }
+
+        if ((int) $transaction->is_suspense === 1 || strtolower((string) $transaction->status) === 'suspense') {
+            $issues[] = [
+                'field' => 'ledger',
+                'message' => 'This bank transaction is marked as suspense and needs resolution.',
+            ];
+        }
+
+        return $issues;
+    }
+
+    private function attachBankPendingIssues($rows)
+    {
+        $rows->getCollection()->transform(function ($row) {
+            $row->pending_issues = $this->getBankPendingIssues($row);
+            return $row;
+        });
+
+        return $rows;
     }
 
     public function index()
@@ -458,6 +534,7 @@ class BankUploadController extends Controller
             ->whereIn('status', ['pending','suspense'])
             ->where('iPartyId', $iPartyId)
             ->paginate(50);
+        $rows = $this->attachBankPendingIssues($rows);
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
             ->whereIn('vchType', ['Contra', 'Payment', 'Receipt'])

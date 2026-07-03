@@ -1,6 +1,12 @@
 <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
     <div class="bg-neutral-900 w-[520px] rounded-lg shadow-lg p-6">
         <h2 class="text-lg text-white mb-4">Edit Transaction</h2>
+        <div id="pendingIssueAlert" class="pending-issue-alert" style="display:none;">
+            <div class="pending-issue-title">
+                <i class="fa-solid fa-triangle-exclamation"></i> This bank transaction is still pending
+            </div>
+            <ul id="pendingIssueList" class="pending-issue-list"></ul>
+        </div>
         <form id="editForm">
             
             @csrf

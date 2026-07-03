@@ -173,6 +173,7 @@ class JournalController extends Controller
             'total_debit' => $txn->total_debit,
             'total_credit' => $txn->total_credit,
             'status' => $txn->status,
+            'pending_issues' => $this->getJournalPendingIssues($txn),
             //'items' => $txn->items->map(function ($item) {
             'items' => $txn->items->map(function ($item) use ($txn) {
                 $ledgerId = $item->ledger_id;
@@ -192,6 +193,87 @@ class JournalController extends Controller
                 ];
             })
         ]);
+    }
+
+    private function getJournalPendingIssues(JournalTransaction $transaction): array
+    {
+        if (strtolower((string) $transaction->status) !== 'pending') {
+            return [];
+        }
+
+        $transaction->loadMissing('items');
+        $issues = [];
+        $date = $transaction->date instanceof \DateTimeInterface
+            ? $transaction->date->format('Y-m-d')
+            : $transaction->date;
+
+        if (blank($transaction->journal_no)) {
+            $issues[] = [
+                'field' => 'journal_no',
+                'message' => 'Journal number is required.',
+            ];
+        }
+
+        if (!$date || (session('year_from') && session('year_to') && ($date < session('year_from') || $date > session('year_to')))) {
+            $issues[] = [
+                'field' => 'date',
+                'message' => 'Journal date is outside the selected financial year.',
+            ];
+        }
+
+        if ($transaction->items->isEmpty()) {
+            $issues[] = [
+                'field' => 'ledger',
+                'message' => 'At least one journal ledger row is required.',
+            ];
+        }
+
+        $hasLedgerIssue = false;
+        $hasAmountIssue = false;
+        $totalDebit = 0;
+        $totalCredit = 0;
+
+        foreach ($transaction->items as $item) {
+            $debit = (float) ($item->debit ?? 0);
+            $credit = (float) ($item->credit ?? 0);
+            $totalDebit += $debit;
+            $totalCredit += $credit;
+
+            $ledger = $item->ledger_id
+                ? Ledger::getLedgerById($transaction->iPartyId, $item->ledger_id)
+                : ($item->ledger_name ? Ledger::getLedgerByName($transaction->iPartyId, $item->ledger_name) : null);
+
+            if (!$ledger) {
+                $hasLedgerIssue = true;
+            }
+
+            if (($debit <= 0 && $credit <= 0) || ($debit > 0 && $credit > 0)) {
+                $hasAmountIssue = true;
+            }
+        }
+
+        if ($hasLedgerIssue) {
+            $issues[] = [
+                'field' => 'ledger',
+                'message' => 'One or more journal ledgers are missing or not matched with ledger master.',
+            ];
+        }
+
+        if ($hasAmountIssue) {
+            $issues[] = [
+                'field' => 'amount',
+                'message' => 'Each journal row must have either debit or credit amount.',
+            ];
+        }
+
+        if (abs($totalDebit - $totalCredit) > 0.01) {
+            $issues[] = [
+                'field' => 'amount',
+                'message' => 'Total debit and total credit must be equal.',
+            ];
+        }
+
+        return $issues;
     }
 
     // ─────────────────────────────────────────────

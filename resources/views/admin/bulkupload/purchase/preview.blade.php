@@ -858,8 +858,14 @@
     .pending-issue-alert { margin:0 8px 8px; padding:8px 10px; border:1px solid #fca5a5; border-left:4px solid #dc2626; border-radius:6px; background:#fef2f2; color:#991b1b; font-size:12px; }
     .pending-issue-title { font-weight:700; margin-bottom:4px; }
     .pending-issue-list { margin:0; padding-left:18px; }
-    #editModal .pending-field-error, #editModal .pending-field-error + .select2 .select2-selection, #editModal .pending-field-error.select2-hidden-accessible + .select2 .select2-selection { border-color:#dc2626!important; background:#fff1f2!important; box-shadow:0 0 0 1px rgba(220,38,38,.35)!important; }
-    #editModal .pending-field-error-row { outline:2px solid #dc2626; outline-offset:-2px; background:#fff1f2; }
+    #editModal .pending-field-error,
+    #editModal .pending-field-error + .select2 .select2-selection,
+    #editModal .pending-field-error.select2-hidden-accessible + .select2 .select2-selection { border-color:#ef4444!important; background:#fff7f7!important; box-shadow:0 0 0 2px rgba(239,68,68,.12)!important; }
+    #editModal .receipt-table .pending-field-error,
+    #editModal .receipt-table .pending-field-error + .select2 .select2-selection,
+    #editModal .receipt-table .pending-field-error.select2-hidden-accessible + .select2 .select2-selection,
+    #editModal .custom-slots-table .pending-field-error { border-color:#f87171!important; background:#fffafa!important; box-shadow:inset 0 0 0 1px rgba(248,113,113,.35)!important; }
+    #editModal .pending-field-error-row { background:#fff7f7; }
     .receipt-head { display:flex; justify-content:space-between; align-items:flex-start; padding:4px 8px; background:#fff; }
     .receipt-company { font-size:12px; font-weight:700; color:#000; }
     .receipt-subtitle { font-size:8px; color:#000; text-transform:uppercase; letter-spacing:1px; }
@@ -1355,6 +1361,58 @@ window.addEventListener('load', function () {
         });
     });
 
+    function clearPendingIssueHighlights() {
+        $('#pendingIssueAlert').hide();
+        $('#pendingIssueList').empty();
+        $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
+    }
+
+    function pendingIssueTargets(field) {
+        const targets = {
+            purchase_ledger: ['#noitem_purchase_ledger', '.noitem-ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger'],
+            party_name: ['#edit_party'],
+            gst_no: ['#edit_gst'],
+            date: ['#edit_date'],
+            gst_rate: ['.item-gst_rate', '.noitem-gst'],
+            invoice_no: ['#edit_invoice'],
+            amount: ['#edit_total_amount', '#noitem_amount', '.noitem-amount'],
+            gst_ledger: ['#igst_ledger', '#cgst_ledger', '#sgst_ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger']
+        };
+
+        return targets[field] || [];
+    }
+
+    function applyPendingIssueHighlights(issues, status = '') {
+        clearPendingIssueHighlights();
+
+        const normalizedStatus = String(status || '').trim().toLowerCase();
+        const issueList = Array.isArray(issues) ? issues : [];
+
+        if (!issueList.length) {
+            if (normalizedStatus === 'pending') {
+                $('#pendingIssueList').html('<li>This purchase entry is pending. Please review the highlighted/required fields before updating.</li>');
+                $('#pendingIssueAlert').show();
+            }
+            return;
+        }
+
+        const list = issueList.map(issue => `<li>${$('<div>').text(issue.message || 'Please review this field.').html()}</li>`).join('');
+        $('#pendingIssueList').html(list);
+        $('#pendingIssueAlert').show();
+
+        issueList.forEach(issue => {
+            pendingIssueTargets(issue.field).forEach(selector => {
+                const field = $(selector);
+                field.addClass('pending-field-error');
+
+                if (!field.closest('#noItemBody, #customSlotsBody, #editItemsBody').length) {
+                    field.closest('tr').addClass('pending-field-error-row');
+                }
+            });
+        });
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // VIEW MODAL
     // ═══════════════════════════════════════════════════════════════════════
@@ -1482,9 +1540,8 @@ window.addEventListener('load', function () {
                 } else if (res.gst_mode === 'custom') {
                     renderCustomSlotsFromPurchaseItems(res.items || [], res.is_igst == 1);
                 }
-                applyPendingIssueHighlights(res.pending_issues, res.status);
-
                 //recalcTotals();
+                applyPendingIssueHighlights(res.pending_issues, res.status);                
             }
         });
     });
@@ -2779,6 +2836,7 @@ window.addEventListener('load', function () {
             .css('pointer-events', 'auto');
 
         $('.receipt-del-btn').show();
+        clearPendingIssueHighlights();
     }
     function openViewModal()    { document.getElementById('viewModal').classList.add('show'); }
     function closeViewModal()   { document.getElementById('viewModal').classList.remove('show'); }

@@ -376,9 +376,78 @@
         z-index: 99999 !important;
     }
 
+    @@ -354,121 +354,210 @@
+        background: #fff !important;
+    }
+
+    /* 🔥 HOVER FIX */
+    .select2-results__option--highlighted {
+        background: #2563eb !important;
+        color: #fff !important;
+    }
+
+    /* 🔥 DARK MODE FIX */
+    .dark .select2-results__option {
+        color: #fff !important;
+        background: #020617 !important;
+    }
+
+    .dark .select2-results__option--highlighted {
+        background: #2563eb !important;
+        color: #fff !important;
+    }
+
+    /* 🔥 DROPDOWN BOX */
+    .select2-dropdown {
+        z-index: 99999 !important;
+    }
+
+
+    .pending-issue-alert {
+        margin: 8px 12px;
+        padding: 10px 12px;
+        border: 1px solid #fca5a5;
+        border-left: 4px solid #dc2626;
+        border-radius: 8px;
+        background: #fef2f2;
+        color: #991b1b;
+        font-size: 12px;
+    }
+
+    .pending-issue-title {
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .pending-issue-list {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    #editModal .pending-field-error,
+    #editModal .pending-field-error + .select2 .select2-selection,
+    #editModal .pending-field-error.select2-hidden-accessible + .select2 .select2-selection {
+        border-color: #ef4444 !important;
+        background: #fff7f7 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, .12) !important;
+    }
+
+    #editModal .receipt-table .pending-field-error,
+    #editModal .receipt-table .pending-field-error + .select2 .select2-selection,
+    #editModal .receipt-table .pending-field-error.select2-hidden-accessible + .select2 .select2-selection {
+        border-color: #f87171 !important;
+        background: #fffafa !important;
+        box-shadow: inset 0 0 0 1px rgba(248, 113, 113, .35) !important;
+    }
+
+    #editModal .pending-field-error-row {
+        background: #fff7f7;
+    }
+
     .auto-row input {
         background: #fef9c3;
     }
+
 </style>
 @endsection
 @section('scripts')
@@ -386,6 +455,52 @@
     let ledgers = @json($ledgers);
 </script>
 <script>
+
+    function clearPendingIssueHighlights() {
+        $('#pendingIssueAlert').hide();
+        $('#pendingIssueList').empty();
+        $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
+    }
+
+    function pendingIssueTargets(field) {
+        const targets = {
+            journal_no: ['#edit_journal_no'],
+            date: ['#edit_date'],
+            ledger: ['#itemsBody .ledger'],
+            amount: ['#itemsBody .debit', '#itemsBody .credit', '#totalDr', '#totalCr'],
+        };
+
+        return targets[field] || [];
+    }
+
+    function applyPendingIssueHighlights(issues, status = '') {
+        clearPendingIssueHighlights();
+
+        const normalizedStatus = String(status || '').trim().toLowerCase();
+        const issueList = Array.isArray(issues) ? issues : [];
+
+        if (!issueList.length) {
+            if (normalizedStatus === 'pending') {
+                $('#pendingIssueList').html('<li>This journal entry is pending. Please review required ledger, date, debit, and credit details before updating.</li>');
+                $('#pendingIssueAlert').show();
+            }
+            return;
+        }
+
+        const list = issueList.map(issue => `<li>${$('<div>').text(issue.message || 'Please review this field.').html()}</li>`).join('');
+        $('#pendingIssueList').html(list);
+        $('#pendingIssueAlert').show();
+
+        issueList.forEach(issue => {
+            pendingIssueTargets(issue.field).forEach(selector => {
+                const field = $(selector);
+                field.addClass('pending-field-error');
+                field.closest('tr').addClass('pending-field-error-row');
+            });
+        });
+    }
+
     function normalize(str) {
         return (str || '')
             .replace(/["']/g, '') // remove quotes
@@ -398,6 +513,7 @@
         let url = "{{ route('journal.show', ':id') }}";
         url = url.replace(':id', id);
         $('#editModal').addClass('show'); // ⚡ instant open
+        clearPendingIssueHighlights();
         $.get(url, function(res) {
 
             //$('#editModal').addClass('show'); // IMPORTANT FIX
@@ -447,6 +563,7 @@
             }, 100);
 
             recalc();
+            applyPendingIssueHighlights(res.pending_issues, res.status);
         });
     }
 

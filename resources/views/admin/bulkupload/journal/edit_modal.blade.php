@@ -11,6 +11,12 @@
             </div>
             <button class="receipt-close-btn" onclick="closeModal()">✕</button>
         </div>
+        <div id="pendingIssueAlert" class="pending-issue-alert" style="display:none;">
+            <div class="pending-issue-title">
+                <i class="fa-solid fa-triangle-exclamation"></i> This journal entry is still pending
+            </div>
+            <ul id="pendingIssueList" class="pending-issue-list"></ul>
+        </div>
 
         <!-- FORM -->
         <div class="receipt-meta-grid">

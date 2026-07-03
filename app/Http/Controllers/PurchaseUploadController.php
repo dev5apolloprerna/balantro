@@ -1463,122 +1463,161 @@ class PurchaseUploadController extends Controller
 
         $issues = [];
         $partyId = $transaction->iPartyId;
-        $purchaseLedger = trim((string) ($transaction->purchase_ledger_name ?: $transaction->purchase_ledger));
-        $gstMapping = $gstMapping ?: $this->getGstMapping($partyId, $purchaseLedger);
+        $purchaseLedgerName = $transaction->purchase_ledger_name ?: $transaction->purchase_ledger;
+        $purchaseLedger = $purchaseLedgerName ? Ledger::getLedgerByName($partyId, $purchaseLedgerName) : null;
+        $gstMapping = $gstMapping ?: $this->getGstMapping($partyId, $purchaseLedger?->name ?? $purchaseLedgerName);
         $partyLedgerDetails = $this->findPartyLedgerForUpload($partyId, $transaction->party_name, $transaction->gst_no);
-        $invoiceDate = $transaction->date instanceof \DateTimeInterface
-            ? $transaction->date->format('Y-m-d')
-            : (string) $transaction->date;
 
-        if (!$this->purchaseLedgerIsMapped($partyId, $purchaseLedger)) {
+        if (!$this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $transaction->gst_no)) {
+            $issues[] = [
+                'field' => 'party_name',
+                'message' => 'Party name/GSTIN does not match any creditor ledger.',
+            ];
+        }
+
+        if (empty($purchaseLedger)) {
             $issues[] = [
                 'field' => 'purchase_ledger',
                 'message' => 'Purchase ledger is missing or not matched with ledger master.',
             ];
         }
 
-        if (!$this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $transaction->gst_no)) {
-            $issues[] = [
-                'field' => 'party_name',
-                'message' => 'Party name/GSTIN does not match any supplier ledger.',
-            ];
-        } elseif ($this->normalizeGstNo($transaction->gst_no) !== '' && $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null) !== $this->normalizeGstNo($transaction->gst_no)) {
-            $issues[] = [
-                'field' => 'gst_no',
-                'message' => 'Uploaded GSTIN does not match the selected party ledger GSTIN.',
-            ];
-        }
+        $invoiceDate = $transaction->date instanceof \DateTimeInterface
+            ? $transaction->date->format('Y-m-d')
+            : $transaction->date;
 
-        if (empty($invoiceDate) || empty(session('year_from')) || empty(session('year_to')) || $invoiceDate < session('year_from') || $invoiceDate > session('year_to')) {
+        if ($invoiceDate && session('year_from') && session('year_to') && ($invoiceDate < session('year_from') || $invoiceDate > session('year_to'))) {
             $issues[] = [
                 'field' => 'date',
-                'message' => 'Invoice date is outside the selected financial year.',
+                'message' => 'Purchase date is outside the selected financial year.',
             ];
         }
 
-        $items = $transaction->items->map(fn ($item) => [
-            'item_name' => $item->item_name,
-            'quantity' => $item->quantity,
-            'rate' => $item->rate,
-            'amount' => $item->amount,
-            'gst_rate' => $item->gst_rate,
-        ])->all();
-        $noitemRows = $transaction->customGst->map(fn ($slot) => [
-            'ledger' => $slot->ledger_name,
-            'amount' => $slot->taxable ?: $slot->amount,
-            'gst' => $slot->gst_rate,
-        ])->all();
-
-        if (!$this->hasPurchaseRequiredDetails($transaction->party_name, $items, $noitemRows, $purchaseLedger)) {
-            $issues[] = [
-                'field' => 'party_name',
-                'message' => 'Required party, item, or purchase ledger details are missing.',
-            ];
-        }
-
-        if (!$this->allGstRatesAreApplicable($this->extractVoucherRequestGstRates($items, $noitemRows, [], $transaction->gst_rate))) {
+        if (!$this->allGstRatesAreApplicable($this->purchaseTransactionGstRates($transaction))) {
             $issues[] = [
                 'field' => 'gst_rate',
                 'message' => 'GST rate is not one of the allowed GST slabs.',
             ];
         }
 
-        if (!$this->purchaseAmountsMatch($items, $noitemRows)) {
+        if ($this->voucherCombinationExists('purchase_transactions', [
+            'iPartyId' => $partyId,
+            'voucher_column' => 'vchType',
+            'voucher_value' => $transaction->vchType,
+            'number_column' => 'invoice_no',
+            'number_value' => $transaction->invoice_no,
+            'party_column' => 'party_name',
+            'party_value' => $transaction->party_name,
+            'date_column' => 'date',
+            'date_value' => $transaction->date,
+            'year_column' => 'strYear',
+            'year_value' => $transaction->strYear ?? session('year'),
+        ], $transaction->id)) {
             $issues[] = [
-                'field' => 'amount',
-                'message' => 'Item quantity/rate amount or accounting row amount is invalid.',
+                'field' => 'invoice_no',
+                'message' => 'Invoice number already exists for this voucher type and financial year.',
             ];
         }
 
-        $isIgst = (float) $transaction->igst > 0;
-        $gstLedgersMapped = $transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()
-            ? $this->customGstLedgersAreMapped($transaction->customGst->map(fn ($slot) => [
-                'igst_amount' => $slot->igst_amount,
-                'cgst_amount' => $slot->cgst_amount,
-                'sgst_amount' => $slot->sgst_amount,
-                'igst_ledger_id' => $slot->igst_ledger_id,
-                'cgst_ledger_id' => $slot->cgst_ledger_id,
-                'sgst_ledger_id' => $slot->sgst_ledger_id,
-            ])->all(), $isIgst)
-            : $this->gstLedgersAreMappedForAmounts(
-                $isIgst,
-                (float) $transaction->igst,
-                (float) $transaction->cgst,
-                (float) $transaction->sgst,
-                $transaction->igst_id ?: ($gstMapping['igst_id'] ?? null),
-                $transaction->cgst_id ?: ($gstMapping['cgst_id'] ?? null),
-                $transaction->sgst_id ?: ($gstMapping['sgst_id'] ?? null)
-            );
-
-        if (!$gstLedgersMapped) {
+        if (!$this->purchaseHasRequiredGstLedgers($transaction, $gstMapping)) {
             $issues[] = [
                 'field' => 'gst_ledger',
                 'message' => 'Required GST ledger mapping is missing for the GST amount.',
             ];
         }
 
-        if ($this->voucherCombinationExists('purchase_transactions', [
-            'iPartyId' => $partyId,
-            'voucher_column' => 'vchType',
-            'voucher_value' => $transaction->vchType ?? 'Purchase',
-            'number_column' => 'invoice_no',
-            'number_value' => $transaction->invoice_no,
-            'party_column' => 'party_name',
-            'party_value' => $transaction->party_name,
-            'date_column' => 'date',
-            'date_value' => $invoiceDate,
-            'year_column' => 'strYear',
-            'year_value' => $transaction->strYear ?? session('year'),
-        ], $transaction->id)) {
+        if (!$this->purchaseTransactionAmountsMatch($transaction)) {
             $issues[] = [
-                'field' => 'invoice_no',
-                'message' => 'Invoice number already exists for this party, date, voucher type, and financial year.',
+                'field' => 'amount',
+                'message' => 'One or more item/no-item amounts need review.',
             ];
         }
 
         return $issues;
     }
 
+    private function purchaseTransactionGstRates(PurchaseTransaction $transaction): array
+    {
+        $rates = [];
+
+        foreach ($transaction->items as $item) {
+            $rates[] = $item->gst_rate;
+        }
+
+        foreach ($transaction->customGst as $slot) {
+            $rates[] = $slot->gst_rate;
+        }
+
+        if (empty(array_filter($rates, fn ($rate) => $rate !== null && $rate !== ''))) {
+            $rates[] = $transaction->gst_rate;
+        }
+
+        return $rates;
+    }
+
+    private function purchaseHasRequiredGstLedgers(PurchaseTransaction $transaction, array $gstMapping): bool
+    {
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            $slots = $transaction->customGst->map(fn ($slot) => [
+                'igst_amount' => (float) $slot->igst_amount,
+                'igst_ledger_id' => $slot->igst_ledger_id ?: ($gstMapping['igst_id'] ?? null),
+                'cgst_amount' => (float) $slot->cgst_amount,
+                'cgst_ledger_id' => $slot->cgst_ledger_id ?: ($gstMapping['cgst_id'] ?? null),
+                'sgst_amount' => (float) $slot->sgst_amount,
+                'sgst_ledger_id' => $slot->sgst_ledger_id ?: ($gstMapping['sgst_id'] ?? null),
+            ])->all();
+
+            return $this->customGstLedgersAreMapped($slots, (bool) $transaction->is_igst);
+        }
+
+        if ($transaction->items->isNotEmpty()) {
+            foreach ($transaction->items as $item) {
+                $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
+                if (!$this->gstLedgersAreMappedForAmounts(
+                    (float) $item->igst > 0,
+                    (float) $item->igst,
+                    (float) $item->cgst,
+                    (float) $item->sgst,
+                    $itemMapping['igst_id'] ?? null,
+                    $itemMapping['cgst_id'] ?? null,
+                    $itemMapping['sgst_id'] ?? null
+                )) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $this->gstLedgersAreMappedForAmounts(
+            (bool) $transaction->is_igst,
+            (float) $transaction->igst,
+            (float) $transaction->cgst,
+            (float) $transaction->sgst,
+            $transaction->igst_id ?: ($gstMapping['igst_id'] ?? null),
+            $transaction->cgst_id ?: ($gstMapping['cgst_id'] ?? null),
+            $transaction->sgst_id ?: ($gstMapping['sgst_id'] ?? null)
+        );
+    }
+
+    private function purchaseTransactionAmountsMatch(PurchaseTransaction $transaction): bool
+    {
+        if ($transaction->items->isNotEmpty()) {
+            return $this->purchaseAmountsMatch($transaction->items->map(fn ($item) => [
+                'quantity' => $item->quantity,
+                'rate' => $item->rate,
+                'amount' => $item->amount,
+            ])->all());
+        }
+
+        if ($transaction->customGst->isNotEmpty()) {
+            return $this->purchaseAmountsMatch([], $transaction->customGst->map(fn ($slot) => [
+                'amount' => $slot->amount ?? $slot->taxable,
+            ])->all());
+        }
+
+        return (float) $transaction->amount > 0;
+    }
 
     // ── SHOW (used by both View and Edit modals via AJAX) ─────────────────────────
     public function show($id)
@@ -1609,7 +1648,7 @@ class PurchaseUploadController extends Controller
             'city'            => $transaction->city,
             'is_igst'         => $transaction->is_igst,
             'status'          => $transaction->status,
-            'pending_issues'  => $this->getPurchasePendingIssues($transaction, $gstMapping),
+            'pending_issues' => $this->getPurchasePendingIssues($transaction, $gstMapping),
             'igst_ledger_name'=> $transaction->igst_ledger_name,
             'cgst_ledger_name'=> $transaction->cgst_ledger_name,
             'sgst_ledger_name'=> $transaction->sgst_ledger_name,
