@@ -1279,26 +1279,19 @@ class PurchaseUploadController extends Controller
                 return response()->json(['status' => false, 'message' => 'Duplicate voucher combination is not allowed.']);
             }
             $uploadId = $row->upload_id;
-            $existingItems = PurchaseTransactionItem::where('transaction_id', $row->id)
-                ->get(['item_name'])
-                ->map(fn ($item) => ['item_name' => $item->item_name])
-                ->all();
-            $purchaseLedger = $row->purchase_ledger;
-            $rowStatus = $this->hasPurchaseRequiredDetails($partyName, $existingItems, [], $purchaseLedger)
-                ? 'saved'
-                : 'pending';
-            $row->update([
-                'invoice_no' => $request->invoice_no[$id],
-                'date' => $request->date[$id],
+            $row->fill([
+                'invoice_no' => $invoiceNo,
+                'date' => $date,
                 //'party_name' => $request->party_name[$id] ?? $request->ledger[$id],
                 // 'party_name' => $request->party_name[$id]  ?: ($request->party_ledger[$id] ?? $request->ledger[$id]),
                 'party_name' => $partyName,
-                'place_of_supply' => $request->place_of_supply[$id],
-                'purchase_ledger' => $request->party_name[$id]  ?: ($request->party_ledger[$id] ?? $request->ledger[$id]),
-                //'status' => 'saved',
-                'status' => $rowStatus,
-                'vchType' => $request->voucher_type[$id]
+                'place_of_supply' => $request->place_of_supply[$id] ?? $row->place_of_supply,
+                'purchase_ledger' => $request->ledger[$id] ?? $row->purchase_ledger,
+                'vchType' => $voucherType,
             ]);
+            $row->loadMissing(['items', 'customGst']);
+            $row->status = $this->rematchPendingPurchaseTransaction($row) ? 'saved' : 'pending';
+            $row->save();
         }
 
         if ($uploadId) {
@@ -1485,6 +1478,13 @@ class PurchaseUploadController extends Controller
         $invoiceDate = $transaction->date instanceof \DateTimeInterface
             ? $transaction->date->format('Y-m-d')
             : $transaction->date;
+        
+        if ($this->purchaseHasUnmatchedItems($transaction)) {
+            $issues[] = [
+                'field' => 'item_name',
+                'message' => 'Item/particulars is missing or not matched with stock item master.',
+            ];
+        }
 
         if ($invoiceDate && session('year_from') && session('year_to') && ($invoiceDate < session('year_from') || $invoiceDate > session('year_to'))) {
             $issues[] = [
@@ -1534,6 +1534,32 @@ class PurchaseUploadController extends Controller
         }
 
         return $issues;
+    }
+
+    private function purchaseHasUnmatchedItems(PurchaseTransaction $transaction): bool
+    {
+        if ($transaction->items->isEmpty()) {
+            return false;
+        }
+
+        foreach ($transaction->items as $item) {
+            $itemName = trim((string) $item->item_name);
+
+            if ($itemName === '') {
+                return true;
+            }
+
+            $exists = DB::table('StockItemMaster')
+                ->where('iPartyId', $transaction->iPartyId)
+                ->whereRaw('LOWER(TRIM(strItemName)) = ?', [strtolower($itemName)])
+                ->exists();
+
+            if (!$exists) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function purchaseTransactionGstRates(PurchaseTransaction $transaction): array
@@ -1617,6 +1643,105 @@ class PurchaseUploadController extends Controller
         }
 
         return (float) $transaction->amount > 0;
+    }
+
+     private function rematchPendingPurchaseTransaction(PurchaseTransaction $transaction): bool
+    {
+        $partyId = $transaction->iPartyId;
+        $purchaseLedgerName = $transaction->purchase_ledger_name ?: $transaction->purchase_ledger;
+        $purchaseLedger = $purchaseLedgerName ? Ledger::getLedgerByName($partyId, $purchaseLedgerName) : null;
+        $mapping = $this->getGstMapping($partyId, $purchaseLedger?->name ?? $purchaseLedgerName);
+        $partyLedgerDetails = $this->findPartyLedgerForUpload($partyId, $transaction->party_name, $transaction->gst_no);
+
+        $transaction->fill([
+            'party_name' => $partyLedgerDetails['name'] ?? $transaction->party_name,
+            'gst_no' => $partyLedgerDetails['gst_no'] ?? $transaction->gst_no,
+            'place_of_supply' => $partyLedgerDetails['state'] ?? $transaction->place_of_supply,
+            'address' => $partyLedgerDetails['address'] ?? $transaction->address,
+            'pincode' => $partyLedgerDetails['pincode'] ?? $transaction->pincode,
+            'city' => $partyLedgerDetails['city'] ?? $transaction->city,
+            'purchase_ledger_id' => $purchaseLedger?->id ?? $purchaseLedger?->iLedgerId ?? $transaction->purchase_ledger_id,
+            'purchase_ledger_name' => $purchaseLedger?->name ?? $purchaseLedger?->strCustomerName ?? $transaction->purchase_ledger_name,
+            'cgst_id' => $mapping['cgst_id'],
+            'cgst_ledger_name' => $mapping['cgst_name'],
+            'sgst_id' => $mapping['sgst_id'],
+            'sgst_ledger_name' => $mapping['sgst_name'],
+            'igst_id' => $mapping['igst_id'],
+            'igst_ledger_name' => $mapping['igst_name'],
+        ]);
+
+        $hasGstLedgers = $this->rematchPurchaseGstLedgers($transaction, $mapping);
+        $invoiceDate = $transaction->date instanceof \DateTimeInterface
+            ? $transaction->date->format('Y-m-d')
+            : $transaction->date;
+
+        return $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $transaction->gst_no)
+            && !empty($purchaseLedger)
+            && (!$invoiceDate || !session('year_from') || !session('year_to') || ($invoiceDate >= session('year_from') && $invoiceDate <= session('year_to')))
+            && $this->allGstRatesAreApplicable($this->purchaseTransactionGstRates($transaction))
+            && $hasGstLedgers
+            && $this->purchaseTransactionAmountsMatch($transaction)
+            && !$this->voucherCombinationExists('purchase_transactions', [
+                'iPartyId' => $partyId,
+                'voucher_column' => 'vchType',
+                'voucher_value' => $transaction->vchType,
+                'number_column' => 'invoice_no',
+                'number_value' => $transaction->invoice_no,
+                'party_column' => 'party_name',
+                'party_value' => $transaction->party_name,
+                'date_column' => 'date',
+                'date_value' => $transaction->date,
+                'year_column' => 'strYear',
+                'year_value' => $transaction->strYear ?? session('year'),
+            ], $transaction->id)
+            && !$this->vchHistoryCombinationExists([
+                'iPartyId' => $partyId,
+                'voucher_value' => $transaction->vchType,
+                'number_value' => $transaction->invoice_no,
+                'party_value' => $transaction->party_name,
+                'history_date_value' => $this->historyDate($transaction->date),
+                'year_value' => $transaction->strYear ?? session('year'),
+            ]);
+    }
+
+    private function rematchPurchaseGstLedgers(PurchaseTransaction $transaction, array $mapping): bool
+    {
+        if ($transaction->items->isNotEmpty()) {
+            $hasAllMappings = true;
+            foreach ($transaction->items as $item) {
+                $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
+                if (!$this->gstLedgersAreMappedForAmounts((float) $item->igst > 0, (float) $item->igst, (float) $item->cgst, (float) $item->sgst, $itemMapping['igst_id'] ?? null, $itemMapping['cgst_id'] ?? null, $itemMapping['sgst_id'] ?? null)) {
+                    $hasAllMappings = false;
+                }
+            }
+            return $hasAllMappings;
+        }
+
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            $slots = [];
+            foreach ($transaction->customGst as $slot) {
+                $slotMapping = $this->getGstMapping($transaction->iPartyId, $slot->ledger_name ?: $transaction->purchase_ledger);
+                $slot->fill([
+                    'cgst_ledger_id' => $slotMapping['cgst_id'],
+                    'cgst_ledger_name' => $slotMapping['cgst_name'],
+                    'sgst_ledger_id' => $slotMapping['sgst_id'],
+                    'sgst_ledger_name' => $slotMapping['sgst_name'],
+                    'igst_ledger_id' => $slotMapping['igst_id'],
+                    'igst_ledger_name' => $slotMapping['igst_name'],
+                ])->save();
+                $slots[] = [
+                    'cgst_amount' => $slot->cgst_amount,
+                    'sgst_amount' => $slot->sgst_amount,
+                    'igst_amount' => $slot->igst_amount,
+                    'cgst_ledger_id' => $slotMapping['cgst_id'],
+                    'sgst_ledger_id' => $slotMapping['sgst_id'],
+                    'igst_ledger_id' => $slotMapping['igst_id'],
+                ];
+            }
+            return $this->customGstLedgersAreMapped($slots, (bool) $transaction->is_igst);
+        }
+
+        return $this->gstLedgersAreMappedForAmounts((bool) $transaction->is_igst, (float) $transaction->igst, (float) $transaction->cgst, (float) $transaction->sgst, $mapping['igst_id'] ?? null, $mapping['cgst_id'] ?? null, $mapping['sgst_id'] ?? null);
     }
 
     // ── SHOW (used by both View and Edit modals via AJAX) ─────────────────────────

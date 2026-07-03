@@ -1827,6 +1827,13 @@ class DebitNoteController extends Controller
             ? $transaction->note_date->format('Y-m-d')
             : $transaction->note_date;
 
+        if ($this->debitNoteHasUnmatchedItems($transaction)) {
+            $issues[] = [
+                'field' => 'item_name',
+                'message' => 'Item/particulars is missing or not matched with stock item master.',
+            ];
+        }
+
         if ($noteDate && session('year_from') && session('year_to') && ($noteDate < session('year_from') || $noteDate > session('year_to'))) {
             $issues[] = [
                 'field' => 'date',
@@ -1889,6 +1896,32 @@ class DebitNoteController extends Controller
         }
 
         return $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null) === $uploadedGst;
+    }
+
+    private function debitNoteHasUnmatchedItems(DebitNoteTransaction $transaction): bool
+    {
+        if ($transaction->items->isEmpty()) {
+            return false;
+        }
+
+        foreach ($transaction->items as $item) {
+            $itemName = trim((string) $item->item_name);
+
+            if ($itemName === '') {
+                return true;
+            }
+
+            $exists = DB::table('StockItemMaster')
+                ->where('iPartyId', $transaction->iPartyId)
+                ->whereRaw('LOWER(TRIM(strItemName)) = ?', [strtolower($itemName)])
+                ->exists();
+
+            if (!$exists) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function debitNoteTransactionGstRates(DebitNoteTransaction $transaction): array

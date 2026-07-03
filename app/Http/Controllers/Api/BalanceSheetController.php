@@ -270,6 +270,27 @@ class BalanceSheetController extends Controller
 			$totalAssetsResponse = $totalAssetsWithClosingStock + ($showDiffOnAssetSide ? $differenceAmount : 0);
 			$totalCrResponse = $totalCr + ($showDiffOnLiabilitySide ? $differenceAmount : 0);
 
+            if ($differenceAmount > 0) {
+				$differenceEntry = [
+					'iPrimaryGroupId' => null,
+					'strGroupName'    => 'Difference in Balance',
+					'decMainAmount'   => $this->fmt($differenceAmount),
+					'rawAmount'       => $this->fmt($differenceAmount),
+					'Side'            => $showDiffOnAssetSide ? 'DR' : 'CR',
+					'iPartyId'        => $partyId,
+					'iYearId'         => 0,
+					'is_difference'   => true,
+				];
+
+				if ($showDiffOnAssetSide) {
+					$data['dr'][] = $differenceEntry;
+					$otherAssets += $differenceAmount;
+				} elseif ($showDiffOnLiabilitySide) {
+					$data['cr'][] = $differenceEntry;
+					$otherLiabilities += $differenceAmount;
+				}
+			}
+
 			$data['totalDr'] = $this->fmt($totalAssetsResponse);
 			$data['totalCr'] = $this->fmt($totalCrResponse);
 			$data['totals'] = [
@@ -283,7 +304,7 @@ class BalanceSheetController extends Controller
 				'show_difference_on_asset_side' => $showDiffOnAssetSide,
 				'show_difference_on_liability_side' => $showDiffOnLiabilitySide,
 			];
-			$data['breakdown'] = [
+            $data['breakdown'] = [
 				'assets' => [
 					'current_assets_without_stock' => $this->fmt($currentAssetsWithoutStock),
 					'closing_stock' => $this->fmt($closingStockAmount),
@@ -300,7 +321,25 @@ class BalanceSheetController extends Controller
 					'capital_and_profit_loss' => $this->fmt($equity),
 				]
 			];
-
+            $data['graphs'] = [
+				'breakdown' => [
+					'assets' => $this->buildGraphData(
+						['Current Assets', 'Closing Stock', 'Fixed Assets', 'Investments', 'Other Assets'],
+						[$currentAssetsWithoutStock, $closingStockAmount, $fixedAssets, $investments, $otherAssets],
+						['#a78bfa', '#34d399', '#fbbf24', '#f472b6', '#60a5fa']
+					),
+					'liabilities' => $this->buildGraphData(
+						['Current Liabilities', 'Long-term Liabilities', 'Capital Account', 'Other Liabilities'],
+						[$currentLiabilities, $longTermLiabilities, $equity, $otherLiabilities],
+						['#a78bfa', '#34d399', '#fbbf24', '#f472b6']
+					),
+				],
+				'balance_sheet' => $this->buildGraphData(
+					['Assets', 'Liabilities', 'Equity'],
+					[$totalAssetsResponse, max(0, $totalCrResponse - $equity), $equity],
+					['#22d3ee', '#fbbf24', '#a78bfa']
+				),
+			];
 
 			return response()->json([
 				'success' => true,
@@ -320,6 +359,33 @@ class BalanceSheetController extends Controller
 				'error'   => $e->getMessage()
 			], 500);
 		}
+	}
+
+    private function buildGraphData(array $labels, array $values, array $colors): array
+	{
+		$items = [];
+
+		foreach ($labels as $index => $label) {
+			$value = abs((float) ($values[$index] ?? 0));
+			if ($value <= 0) {
+				continue;
+			}
+
+			$items[] = [
+				'label' => $label,
+				'value' => round($value, 2),
+				'formatted_value' => $this->fmt($value),
+				'color' => $colors[$index] ?? '#60a5fa',
+			];
+		}
+
+		return [
+			'labels' => array_column($items, 'label'),
+			'values' => array_column($items, 'value'),
+			'formatted_values' => array_column($items, 'formatted_value'),
+			'colors' => array_column($items, 'color'),
+			'items' => $items,
+		];
 	}
 
 	private function resolveClosingStockAmount($procedureTotals, int $partyId, ?string $endDate): float

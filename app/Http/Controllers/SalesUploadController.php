@@ -1175,6 +1175,13 @@ class SalesUploadController extends Controller
             ];
         }
 
+        if ($this->salesHasUnmatchedItems($transaction)) {
+            $issues[] = [
+                'field' => 'item_name',
+                'message' => 'Item/particulars is missing or not matched with stock item master.',
+            ];
+        }
+
         if (!$this->isUploadDateInSelectedYear($invoiceDate)) {
             $issues[] = [
                 'field' => 'date',
@@ -1208,6 +1215,32 @@ class SalesUploadController extends Controller
         }
 
         return $issues;
+    }
+
+    private function salesHasUnmatchedItems(SalesTransaction $transaction): bool
+    {
+        if ($transaction->items->isEmpty()) {
+            return false;
+        }
+
+        foreach ($transaction->items as $item) {
+            $itemName = trim((string) $item->item_name);
+
+            if ($itemName === '') {
+                return true;
+            }
+
+            $exists = DB::table('StockItemMaster')
+                ->where('iPartyId', $transaction->iPartyId)
+                ->whereRaw('LOWER(TRIM(strItemName)) = ?', [strtolower($itemName)])
+                ->exists();
+
+            if (!$exists) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function hasPendingItemGstLedgers(SalesTransaction $transaction): bool

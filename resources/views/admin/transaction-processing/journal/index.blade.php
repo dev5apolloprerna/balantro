@@ -61,7 +61,7 @@
                     <!-- Table Header -->
                     <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 text-xs uppercase sticky top-0 z-10">
                         <tr>
-                            <th class="px-4 py-3"><input type="checkbox"></th>
+                            <th class="px-4 py-3"><input type="checkbox" id="selectAll" class="journalSelectAll"></th>
                             <th class="px-4 py-3">Sr.No</th>
                             <th class="px-4 py-3">File Name</th>
                             <th class="px-4 py-3">Total</th>
@@ -75,19 +75,14 @@
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         @foreach($uploads as $upload)
                         <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
-
-                            <td class="px-4 py-3"><input type="checkbox"></td>
-
+                            <td class="px-4 py-3"><input type="checkbox" class="rowCheckbox" value="{{ $upload->id }}"></td>
                             <td class="px-4 py-3">{{ $loop->iteration }}</td>
-
                             <td class="px-4 py-3 font-medium">
                                 {{ $upload->file_name }}
                             </td>
-
                             <td class="px-4 py-3">{{ $upload->total }}</td>
                             <td class="px-4 py-3">{{ $upload->pending }}</td>
                             <td class="px-4 py-3">{{ $upload->saved }}</td>
-
                             <td class="px-4 py-3">
                                 <a href="{{ route('transaction_processing.preview_processing_journal',$upload->id) }}"
                                     class="@if($upload->status=='completed') text-green-500
@@ -96,40 +91,32 @@
                                     {{ ucfirst($upload->status) }}
                                 </a>
                             </td>
-
                             <td class="px-4 py-3 text-right">
                                 <a href="{{ route('transaction_processing.preview_processing_journal',$upload->id) }}">
                                     <i class="fa-regular fa-eye action-icon text-gray-500"></i>
                                 </a>
                                 <div x-data="{ open:false }" class="relative inline-block">
-
                                     <!-- Button -->
                                     <button onclick="openDropdown(event, {{ $upload->id }})"
                                         class="text-gray-500 hover:text-gray-700 px-2">
                                         <i class="fa-solid fa-ellipsis-vertical action-icon"></i>
                                     </button>
-
                                     <!-- Dropdown -->
                                     <div id="globalDropdown"
                                         class="hidden fixed bg-white dark:bg-neutral-800 border rounded-xl shadow-xl w-48 z-[99999]">
-
                                         <div class="px-4 py-2 text-xs font-semibold text-gray-400 border-b">
                                             Change Status
                                         </div>
-
                                         <button onclick="handleStatus('Pending')" class="dropdown-item">Pending</button>
                                         <button onclick="handleStatus('Processing')" class="dropdown-item">Processing</button>
                                         <button onclick="handleStatus('Completed')" class="dropdown-item">Completed</button>
-
                                         <div class="border-t my-1"></div>
-
                                         <button onclick="handleDelete()" class="dropdown-item text-red-500" style="color: indianred;">
                                             Delete
                                         </button>
                                     </div>
                                 </div>
                             </td>
-
                         </tr>
                         @endforeach
                     </tbody>
@@ -472,12 +459,29 @@
         });
     }
 
-    // BULK DELETE
-    function bulkDelete() {
-
-        let ids = $('.rowCheckbox:checked').map(function() {
+    function getSelectedJournalUploadIds() {
+        return $('.rowCheckbox:checked').map(function() {
             return this.value;
         }).get();
+    }
+
+    function syncJournalSelectAllState() {
+        const total = $('.rowCheckbox').length;
+        const checked = $('.rowCheckbox:checked').length;
+        $('#selectAll').prop('checked', total > 0 && checked === total);
+        $('#selectAll').prop('indeterminate', checked > 0 && checked < total);
+    }
+
+    $(document).on('change', '#selectAll', function() {
+        $('.rowCheckbox').prop('checked', this.checked);
+        syncJournalSelectAllState();
+    });
+
+    $(document).on('change', '.rowCheckbox', syncJournalSelectAllState);
+
+    // BULK DELETE
+    function bulkDelete() {
+        let ids = getSelectedJournalUploadIds();
 
         if (ids.length == 0) {
             showToast('Select at least one','error');

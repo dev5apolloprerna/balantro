@@ -1100,6 +1100,7 @@
         $('#pendingIssueAlert').hide();
         $('#pendingIssueList').empty();
         $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .select2-container.pending-field-error').removeClass('pending-field-error');
         $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
     }
 
@@ -1110,11 +1111,28 @@
             gst_no: ['#edit_gst'],
             date: ['#edit_date'],
             gst_rate: ['.item-gst_rate', '.noitem-gst'],
+            item_name: ['.item-name'],
             invoice_no: ['#edit_invoice'],
             gst_ledger: ['#igst_ledger', '#cgst_ledger', '#sgst_ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger']
         };
 
         return targets[field] || [];
+    }
+
+    function markPendingField(fields) {
+        fields.each(function () {
+            const field = $(this);
+            field.addClass('pending-field-error');
+            field.next('.select2-container').addClass('pending-field-error');
+
+            const fieldRow = field.closest('.receipt-field-row, .tax-row');
+            if (fieldRow.length) {
+                fieldRow.addClass('pending-field-error-row');
+                return;
+            }
+
+            field.closest('tr').addClass('pending-field-error-row');
+        });
     }
 
     function applyPendingIssueHighlights(issues, status = '') {
@@ -1137,9 +1155,10 @@
 
         issueList.forEach(issue => {
             pendingIssueTargets(issue.field).forEach(selector => {
-                const field = $(selector);
-                field.addClass('pending-field-error');
-                field.closest('tr').addClass('pending-field-error-row');
+                // const field = $(selector);
+                // field.addClass('pending-field-error');
+                // field.closest('tr').addClass('pending-field-error-row');
+                markPendingField($(selector));
             });
         });
     }

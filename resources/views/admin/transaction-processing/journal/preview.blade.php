@@ -445,6 +445,19 @@
         background: #fff7f7;
     }
 
+    #editModal input[type="date"],
+    #editModal input[type="date"].receipt-input,
+    #editModal input[type="date"].pending-field-error {
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        color-scheme: light;
+    }
+
+    #editModal input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: none;
+        opacity: 1;
+    }
+
     .auto-row input {
         background: #fef9c3;
     }
@@ -459,6 +472,7 @@
         $('#pendingIssueAlert').hide();
         $('#pendingIssueList').empty();
         $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .select2-container.pending-field-error').removeClass('pending-field-error');
         $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
     }
 
@@ -471,6 +485,22 @@
         };
 
         return targets[field] || [];
+    }
+
+     function markPendingField(fields) {
+        fields.each(function () {
+            const field = $(this);
+            field.addClass('pending-field-error');
+            field.next('.select2-container').addClass('pending-field-error');
+
+            const fieldRow = field.closest('.receipt-field-row, .tax-row');
+            if (fieldRow.length) {
+                fieldRow.addClass('pending-field-error-row');
+                return;
+            }
+
+            field.closest('tr').addClass('pending-field-error-row');
+        });
     }
 
     function applyPendingIssueHighlights(issues, status = '') {
@@ -493,9 +523,10 @@
 
         issueList.forEach(issue => {
             pendingIssueTargets(issue.field).forEach(selector => {
-                const field = $(selector);
-                field.addClass('pending-field-error');
-                field.closest('tr').addClass('pending-field-error-row');
+                // const field = $(selector);
+                // field.addClass('pending-field-error');
+                // field.closest('tr').addClass('pending-field-error-row');
+                markPendingField($(selector));
             });
         });
     }
@@ -745,9 +776,7 @@ function closeModal() {
 }
 
 function saveSelected() {
-    let selected = $('.rowCheckbox:checked').map(function(){
-        return this.value;
-    }).get();
+    let selected = getSelectedJournalRowIds();
     $.post("{{ route('journal.save') }}", {
         _token: '{{ csrf_token() }}',
         selected: selected
@@ -758,9 +787,7 @@ function saveSelected() {
 }
 
 function submitSelected() {
-    let selected = $('.rowCheckbox:checked').map(function(){
-        return this.value;
-    }).get();
+    let selected = getSelectedJournalRowIds();
     if (!selected.length) {
         showToast('Please select at least one journal row before submitting.','success');
         return;
@@ -790,10 +817,27 @@ function deleteRow(id) {
     }
 }
 
+function getSelectedJournalRowIds() {
+    return $('.rowCheckbox:checked').map(function() {
+        return this.value;
+    }).get();
+}
+
+function syncJournalRowSelectAllState() {
+    const visibleRows = $('.rowCheckbox:visible');
+    const total = visibleRows.length;
+    const checked = visibleRows.filter(':checked').length;
+    $('#selectAll').prop('checked', total > 0 && checked === total);
+    $('#selectAll').prop('indeterminate', checked > 0 && checked < total);
+}
+
 // SELECT ALL
-$('#selectAll').click(function () {
-    $('.rowCheckbox').prop('checked', this.checked);
+$(document).on('change', '#selectAll', function () {
+    $('.rowCheckbox:visible').prop('checked', this.checked);
+    syncJournalRowSelectAllState();
 });
+
+$(document).on('change', '.rowCheckbox', syncJournalRowSelectAllState);
 
 // SEARCH
 $('.searchInput').on('keyup', function () {

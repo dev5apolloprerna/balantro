@@ -931,6 +931,84 @@
     #bankTable .pending-field-error,
     #bankTable .pending-field-error + .select2 .select2-selection { border-color:#f87171!important; background:#fffafa!important; box-shadow:inset 0 0 0 1px rgba(248,113,113,.35)!important; }
     #bankTable tr.pending-field-error-row { background:#fff7f7; }
+
+     /* Professional bank preview table polish */
+    /* #bankTable tbody tr {
+        background: #ffffff;
+    } */
+
+    .dark #bankTable tbody tr {
+        background: #0f172a;
+    }
+
+    #bankTable tr.pending-field-error-row {
+        background: #fffafa;
+    }
+
+    /* .dark #bankTable tr.pending-field-error-row {
+        background: rgba(127, 29, 29, 0.18);
+    } */
+
+    #bankTable input,
+    #bankTable select,
+    #bankTable .inputCell,
+    #bankTable .searchInput,
+    #bankTable .select2-container--default .select2-selection--single {
+        min-height: 30px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #111827;
+        font-size: 12px;
+        line-height: 1.25;
+    }
+
+    #bankTable input,
+    #bankTable select,
+    #bankTable .inputCell,
+    #bankTable .searchInput {
+        padding: 5px 8px;
+    }
+
+    .dark #bankTable input,
+    .dark #bankTable select,
+    .dark #bankTable .inputCell,
+    .dark #bankTable .searchInput,
+    .dark #bankTable .select2-container--default .select2-selection--single {
+        border-color: #475569;
+        background: #020617;
+        color: #f8fafc;
+    }
+
+    #bankTable input[type="date"] {
+        color-scheme: light;
+    }
+
+    .dark #bankTable input[type="date"] {
+        color-scheme: dark;
+    }
+
+    #bankTable .pending-field-error,
+    #bankTable .pending-field-error + .select2 .select2-selection {
+        border-color: #f87171 !important;
+        background: #fffafa !important;
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, .14) !important;
+    }
+
+    .dark #bankTable .pending-field-error,
+    .dark #bankTable .pending-field-error + .select2 .select2-selection {
+        background: #1f1215 !important;
+        color: #f8fafc !important;
+    }
+
+    #bankTable .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: inherit !important;
+        line-height: 28px;
+    }
+
+    #bankTable .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 28px;
+    }
 </style>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('scripts'); ?>

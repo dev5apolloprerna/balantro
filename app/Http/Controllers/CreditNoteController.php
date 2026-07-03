@@ -2119,6 +2119,13 @@ class CreditNoteController extends Controller
             ];
         }
 
+        if ($this->creditNoteHasUnmatchedItems($transaction)) {
+            $issues[] = [
+                'field' => 'item_name',
+                'message' => 'Item/particulars is missing or not matched with stock item master.',
+            ];
+        }
+
         $noteDate = $transaction->note_date instanceof \DateTimeInterface
             ? $transaction->note_date->format('Y-m-d')
             : $transaction->note_date;
@@ -2159,6 +2166,28 @@ class CreditNoteController extends Controller
         }
 
         return $issues;
+    }
+
+    private function creditNoteHasUnmatchedItems(CreditNoteTransaction $transaction): bool
+    {
+        if ($transaction->items->isEmpty()) {
+            return false;
+        }
+        foreach ($transaction->items as $item) {
+            $itemName = trim((string) $item->item_name);
+            if ($itemName === '') {
+                return true;
+            }
+            $exists = DB::table('StockItemMaster')
+                ->where('iPartyId', $transaction->iPartyId)
+                ->whereRaw('LOWER(TRIM(strItemName)) = ?', [strtolower($itemName)])
+                ->exists();
+
+            if (!$exists) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private function creditNoteTransactionGstRates(CreditNoteTransaction $transaction): array

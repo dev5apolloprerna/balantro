@@ -871,7 +871,7 @@
     #editModal .receipt-table .pending-field-error + .select2 .select2-selection,
     #editModal .receipt-table .pending-field-error.select2-hidden-accessible + .select2 .select2-selection,
     #editModal .custom-slots-table .pending-field-error { border-color:#f87171!important; background:#fffafa!important; box-shadow:inset 0 0 0 1px rgba(248,113,113,.35)!important; }
-    #editModal .pending-field-error-row { background:#fff7f7; }
+    #editModal .pending-field-error-row { background:#fff7f7!important; }
     .receipt-head { display:flex; justify-content:space-between; align-items:flex-start; padding:4px 8px; background:#fff; }
     .receipt-company { font-size:12px; font-weight:700; color:#000; }
     .receipt-subtitle { font-size:8px; color:#000; text-transform:uppercase; letter-spacing:1px; }
@@ -1371,6 +1371,7 @@ window.addEventListener('load', function () {
         $('#pendingIssueAlert').hide();
         $('#pendingIssueList').empty();
         $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .select2-container.pending-field-error').removeClass('pending-field-error');
         $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
     }
 
@@ -1381,12 +1382,29 @@ window.addEventListener('load', function () {
             gst_no: ['#edit_gst'],
             date: ['#edit_date'],
             gst_rate: ['.item-gst_rate', '.noitem-gst'],
+            item_name: ['.item-name'],
             invoice_no: ['#edit_invoice'],
             amount: ['#edit_total_amount', '#noitem_amount', '.noitem-amount'],
             gst_ledger: ['#igst_ledger', '#cgst_ledger', '#sgst_ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger']
         };
 
         return targets[field] || [];
+    }
+
+    function markPendingField(fields) {
+        fields.each(function () {
+            const field = $(this);
+            field.addClass('pending-field-error');
+            field.next('.select2-container').addClass('pending-field-error');
+
+            const fieldRow = field.closest('.receipt-field-row, .tax-row');
+            if (fieldRow.length) {
+                fieldRow.addClass('pending-field-error-row');
+                return;
+            }
+
+            field.closest('tr').addClass('pending-field-error-row');
+        });
     }
 
     function applyPendingIssueHighlights(issues, status = '') {
@@ -1409,12 +1427,13 @@ window.addEventListener('load', function () {
 
         issueList.forEach(issue => {
             pendingIssueTargets(issue.field).forEach(selector => {
-                const field = $(selector);
-                field.addClass('pending-field-error');
+                // const field = $(selector);
+                // field.addClass('pending-field-error');
 
-                if (!field.closest('#noItemBody, #customSlotsBody, #editItemsBody').length) {
-                    field.closest('tr').addClass('pending-field-error-row');
-                }
+                // if (!field.closest('#noItemBody, #customSlotsBody, #editItemsBody').length) {
+                //     field.closest('tr').addClass('pending-field-error-row');
+                // }
+                markPendingField($(selector));
             });
         });
     }
@@ -1566,6 +1585,7 @@ window.addEventListener('load', function () {
         $('#pendingIssueAlert').hide();
         $('#pendingIssueList').empty();
         $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .select2-container.pending-field-error').removeClass('pending-field-error');
         $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
     }
 
@@ -1576,6 +1596,7 @@ window.addEventListener('load', function () {
             gst_no: ['#edit_gst'],
             date: ['#edit_date'],
             gst_rate: ['.item-gst_rate', '.noitem-gst'],
+            item_name: ['.item-name'],
             invoice_no: ['#edit_invoice'],
             amount: ['.item-quantity', '.item-rate', '.item-amount', '.noitem-amount'],
             gst_ledger: []
@@ -1606,9 +1627,10 @@ window.addEventListener('load', function () {
 
         issueList.forEach(issue => {
             pendingIssueTargets(issue.field).forEach(selector => {
-                const field = $(selector);
-                field.addClass('pending-field-error');
-                field.closest('tr').addClass('pending-field-error-row');
+                // const field = $(selector);
+                // field.addClass('pending-field-error');
+                // field.closest('tr').addClass('pending-field-error-row');
+                markPendingField($(selector));
             });
 
             if (issue.field === 'gst_ledger') {
@@ -1631,19 +1653,23 @@ window.addEventListener('load', function () {
             ].forEach(({ amount, selector }) => {
                 const ledger = row.find(selector);
                 if (amount > 0 && !ledger.val()) {
-                    ledger.addClass('pending-field-error');
+                    // ledger.addClass('pending-field-error');
+                    markPendingField(ledger);
                 }
             });
         });
 
         if ((parseFloat($('#sum_igst').text()) || parseFloat($('#edit_igst').val()) || 0) > 0 && !$('#igst_ledger').val()) {
-            $('#igst_ledger').addClass('pending-field-error');
+            // $('#igst_ledger').addClass('pending-field-error');
+            markPendingField($('#igst_ledger'));
         }
         if ((parseFloat($('#sum_cgst').text()) || parseFloat($('#edit_cgst').val()) || 0) > 0 && !$('#cgst_ledger').val()) {
-            $('#cgst_ledger').addClass('pending-field-error');
+            // $('#cgst_ledger').addClass('pending-field-error');
+            markPendingField($('#cgst_ledger'));
         }
         if ((parseFloat($('#sum_sgst').text()) || parseFloat($('#edit_sgst').val()) || 0) > 0 && !$('#sgst_ledger').val()) {
-            $('#sgst_ledger').addClass('pending-field-error');
+            // $('#sgst_ledger').addClass('pending-field-error');
+            markPendingField($('#sgst_ledger'));
         }
     }
 

@@ -289,6 +289,13 @@
             </div>
         </div>
 
+        <div id="pendingIssueAlert" class="pending-issue-alert" style="display:none;">
+            <div class="pending-issue-title">
+                <i class="fa-solid fa-triangle-exclamation"></i> This debit note is still pending
+            </div>
+            <ul id="pendingIssueList" class="pending-issue-list"></ul>
+        </div>
+
         
         <div class="receipt-meta-grid">
             
@@ -822,6 +829,17 @@
     #editModal.modal.show { align-items:flex-start; padding:16px; overflow-y:hidden; }
     .receipt-wrapper {  width: 95%;max-width: 1100px;max-height: 95vh; background:#fff; border-radius:8px; overflow:auto; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.4); border:1px solid #e2e8f0; }
     .dark #editModal input,.dark #editModal select,.dark #editModal textarea,.dark #editModal .receipt-input { background:#ffffff!important; color:#000000!important; border:1px solid #d1d5db!important; }
+    .pending-issue-alert { margin:0 8px 8px; padding:8px 10px; border:1px solid #fca5a5; border-left:4px solid #dc2626; border-radius:6px; background:#fef2f2; color:#991b1b; font-size:12px; }
+    .pending-issue-title { font-weight:700; margin-bottom:4px; }
+    .pending-issue-list { margin:0; padding-left:18px; }
+    #editModal .pending-field-error,
+    #editModal .pending-field-error + .select2 .select2-selection,
+    #editModal .pending-field-error.select2-hidden-accessible + .select2 .select2-selection { border-color:#ef4444!important; background:#fff7f7!important; box-shadow:0 0 0 2px rgba(239,68,68,.12)!important; }
+    #editModal .receipt-table .pending-field-error,
+    #editModal .receipt-table .pending-field-error + .select2 .select2-selection,
+    #editModal .receipt-table .pending-field-error.select2-hidden-accessible + .select2 .select2-selection,
+    #editModal .custom-slots-table .pending-field-error { border-color:#f87171!important; background:#fffafa!important; box-shadow:inset 0 0 0 1px rgba(248,113,113,.35)!important; }
+    #editModal .pending-field-error-row { background:#fff7f7 !important; }
     .receipt-head { display:flex; justify-content:space-between; align-items:flex-start; padding:4px 8px; background:#fff; }
     .receipt-company { font-size:12px; font-weight:700; color:#000; }
     .receipt-subtitle { font-size:8px; color:#000; text-transform:uppercase; letter-spacing:1px; }
@@ -1347,11 +1365,83 @@
         row.find('input[name^="party_name"]').val(value);
     });
 
+     function clearPendingIssueHighlights() {
+        $('#pendingIssueAlert').hide();
+        $('#pendingIssueList').empty();
+        $('#editModal .pending-field-error').removeClass('pending-field-error');
+        $('#editModal .select2-container.pending-field-error').removeClass('pending-field-error');
+        $('#editModal .pending-field-error-row').removeClass('pending-field-error-row');
+    }
+
+    function pendingIssueTargets(field) {
+        const targets = {
+            purchase_ledger: ['#noitem_purchase_ledger', '.noitem-ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger'],
+            party_name: ['#edit_party'],
+            gst_no: ['#edit_gst'],
+            date: ['#edit_date'],
+            gst_rate: ['.item-gst_rate', '.noitem-gst'],
+            item_name: ['.item-name'],
+            invoice_no: ['#edit_invoice'],
+            amount: ['#edit_total_amount', '#noitem_amount', '.noitem-amount'],
+            gst_ledger: ['#igst_ledger', '#cgst_ledger', '#sgst_ledger', '.slot-igst-ledger', '.slot-cgst-ledger', '.slot-sgst-ledger']
+        };
+
+        return targets[field] || [];
+    }
+
+    function markPendingField(fields) {
+        fields.each(function () {
+            const field = $(this);
+            field.addClass('pending-field-error');
+            field.next('.select2-container').addClass('pending-field-error');
+
+            const fieldRow = field.closest('.receipt-field-row, .tax-row');
+            if (fieldRow.length) {
+                fieldRow.addClass('pending-field-error-row');
+                return;
+            }
+
+            field.closest('tr').addClass('pending-field-error-row');
+        });
+    }
+
+    function applyPendingIssueHighlights(issues, status = '') {
+        clearPendingIssueHighlights();
+
+        const normalizedStatus = String(status || '').trim().toLowerCase();
+        const issueList = Array.isArray(issues) ? issues : [];
+
+        if (!issueList.length) {
+            if (normalizedStatus === 'pending') {
+                $('#pendingIssueList').html('<li>This debit note is pending. Please review the highlighted/required fields before updating.</li>');
+                $('#pendingIssueAlert').show();
+            }
+            return;
+        }
+
+        const list = issueList.map(issue => `<li>${$('<div>').text(issue.message || 'Please review this field.').html()}</li>`).join('');
+        $('#pendingIssueList').html(list);
+        $('#pendingIssueAlert').show();
+
+        issueList.forEach(issue => {
+            pendingIssueTargets(issue.field).forEach(selector => {
+                // const field = $(selector);
+                // field.addClass('pending-field-error');
+
+                // if (!field.closest('#noItemBody, #customSlotsBody, #editItemsBody').length) {
+                //     field.closest('tr').addClass('pending-field-error-row');
+                // }
+                markPendingField($(selector));
+            });
+        });
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // VIEW MODAL
     // ═══════════════════════════════════════════════════════════════════════
     $(document).on('click', '.viewRow', function () {
         let id = $(this).data('id');
+        clearPendingIssueHighlights();
 
         // Open same edit modal
         openEditModal();
@@ -1464,6 +1554,7 @@
                 syncEntryMode(hasItems, true);
 
                 recalcTotals();
+                applyPendingIssueHighlights(res.pending_issues, res.status);
             }
         });
     });
@@ -1477,7 +1568,7 @@
    // ═══════ EDIT MODAL ═══════
     $(document).on('click', '.editRow', function () {
         let btn = $(this), id = btn.data('id');
-
+        clearPendingIssueHighlights();
         $('#updateRow').show();
         $('#addItemRow').show();
 
@@ -1590,6 +1681,7 @@
                 syncEntryMode(hasItems, false);
                 // else {
                     recalcTotals();
+                    applyPendingIssueHighlights(res.pending_issues, res.status);
                 //}
 
                 // if (!res.items || !res.items.length) {
@@ -2584,6 +2676,7 @@
             .css('pointer-events', 'auto');
 
         $('.receipt-del-btn').show();
+        clearPendingIssueHighlights();
     }
     function openViewModal()    { document.getElementById('viewModal').classList.add('show'); }
     function closeViewModal()   { document.getElementById('viewModal').classList.remove('show'); }
