@@ -1182,6 +1182,13 @@ class SalesUploadController extends Controller
             ];
         }
 
+        if (!$this->salesAmountsMatch($transaction)) {
+            $issues[] = [
+                'field' => 'amount',
+                'message' => 'Amount does not match the recalculated taxable/GST total.',
+            ];
+        }
+
         if (!$this->isUploadDateInSelectedYear($invoiceDate)) {
             $issues[] = [
                 'field' => 'date',
@@ -1289,6 +1296,91 @@ class SalesUploadController extends Controller
         ]], (float) $transaction->igst > 0);
     }
 
+    private function salesAmountsMatch(SalesTransaction $transaction): bool
+    {
+        if ((int) $transaction->isWithItem === 1) {
+            foreach ($transaction->items as $item) {
+                $calculatedAmount = $this->roundCurrency((float) $item->quantity * (float) $item->rate);
+                if (abs($calculatedAmount - $this->roundCurrency($item->amount)) > 0.01) {
+                    return false;
+                }
+            }
+        }
+
+        $roundOffSide = $this->getRoundOffSetting($transaction->iPartyId)['side'];
+        return $this->totalsMatch(
+            (float) $transaction->total_amount,
+            (float) $transaction->amount,
+            (float) $transaction->sgst,
+            (float) $transaction->cgst,
+            (float) $transaction->igst,
+            $roundOffSide
+        );
+    }
+
+    private function recalculateSalesTransactionAmounts(SalesTransaction $transaction): bool
+    {
+        $amount = 0.0;
+        $sgst = 0.0;
+        $cgst = 0.0;
+        $igst = 0.0;
+
+        if ((int) $transaction->isWithItem === 1) {
+            foreach ($transaction->items as $item) {
+                $itemAmount = $this->roundCurrency((float) $item->quantity * (float) $item->rate);
+                $itemSgst = $this->roundCurrency($item->sgst);
+                $itemCgst = $this->roundCurrency($item->cgst);
+                $itemIgst = $this->roundCurrency($item->igst);
+
+                $item->amount = $itemAmount;
+                $item->total_amount = $this->roundCurrency($itemAmount + $itemSgst + $itemCgst + $itemIgst);
+                $item->save();
+
+                $amount += $itemAmount;
+                $sgst += $itemSgst;
+                $cgst += $itemCgst;
+                $igst += $itemIgst;
+            }
+        } elseif ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            foreach ($transaction->customGst as $slot) {
+                $slotAmount = $this->roundCurrency($slot->taxable ?? $slot->amount ?? 0);
+                $slotSgst = $this->roundCurrency($slot->sgst_amount);
+                $slotCgst = $this->roundCurrency($slot->cgst_amount);
+                $slotIgst = $this->roundCurrency($slot->igst_amount);
+
+                $slot->taxable = $slotAmount;
+                $slot->amount = $slotAmount;
+                $slot->save();
+
+                $amount += $slotAmount;
+                $sgst += $slotSgst;
+                $cgst += $slotCgst;
+                $igst += $slotIgst;
+            }
+        } else {
+            $amount = $this->roundCurrency($transaction->amount);
+            $sgst = $this->roundCurrency($transaction->sgst);
+            $cgst = $this->roundCurrency($transaction->cgst);
+            $igst = $this->roundCurrency($transaction->igst);
+        }
+
+        $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
+        $roundOffLedger = $roundOffSetting['ledger'];
+        $transaction->fill([
+            'amount' => $this->roundCurrency($amount),
+            'sgst' => $this->roundCurrency($sgst),
+            'cgst' => $this->roundCurrency($cgst),
+            'igst' => $this->roundCurrency($igst),
+            'total_amount' => $this->calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, $roundOffSetting['side']),
+            'roundoff' => $this->calculateRoundOffAmount($amount, $sgst, $cgst, $igst, $roundOffSetting['side']),
+            'roundoff_id' => $roundOffLedger->iLedgerId ?? $transaction->roundoff_id,
+            'roundoff_ledger_name' => $roundOffLedger->strCustomerName ?? $transaction->roundoff_ledger_name,
+            'is_igst' => $igst > 0 ? 1 : 0,
+        ]);
+
+        return $this->salesAmountsMatch($transaction);
+    }
+
     private function rematchPendingSalesTransaction(SalesTransaction $transaction): bool
     {
         $partyId = $transaction->iPartyId;
@@ -1297,6 +1389,8 @@ class SalesUploadController extends Controller
         $mapping = $this->getGstMapping($partyId, $salesLedger?->name ?? $salesLedgerName);
         $partyLookup = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
         $partyDetails = $partyLookup['details'] ?? null;
+
+        $amountMatched = $this->recalculateSalesTransactionAmounts($transaction);
 
         $transaction->fill([
             'party_name' => $partyDetails['name'] ?? $transaction->party_name,
@@ -1323,6 +1417,8 @@ class SalesUploadController extends Controller
 
         return $this->hasSalesLedgerMatch($salesLedger)
             && $hasGstLedgers
+            && !$this->salesHasUnmatchedItems($transaction)
+            && $amountMatched
             && $this->hasUploadPartyMatch($partyLookup)
             && $this->hasUploadedGstNoMatch($partyLookup, $transaction->gst_no)
             && $this->isUploadDateInSelectedYear($invoiceDate)

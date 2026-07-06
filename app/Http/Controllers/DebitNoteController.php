@@ -2320,9 +2320,9 @@ class DebitNoteController extends Controller
             // ===============================
             // UPDATE ROW
             // ===============================
-            $row->update([
-                'note_no' => $request->note_no[$id] ?? ($request->invoice_no[$id] ?? $row->note_no),
-                'note_date' => $request->note_date[$id] ?? ($request->date[$id] ?? $row->note_date),
+            $row->fill([
+                'note_no' => $noteNo,
+                'note_date' => $date,
 
                 'party_name' => $partyName,
 
@@ -2332,11 +2332,11 @@ class DebitNoteController extends Controller
                 'purchase_ledger_name' => $ledger->name ?? $row->purchase_ledger_name,
 
                 'vch_type' => $voucherType ?: 'Debit Note',
-                // 'status' => 'saved'
-                'status' => $this->canMarkDebitNoteSaved($row, $partyName, $ledger->name ?? $ledgerName)
-                    ? 'saved'
-                    : 'Pending'
+                'status' => 'Pending',
             ]);
+            $row->loadMissing(['items', 'customGst']);
+            $row->status = empty($this->getDebitNotePendingIssues($row)) ? 'saved' : 'Pending';
+            $row->save();
         }
 
         // ===============================
