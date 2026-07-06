@@ -437,6 +437,15 @@
     const ITEM_MASTER = @json($stockItems);
     const SALES_LEDGERS = @json($salesLedgers);
     const SALES_GST_MAPPINGS = @json($salesGstMappings ?? []);
+    const GST_RATE_OPTIONS = [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0];
+
+    function buildGstRateOptions(selected = 0) {
+        const selectedRate = parseFloat(selected);
+        return GST_RATE_OPTIONS.map(rate => {
+            const isSelected = Number.isFinite(selectedRate) && Math.abs(rate - selectedRate) < 0.000001;
+            return `<option value="${rate}" ${isSelected ? 'selected' : ''}>${rate}</option>`;
+        }).join('');
+    }
 
     function normalizeLedgerName(name) {
         return String(name || '').replace(/["']/g, '').trim().toLowerCase();
@@ -643,7 +652,7 @@
                     </select>
                 </td>
                 <td>
-                    <input type="number" class="receipt-input noitem-gst" value="${row.gst || row.gst_rate || 0}" step="any">
+                    <select class="receipt-input noitem-gst">${buildGstRateOptions(row.gst || row.gst_rate || 0)}</select>
                 </td>
                 <td>
                     <input type="number" class="receipt-input noitem-amount" value="${row.amount || row.taxable || 0}" step="any">
@@ -1401,7 +1410,7 @@
     });
 
     // ═══════ LIVE RECALC ON INPUT ═══════
-    $(document).on('input', '#editItemsBody input', function() {
+    $(document).on('input change', '#editItemsBody input, #editItemsBody select.item-gst_rate', function() {
         recalcItemRow($(this).closest('tr'));
         recalcTotals();
     });
@@ -1698,7 +1707,7 @@
                 </td>
 
                 <td><input type="text" class="item-hsn" value="${item.hsn||''}"></td>
-                <td><input type="number" class="item-gst_rate" value="${item.gst_rate||''}"></td>
+                <td><select class="item-gst_rate receipt-input">${buildGstRateOptions(item.gst_rate || 0)}</select></td>
                 <td><input type="number" class="item-qty" value="${item.quantity||''}"></td>
                 <td><input type="text" class="item-unit" value="${item.unit||'NOS'}"></td>
                 <td><input type="number" class="item-rate" value="${item.rate||''}"></td>

@@ -505,7 +505,7 @@ class PandLAccountController extends Controller
             |--------------------------------------------------------------------------
             */
 
-            $cogs = max($openingStock, 0) + $purchaseAccounts + $directExpenses - max($closingStock, 0);
+            $cogs = max($openingStock, 0) + $purchaseAccounts  - max($closingStock, 0);
 
             /*
             |--------------------------------------------------------------------------

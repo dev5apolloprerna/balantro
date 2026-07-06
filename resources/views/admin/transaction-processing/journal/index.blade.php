@@ -52,6 +52,16 @@
                         Select Client
                     </button>
 
+                    <button
+                        id="bulkDeleteBtn"
+                        type="button"
+                        onclick="bulkDelete()"
+                        title="Delete selected uploads"
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-trash"></i>
+                        
+                    </button>
+
                 </div>
             </div>
 

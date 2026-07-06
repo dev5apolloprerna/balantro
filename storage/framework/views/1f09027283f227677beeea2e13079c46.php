@@ -129,10 +129,8 @@
                                 </a>
                             </td>
                             <td class="px-4 py-3 text-right flex justify-end gap-4">
-                                <?php echo e($upload->status); ?>
-
                                 <?php if(($upload->status == 'pending' || $upload->status == 'Pending') && ($upload->pending ?? 0) > 0): ?>
-                                <?php dd($upload->pending); ?>
+                                
                                 <form method="POST" action="<?php echo e(route('journal.rematch', $upload->id)); ?>" class="inline">
                                     <?php echo csrf_field(); ?>
                                     <button

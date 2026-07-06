@@ -444,9 +444,21 @@
         background: #fff7f7;
     }
 
+    #editModal .receipt-input,
+    #editModal input.receipt-input,
+    #editModal textarea.receipt-input,
+    #editModal select.receipt-input {
+        background: #f9fafb !important;
+        border-color: #d1d5db !important;
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        color-scheme: light;
+    }
+
     #editModal input[type="date"],
     #editModal input[type="date"].receipt-input,
     #editModal input[type="date"].pending-field-error {
+        background: #f9fafb !important;
         color: #111827 !important;
         -webkit-text-fill-color: #111827 !important;
         color-scheme: light;
@@ -455,6 +467,13 @@
     #editModal input[type="date"]::-webkit-calendar-picker-indicator {
         filter: none;
         opacity: 1;
+    }
+
+    #editModal .select2-container--default .select2-selection--single,
+    #editModal .select2-container--default .select2-selection--single .select2-selection__rendered {
+        background: #f9fafb !important;
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
     }
     
     .auto-row input {

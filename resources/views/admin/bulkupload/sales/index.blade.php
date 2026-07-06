@@ -1921,6 +1921,15 @@
         let SGST_LEDGERS = @json($sGstLedgers);
         const SALES_GST_MAPPINGS = @json($salesGstMappings ?? []);
         const ITEM_MASTER = @json($stockItems);
+        const GST_RATE_OPTIONS = [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0];
+
+        function buildGstRateOptions(selected = 0) {
+            const selectedRate = parseFloat(selected);
+            return GST_RATE_OPTIONS.map(rate => {
+                const isSelected = Number.isFinite(selectedRate) && Math.abs(rate - selectedRate) < 0.000001;
+                return `<option value="${rate}" ${isSelected ? 'selected' : ''}>${rate}</option>`;
+            }).join('');
+        }
     </script>
     <script>
         function showFileName(input) {
@@ -2647,7 +2656,7 @@
                         ${buildItemOptions(data.item_name || '')}
                     </select></td>
                     <td><input type="text" class="hsn" value="${data.hsn || ''}"></td>
-                    <td><input type="number" class="gst"  value="${data.gst || 0}"></td>
+                    <td><select class="gst receipt-input">${buildGstRateOptions(data.gst || 0)}</select></td>
                     <td><input type="number" class="qty" value="${data.qty || 1}"></td>
                     <td><input type="text" class="unit receipt-input" value="${data.unit || 'NOS'}"></td>
                     <td><input type="number" class="rate" value="${data.rate || 0}"></td>
@@ -2682,7 +2691,7 @@
 
         });
 
-        $(document).on('input', '.qty, .rate, .gst', function() {
+        $(document).on('input change', '.qty, .rate, .gst', function() {
             let mode = $('#gst_calc_mode').val();
 
             if (mode === 'standard') {
@@ -3179,9 +3188,9 @@
                         </select>
                     </td>
                     <td>
-                        <input type="number"
-                            class="receipt-input noitem-gst"
-                            value="18">
+                        <select class="receipt-input noitem-gst">
+                            ${buildGstRateOptions(18)}
+                        </select>
                     </td>
                     <td>
                         <input type="number"
