@@ -1320,6 +1320,94 @@ class PurchaseUploadController extends Controller
         ]);
     }
 
+    public function rematch($id)
+    {
+        $iPartyId = session('iPartyId');
+        if (!$iPartyId) {
+            return redirect()->route('data_entry_operators.bulkuploadpurchase')
+                ->with('alert', 'Please select company first');
+        }
+
+        $upload = BulkPurchaseUpload::where('id', $id)
+            ->where('iPartyId', $iPartyId)
+            ->first();
+
+        if (!$upload) {
+            return back()->with('alert', 'Upload not found');
+        }
+
+        $matched = 0;
+        $stillPending = 0;
+        $totalPending = 0;
+
+        try {
+            DB::transaction(function () use ($upload, $iPartyId, &$matched, &$stillPending, &$totalPending) {
+                $transactions = PurchaseTransaction::with(['items', 'customGst'])
+                    ->where('upload_id', $upload->id)
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', 'pending')
+                    ->get();
+
+                $totalPending = $transactions->count();
+
+                foreach ($transactions as $transaction) {
+                    if ($this->rematchPendingPurchaseTransaction($transaction)) {
+                        $transaction->status = 'saved';
+                        $matched++;
+                    } else {
+                        $transaction->status = 'pending';
+                        $stillPending++;
+                    }
+
+                    $transaction->save();
+                }
+
+                $this->refreshPurchaseUploadCounts($upload->id);
+            });
+        } catch (\Throwable $exception) {
+            \Log::error('Purchase re-match failed', [
+                'upload_id' => $upload->id,
+                'iPartyId' => $iPartyId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return back()->with('alert', 'Re-Match failed. Please try again or contact support if the issue continues.');
+        }
+
+        if ($totalPending === 0) {
+            return back()->with('notice', 'No pending purchase entries were found for re-match.');
+        }
+
+        if ($matched === 0) {
+            return back()->with(
+                'alert',
+                "Re-Match completed, but no pending entries could be saved. {$stillPending} pending entr"
+                    . ($stillPending === 1 ? 'y requires' : 'ies require')
+                    . ' GST, ledger, or item mapping updates before trying again.'
+            );
+        }
+
+        $message = "Re-Match completed successfully. {$matched} pending entr"
+            . ($matched === 1 ? 'y was' : 'ies were')
+            . " saved; {$stillPending} remain pending.";
+
+        return back()->with('notice', $message);
+    }
+
+    private function refreshPurchaseUploadCounts(int $uploadId): void
+    {
+        $saved = PurchaseTransaction::where('upload_id', $uploadId)->where('status', 'saved')->count();
+        $pending = PurchaseTransaction::where('upload_id', $uploadId)->where('status', 'pending')->count();
+        $total = PurchaseTransaction::where('upload_id', $uploadId)->count();
+
+        BulkPurchaseUpload::where('id', $uploadId)->update([
+            'total' => $total,
+            'saved' => $saved,
+            'pending' => $pending,
+            'status' => $pending > 0 ? 'Pending' : 'Completed',
+        ]);
+    }
+
     // PREVIEW PAGE
     public function preview($id)
     {

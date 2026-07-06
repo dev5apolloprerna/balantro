@@ -172,6 +172,7 @@
 
                                     </td>
                                     <td class="px-4 py-3">
+                                        
                                         <?php if($upload->status == 'Completed' || $upload->status == 'completed'): ?>
                                         <a href="<?php echo e(route('transaction_processing.preview_processing_credit_note',$upload->id)); ?>"
                                             class="text-green-500 font-semibold hover:underline">

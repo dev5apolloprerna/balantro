@@ -2088,6 +2088,257 @@ class CreditNoteController extends Controller
             'message' => 'Credit Note Updated Successfully'
         ]);
     }
+
+    public function rematch($id)
+    {
+        $iPartyId = session('iPartyId');
+        if (!$iPartyId) {
+            return redirect()->route('cn.index')
+                ->with('alert', 'Please select company first');
+        }
+
+        $upload = BulkCreditNoteUpload::where('id', $id)
+            ->where('iPartyId', $iPartyId)
+            ->first();
+
+        if (!$upload) {
+            return back()->with('alert', 'Upload not found');
+        }
+
+        $matched = 0;
+        $stillPending = 0;
+        $totalPending = 0;
+
+        try {
+            DB::transaction(function () use ($upload, $iPartyId, &$matched, &$stillPending, &$totalPending) {
+                $transactions = CreditNoteTransaction::with(['items', 'customGst'])
+                    ->where('upload_id', $upload->id)
+                    ->where('iPartyId', $iPartyId)
+                    ->whereIn('status', ['pending', 'Pending'])
+                    ->where('is_delete', 0)
+                    ->get();
+
+                $totalPending = $transactions->count();
+
+                foreach ($transactions as $transaction) {
+                    if ($this->rematchPendingCreditNoteTransaction($transaction)) {
+                        $transaction->status = 'saved';
+                        $matched++;
+                    } else {
+                        $transaction->status = 'pending';
+                        $stillPending++;
+                    }
+
+                    $transaction->save();
+                }
+
+                $this->refreshCreditNoteUploadCounts($upload->id);
+            });
+        } catch (\Throwable $exception) {
+            \Log::error('Credit note re-match failed', [
+                'upload_id' => $upload->id,
+                'iPartyId' => $iPartyId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return back()->with('alert', 'Re-Match failed. Please try again or contact support if the issue continues.');
+        }
+
+        if ($totalPending === 0) {
+            return back()->with('notice', 'No pending credit note entries were found for re-match.');
+        }
+
+        if ($matched === 0) {
+            return back()->with(
+                'alert',
+                "Re-Match completed, but no pending entries could be saved. {$stillPending} pending entr"
+                    . ($stillPending === 1 ? 'y requires' : 'ies require')
+                    . ' GST, ledger, or item mapping updates before trying again.'
+            );
+        }
+
+        $message = "Re-Match completed successfully. {$matched} pending entr"
+            . ($matched === 1 ? 'y was' : 'ies were')
+            . " saved; {$stillPending} remain pending.";
+
+        return back()->with('notice', $message);
+    }
+
+    private function rematchPendingCreditNoteTransaction(CreditNoteTransaction $transaction): bool
+    {
+        $partyId = $transaction->iPartyId;
+        $salesLedgerName = $transaction->sales_ledger_name ?: $transaction->sales_ledger;
+        $salesLedger = $salesLedgerName ? Ledger::getLedgerByName($partyId, $salesLedgerName) : null;
+        $mapping = $this->getGstMapping($partyId, $salesLedger?->name ?? $salesLedgerName);
+        $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($partyId, [
+            'gst_no' => $transaction->gst_no,
+            'party_name' => $transaction->party_name,
+        ]);
+
+        $transaction->fill([
+            'party_name' => $partyLedgerDetails['party_name'] ?? $transaction->party_name,
+            'gst_no' => $partyLedgerDetails['gst_no'] ?? $transaction->gst_no,
+            'place_of_supply' => $partyLedgerDetails['state'] ?? $transaction->place_of_supply,
+            'address' => $partyLedgerDetails['address'] ?? $transaction->address,
+            'pincode' => $partyLedgerDetails['pincode'] ?? $transaction->pincode,
+            'city' => $partyLedgerDetails['city'] ?? $transaction->city,
+            'sales_ledger_id' => $salesLedger?->id ?? $salesLedger?->iLedgerId ?? $transaction->sales_ledger_id,
+            'sales_ledger_name' => $salesLedger?->name ?? $salesLedger?->strCustomerName ?? $transaction->sales_ledger_name,
+            'cgst_id' => $mapping['cgst_id'],
+            'cgst_ledger_name' => $mapping['cgst_name'],
+            'sgst_id' => $mapping['sgst_id'],
+            'sgst_ledger_name' => $mapping['sgst_name'],
+            'igst_id' => $mapping['igst_id'],
+            'igst_ledger_name' => $mapping['igst_name'],
+        ]);
+
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            foreach ($transaction->customGst as $slot) {
+                $slotMapping = $this->getGstMapping($partyId, $slot->ledger_name ?: $salesLedgerName);
+                $slot->fill([
+                    'cgst_ledger_id' => $slotMapping['cgst_id'],
+                    'cgst_ledger_name' => $slotMapping['cgst_name'],
+                    'sgst_ledger_id' => $slotMapping['sgst_id'],
+                    'sgst_ledger_name' => $slotMapping['sgst_name'],
+                    'igst_ledger_id' => $slotMapping['igst_id'],
+                    'igst_ledger_name' => $slotMapping['igst_name'],
+                ])->save();
+            }
+        }
+
+        $this->normalizeCreditNoteGstRatesAndRecalculate($transaction);
+
+        return empty($this->getCreditNotePendingIssues($transaction, $mapping));
+    }
+
+    private function normalizeCreditNoteGstRatesAndRecalculate(CreditNoteTransaction $transaction): void
+    {
+        $sumAmount = 0.0;
+        $sumCgst = 0.0;
+        $sumSgst = 0.0;
+        $sumIgst = 0.0;
+
+        if ($transaction->items->isNotEmpty()) {
+            foreach ($transaction->items as $item) {
+                $amount = (float) $item->amount;
+                $gstRate = $this->nearestCreditNoteGstSlab($item->gst_rate);
+                $taxAmount = ($amount * $gstRate) / 100;
+
+                $item->gst_rate = $gstRate;
+                if ((float) $item->igst > 0 || (bool) $transaction->is_igst) {
+                    $item->igst = $this->roundCurrency($taxAmount);
+                    $item->cgst = 0;
+                    $item->sgst = 0;
+                } else {
+                    $item->igst = 0;
+                    $item->cgst = $this->roundCurrency($taxAmount / 2);
+                    $item->sgst = $this->roundCurrency($taxAmount / 2);
+                }
+                $item->total_amount = $this->roundCurrency($amount + (float) $item->cgst + (float) $item->sgst + (float) $item->igst);
+                $item->save();
+
+                $sumAmount += $amount;
+                $sumCgst += (float) $item->cgst;
+                $sumSgst += (float) $item->sgst;
+                $sumIgst += (float) $item->igst;
+            }
+        } elseif ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            foreach ($transaction->customGst as $slot) {
+                $amount = (float) ($slot->amount ?? $slot->taxable);
+                $gstRate = $this->nearestCreditNoteGstSlab($slot->gst_rate);
+                $taxAmount = ($amount * $gstRate) / 100;
+
+                $slot->gst_rate = $gstRate;
+                $slot->taxable = $amount;
+                $slot->amount = $amount;
+                if ((bool) $transaction->is_igst || (float) $slot->igst_amount > 0) {
+                    $slot->igst_amount = $this->roundCurrency($taxAmount);
+                    $slot->cgst_amount = 0;
+                    $slot->sgst_amount = 0;
+                } else {
+                    $slot->igst_amount = 0;
+                    $slot->cgst_amount = $this->roundCurrency($taxAmount / 2);
+                    $slot->sgst_amount = $this->roundCurrency($taxAmount / 2);
+                }
+                $slot->save();
+
+                $sumAmount += $amount;
+                $sumCgst += (float) $slot->cgst_amount;
+                $sumSgst += (float) $slot->sgst_amount;
+                $sumIgst += (float) $slot->igst_amount;
+            }
+        } else {
+            $sumAmount = (float) $transaction->taxable_amount;
+            $gstRate = $this->nearestCreditNoteGstSlab($transaction->gst_rate);
+            $taxAmount = ($sumAmount * $gstRate) / 100;
+
+            $transaction->gst_rate = $gstRate;
+            if ((bool) $transaction->is_igst || (float) $transaction->igst > 0) {
+                $sumIgst = $this->roundCurrency($taxAmount);
+            } else {
+                $sumCgst = $this->roundCurrency($taxAmount / 2);
+                $sumSgst = $this->roundCurrency($taxAmount / 2);
+            }
+        }
+
+        $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
+        $roundOffLedger = $roundOffSetting['ledger'];
+
+        $transaction->fill([
+            'taxable_amount' => $this->roundCurrency($sumAmount),
+            'cgst' => $this->roundCurrency($sumCgst),
+            'sgst' => $this->roundCurrency($sumSgst),
+            'igst' => $this->roundCurrency($sumIgst),
+            'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
+            'roundoff_id' => $roundOffLedger?->iLedgerId,
+            'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
+            'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
+        ]);
+    }
+
+    private function nearestCreditNoteGstSlab($rate): float
+    {
+        $rate = round((float) $rate, 2);
+        if ($rate <= 0 || $this->isGstRateWithinDefinedSlabs($rate)) {
+            return $rate;
+        }
+
+        $slabs = [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0];
+        $nearest = $rate;
+        $smallestDifference = null;
+
+        foreach ($slabs as $slab) {
+            $difference = abs($rate - $slab);
+            if ($smallestDifference === null || $difference < $smallestDifference) {
+                $nearest = $slab;
+                $smallestDifference = $difference;
+            }
+        }
+
+        return $smallestDifference !== null && $smallestDifference <= 0.05 ? $nearest : $rate;
+    }
+
+    private function refreshCreditNoteUploadCounts(int $uploadId): void
+    {
+        $saved = CreditNoteTransaction::where('upload_id', $uploadId)
+            ->where('status', 'saved')
+            ->where('is_delete', 0)
+            ->count();
+        $pending = CreditNoteTransaction::where('upload_id', $uploadId)
+            ->whereIn('status', ['pending', 'Pending'])
+            ->where('is_delete', 0)
+            ->count();
+        $total = CreditNoteTransaction::where('upload_id', $uploadId)
+            ->where('is_delete', 0)
+            ->count();
+
+        BulkCreditNoteUpload::where('id', $uploadId)->update([
+            'total' => $total,
+            'saved' => $saved,
+            'pending' => $pending,
+            'status' => $pending > 0 ? 'pending' : 'completed',
+        ]);
+    }
     
     private function getCreditNotePendingIssues(CreditNoteTransaction $transaction, ?array $gstMapping = null): array
     {

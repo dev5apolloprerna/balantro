@@ -1098,7 +1098,7 @@ class SalesUploadController extends Controller
         $iPartyId = session('iPartyId');
         if (!$iPartyId) {
             return redirect()->route('data_entry_operators.bulkuploadsales')
-                ->with('error', 'Please select company first');
+                ->with('alert', 'Please select company first');
         }
 
         $upload = BulkSalesUpload::where('id', $id)
@@ -1106,38 +1106,59 @@ class SalesUploadController extends Controller
             ->first();
 
         if (!$upload) {
-            return back()->with('error', 'Upload not found');
+            return back()->with('alert', 'Upload not found');
         }
 
         $matched = 0;
         $stillPending = 0;
+        $totalPending = 0;
 
-        DB::transaction(function () use ($upload, $iPartyId, &$matched, &$stillPending) {
-            $transactions = SalesTransaction::with(['items', 'customGst'])
-                ->where('upload_id', $upload->id)
-                ->where('iPartyId', $iPartyId)
-                ->where('status', 'pending')
-                ->get();
-
-            foreach ($transactions as $transaction) {
-                if ($this->rematchPendingSalesTransaction($transaction)) {
-                    $transaction->status = 'saved';
-                    $matched++;
-                } else {
-                    $transaction->status = 'pending';
-                    $stillPending++;
+        try {
+            DB::transaction(function () use ($upload, $iPartyId, &$matched, &$stillPending, &$totalPending) {
+                $transactions = SalesTransaction::with(['items', 'customGst'])
+                    ->where('upload_id', $upload->id)
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', 'pending')
+                    ->get();
+                $totalPending = $transactions->count();
+                foreach ($transactions as $transaction) {
+                    if ($this->rematchPendingSalesTransaction($transaction)) {
+                        $transaction->status = 'saved';
+                        $matched++;
+                    } else {
+                        $transaction->status = 'pending';
+                        $stillPending++;
+                    }
+                    $transaction->save();
                 }
+                $this->refreshSalesUploadCounts($upload->id);
+            });
+        } catch (\Throwable $exception) {
+            \Log::error('Sales re-match failed', [
+                'upload_id' => $upload->id,
+                'iPartyId' => $iPartyId,
+                'error' => $exception->getMessage(),
+            ]);
+            return back()->with('alert', 'Re-Match failed. Please try again or contact support if the issue continues.');
+        }
+         if ($totalPending === 0) {
+            return back()->with('notice', 'No pending sales entries were found for re-match.');
+        }
 
-                $transaction->save();
-            }
+        if ($matched === 0) {
+            return back()->with(
+                'alert',
+                "Re-Match completed, but no pending entries could be saved. {$stillPending} pending entr"
+                    . ($stillPending === 1 ? 'y requires' : 'ies require')
+                    . ' GST or item mapping updates before trying again.'
+            );
+        }
 
-            $this->refreshSalesUploadCounts($upload->id);
-        });
+        $message = "Re-Match completed successfully. {$matched} pending entr"
+            . ($matched === 1 ? 'y was' : 'ies were')
+            . " saved; {$stillPending} remain pending.";
 
-        return back()->with(
-            $matched > 0 ? 'success' : 'info',
-            "Re-Match completed. {$matched} pending entr" . ($matched === 1 ? 'y was' : 'ies were') . " saved; {$stillPending} remain pending."
-        );
+        return back()->with('notice', $message);
     }
 
     private function getSalesPendingIssues(SalesTransaction $transaction, ?array $gstMapping = null): array

@@ -803,9 +803,7 @@
     }
 
     function saveSelected() {
-        let selected = $('.rowCheckbox:checked').map(function() {
-            return this.value;
-        }).get();
+        let selected = getSelectedJournalRowIds();
         $.post("<?php echo e(route('journal.save')); ?>", {
             _token: '<?php echo e(csrf_token()); ?>',
             selected: selected
@@ -816,9 +814,7 @@
     }
 
     function submitSelected() {
-        let selected = $('.rowCheckbox:checked').map(function() {
-            return this.value;
-        }).get();
+        let selected = getSelectedJournalRowIds();
         $.post("<?php echo e(route('journal.submit')); ?>", {
             _token: '<?php echo e(csrf_token()); ?>',
             selected: selected
@@ -840,10 +836,27 @@
         }
     }
 
+    function getSelectedJournalRowIds() {
+        return $('.rowCheckbox:checked').map(function() {
+            return this.value;
+        }).get();
+    }
+
+    function syncJournalRowSelectAllState() {
+        const visibleRows = $('.rowCheckbox:visible');
+        const total = visibleRows.length;
+        const checked = visibleRows.filter(':checked').length;
+        $('#selectAll').prop('checked', total > 0 && checked === total);
+        $('#selectAll').prop('indeterminate', checked > 0 && checked < total);
+    }
+
     // SELECT ALL
-    $('#selectAll').click(function() {
-        $('.rowCheckbox').prop('checked', this.checked);
+    $(document).on('change', '#selectAll', function() {
+        $('.rowCheckbox:visible').prop('checked', this.checked);
+        syncJournalRowSelectAllState();
     });
+
+    $(document).on('change', '.rowCheckbox', syncJournalRowSelectAllState);
 
     // SEARCH
     $('.searchInput').on('keyup', function() {

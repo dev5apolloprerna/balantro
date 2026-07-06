@@ -236,6 +236,17 @@
                                         </a>
                                         <!-- <i class="fa-regular fa-file-lines text-gray-500 cursor-pointer"></i> -->
                                         <div class="relative inline-block">
+                                            <?php if(($upload->status == 'Pending' || $upload->status == 'pending') && ($upload->pending ?? 0) > 0): ?>
+                                            <form method="POST" action="<?php echo e(route('dn.rematch', $upload->id)); ?>" class="inline">
+                                                <?php echo csrf_field(); ?>
+                                                <button
+                                                    type="submit"
+                                                    title="Re-Match pending entries"
+                                                    class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
+                                                    <i class="fa-solid fa-repeat"></i>
+                                                </button>
+                                            </form>
+                                            <?php endif; ?>
                                             <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                                 class="text-gray-500 hover:text-gray-700 px-2">
                                                 <i class="fa-solid fa-ellipsis-vertical action-icon"></i>

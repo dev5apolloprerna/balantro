@@ -138,6 +138,7 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
         Route::post('/purchase-upload', [\App\Http\Controllers\PurchaseUploadController::class, 'upload'])->name('purchase.upload');
         Route::get('/purchase-preview/{id}', [\App\Http\Controllers\PurchaseUploadController::class, 'preview'])->name('purchase.preview');
         Route::post('/purchase-save',[\App\Http\Controllers\PurchaseUploadController::class,'save'])->name('purchase.save');
+        Route::post('/purchase-rematch/{id}', [\App\Http\Controllers\PurchaseUploadController::class, 'rematch'])->name('purchase.rematch');
         Route::post('/purchase-delete/{id}', [\App\Http\Controllers\PurchaseUploadController::class, 'delete'])->name('purchase.delete');
         Route::post('/purchase-update',[\App\Http\Controllers\PurchaseUploadController::class,'update'])->name('purchase.update');
         Route::post('/purchase/ledger-store',[\App\Http\Controllers\PurchaseUploadController::class,'storeLedger'])->name('purchase.ledger.store');
@@ -154,6 +155,7 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
         Route::get('/credit-notes/{id}',     [\App\Http\Controllers\CreditNoteController::class, 'show'])->name('cn.show');
         Route::get('/credit-preview/{id}',     [\App\Http\Controllers\CreditNoteController::class, 'preview'])->name('cn.preview');
         Route::post('/credit-notes/update',  [\App\Http\Controllers\CreditNoteController::class, 'update'])->name('cn.update');
+        Route::post('/credit-notes/rematch/{id}', [\App\Http\Controllers\CreditNoteController::class, 'rematch'])->name('cn.rematch');
         Route::post('/credit-notes/delete/{id}',  [\App\Http\Controllers\CreditNoteController::class, 'destroy'])->name('cn.delete');
         Route::post('/credit-notes/save',    [\App\Http\Controllers\CreditNoteController::class, 'save'])->name('cn.save');
         Route::post('/credit-notes/change-status', [\App\Http\Controllers\CreditNoteController::class, 'changeUploadStatus'])->name('cn.upload.status');
@@ -167,6 +169,7 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
         Route::get('/debit-notes/{id}',     [\App\Http\Controllers\DebitNoteController::class, 'show'])->name('dn.show');
         Route::get('/debit-preview/{id}',     [\App\Http\Controllers\DebitNoteController::class, 'preview'])->name('dn.preview');
         Route::post('/debit-notes/update',  [\App\Http\Controllers\DebitNoteController::class, 'update'])->name('dn.update');
+        Route::post('/debit-notes/rematch/{id}', [\App\Http\Controllers\DebitNoteController::class, 'rematch'])->name('dn.rematch');
         Route::post('/debit-notes/delete/{id}',  [\App\Http\Controllers\DebitNoteController::class, 'destroy'])->name('dn.delete');
         Route::post('/debit-notes/save',    [\App\Http\Controllers\DebitNoteController::class, 'save'])->name('dn.save');
         Route::post('/debit-notes/change-status', [\App\Http\Controllers\DebitNoteController::class, 'changeUploadStatus'])->name('dn.upload.status');
@@ -178,6 +181,7 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
         Route::get('/journal/preview/{id}', [\App\Http\Controllers\JournalController::class, 'preview'])->name('journal.preview');
         Route::get('/journal/show/{id}', [\App\Http\Controllers\JournalController::class, 'show'])->name('journal.show');
         Route::post('/journal/update', [\App\Http\Controllers\JournalController::class, 'update'])->name('journal.update');
+        Route::post('/journal/rematch/{id}', [\App\Http\Controllers\JournalController::class, 'rematch'])->name('journal.rematch');
         Route::post('/journal/save', [\App\Http\Controllers\JournalController::class, 'save'])->name('journal.save');
         Route::post('/journal/submit', [\App\Http\Controllers\JournalController::class, 'submit'])->name('journal.submit');
         Route::get('/journal/delete/{id}', [\App\Http\Controllers\JournalController::class, 'delete'])->name('journal.delete');

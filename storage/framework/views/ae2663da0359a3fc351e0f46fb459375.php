@@ -208,6 +208,7 @@
 
                                     </td>
                                     <td class="px-4 py-3">
+                                        
                                         <?php if($upload->status == 'Complete' || $upload->status == 'complete'): ?>
                                         <a href="<?php echo e(route('cn.preview',$upload->id)); ?>"
                                             class="text-green-500 font-semibold hover:underline">
@@ -231,6 +232,17 @@
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-4 py-3 text-right flex justify-end gap-4">
+                                        <?php if(($upload->status == 'Pending' || $upload->status == 'pending') && ($upload->pending ?? 0) > 0): ?>
+                                        <form method="POST" action="<?php echo e(route('cn.rematch', $upload->id)); ?>" class="inline">
+                                            <?php echo csrf_field(); ?>
+                                            <button
+                                                type="submit"
+                                                title="Re-Match pending entries"
+                                                class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
+                                                <i class="fa-solid fa-repeat"></i>
+                                            </button>
+                                        </form>
+                                        <?php endif; ?>
                                         <a href="<?php echo e(route('cn.preview',$upload->id)); ?>">
                                             <i class="fa-regular fa-eye action-icon text-gray-500 cursor-pointer"></i>
                                         </a>

@@ -80,6 +80,14 @@
                         Add
                     </button>
 
+                    <!-- Multi Delete -->
+                    <button
+                        type="button"
+                        onclick="bulkDelete()"
+                        class="bulk-text-btn flex items-center gap-1 px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded whitespace-nowrap">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+
                 </div>
             </div>
 
@@ -120,11 +128,26 @@
 
                                 </a>
                             </td>
-                            <td class="px-4 py-3 text-right">
+                            <td class="px-4 py-3 text-right flex justify-end gap-4">
+                                <?php echo e($upload->status); ?>
+
+                                <?php if(($upload->status == 'pending' || $upload->status == 'Pending') && ($upload->pending ?? 0) > 0): ?>
+                                <?php dd($upload->pending); ?>
+                                <form method="POST" action="<?php echo e(route('journal.rematch', $upload->id)); ?>" class="inline">
+                                    <?php echo csrf_field(); ?>
+                                    <button
+                                        type="submit"
+                                        title="Re-Match pending entries"
+                                        class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
+                                        <i class="fa-solid fa-repeat"></i>
+                                    </button>
+                                </form>
+                                <?php endif; ?>
                                 <a href="<?php echo e(route('journal.preview',$upload->id)); ?>">
                                     <i class="fa-regular fa-eye action-icon text-gray-500"></i>
                                 </a>
-                                <div class="relative inline-block">
+                                
+                                    
                                     <button onclick="openDropdown(event, <?php echo e($upload->id); ?>)"
                                         class="text-gray-500 hover:text-gray-700 px-2">
                                         <i class="fa-solid fa-ellipsis-vertical action-icon"></i>

@@ -124,7 +124,7 @@ class JournalController extends Controller
         }
 
         $upload->update([
-            'status' => 'completed',
+            'status' => $totalInvoices > 0 ? 'pending' : 'completed',
             'total'   => $totalInvoices,
             'pending' => $totalInvoices,
         ]);
@@ -274,6 +274,127 @@ class JournalController extends Controller
         }
 
         return $issues;
+    }
+
+    public function rematch($id)
+    {
+        $iPartyId = session('iPartyId');
+        if (!$iPartyId) {
+            return redirect()->route('journal.index')
+                ->with('alert', 'Please select company first');
+        }
+
+        $upload = BulkJournalUpload::where('id', $id)
+            ->where('iPartyId', $iPartyId)
+            ->first();
+
+        if (!$upload) {
+            return back()->with('alert', 'Upload not found');
+        }
+
+        $matched = 0;
+        $stillPending = 0;
+        $totalPending = 0;
+
+        try {
+            DB::transaction(function () use ($upload, $iPartyId, &$matched, &$stillPending, &$totalPending) {
+                $transactions = JournalTransaction::with('items')
+                    ->where('upload_id', $upload->id)
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', 'pending')
+                    ->get();
+
+                $totalPending = $transactions->count();
+
+                foreach ($transactions as $transaction) {
+                    if ($this->rematchPendingJournalTransaction($transaction)) {
+                        $transaction->status = 'saved';
+                        $matched++;
+                    } else {
+                        $transaction->status = 'pending';
+                        $stillPending++;
+                    }
+
+                    $transaction->save();
+                }
+
+                $this->refreshJournalUploadCounts($upload->id);
+            });
+        } catch (\Throwable $exception) {
+            \Log::error('Journal re-match failed', [
+                'upload_id' => $upload->id,
+                'iPartyId' => $iPartyId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return back()->with('alert', 'Re-Match failed. Please try again or contact support if the issue continues.');
+        }
+
+        if ($totalPending === 0) {
+            return back()->with('notice', 'No pending journal entries were found for re-match.');
+        }
+
+        if ($matched === 0) {
+            return back()->with(
+                'alert',
+                "Re-Match completed, but no pending entries could be saved. {$stillPending} pending entr"
+                    . ($stillPending === 1 ? 'y requires' : 'ies require')
+                    . ' ledger, date, or amount updates before trying again.'
+            );
+        }
+
+        $message = "Re-Match completed successfully. {$matched} pending entr"
+            . ($matched === 1 ? 'y was' : 'ies were')
+            . " saved; {$stillPending} remain pending.";
+
+        return back()->with('notice', $message);
+    }
+
+    private function rematchPendingJournalTransaction(JournalTransaction $transaction): bool
+    {
+        $totalDebit = 0.0;
+        $totalCredit = 0.0;
+
+        foreach ($transaction->items as $item) {
+            $ledger = $item->ledger_id
+                ? Ledger::getLedgerById($transaction->iPartyId, $item->ledger_id)
+                : ($item->ledger_name ? Ledger::getLedgerByName($transaction->iPartyId, $item->ledger_name) : null);
+
+            $debit = (float) ($item->debit ?? 0);
+            $credit = (float) ($item->credit ?? 0);
+
+            $item->fill([
+                'ledger_id' => $ledger?->id ?? $item->ledger_id,
+                'ledger_name' => $ledger?->name ?? $item->ledger_name,
+                'dr_cr' => $debit > 0 ? 'Dr' : ($credit > 0 ? 'Cr' : $item->dr_cr),
+                'debit' => $debit,
+                'credit' => $credit,
+            ])->save();
+
+            $totalDebit += $debit;
+            $totalCredit += $credit;
+        }
+
+        $transaction->fill([
+            'total_debit' => round($totalDebit, 2),
+            'total_credit' => round($totalCredit, 2),
+        ]);
+
+        return empty($this->getJournalPendingIssues($transaction));
+    }
+
+    private function refreshJournalUploadCounts(int $uploadId): void
+    {
+        $saved = JournalTransaction::where('upload_id', $uploadId)->where('status', 'saved')->count();
+        $pending = JournalTransaction::where('upload_id', $uploadId)->where('status', 'pending')->count();
+        $total = JournalTransaction::where('upload_id', $uploadId)->count();
+
+        BulkJournalUpload::where('id', $uploadId)->update([
+            'total' => $total,
+            'saved' => $saved,
+            'pending' => $pending,
+            'status' => $pending > 0 ? 'pending' : 'completed',
+        ]);
     }
 
     // ─────────────────────────────────────────────

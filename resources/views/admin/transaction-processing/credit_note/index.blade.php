@@ -163,6 +163,7 @@
                                         {{ $upload->synced ?? '-' }}
                                     </td>
                                     <td class="px-4 py-3">
+                                        
                                         @if($upload->status == 'Completed' || $upload->status == 'completed')
                                         <a href="{{ route('transaction_processing.preview_processing_credit_note',$upload->id) }}"
                                             class="text-green-500 font-semibold hover:underline">

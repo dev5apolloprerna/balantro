@@ -1796,6 +1796,145 @@ class DebitNoteController extends Controller
         ]);
     }
 
+    public function rematch($id)
+    {
+        $iPartyId = session('iPartyId');
+        if (!$iPartyId) {
+            return redirect()->route('dn.index')
+                ->with('alert', 'Please select company first');
+        }
+
+        $upload = BulkDebitNoteUpload::where('id', $id)
+            ->where('iPartyId', $iPartyId)
+            ->first();
+
+        if (!$upload) {
+            return back()->with('alert', 'Upload not found');
+        }
+
+        $matched = 0;
+        $stillPending = 0;
+        $totalPending = 0;
+
+        try {
+            DB::transaction(function () use ($upload, $iPartyId, &$matched, &$stillPending, &$totalPending) {
+                $transactions = DebitNoteTransaction::with(['items', 'customGst'])
+                    ->where('upload_id', $upload->id)
+                    ->where('iPartyId', $iPartyId)
+                    ->whereIn('status', ['pending', 'Pending'])
+                    ->where('is_delete', 0)
+                    ->get();
+
+                $totalPending = $transactions->count();
+
+                foreach ($transactions as $transaction) {
+                    if ($this->rematchPendingDebitNoteTransaction($transaction)) {
+                        $transaction->status = 'saved';
+                        $matched++;
+                    } else {
+                        $transaction->status = 'Pending';
+                        $stillPending++;
+                    }
+
+                    $transaction->save();
+                }
+
+                $this->refreshDebitNoteUploadCounts($upload->id);
+            });
+        } catch (\Throwable $exception) {
+            \Log::error('Debit note re-match failed', [
+                'upload_id' => $upload->id,
+                'iPartyId' => $iPartyId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return back()->with('alert', 'Re-Match failed. Please try again or contact support if the issue continues.');
+        }
+
+        if ($totalPending === 0) {
+            return back()->with('notice', 'No pending debit note entries were found for re-match.');
+        }
+
+        if ($matched === 0) {
+            return back()->with(
+                'alert',
+                "Re-Match completed, but no pending entries could be saved. {$stillPending} pending entr"
+                    . ($stillPending === 1 ? 'y requires' : 'ies require')
+                    . ' GST, ledger, or item mapping updates before trying again.'
+            );
+        }
+
+        $message = "Re-Match completed successfully. {$matched} pending entr"
+            . ($matched === 1 ? 'y was' : 'ies were')
+            . " saved; {$stillPending} remain pending.";
+
+        return back()->with('notice', $message);
+    }
+
+    private function rematchPendingDebitNoteTransaction(DebitNoteTransaction $transaction): bool
+    {
+        $partyId = $transaction->iPartyId;
+        $purchaseLedgerName = $transaction->purchase_ledger_name ?: $transaction->purchase_ledger;
+        $purchaseLedger = $purchaseLedgerName ? Ledger::getLedgerByName($partyId, $purchaseLedgerName) : null;
+        $mapping = $this->getGstMapping($partyId, $purchaseLedger?->name ?? $purchaseLedgerName);
+        $partyLedgerDetails = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
+
+        $transaction->fill([
+            'party_name' => $partyLedgerDetails['party_name'] ?? $transaction->party_name,
+            'gst_no' => $partyLedgerDetails['gst_no'] ?? $transaction->gst_no,
+            'place_of_supply' => $partyLedgerDetails['state'] ?? $transaction->place_of_supply,
+            'address' => $partyLedgerDetails['address'] ?? $transaction->address,
+            'pincode' => $partyLedgerDetails['pincode'] ?? $transaction->pincode,
+            'city' => $partyLedgerDetails['city'] ?? $transaction->city,
+            'purchase_ledger_id' => $purchaseLedger?->id ?? $purchaseLedger?->iLedgerId ?? $transaction->purchase_ledger_id,
+            'purchase_ledger_name' => $purchaseLedger?->name ?? $purchaseLedger?->strCustomerName ?? $transaction->purchase_ledger_name,
+            'cgst_id' => $mapping['cgst_id'],
+            'cgst_ledger_name' => $mapping['cgst_name'],
+            'sgst_id' => $mapping['sgst_id'],
+            'sgst_ledger_name' => $mapping['sgst_name'],
+            'igst_id' => $mapping['igst_id'],
+            'igst_ledger_name' => $mapping['igst_name'],
+        ]);
+
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            foreach ($transaction->customGst as $slot) {
+                $slotMapping = $this->getGstMapping($partyId, $slot->ledger_name ?: $purchaseLedgerName);
+                $slot->fill([
+                    'cgst_ledger_id' => $slotMapping['cgst_id'],
+                    'cgst_ledger_name' => $slotMapping['cgst_name'],
+                    'sgst_ledger_id' => $slotMapping['sgst_id'],
+                    'sgst_ledger_name' => $slotMapping['sgst_name'],
+                    'igst_ledger_id' => $slotMapping['igst_id'],
+                    'igst_ledger_name' => $slotMapping['igst_name'],
+                ])->save();
+            }
+        }
+
+        return empty($this->getDebitNotePendingIssues($transaction, $mapping));
+    }
+
+    private function refreshDebitNoteUploadCounts(int $uploadId): void
+    {
+        $saved = DebitNoteTransaction::where('upload_id', $uploadId)
+            ->where('status', 'saved')
+            ->where('is_delete', 0)
+            ->count();
+        $pending = DebitNoteTransaction::where('upload_id', $uploadId)
+            ->whereIn('status', ['pending', 'Pending'])
+            ->where('is_delete', 0)
+            ->count();
+        $total = DebitNoteTransaction::where('upload_id', $uploadId)
+            ->where('is_delete', 0)
+            ->count();
+
+        BulkDebitNoteUpload::where('id', $uploadId)->update([
+            'total' => $total,
+            'saved' => $saved,
+            'pending' => $pending,
+            'status' => $pending > 0 ? 'Pending' : 'Completed',
+        ]);
+    }
+
     private function getDebitNotePendingIssues(DebitNoteTransaction $transaction, ?array $gstMapping = null): array
     {
         if (!in_array(strtolower((string) $transaction->status), ['pending'], true)) {
