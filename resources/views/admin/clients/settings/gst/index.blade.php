@@ -82,12 +82,12 @@
 
 #mappingModal .gst-modal-panel,
 #itemMappingModal .gst-modal-panel {
-    max-height: min(90vh, 760px);
+    max-height: min(88vh, 620px);
 }
 
 #mappingModal .gst-modal-body,
 #itemMappingModal .gst-modal-body {
-    max-height: calc(90vh - 172px);
+    max-height: calc(88vh - 140px);
     overflow-y: auto;
 }
 
@@ -164,12 +164,12 @@
 
 #mappingModal .select2-container--default .select2-selection--multiple,
 #itemMappingModal .select2-container--default .select2-selection--multiple {
-    min-height: 44px !important;
-    max-height: 148px;
+    min-height: 42px !important;
+    max-height: 96px;
     overflow-y: auto;
-    border-radius: 0.75rem !important;
+    border-radius: 0.5rem !important;
     border-color: #cbd5e1 !important;
-    padding: 0.25rem 0.5rem !important;
+    padding: 0.15rem 0.4rem !important;
 }
 #mappingModal .select2-container--default.select2-container--focus .select2-selection--multiple,
 #itemMappingModal .select2-container--default.select2-container--focus .select2-selection--multiple {
@@ -188,12 +188,18 @@
 }
 .gst-mapping-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-    gap: 1rem;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.gst-tax-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
 }
 
 @media (max-width: 768px) {
-    .gst-mapping-layout {
+    .gst-tax-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -201,10 +207,10 @@
 .gst-selection-card {
     border: 1px solid rgba(6, 182, 212, 0.24);
     background: linear-gradient(180deg, rgba(236, 254, 255, 0.92), rgba(255, 255, 255, 0.98));
-    border-radius: 1.25rem;
-    min-height: 292px;
-    padding: 0.875rem;
-    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    border-radius: 1rem;
+    min-height: auto;
+    padding: 0.75rem;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
 }
 
 .dark .gst-selection-card {
@@ -213,7 +219,7 @@
 }
 
 .gst-ledger-heading {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
 }
 
 .gst-ledger-copy {
@@ -223,9 +229,9 @@
 .gst-tax-card {
     border: 1px solid rgba(148, 163, 184, 0.55);
     background: rgba(255, 255, 255, 0.96);
-    border-radius: 1rem;
-    padding: 0.95rem;
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    border-radius: 0.85rem;
+    padding: 0.75rem;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
 }
 
 .dark .gst-tax-card {
@@ -248,8 +254,8 @@
     border-radius: 9999px;
     background: rgba(14, 116, 144, 0.1);
     color: #155e75;
-    padding: 0.3rem 0.65rem;
-    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.7rem;
     font-weight: 700;
 }
 
@@ -483,11 +489,11 @@
 </div>
 
 <div id="mappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
-    <div class="gst-modal-panel flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-black shadow-2xl">
+    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-black shadow-2xl">
         <!-- Header -->
-        <div class="gst-modal-hero flex items-start justify-between px-5 py-4 text-white">
+        <div class="gst-modal-hero flex items-start justify-between px-5 py-3 text-white">
             <div>
-                <h3 class="mt-1 text-2xl font-bold">Ledger GST Mapping</h3>
+                <h3 class="text-xl font-bold">Ledger GST Mapping</h3>
                 <p class="gst-modal-subtitle mt-1 text-sm">Pick client ledgers on the left and assign CGST, SGST, and IGST on the right.</p>
             </div>
 
@@ -500,7 +506,7 @@
             @csrf
             <input type="hidden" name="guid" value="{{ $user->guid }}">
             <!-- Body -->
-            <div class="gst-modal-body space-y-5 bg-slate-50/90 p-4 dark:bg-slate-950">
+            <div class="gst-modal-body space-y-3 bg-slate-50/90 p-3 dark:bg-slate-950">
                 <div class="gst-mapping-layout">
                     <!-- Ledger -->
                     <div class="gst-selection-card">
@@ -525,7 +531,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="space-y-3">
+                    <div class="gst-tax-grid">
                     <!-- CGST -->
                     <div class="gst-tax-card">
                         <label class="gst-select-label">
@@ -590,7 +596,7 @@
                 </div>
             </div>
             <!-- Footer -->
-            <div class="gst-modal-footer flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
+            <div class="gst-modal-footer flex shrink-0 justify-end gap-3 px-5 py-3 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
 
                 <button type="button"
                     class="closeModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
@@ -609,11 +615,11 @@
 </div>
 
 <div id="itemMappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
-    <div class="gst-modal-panel flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-black shadow-2xl">
+    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-black shadow-2xl">
         <!-- Header -->
-        <div class="gst-modal-hero flex items-start justify-between px-5 py-4 text-white">
+        <div class="gst-modal-hero flex items-start justify-between px-5 py-3 text-white">
             <div>
-                <h3 class="mt-1 text-2xl font-bold">Item GST Mapping</h3>
+                <h3 class="text-xl font-bold">Item GST Mapping</h3>
                 <p class="gst-modal-subtitle mt-1 text-sm">Pick client items on the left and assign CGST, SGST, and IGST on the right.</p>
             </div>
 
@@ -623,7 +629,7 @@
             </button>
         </div>
         <!-- Body -->
-        <div class="gst-modal-body space-y-3 bg-slate-50/90 p-4 dark:bg-slate-950">
+        <div class="gst-modal-body space-y-3 bg-slate-50/90 p-3 dark:bg-slate-950">
             <input type="hidden" id="item_mapping_id">
             <div class="gst-mapping-layout">
                 <!-- Item -->
@@ -645,7 +651,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="space-y-3">
+                <div class="gst-tax-grid">
                 <!-- CGST -->
                 <div class="gst-tax-card">
                     <label class="gst-select-label">
@@ -702,7 +708,7 @@
             </div>
         </div>
         <!-- Footer -->
-        <div class="gst-modal-footer flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
+        <div class="gst-modal-footer flex shrink-0 justify-end gap-3 px-5 py-3 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
             <button type="button"
                 class="closeItemModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
                 Cancel
@@ -762,7 +768,7 @@ function initLedgerSelect() {
         dropdownParent: $('#mappingModal'),
         placeholder: 'Search and select ledgers...',
         allowClear: true,
-        closeOnSelect: false,
+        closeOnSelect: true,
         width:'100%'
     });
 }
@@ -777,7 +783,7 @@ function initItemSelect() {
         dropdownParent: $('#itemMappingModal'),
         placeholder: 'Search and select items...',
         allowClear: true,
-        closeOnSelect: false,
+        closeOnSelect: true,
         width: '100%'
     });
 }
