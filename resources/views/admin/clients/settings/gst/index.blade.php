@@ -162,6 +162,74 @@
     margin-top: 4px !important;
     padding: 2px 8px 2px 22px !important;
 }
+.gst-mapping-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .gst-mapping-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.gst-selection-card {
+    border: 1px solid rgba(6, 182, 212, 0.22);
+    background: linear-gradient(180deg, rgba(236, 254, 255, 0.82), rgba(255, 255, 255, 0.92));
+    border-radius: 1.25rem;
+    padding: 1rem;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.dark .gst-selection-card {
+    border-color: rgba(34, 211, 238, 0.22);
+    background: linear-gradient(180deg, rgba(8, 47, 73, 0.52), rgba(0, 0, 0, 0.86));
+}
+
+.gst-tax-card {
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 1rem;
+    padding: 0.875rem;
+}
+
+.dark .gst-tax-card {
+    border-color: rgba(55, 65, 81, 0.95);
+    background: rgba(15, 23, 42, 0.7);
+}
+
+.gst-helper-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    background: rgba(14, 116, 144, 0.1);
+    color: #155e75;
+    padding: 0.3rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.dark .gst-helper-chip {
+    background: rgba(34, 211, 238, 0.13);
+    color: #a5f3fc;
+}
+
+.gst-select-label {
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.dark .gst-select-label {
+    color: #f8fafc;
+}
 </style>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <div class="container mx-auto">
@@ -377,8 +445,8 @@
         <!-- Header -->
         <div class="gst-modal-hero flex items-start justify-between px-3 py-2 text-white">
             <div>
-                <h3 class="mt-1 text-2xl font-bold">GST Ledger Mapping</h3>
-                <p class="mt-1 text-sm text-cyan-50/90">Select one or many ledgers, then assign matching GST ledgers.</p>
+                <h3 class="mt-1 text-2xl font-bold">Ledger GST Mapping</h3>
+                <p class="mt-1 text-sm text-cyan-50/90">Pick client ledgers on the left and assign CGST, SGST, and IGST on the right.</p>
             </div>
 
             <button type="button"
@@ -391,17 +459,17 @@
             <input type="hidden" name="guid" value="{{ $user->guid }}">
             <!-- Body -->
             <div class="gst-modal-body space-y-5 bg-slate-50/70 p-3 dark:bg-black">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="gst-mapping-layout">
                     <!-- Ledger -->
-                    <div class="gst-field-card md:col-span-2">
-                        <div class="mb-1 flex items-center gap-3">
+                    <div class="gst-selection-card">
+                        <div class="mb-4 flex items-start gap-3">
                             <span class="gst-modal-step">01</span>
                             <div>
-                                <label class="block text-sm font-bold text-slate-800 dark:text-slate-100">Ledger Name</label>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">Search and select multiple ledgers in one flow.</p>
+                                <label class="block text-base font-bold text-slate-800 dark:text-slate-100">Choose Client Ledger</label>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Type to search, then select one or more ledgers. Selected ledgers appear as removable chips.</p>
                             </div>
                         </div>
-
+                        <span class="gst-helper-chip mb-3">Tip: select multiple ledgers for same GST setup</span>
                         <select id="ledger_id" name="ledger_id[]"  multiple="multiple"
                             class="select2-ledger w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
@@ -415,10 +483,12 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="space-y-3">
                     <!-- CGST -->
-                    <div class="gst-field-card">
-                        <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
-                            <span class="gst-modal-step">02</span> CGST Ledger
+                    <div class="gst-tax-card">
+                        <label class="gst-select-label">
+                            <span><span class="gst-modal-step mr-2">02</span> CGST Ledger</span>
+                            <span class="text-xs font-semibold text-slate-400">Central Tax</span>
                         </label>
 
                         <select id="cgst_id" name="cgst_id"
@@ -435,9 +505,10 @@
                         </select>
                     </div>
                     <!-- SGST -->
-                    <div class="gst-field-card">
-                        <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
-                            <span class="gst-modal-step">03</span> SGST Ledger
+                    <div class="gst-tax-card">
+                        <label class="gst-select-label">
+                            <span><span class="gst-modal-step mr-2">03</span> SGST Ledger</span>
+                            <span class="text-xs font-semibold text-slate-400">State Tax</span>
                         </label>
 
                         <select id="sgst_id" name="sgst_id"
@@ -454,9 +525,10 @@
                         </select>
                     </div>
                     <!-- IGST -->
-                    <div class="gst-field-card md:col-span-2">
-                        <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
-                            <span class="gst-modal-step">04</span> IGST Ledger
+                    <div class="gst-tax-card">
+                        <label class="gst-select-label">
+                            <span><span class="gst-modal-step mr-2">04</span> IGST Ledger</span>
+                            <span class="text-xs font-semibold text-slate-400">Interstate Tax</span>
                         </label>
 
                         <select id="igst_id" name="igst_id"
@@ -472,6 +544,7 @@
                             @endforeach
                         </select>
                     </div>
+                </div>
                 </div>
             </div>
             <!-- Footer -->
@@ -499,7 +572,7 @@
         <div class="gst-modal-hero flex items-start justify-between px-3 py-2 text-white">
             <div>
                 <h3 class="mt-1 text-2xl font-bold">Item GST Mapping</h3>
-                <p class="mt-1 text-sm text-cyan-50/90">Select one or many items, then assign matching GST ledgers.</p>
+                <p class="mt-1 text-sm text-cyan-50/90">Pick client items on the left and assign CGST, SGST, and IGST on the right.</p>
             </div>
 
             <button type="button"
@@ -510,16 +583,17 @@
         <!-- Body -->
         <div class="gst-modal-body space-y-3 bg-slate-50/70 p-3 dark:bg-black">
             <input type="hidden" id="item_mapping_id">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="gst-mapping-layout">
                 <!-- Item -->
-                <div class="gst-field-card md:col-span-2">
+                <div class="gst-selection-card">
                     <div class="mb-1 flex items-center gap-3">
                         <span class="gst-modal-step">01</span>
                         <div>
-                            <label class="block text-sm font-bold text-slate-800 dark:text-slate-100">Item</label>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Search and select multiple items in one flow.</p>
+                            <label class="block text-base font-bold text-slate-800 dark:text-slate-100">Choose Client Item</label>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Type to search, then select one or more items. Selected items appear as removable chips.</p>
                         </div>
                     </div>
+                    <span class="gst-helper-chip mb-3">Tip: select multiple items for same GST setup</span>
                     <select id="item_id" name="item_id[]" multiple="multiple" class="select2-item w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-2 select2-hidden-accessible">
                         <!-- <option value="">Select Item</option> -->
                         @foreach($availableItems as $item)
@@ -529,10 +603,12 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="space-y-3">
                 <!-- CGST -->
-                <div class="gst-field-card">
-                    <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
-                        <span class="gst-modal-step">02</span> CGST Ledger
+                <div class="gst-tax-card">
+                    <label class="gst-select-label">
+                        <span><span class="gst-modal-step mr-2">02</span> CGST Ledger</span>
+                        <span class="text-xs font-semibold text-slate-400">Central Tax</span>
                     </label>
                     <select id="item_cgst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
@@ -546,9 +622,10 @@
                     </select>
                 </div>
                 <!-- SGST -->
-                <div class="gst-field-card">
-                    <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
-                        <span class="gst-modal-step">03</span> SGST Ledger
+                <div class="gst-tax-card">
+                    <label class="gst-select-label">
+                        <span><span class="gst-modal-step mr-2">03</span> SGST Ledger</span>
+                        <span class="text-xs font-semibold text-slate-400">State Tax</span>
                     </label>
                     <select id="item_sgst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
@@ -562,9 +639,10 @@
                     </select>
                 </div>
                 <!-- IGST -->
-                <div class="gst-field-card md:col-span-2">
-                    <label class="mb-1 flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
-                        <span class="gst-modal-step">04</span> IGST Ledger
+                <div class="gst-tax-card">
+                    <label class="gst-select-label">
+                        <span><span class="gst-modal-step mr-2">04</span> IGST Ledger</span>
+                        <span class="text-xs font-semibold text-slate-400">Interstate Tax</span>
                     </label>
                     <select id="item_igst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
                                 bg-white dark:bg-slate-800
@@ -577,6 +655,8 @@
                         @endforeach
                     </select>
                 </div>
+                </div>
+                
             </div>
         </div>
         <!-- Footer -->

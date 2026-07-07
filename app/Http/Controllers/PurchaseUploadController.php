@@ -1509,9 +1509,39 @@ class PurchaseUploadController extends Controller
         ]);
     }
 
+     private function validateUploadedLedgerRequest(Request $request, int $partyId)
+    {
+        $parent = trim((string) $request->Parent);
+        $group = DB::table('GroupMaster')
+            ->where('iPartyId', $partyId)
+            ->where(function ($query) use ($parent) {
+                $query->where('strGroupName', $parent);
+                    // ->orWhere('strParents', $parent);
+            })
+            ->first();
+
+        $isRevenue = (int) ($group->IsRevenue ?? 0) === 1;
+
+        $rules = [
+            'Name' => ['required', 'string'],
+            'Parent' => ['required', 'string'],
+        ];
+
+        if (!$isRevenue) {
+            $rules['State'] = ['required', 'string'];
+        }
+
+        return $request->validate($rules, [], [
+            'Name' => 'Name',
+            'Parent' => 'Group',
+            'State' => 'State',
+        ]);
+    }
+
     public function storeLedger(Request $request)
     {
         $iPartyId = session('iPartyId');
+                $this->validateUploadedLedgerRequest($request, (int) $iPartyId);
         DB::table('ledgers')->insert([
             'iPartyId' => $iPartyId,
             'Name' => $request->Name,

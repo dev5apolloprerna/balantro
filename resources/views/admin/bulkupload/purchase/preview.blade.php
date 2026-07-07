@@ -600,6 +600,7 @@
         <!-- BODY -->
         <div class="modal-body">
             <form id="ledgerForm">
+                <input type="hidden" name="ledger_action" id="ledger_action" value="submit">
                 @csrf
                 <div class="form-grid">
                     <div class="form-group">
@@ -637,7 +638,7 @@
                     </div>
                     <div class="form-group">
                         <label>State</label>
-                        <select id="State" class="inputCell">
+                        <select id="State" name="State" class="inputCell">
                             <option value="">Select State</option>
                             @foreach($states as $state)
                             <option value="{{$state}}">{{$state}}</option>
@@ -675,7 +676,9 @@
         </div>
         <div class="modal-footer">
             <button onclick="closeLedgerModal()" class="btn-cancel">Cancel</button>
-            <button type="submit" form="ledgerForm" class="submit-btn">Save Ledger</button>
+            <!-- <button type="submit" form="ledgerForm" class="submit-btn">Save Ledger</button> -->
+            <button type="button" id="ledgerSaveBtn" class="submit-btn ledger-save-btn">Save</button>
+            <button type="button" id="ledgerSubmitBtn" class="submit-btn ledger-submit-btn">Submit</button>
         </div>
     </div>
 </div>
@@ -982,6 +985,15 @@ const IGST_LEDGERS = @json($iGstLedgers ?? []);
 const CGST_LEDGERS = @json($cGstLedgers ?? []);
 const SGST_LEDGERS = @json($sGstLedgers ?? []);
 const PARTY_LEDGER_DETAILS = @json($ledgers ?? []);
+const GST_RATE_OPTIONS = [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0];
+
+function buildGstRateOptions(selected = '') {
+    const selectedRate = parseFloat(selected);
+    return GST_RATE_OPTIONS.map(rate => {
+        const isSelected = !Number.isNaN(selectedRate) && Math.abs(selectedRate - rate) < 0.0001;
+        return `<option value="${rate}" ${isSelected ? 'selected' : ''}>${rate}%</option>`;
+    }).join('');
+}
 
 function normalizedLedgerName(value) {
     return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
@@ -1154,10 +1166,83 @@ window.addEventListener('load', function () {
         }
     }
 
+    const LEDGER_PROFIT_AND_LOSS_GROUPS = [
+        'sales accounts',
+        'purchase accounts',
+        'direct incomes',
+        'direct expenses',
+        'indirect incomes',
+        'indirect expenses'
+    ];
+
+    function getLedgerFormValue(fieldName) {
+        return String($('#ledgerForm [name="' + fieldName + '"]').val() || '').trim();
+    }
+
+    function isLedgerProfitAndLossGroup() {
+        return LEDGER_PROFIT_AND_LOSS_GROUPS.includes(getLedgerFormValue('Parent').toLowerCase());
+    }
+
+    function updateLedgerActionButtons() {
+        const isProfitAndLoss = isLedgerProfitAndLossGroup();
+        $('#ledgerSaveBtn').toggle(!isProfitAndLoss);
+    }
+
+    function validateLedgerForm() {
+        const isProfitAndLoss = isLedgerProfitAndLossGroup();
+        const missing = [];
+
+        if (!getLedgerFormValue('Name')) {
+            missing.push('Name');
+        }
+
+        if (!getLedgerFormValue('Parent') || getLedgerFormValue('Parent').toLowerCase() === 'select parent') {
+            missing.push('Group');
+        }
+
+        if (!isProfitAndLoss && !getLedgerFormValue('State')) {
+            missing.push('State');
+        }
+
+        if (missing.length) {
+            showToast('Please fill required field(s): ' + missing.join(', '), 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    $(document).on('change', '#ledgerForm [name="Parent"]', updateLedgerActionButtons);
+
+    $(document).on('click', '#ledgerSaveBtn', function() {
+        if (!validateLedgerForm()) {
+            return;
+        }
+
+        if (!isLedgerProfitAndLossGroup() && !getLedgerFormValue('GstNo')) {
+            alert('GST No is empty. Please fill the GST No if you have it, else press Submit. Click OK to stay on the ledger form.');
+            return;
+        }
+
+        $('#ledger_action').val('save');
+        $('#ledgerForm').trigger('submit');
+    });
+
+    $(document).on('click', '#ledgerSubmitBtn', function() {
+        if (!validateLedgerForm()) {
+            return;
+        }
+
+        $('#ledger_action').val('submit');
+        $('#ledgerForm').trigger('submit');
+    });
+
     // Optional: handle form submit
     $('#ledgerForm').on('submit', function(e) {
         e.preventDefault();
-
+        if (typeof validateLedgerForm === 'function' && !validateLedgerForm()) {
+            return;
+        }
         let formData = $(this).serialize();
 
         $.ajax({
@@ -2212,7 +2297,7 @@ window.addEventListener('load', function () {
                 </select>
             </td>
             <td style="width:80px;"><input type="text" class="item-hsn" value="${item.hsn||''}" placeholder="HSN" style="text-align:center;"></td>
-            <td style="width:65px;"><input type="number" class="item-gst_rate" value="${item.gst_rate||''}" placeholder="%" step="any" style="text-align:right;"></td>
+            <td style="width:65px;"><select class="item-gst_rate" style="text-align:right;">${buildGstRateOptions(item.gst_rate || 0)}</select></td>
             <td style="width:65px;"><input type="number" class="item-qty" value="${item.quantity||''}" placeholder="0" step="any" style="text-align:right;"></td>
             <td style="width:55px;"><input type="text" class="item-unit" value="${item.unit||'NOS'}" style="text-align:center;"></td>
             <td style="width:85px;"><input type="number" class="item-rate" value="${item.rate||''}" placeholder="0.00" step="any" style="text-align:right;"></td>
@@ -2646,7 +2731,7 @@ window.addEventListener('load', function () {
         let row = `
             <tr>
                 <td><select class="receipt-input noitem-ledger">${buildPurchaseLedgerOptions(data.ledger || data.ledger_id || data.ledger_name || '')}</select></td>
-                <td><input type="number" class="receipt-input noitem-gst" value="${data.gst || data.gst_rate || 18}"></td>
+                <td><select class="receipt-input noitem-gst">${buildGstRateOptions(data.gst || data.gst_rate || 18)}</select></td>
                 <td><input type="number" class="receipt-input noitem-amount" value="${data.amount || data.taxable || ''}"></td>
                 <td><button type="button" class="removeNoItem receipt-del-btn">×</button></td>
             </tr>

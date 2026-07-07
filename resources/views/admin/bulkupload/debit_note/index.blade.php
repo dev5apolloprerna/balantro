@@ -85,7 +85,7 @@
                                             </button>
 
                                             <!-- Primary Action -->
-                                            <button id="addEntryBtn"  onclick="openPurchaseModal()"
+                                            <button id="addEntryBtn" onclick="openPurchaseModal()"
                                                 class="bulk-text-btn px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap">
                                                 <i class="fa-solid fa-plus text-xs"></i>
                                                 Add
@@ -146,8 +146,8 @@
                         </div>
                     </div>
                     <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
-                <table id="salesTable" class="min-w-[1100px] w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
-                    <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-xs text-gray-700 dark:text-gray-300 uppercase sticky top-0 z-10">
+                        <table id="salesTable" class="min-w-[1100px] w-full text-sm text-gray-700 dark:text-gray-300 border-collapse">
+                            <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-xs text-gray-700 dark:text-gray-300 uppercase sticky top-0 z-10">
                                 <tr>
                                     <th class="px-4 py-3">
                                         <input type="checkbox" id="selectAllUploads">
@@ -725,53 +725,64 @@
     </div>
 
     {{-- LEDGER MODAL --}}
-<div id="ledgerModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Create Ledger</h3>
-            <button type="button" class="close-btn" onclick="closeLedgerModal()">✕</button>
-        </div>
-        <div class="modal-body">
-            <form id="ledgerForm">
-                @csrf
-                <div class="form-grid">
-                    <div class="form-group"><label>Name <span style="color: red;">*</span></label><input type="text" name="Name" required></div>
-                    <div class="form-group"><label>Parent <span style="color: red;">*</span></label>
-                        <select name="Parent" required><option>Select Parent</option>
-                            @foreach($parents as $p)<option value="{{ $p->strParents }}">{{ $p->strParents }}</option>@endforeach
-                        </select>
+    <div id="ledgerModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Ledger</h3>
+                <button type="button" class="close-btn" onclick="closeLedgerModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="ledgerForm">
+                    <input type="hidden" name="ledger_action" id="ledger_action" value="submit">
+                    @csrf
+                    <div class="form-grid">
+                        <div class="form-group"><label>Name <span style="color: red;">*</span></label><input type="text" name="Name" required></div>
+                        <div class="form-group"><label>Parent <span style="color: red;">*</span></label>
+                            <select name="Parent" required>
+                                <option>Select Parent</option>
+                                @foreach($parents as $p)<option value="{{ $p->strParents }}">{{ $p->strParents }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Mailing Name</label><input type="text" name="MailingName"></div>
+                        <div class="form-group"><label>Address Line 1</label><input type="text" name="AddressLine1"></div>
+                        <div class="form-group"><label>Address Line 2</label><input type="text" name="AddressLine2"></div>
+                        <div class="form-group"><label>City</label><input type="text" name="City"></div>
+                        <div class="form-group"><label>Pincode</label><input type="text" name="Pincode"></div>
+                        <div class="form-group"><label>State <span style="color: red;">*</span></label>
+                            <select name="State" required>
+                                <option value="">Select State</option>
+                                @foreach($states as $s)<option value="{{$s}}">{{$s}}</option>@endforeach
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Country</label><input type="text" name="Country"></div>
+                        <div class="form-group"><label>GST No</label><input type="text" name="GstNo"></div>
+                        <div class="form-group"><label>GST Registration Type</label>
+                            <select name="GstRegistrationType">
+                                <option value="">Select</option>
+                                <option>Regular</option>
+                                <option>Composition</option>
+                                <option>Unregistered</option>
+                                <option>Casual Taxable</option>
+                                <option>Non-resident Taxable</option>
+                                <option>Input Service Distributor</option>
+                                <option>Special Economic Zone</option>
+                                <option>E-commerce Operators</option>
+                                <option>Tax Deduction at Source</option>
+                                <option>TCS Collector</option>
+                                <option>Voluntary Registration</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group"><label>Mailing Name</label><input type="text" name="MailingName"></div>
-                    <div class="form-group"><label>Address Line 1</label><input type="text" name="AddressLine1"></div>
-                    <div class="form-group"><label>Address Line 2</label><input type="text" name="AddressLine2"></div>
-                    <div class="form-group"><label>City</label><input type="text" name="City"></div>
-                    <div class="form-group"><label>Pincode</label><input type="text" name="Pincode"></div>
-                    <div class="form-group"><label>State <span style="color: red;">*</span></label>
-                        <select name="State" required><option value="">Select State</option>
-                            @foreach($states as $s)<option value="{{$s}}">{{$s}}</option>@endforeach
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Country</label><input type="text" name="Country"></div>
-                    <div class="form-group"><label>GST No</label><input type="text" name="GstNo"></div>
-                    <div class="form-group"><label>GST Registration Type</label>
-                        <select name="GstRegistrationType">
-                            <option value="">Select</option>
-                            <option>Regular</option><option>Composition</option><option>Unregistered</option>
-                            <option>Casual Taxable</option><option>Non-resident Taxable</option>
-                            <option>Input Service Distributor</option><option>Special Economic Zone</option>
-                            <option>E-commerce Operators</option><option>Tax Deduction at Source</option>
-                            <option>TCS Collector</option><option>Voluntary Registration</option>
-                        </select>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button onclick="closeLedgerModal()" class="btn-cancel">Cancel</button>
-            <button type="submit" form="ledgerForm" class="submit-btn">Save Ledger</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeLedgerModal()" class="btn-cancel">Cancel</button>
+                <!-- <button type="submit" form="ledgerForm" class="submit-btn">Save Ledger</button> -->
+                <button type="button" id="ledgerSaveBtn" class="submit-btn ledger-save-btn">Save</button>
+                <button type="button" id="ledgerSubmitBtn" class="submit-btn ledger-submit-btn">Submit</button>
+            </div>
         </div>
     </div>
-</div>
 
     <style>
         /* SELECT2 */
@@ -1674,6 +1685,7 @@
             overflow: hidden;
             /* 🔥 IMPORTANT FIX */
         }
+
         .card-header {
             backdrop-filter: blur(6px);
         }
@@ -1681,6 +1693,7 @@
         button {
             transition: all 0.2s ease;
         }
+
         .card-header select {
             cursor: pointer;
         }
@@ -1688,6 +1701,7 @@
         .card-header button {
             white-space: nowrap;
         }
+
         .card-header a {
             letter-spacing: 0.3px;
         }
@@ -1697,8 +1711,9 @@
             position: fixed;
             inset: 0;
             z-index: 999;
-            background: rgba(0,0,0,.65);
+            background: rgba(0, 0, 0, .65);
         }
+
         #ledgerModal {
             position: fixed !important;
             inset: 0;
@@ -1706,14 +1721,14 @@
             display: none;
             align-items: center;
             justify-content: center;
-            background: rgba(0,0,0,.6);
+            background: rgba(0, 0, 0, .6);
         }
 
-        #ledgerModal.show{
-            display:flex !important;
+        #ledgerModal.show {
+            display: flex !important;
         }
 
-        #ledgerModal .modal-content{
+        #ledgerModal .modal-content {
             width: 900px;
             max-width: 95%;
             max-height: 90vh;
@@ -1721,87 +1736,97 @@
 
             background: #fff;
             border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(0,0,0,.3);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, .3);
 
             display: flex;
             flex-direction: column;
         }
 
-        #ledgerModal .modal-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:15px 20px;
-    border-bottom:1px solid #e5e7eb;
-}
+        #ledgerModal .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
 
-#ledgerModal .modal-body{
-    padding:20px;
-    overflow-y:auto;
-    flex:1;
-}
+        #ledgerModal .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
 
-#ledgerModal .modal-footer{
-    padding:15px 20px;
-    border-top:1px solid #e5e7eb;
-    display:flex;
-    justify-content:flex-end;
-    gap:10px;
-}
+        #ledgerModal .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
 
-.form-grid{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:15px;
-}
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
 
-.form-group{
-    display:flex;
-    flex-direction:column;
-}
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
 
-.form-group label{
-    margin-bottom:5px;
-    font-size:13px;
-    font-weight:600;
-}
+        .form-group label {
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 600;
+        }
 
-/* Ledger Modal Dark Theme */
-.dark #ledgerModal .modal-content{
-    background:#1f2937;
-    color:#f3f4f6;
-}
+        /* Ledger Modal Dark Theme */
+        .dark #ledgerModal .modal-content {
+            background: #1f2937;
+            color: #f3f4f6;
+        }
 
-.dark #ledgerModal .modal-header,
-.dark #ledgerModal .modal-footer{
-    border-color:#374151;
-}
+        .dark #ledgerModal .modal-header,
+        .dark #ledgerModal .modal-footer {
+            border-color: #374151;
+        }
 
-.dark #ledgerModal h3,
-.dark #ledgerModal label{
-    color:#f3f4f6 !important;
-}
+        .dark #ledgerModal h3,
+        .dark #ledgerModal label {
+            color: #f3f4f6 !important;
+        }
 
-.dark #ledgerModal input,
-.dark #ledgerModal select,
-.dark #ledgerModal textarea{
-    background:#111827 !important;
-    border:1px solid #374151 !important;
-    color:#f9fafb !important;
-}
+        .dark #ledgerModal input,
+        .dark #ledgerModal select,
+        .dark #ledgerModal textarea {
+            background: #111827 !important;
+            border: 1px solid #374151 !important;
+            color: #f9fafb !important;
+        }
 
-.dark #ledgerModal input::placeholder{
-    color:#9ca3af;
-}
+        .dark #ledgerModal input::placeholder {
+            color: #9ca3af;
+        }
 
-.dark #ledgerModal select option{
-    background:#111827;
-    color:#f9fafb;
-}
+        .dark #ledgerModal select option {
+            background: #111827;
+            color: #f9fafb;
+        }
     </style>
     @endsection
     @section('scripts')
     <script>
+        const GST_RATE_OPTIONS = [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0];
+
+        function buildGstRateOptions(selected = '') {
+            const selectedRate = parseFloat(selected);
+            return GST_RATE_OPTIONS.map(rate => {
+                const isSelected = !Number.isNaN(selectedRate) && Math.abs(selectedRate - rate) < 0.0001;
+                return `<option value="${rate}" ${isSelected ? 'selected' : ''}>${rate}%</option>`;
+            }).join('');
+        }
+
         function showFileName(input) {
             if (!validateUploadFileSize(input)) {
                 document.getElementById('fileNameText').innerText = '';
@@ -1849,7 +1874,7 @@
             });
         });
     </script>
-     <script>
+    <script>
         let IGST_LEDGERS = @json($iGstLedgers);
         let CGST_LEDGERS = @json($cGstLedgers);
         let SGST_LEDGERS = @json($sGstLedgers);
@@ -1909,7 +1934,7 @@
             deleteUpload(currentId);
         }
 
-                $('#selectAllUploads').on('change', function() {
+        $('#selectAllUploads').on('change', function() {
             $('.rowCheckbox').prop('checked', $(this).is(':checked'));
         });
 
@@ -1925,7 +1950,7 @@
                 return this.value;
             }).get();
 
-            
+
             if (!ids.length) {
                 showToast('Select at least one', 'error');
                 return;
@@ -2291,13 +2316,14 @@
         });
 
         function getSummaryBaseTotal() {
-            return (parseFloat($('#edit_amount').val()) || 0)
-                + (parseFloat($('#edit_cgst').val()) || 0)
-                + (parseFloat($('#edit_sgst').val()) || 0)
-                + (parseFloat($('#edit_igst').val()) || 0);
+            return (parseFloat($('#edit_amount').val()) || 0) +
+                (parseFloat($('#edit_cgst').val()) || 0) +
+                (parseFloat($('#edit_sgst').val()) || 0) +
+                (parseFloat($('#edit_igst').val()) || 0);
         }
 
         const ROUND_OFF_SIDE = @json($roundOffSide ?? 'normal');
+
         function calculateRoundOffAmountForSummary(total) {
             total = parseFloat(total) || 0;
             let roundedTotal;
@@ -2405,7 +2431,10 @@
                     // 👉 ADD THIS (rate-wise grouping)
                     if (gstRate > 0) {
                         if (!rateMap[gstRate]) {
-                            rateMap[gstRate] = { taxable: 0, gst: 0 };
+                            rateMap[gstRate] = {
+                                taxable: 0,
+                                gst: 0
+                            };
                         }
                         rateMap[gstRate].taxable += amount;
                         rateMap[gstRate].gst += gstAmt;
@@ -2494,11 +2523,11 @@
             }
         }
 
-        $('#noitem_amount, #noitem_gst_rate').on('input', function () {
+        $('#noitem_amount, #noitem_gst_rate').on('input change', function () {
             recalcTotals();
         });
 
-        $('#gst_calc_mode').on('change', function () {
+        $('#gst_calc_mode').on('change', function() {
             recalcTotals();
         });
 
@@ -2508,7 +2537,7 @@
         });
 
 
-        $('#manual_cgst, #manual_sgst, #manual_igst').on('input', function() {
+        $('#manual_cgst, #manual_sgst, #manual_igst').on('input change', function() {
             $(this).data('manual', true);
             recalcTotals();
         });
@@ -2598,7 +2627,7 @@
             }
         }
 
-        $(document).on('change', '#edit_party', function () {
+        $(document).on('change', '#edit_party', function() {
             applyPartyLedgerDetails($(this).val(), $(this).find('option:selected').text());
         });
 
@@ -2719,7 +2748,7 @@
             let row = `
                 <tr>
                     <td><select class="receipt-input noitem-ledger">${buildPurchaseLedgerOptions(data.ledger || '')}</select></td>
-                    <td><input type="number" class="receipt-input noitem-gst" value="${data.gst || 0}"></td>
+                    <td><select class="receipt-input noitem-gst">${buildGstRateOptions(data.gst || 0)}</select></td>
                     <td><input type="number" class="receipt-input noitem-amount" value="${data.amount || ''}"></td>
                     <td><button type="button" class="receipt-del-btn removeNoItem">x</button></td>
                 </tr>
@@ -2923,15 +2952,15 @@
                     let data = rateMap[key];
                     let rate = data.rate ?? key;
                     let existing = existingRows[key] || {};
-                    let igstLedgerId = entryMode === 'item'
-                        ? itemMappedGstLedgerId('igst', rate, existing.igst)
-                        : mappedGstLedgerId('igst', existing.igst, data.ledgerId, data.ledgerName);
-                    let cgstLedgerId = entryMode === 'item'
-                        ? itemMappedGstLedgerId('cgst', rate, existing.cgst)
-                        : mappedGstLedgerId('cgst', existing.cgst, data.ledgerId, data.ledgerName);
-                    let sgstLedgerId = entryMode === 'item'
-                        ? itemMappedGstLedgerId('sgst', rate, existing.sgst)
-                        : mappedGstLedgerId('sgst', existing.sgst, data.ledgerId, data.ledgerName);
+                    let igstLedgerId = entryMode === 'item' ?
+                        itemMappedGstLedgerId('igst', rate, existing.igst) :
+                        mappedGstLedgerId('igst', existing.igst, data.ledgerId, data.ledgerName);
+                    let cgstLedgerId = entryMode === 'item' ?
+                        itemMappedGstLedgerId('cgst', rate, existing.cgst) :
+                        mappedGstLedgerId('cgst', existing.cgst, data.ledgerId, data.ledgerName);
+                    let sgstLedgerId = entryMode === 'item' ?
+                        itemMappedGstLedgerId('sgst', rate, existing.sgst) :
+                        mappedGstLedgerId('sgst', existing.sgst, data.ledgerId, data.ledgerName);
                     let cgstAmt = data.gst / 2;
                     let sgstAmt = data.gst / 2;
 
@@ -2953,7 +2982,7 @@
             }
         }
 
-        $('#gst_calc_mode').on('change', function () {
+        $('#gst_calc_mode').on('change', function() {
             toggleSectionsByMode();
             recalcTotals();
         });
@@ -2975,13 +3004,12 @@
             });
             return html;
         }
-        $(document).on('change','.item_name',function(){
+        $(document).on('change', '.item_name', function() {
             let itemId = $(this).val();
             let item = ITEM_MASTER.find(
                 x => String(x.strItemName) === String(itemId)
             );
-            if(item)
-            {
+            if (item) {
                 $(this)
                     .closest('tr')
                     .find('.unit')
@@ -3006,56 +3034,129 @@
             modal.classList.remove('show');
         }
 
-        // Optional: handle form submit
-    $('#ledgerForm').on('submit', function(e) {
-        e.preventDefault();
+        const LEDGER_PROFIT_AND_LOSS_GROUPS = [
+            'sales accounts',
+            'purchase accounts',
+            'direct incomes',
+            'direct expenses',
+            'indirect incomes',
+            'indirect expenses'
+        ];
 
-        let formData = $(this).serialize();
+        function getLedgerFormValue(fieldName) {
+            return String($('#ledgerForm [name="' + fieldName + '"]').val() || '').trim();
+        }
 
-        $.ajax({
-            url: "{{ route('sales.ledger.store') }}",
-            type: "POST",
-            data: formData,
-            success: function(response) {
-                closeLedgerModal();
-                let name = $('input[name="Name"]').val();
+        function isLedgerProfitAndLossGroup() {
+            return LEDGER_PROFIT_AND_LOSS_GROUPS.includes(getLedgerFormValue('Parent').toLowerCase());
+        }
 
-                // ✅ Add into EDIT MODAL dropdown
-                let newOption = new Option(name, name, true, true);
-                $('#edit_party').append(newOption).trigger('change');
+        function updateLedgerActionButtons() {
+            const isProfitAndLoss = isLedgerProfitAndLossGroup();
+            $('#ledgerSaveBtn').toggle(!isProfitAndLoss);
+        }
 
-                // ✅ ALSO update table dropdowns (VERY IMPORTANT)
-                $('.ledgerSelect').each(function() {
-                    $(this).append(new Option(name, name));
-                });
+        function validateLedgerForm() {
+            const isProfitAndLoss = isLedgerProfitAndLossGroup();
+            const missing = [];
 
-                // ✅ Refresh Select2 UI
-                $('#edit_party').trigger('change');
-                $('.ledgerSelect').trigger('change');
-
-                // ✅ Clear form
-                $('#ledgerForm')[0].reset();
-
-
-                // location.reload();
-                // OPTIONAL: add new ledger in dropdown
-                // let name = $('input[name="Name"]').val();
-
-                // $('.ledgerSelect').append(
-                //     `<option value="${name}" selected>${name}</option>`
-                // ).trigger('change');
-            },
-            error: function(xhr) {
-                showToast('Error saving ledger','error');
-                console.log(xhr.responseText);
+            if (!getLedgerFormValue('Name')) {
+                missing.push('Name');
             }
-        });
-    });
 
-    $(document).on('select2:open', function() {
-        setTimeout(function() {
-            document.querySelector('.select2-container--open .select2-search__field')?.focus();
-        }, 0);
-    });
+            if (!getLedgerFormValue('Parent') || getLedgerFormValue('Parent').toLowerCase() === 'select parent') {
+                missing.push('Group');
+            }
+
+            if (!isProfitAndLoss && !getLedgerFormValue('State')) {
+                missing.push('State');
+            }
+
+            if (missing.length) {
+                showToast('Please fill required field(s): ' + missing.join(', '), 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        $(document).on('change', '#ledgerForm [name="Parent"]', updateLedgerActionButtons);
+
+        $(document).on('click', '#ledgerSaveBtn', function() {
+            if (!validateLedgerForm()) {
+                return;
+            }
+
+            if (!isLedgerProfitAndLossGroup() && !getLedgerFormValue('GstNo')) {
+                alert('GST No is empty. Please fill the GST No if you have it, else press Submit. Click OK to stay on the ledger form.');
+                return;
+            }
+
+            $('#ledger_action').val('save');
+            $('#ledgerForm').trigger('submit');
+        });
+
+        $(document).on('click', '#ledgerSubmitBtn', function() {
+            if (!validateLedgerForm()) {
+                return;
+            }
+
+            $('#ledger_action').val('submit');
+            $('#ledgerForm').trigger('submit');
+        });
+
+        // Optional: handle form submit
+        $('#ledgerForm').on('submit', function(e) {
+            e.preventDefault();
+            if (typeof validateLedgerForm === 'function' && !validateLedgerForm()) {
+                return;
+            }
+            let formData = $(this).serialize();
+
+            $.ajax({
+                url: "{{ route('sales.ledger.store') }}",
+                type: "POST",
+                data: formData,
+                success: function(response) {
+                    closeLedgerModal();
+                    let name = $('input[name="Name"]').val();
+
+                    // ✅ Add into EDIT MODAL dropdown
+                    let newOption = new Option(name, name, true, true);
+                    $('#edit_party').append(newOption).trigger('change');
+
+                    // ✅ ALSO update table dropdowns (VERY IMPORTANT)
+                    $('.ledgerSelect').each(function() {
+                        $(this).append(new Option(name, name));
+                    });
+
+                    // ✅ Refresh Select2 UI
+                    $('#edit_party').trigger('change');
+                    $('.ledgerSelect').trigger('change');
+
+                    // ✅ Clear form
+                    $('#ledgerForm')[0].reset();
+
+
+                    // location.reload();
+                    // OPTIONAL: add new ledger in dropdown
+                    // let name = $('input[name="Name"]').val();
+
+                    // $('.ledgerSelect').append(
+                    //     `<option value="${name}" selected>${name}</option>`
+                    // ).trigger('change');
+                },
+                error: function(xhr) {
+                    showToast('Error saving ledger', 'error');
+                    console.log(xhr.responseText);
+                }
+            });
+        });
+
+        $(document).on('select2:open', function() {
+            setTimeout(function() {
+                document.querySelector('.select2-container--open .select2-search__field')?.focus();
+            }, 0);
+        });
     </script>
     @endsection

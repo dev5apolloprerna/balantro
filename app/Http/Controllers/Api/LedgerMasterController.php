@@ -224,7 +224,7 @@ class LedgerMasterController extends Controller
             }
 
             $GroupMasters = DB::table('GroupMaster')
-                ->where('PartyGUID', $partyguid)
+                //->where('PartyGUID', $partyguid)
                 ->where('iPartyId', $partyId)
                 //->where('iParentId', 0)
                 //->where("strDispName", '!=', 'Cost of Sales :')
@@ -338,6 +338,12 @@ class LedgerMasterController extends Controller
                 if ($op == 0.0 && $dr == 0.0 && $cr == 0.0 && $cl == 0.0) {
                     continue;
                 }
+                $clAmt = 0;
+                if($this->balanceSideForLedger($cl) == "Dr"){
+                    $clAmt = $cl * -1;
+                } else {
+                    $clAmt = $cl;
+                }
 
                 $row = array(
                     "iLedgerId" => $LedgerMaster->iLedgerId,
@@ -349,7 +355,7 @@ class LedgerMasterController extends Controller
                     "decDrRaw" => $dr,
                     "decCr" => $this->fmt($cr),
                     "decCrRaw" => $cr,
-                    "decClBl" => $this->fmt($cl),
+                    "decClBl" => $this->fmt($clAmt) ,
                     "decClBlRaw" => $cl,
                     "decClBlSide" => $this->balanceSideForLedger($cl),
                     "strGUID" => $LedgerMaster->strGUID,

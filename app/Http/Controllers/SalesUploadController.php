@@ -1570,6 +1570,35 @@ class SalesUploadController extends Controller
         return view('admin.bulkupload.sales.preview', array_merge(compact('rows'), $commonData));
     }
 
+     private function validateUploadedLedgerRequest(Request $request, int $partyId)
+    {
+        $parent = trim((string) $request->Parent);
+        $group = DB::table('GroupMaster')
+            ->where('iPartyId', $partyId)
+            ->where(function ($query) use ($parent) {
+                $query->where('strGroupName', $parent);
+                    // ->orWhere('strParents', $parent)                    
+            })
+            ->first();
+
+        $isRevenue = (int) ($group->IsRevenue ?? 0) === 1;
+
+        $rules = [
+            'Name' => ['required', 'string'],
+            'Parent' => ['required', 'string'],
+        ];
+
+        if (!$isRevenue) {
+            $rules['State'] = ['required', 'string'];
+        }
+
+        return $request->validate($rules, [], [
+            'Name' => 'Name',
+            'Parent' => 'Group',
+            'State' => 'State',
+        ]);
+    }
+
     public function storeLedger(Request $request)
     {
         $iPartyId = session('iPartyId');
@@ -1578,6 +1607,7 @@ class SalesUploadController extends Controller
                 ->with('error', 'Please select company first');
         }
         $iPartyId = session('iPartyId');
+        $this->validateUploadedLedgerRequest($request, (int) $iPartyId);
         DB::table('ledgers')->insert([
             'iPartyId' => $iPartyId,
             'Name' => $request->Name,

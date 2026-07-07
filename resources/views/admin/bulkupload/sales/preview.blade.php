@@ -443,7 +443,7 @@
         const selectedRate = parseFloat(selected);
         return GST_RATE_OPTIONS.map(rate => {
             const isSelected = Number.isFinite(selectedRate) && Math.abs(rate - selectedRate) < 0.000001;
-            return `<option value="${rate}" ${isSelected ? 'selected' : ''}>${rate}</option>`;
+            return `<option value="${rate}" ${isSelected ? 'selected' : ''}>${rate}%</option>`;
         }).join('');
     }
 

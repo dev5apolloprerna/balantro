@@ -300,6 +300,7 @@
             <!-- Body -->
             <div class="p-3">
                 <form id="ledgerForm">
+                <input type="hidden" name="ledger_action" id="ledger_action" value="submit">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <!-- Name -->
@@ -404,8 +405,7 @@
                                 State
                             </label>
 
-                            <select id="State"
-                                name="State"
+                            <select id="State" name="State"
                                 class="w-full rounded-lg bg-slate-800 border border-slate-600 text-white px-2 py-1">
 
                                 <option value="">
@@ -1493,10 +1493,84 @@
         }
     }
 
+    const LEDGER_PROFIT_AND_LOSS_GROUPS = [
+        'sales accounts',
+        'purchase accounts',
+        'direct incomes',
+        'direct expenses',
+        'indirect incomes',
+        'indirect expenses'
+    ];
+
+    function getLedgerFormValue(fieldName) {
+        return String($('#ledgerForm [name="' + fieldName + '"]').val() || '').trim();
+    }
+
+    function isLedgerProfitAndLossGroup() {
+        return LEDGER_PROFIT_AND_LOSS_GROUPS.includes(getLedgerFormValue('Parent').toLowerCase());
+    }
+
+    function updateLedgerActionButtons() {
+        const isProfitAndLoss = isLedgerProfitAndLossGroup();
+        $('#ledgerSaveBtn').toggle(!isProfitAndLoss);
+    }
+
+    function validateLedgerForm() {
+        const isProfitAndLoss = isLedgerProfitAndLossGroup();
+        const missing = [];
+
+        if (!getLedgerFormValue('Name')) {
+            missing.push('Name');
+        }
+
+        if (!getLedgerFormValue('Parent') || getLedgerFormValue('Parent').toLowerCase() === 'select parent') {
+            missing.push('Group');
+        }
+
+        if (!isProfitAndLoss && !getLedgerFormValue('State')) {
+            missing.push('State');
+        }
+
+        if (missing.length) {
+            showToast('Please fill required field(s): ' + missing.join(', '), 'error');
+            return false;
+        }
+
+        return true;
+    }
+
+    $(document).on('change', '#ledgerForm [name="Parent"]', updateLedgerActionButtons);
+
+    $(document).on('click', '#ledgerSaveBtn', function() {
+        if (!validateLedgerForm()) {
+            return;
+        }
+
+        if (!isLedgerProfitAndLossGroup() && !getLedgerFormValue('GstNo')) {
+            alert('GST No is empty. Please fill the GST No if you have it, else press Submit. Click OK to stay on the ledger form.');
+            return;
+        }
+
+        $('#ledger_action').val('save');
+        $('#ledgerForm').trigger('submit');
+    });
+
+    $(document).on('click', '#ledgerSubmitBtn', function() {
+        if (!validateLedgerForm()) {
+            return;
+        }
+
+        $('#ledger_action').val('submit');
+        $('#ledgerForm').trigger('submit');
+    });
+
+
     // Optional: handle form submit
     $('#ledgerForm').on('submit', function(e) {
         e.preventDefault();
-
+        if (typeof validateLedgerForm === 'function' && !validateLedgerForm()) {
+            return;
+        }
         let formData = $(this).serialize();
 
         $.ajax({
