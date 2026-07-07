@@ -82,29 +82,34 @@
 
 #mappingModal .gst-modal-panel,
 #itemMappingModal .gst-modal-panel {
-    max-height: min(92vh, 820px);
+    max-height: min(90vh, 760px);
 }
 
 #mappingModal .gst-modal-body,
 #itemMappingModal .gst-modal-body {
-    max-height: calc(92vh - 180px);
+    max-height: calc(90vh - 172px);
     overflow-y: auto;
 }
 
 .gst-modal-panel {
-    border: 1px solid rgba(148, 163, 184, 0.24);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    box-shadow: 0 24px 80px rgba(2, 8, 23, 0.34);
 }
 
 .gst-modal-hero {
     background:
-        radial-gradient(circle at top left, rgba(34, 211, 238, 0.24), transparent 34%),
-        linear-gradient(135deg, #0f172a 0%, #0e7490 100%);
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.34), transparent 32%),
+        linear-gradient(135deg, #0f172a 0%, #155e75 58%, #0f172a 100%);
 }
 
 .dark .gst-modal-hero {
     background:
-        radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 34%),
-        linear-gradient(135deg, #000 0%, #111827 100%);
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.16), transparent 34%),
+        linear-gradient(135deg, #020617 0%, #082f49 56%, #020617 100%);
+}
+
+.gst-modal-subtitle {
+    color: rgba(224, 242, 254, 0.92);
 }
 
 .gst-modal-step {
@@ -138,14 +143,33 @@
     background: rgba(0, 0, 0, 0.72);
 }
 
+.gst-modal-close {
+    height: 2.75rem;
+    width: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 1.75rem;
+    line-height: 1;
+    color: #fff;
+    transition: all 0.18s ease;
+}
+
+.gst-modal-close:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: rotate(90deg);
+}
+
 #mappingModal .select2-container--default .select2-selection--multiple,
 #itemMappingModal .select2-container--default .select2-selection--multiple {
-    min-height: 52px !important;
+    min-height: 44px !important;
     max-height: 148px;
     overflow-y: auto;
     border-radius: 0.75rem !important;
     border-color: #cbd5e1 !important;
-    padding: 0.35rem 0.5rem !important;
+    padding: 0.25rem 0.5rem !important;
 }
 #mappingModal .select2-container--default.select2-container--focus .select2-selection--multiple,
 #itemMappingModal .select2-container--default.select2-container--focus .select2-selection--multiple {
@@ -175,28 +199,46 @@
 }
 
 .gst-selection-card {
-    border: 1px solid rgba(6, 182, 212, 0.22);
-    background: linear-gradient(180deg, rgba(236, 254, 255, 0.82), rgba(255, 255, 255, 0.92));
+    border: 1px solid rgba(6, 182, 212, 0.24);
+    background: linear-gradient(180deg, rgba(236, 254, 255, 0.92), rgba(255, 255, 255, 0.98));
     border-radius: 1.25rem;
-    padding: 1rem;
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    min-height: 292px;
+    padding: 0.875rem;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
 }
 
 .dark .gst-selection-card {
-    border-color: rgba(34, 211, 238, 0.22);
-    background: linear-gradient(180deg, rgba(8, 47, 73, 0.52), rgba(0, 0, 0, 0.86));
+    border-color: rgba(34, 211, 238, 0.28);
+    background: linear-gradient(180deg, rgba(8, 47, 73, 0.64), rgba(2, 6, 23, 0.9));
+}
+
+.gst-ledger-heading {
+    margin-bottom: 0.5rem;
+}
+
+.gst-ledger-copy {
+    line-height: 1.25;
 }
 
 .gst-tax-card {
-    border: 1px solid rgba(203, 213, 225, 0.9);
-    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    background: rgba(255, 255, 255, 0.96);
     border-radius: 1rem;
-    padding: 0.875rem;
+    padding: 0.95rem;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
 }
 
 .dark .gst-tax-card {
-    border-color: rgba(55, 65, 81, 0.95);
-    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(71, 85, 105, 0.95);
+    background: rgba(15, 23, 42, 0.84);
+}
+
+.gst-modal-footer {
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(241, 245, 249, 0.96));
+}
+
+.dark .gst-modal-footer {
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.96), rgba(0, 0, 0, 0.96));
 }
 
 .gst-helper-chip {
@@ -447,16 +489,16 @@
 </div>
 
 <div id="mappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
-    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-black shadow-2xl">
+    <div class="gst-modal-panel flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-black shadow-2xl">
         <!-- Header -->
-        <div class="gst-modal-hero flex items-start justify-between px-3 py-2 text-white">
+        <div class="gst-modal-hero flex items-start justify-between px-5 py-4 text-white">
             <div>
                 <h3 class="mt-1 text-2xl font-bold">Ledger GST Mapping</h3>
-                <p class="mt-1 text-sm text-cyan-50/90">Pick client ledgers on the left and assign CGST, SGST, and IGST on the right.</p>
+                <p class="gst-modal-subtitle mt-1 text-sm">Pick client ledgers on the left and assign CGST, SGST, and IGST on the right.</p>
             </div>
 
             <button type="button"
-                class="closeModal rounded-full bg-white/10 px-3 py-1 text-2xl text-white hover:bg-white/20">
+                class="closeModal gst-modal-close">
                 ×
             </button>
         </div>
@@ -464,15 +506,15 @@
             <?php echo csrf_field(); ?>
             <input type="hidden" name="guid" value="<?php echo e($user->guid); ?>">
             <!-- Body -->
-            <div class="gst-modal-body space-y-5 bg-slate-50/70 p-3 dark:bg-black">
+            <div class="gst-modal-body space-y-5 bg-slate-50/90 p-4 dark:bg-slate-950">
                 <div class="gst-mapping-layout">
                     <!-- Ledger -->
                     <div class="gst-selection-card">
-                        <div class="mb-4 flex items-start gap-3">
+                        <div class="gst-ledger-heading flex items-center gap-3">
                             <span class="gst-modal-step">01</span>
                             <div>
                                 <label class="block text-base font-bold text-slate-800 dark:text-slate-100">Choose Client Ledger</label>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">Type to search, then select one or more ledgers. Selected ledgers appear as removable chips.</p>
+                                <p class="gst-ledger-copy text-xs text-slate-500 dark:text-slate-400">Type to search, then select one or more ledgers.</p>
                             </div>
                         </div>
                         <span class="gst-helper-chip mb-3">Tip: select multiple ledgers for same GST setup</span>
@@ -558,7 +600,7 @@
                 </div>
             </div>
             <!-- Footer -->
-            <div class="flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-black rounded-b-2xl">
+            <div class="gst-modal-footer flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
 
                 <button type="button"
                     class="closeModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
@@ -577,34 +619,34 @@
 </div>
 
 <div id="itemMappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
-    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-black shadow-2xl">
+    <div class="gst-modal-panel flex w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-black shadow-2xl">
         <!-- Header -->
-        <div class="gst-modal-hero flex items-start justify-between px-3 py-2 text-white">
+        <div class="gst-modal-hero flex items-start justify-between px-5 py-4 text-white">
             <div>
                 <h3 class="mt-1 text-2xl font-bold">Item GST Mapping</h3>
-                <p class="mt-1 text-sm text-cyan-50/90">Pick client items on the left and assign CGST, SGST, and IGST on the right.</p>
+                <p class="gst-modal-subtitle mt-1 text-sm">Pick client items on the left and assign CGST, SGST, and IGST on the right.</p>
             </div>
 
             <button type="button"
-                class="closeItemModal rounded-full bg-white/10 px-3 py-1 text-2xl text-white hover:bg-white/20">
+                class="closeItemModal gst-modal-close">
                 ×
             </button>
         </div>
         <!-- Body -->
-        <div class="gst-modal-body space-y-3 bg-slate-50/70 p-3 dark:bg-black">
+        <div class="gst-modal-body space-y-3 bg-slate-50/90 p-4 dark:bg-slate-950">
             <input type="hidden" id="item_mapping_id">
             <div class="gst-mapping-layout">
                 <!-- Item -->
                 <div class="gst-selection-card">
-                    <div class="mb-1 flex items-center gap-3">
+                    <div class="gst-ledger-heading flex items-center gap-3">
                         <span class="gst-modal-step">01</span>
                         <div>
                             <label class="block text-base font-bold text-slate-800 dark:text-slate-100">Choose Client Item</label>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Type to search, then select one or more items. Selected items appear as removable chips.</p>
+                            <p class="gst-ledger-copy text-xs text-slate-500 dark:text-slate-400">Type to search, then select one or more items.</p>
                         </div>
                     </div>
                     <span class="gst-helper-chip mb-3">Tip: select multiple items for same GST setup</span>
-                    <select id="item_id" name="item_id[]" multiple="multiple" class="select2-item w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-2 select2-hidden-accessible">
+                    <select id="item_id" name="item_id[]" multiple="multiple" class="select2-item w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-2 ">
                         <!-- <option value="">Select Item</option> -->
                         <?php $__currentLoopData = $availableItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <option value="<?php echo e($item->iStockIdtemId); ?>" data-available="true">
@@ -674,7 +716,7 @@
             </div>
         </div>
         <!-- Footer -->
-        <div class="flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-black rounded-b-2xl">
+        <div class="gst-modal-footer flex shrink-0 justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
             <button type="button"
                 class="closeItemModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
                 Cancel
@@ -734,7 +776,7 @@ function initLedgerSelect() {
         dropdownParent: $('#mappingModal'),
         placeholder: 'Search and select ledgers...',
         allowClear: true,
-        closeOnSelect: true,
+        closeOnSelect: false,
         width:'100%'
     });
 }
@@ -749,7 +791,7 @@ function initItemSelect() {
         dropdownParent: $('#itemMappingModal'),
         placeholder: 'Search and select items...',
         allowClear: true,
-        closeOnSelect: true,
+        closeOnSelect: false,
         width: '100%'
     });
 }
@@ -888,6 +930,7 @@ $(document).ready(function () {
 
     $('#btnAddItemMapping').click(function () {
         initItemSelect();
+        $('#item_id option[data-edit-only="true"]').remove();
         $('#item_id').val('').trigger('change');
         $('#item_cgst_id').val('');
         $('#item_sgst_id').val('');
@@ -936,9 +979,9 @@ $(document).on('click','.editItemMapping',function(){
     let itemName = $(this).data('itemname');
     if ($("#item_id option[value='"+itemId+"']").length == 0)
     {
-        $('#item_id').append(
-            new Option(itemName, itemId, true, true)
-        );
+        const editItemOption = new Option(itemName, itemId, true, true);
+        $(editItemOption).attr('data-edit-only', 'true');
+        $('#item_id').append(editItemOption);
     }
     $('#item_id').val([itemId]).trigger('change');
     $('#item_cgst_id').val($(this).data('cgst'));
