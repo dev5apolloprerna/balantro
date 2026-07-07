@@ -475,6 +475,7 @@ class LedgerMasterController extends Controller
                 ? -abs($this->num($openingBalanceData['balance'] ?? 0))
                 : abs($this->num($openingBalanceData['balance'] ?? 0));
             $previousBalance = $openingSigned;
+            $lastOpeningForDisplay = $openingSigned;
             $totalDebit = 0.0;
             $totalCredit = 0.0;
             $data = [[
@@ -491,11 +492,15 @@ class LedgerMasterController extends Controller
                 'strVchDate' => $startDate ? date('d-m-Y', strtotime($startDate)) : '',
                 'opening_balance' => $this->fmt(abs($previousBalance)),
                 'opening_balance_raw' => $previousBalance,
+                'OpeningBalance' => $this->fmt(abs($previousBalance)),
+                'OpeningBalanceRaw' => $previousBalance,
                 'opening_balance_side' => $this->balanceSideForVoucher($previousBalance),
                 'decRunningBalance' => $this->fmt(abs($previousBalance)),
                 'decRunningBalanceRaw' => $previousBalance,
                 'closing_balance' => $this->fmt(abs($previousBalance)),
                 'closing_balance_raw' => $previousBalance,
+                'ClosingBalance' => $this->fmt(abs($previousBalance)),
+                'ClosingBalanceRaw' => $previousBalance,
                 'closing_balance_side' => $this->balanceSideForVoucher($previousBalance),
                 'PartyGUID' => $partyguid,
                 'iYearId' => 0,
@@ -505,6 +510,7 @@ class LedgerMasterController extends Controller
 				$dr = abs($this->num($VchHistory->DRAmount ?? $VchHistory->drAmount ?? $VchHistory->DrAmount ?? 0));
                 $cr = abs($this->num($VchHistory->CRAmount ?? $VchHistory->crAmount ?? $VchHistory->CrAmount ?? 0));
                 $currentOpening = $previousBalance;
+                $lastOpeningForDisplay = $currentOpening;
                 // Match the web report running balance formula.
                 $currentClosing = $previousBalance - $dr + $cr;
                 $totalDebit += $dr;
@@ -522,12 +528,15 @@ class LedgerMasterController extends Controller
                     "strVchDate" => $VchHistory->strVchDate ?? $VchHistory->vchDate ?? $VchHistory->transactionDate ?? '',
                     "opening_balance" => $this->fmt(abs($currentOpening)),
                     "opening_balance_raw" => $currentOpening,
+                    "OpeningBalance" => $this->fmt(abs($currentOpening)),
+                    "OpeningBalanceRaw" => $currentOpening,
                     "opening_balance_side" => $this->balanceSideForVoucher($currentOpening),
                     "decRunningBalance" => $this->fmt(abs($currentClosing)),
                     "decRunningBalanceRaw" => $currentClosing,
-                    'closing_balance' => $this->fmt(abs($previousBalance)),
-                'closing_balance_raw' => $previousBalance,
-                    "closing_balance_side" => $this->balanceSideForVoucher($currentClosing),
+                    "closing_balance" => $this->fmt(abs($currentClosing)),
+                    "closing_balance_raw" => $currentClosing,
+                    "ClosingBalance" => $this->fmt(abs($currentClosing)),
+                    "ClosingBalanceRaw" => $currentClosing,
                     "PartyGUID" => $VchHistory->PartyGUID ?? $partyguid,
                     "iYearId" => $VchHistory->iYearId ?? $VchHistory->yearId ?? 0
                 );
@@ -547,13 +556,17 @@ class LedgerMasterController extends Controller
                 'CRAmountRaw' => 0.0,
                 'vchNo' => 'CLOSING BALANCE',
                 'strVchDate' => $endDate ? date('d-m-Y', strtotime($endDate)) : date('d-m-Y'),
-                'opening_balance' => $this->fmt(abs($closingSigned)),
-                'opening_balance_raw' => $closingSigned,
-                'opening_balance_side' => $this->balanceSideForVoucher($closingSigned),
+                'opening_balance' => $this->fmt(abs($lastOpeningForDisplay)),
+                'opening_balance_raw' => $lastOpeningForDisplay,
+                'OpeningBalance' => $this->fmt(abs($lastOpeningForDisplay)),
+                'OpeningBalanceRaw' => $lastOpeningForDisplay,
+                'opening_balance_side' => $this->balanceSideForVoucher($lastOpeningForDisplay),
                 'decRunningBalance' => $this->fmt(abs($closingSigned)),
                 'decRunningBalanceRaw' => $closingSigned,
                 'closing_balance' => $this->fmt(abs($closingSigned)),
                 'closing_balance_raw' => $closingSigned,
+                'ClosingBalance' => $this->fmt(abs($closingSigned)),
+                'ClosingBalanceRaw' => $closingSigned,
                 'closing_balance_side' => $this->balanceSideForVoucher($closingSigned),
                 'PartyGUID' => $partyguid,
                 'iYearId' => 0,
@@ -776,6 +789,7 @@ class LedgerMasterController extends Controller
 
 		$totalAmount = abs($totalDr ?: $totalCr);
 		$totalSide = $totalDr > 0 ? 'Dr' : 'Cr';
+
 		return [
 			'header' => $header,
 			'party_ledger' => [
