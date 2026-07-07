@@ -54,10 +54,10 @@ class PurchaseUploadController extends Controller
         $parents = DB::table('LedgerMaster')
             ->select('strParents')
             ->where('iPartyId', $iPartyId)
-            ->where('strParents', 'Sundry Creditors')
+            ->whereIn('strParents', ['Sundry Creditors', 'Sundry Debtors'])
             ->distinct()
             ->get();
-        $ledgers = Ledger::getAllCreditorsLedgers($iPartyId);
+        $ledgers = Ledger::getAllPartyLedgers($iPartyId);
 
         $iGstLedgers = Ledger::getAlliGstLedgers($iPartyId);
         $cGstLedgers = Ledger::getAllcGstLedgers($iPartyId);
@@ -384,7 +384,7 @@ class PurchaseUploadController extends Controller
         $hasUploadedGstNo = $this->normalizeGstNo($uploadedGstNo) !== '';
 
         if ($hasUploadedGstNo) {
-            return !empty($ledgerDetails['matched_by_gst']);
+            return !empty($ledgerDetails['matched_by_gst']) || !empty($ledgerDetails['matched_by_name']);
         }
 
         return !empty($ledgerDetails['matched_by_name']);
@@ -1438,10 +1438,10 @@ class PurchaseUploadController extends Controller
         $parents = DB::table('LedgerMaster')
             ->select('strParents')
             ->where('iPartyId', $iPartyId)
-            ->where('strParents', 'Sundry Creditors')
+            ->whereIn('strParents', ['Sundry Creditors', 'Sundry Debtors'])
             ->distinct()
             ->get();
-        $ledgers = Ledger::getAllCreditorsLedgers($iPartyId);
+        $ledgers = Ledger::getAllPartyLedgers($iPartyId);
 
         $iGstLedgers = Ledger::getAlliGstLedgers($iPartyId);
         $cGstLedgers = Ledger::getAllcGstLedgers($iPartyId);
@@ -1582,7 +1582,7 @@ class PurchaseUploadController extends Controller
         if (!$this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $transaction->gst_no)) {
             $issues[] = [
                 'field' => 'party_name',
-                'message' => 'Party name/GSTIN does not match any creditor ledger.',
+                'message' => 'Party name/GSTIN does not match any party ledger.',
             ];
         }
 

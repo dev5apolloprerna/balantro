@@ -129,6 +129,41 @@ class Ledger extends Model
         ", [$companyId, $companyId, $companyId]);
     }
 
+    public static function getAllPartyLedgers($companyId)
+    {
+        return DB::select("
+            SELECT
+                iLedgerId AS id,
+                strCustomerName AS name,
+                GSTNo AS gst_no,
+                LedgerAddress AS address,
+                Pincode AS pincode,
+                '' AS city,
+                StateName AS state
+            FROM LedgerMaster
+            WHERE iPartyId = ? AND iPrimaryGroupId IN (
+                    SELECT iGroupId
+                    FROM GroupMaster
+                    WHERE IsReserved = 1
+                    AND IsRevenue = 0
+                    AND iPartyId = ?
+            )
+            UNION
+
+            SELECT
+                id,
+                name,
+                GstNo AS gst_no,
+                TRIM(CONCAT_WS(' ', AddressLine1, AddressLine2)) AS address,
+                Pincode AS pincode,
+                City AS city,
+                State AS state
+            FROM ledgers
+            WHERE Parent IN ('Sundry Creditors', 'Sundry Debtors') and iPartyId = ?
+            ORDER BY name
+        ", [$companyId, $companyId, $companyId]);
+    }
+
     public static function getAllBankLedgers($companyId)
     {
         return DB::select("
