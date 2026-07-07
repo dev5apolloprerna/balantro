@@ -494,6 +494,8 @@ class LedgerMasterController extends Controller
                 'opening_balance_side' => $this->balanceSideForVoucher($previousBalance),
                 'decRunningBalance' => $this->fmt(abs($previousBalance)),
                 'decRunningBalanceRaw' => $previousBalance,
+                'closing_balance' => $this->fmt(abs($previousBalance)),
+                'closing_balance_raw' => $previousBalance,
                 'closing_balance_side' => $this->balanceSideForVoucher($previousBalance),
                 'PartyGUID' => $partyguid,
                 'iYearId' => 0,
@@ -523,6 +525,8 @@ class LedgerMasterController extends Controller
                     "opening_balance_side" => $this->balanceSideForVoucher($currentOpening),
                     "decRunningBalance" => $this->fmt(abs($currentClosing)),
                     "decRunningBalanceRaw" => $currentClosing,
+                    'closing_balance' => $this->fmt(abs($previousBalance)),
+                'closing_balance_raw' => $previousBalance,
                     "closing_balance_side" => $this->balanceSideForVoucher($currentClosing),
                     "PartyGUID" => $VchHistory->PartyGUID ?? $partyguid,
                     "iYearId" => $VchHistory->iYearId ?? $VchHistory->yearId ?? 0
@@ -548,6 +552,8 @@ class LedgerMasterController extends Controller
                 'opening_balance_side' => $this->balanceSideForVoucher($closingSigned),
                 'decRunningBalance' => $this->fmt(abs($closingSigned)),
                 'decRunningBalanceRaw' => $closingSigned,
+                'closing_balance' => $this->fmt(abs($closingSigned)),
+                'closing_balance_raw' => $closingSigned,
                 'closing_balance_side' => $this->balanceSideForVoucher($closingSigned),
                 'PartyGUID' => $partyguid,
                 'iYearId' => 0,
@@ -742,13 +748,49 @@ class LedgerMasterController extends Controller
 
 	private function formatVoucherDetailsResponse($voucher, $header, float $totalDr, float $totalCr): array
 	{
+        $partyLedgerName = trim((string) ($header->trnAccount ?? ''));
+		$particulars = $voucher
+			->filter(function ($row) use ($partyLedgerName) {
+				return trim((string) ($row->trnAccount ?? '')) !== $partyLedgerName;
+			})
+			->map(function ($row) {
+				$dr = (float) ($row->DRAmount ?? 0);
+				$cr = (float) ($row->CRAmount ?? 0);
+				$amount = abs($dr) > 0 ? abs($dr) : abs($cr);
+
+				return [
+					'iVchId' => $row->iVchId ?? null,
+					'iLedgerId' => $row->iLedgerId ?? null,
+					'trnAccount' => trim((string) ($row->trnAccount ?? '')),
+					'trnAccount_display' => strtoupper(trim((string) ($row->trnAccount ?? ''))),
+					'DRAmount' => $this->fmt(abs($dr)),
+					'DRAmountRaw' => abs($dr),
+					'CRAmount' => $this->fmt(abs($cr)),
+					'CRAmountRaw' => abs($cr),
+					'amount' => $this->fmt($amount),
+					'amount_raw' => $amount,
+					'side' => $dr > 0 ? 'Dr' : 'Cr',
+				];
+			})
+			->values();
+
+		$totalAmount = abs($totalDr ?: $totalCr);
+		$totalSide = $totalDr > 0 ? 'Dr' : 'Cr';
 		return [
 			'header' => $header,
+			'party_ledger' => [
+				'trnAccount' => $partyLedgerName,
+			],
+			'particulars' => $particulars,
 			'rows' => $voucher->values(),
+			'total' => $this->fmt($totalAmount),
+			'total_raw' => $totalAmount,
+			'total_side' => $totalSide,
 			'total_dr' => $this->fmt($totalDr),
 			'total_dr_raw' => $totalDr,
 			'total_cr' => $this->fmt($totalCr),
 			'total_cr_raw' => $totalCr,
+			'narration' => $header->Narration ?? '',
 		];
 	}
 
