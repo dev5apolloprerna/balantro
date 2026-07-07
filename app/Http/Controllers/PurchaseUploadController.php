@@ -463,9 +463,18 @@ class PurchaseUploadController extends Controller
         ];
     }
 
+    private function roundCurrency($value): float
+    {
+        return round((float) $value, 2);
+    }
+
     private function calculateRoundOffAmount($amount, $sgst, $cgst, $igst, ?string $side = 'normal'): float
     {
-        $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        // $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        $grandTotal = $this->roundCurrency($amount)
+            + $this->roundCurrency($sgst)
+            + $this->roundCurrency($cgst)
+            + $this->roundCurrency($igst);
 
         $roundedGrandTotal = match ($side) {
             'upper_side' => ceil($grandTotal),
@@ -478,10 +487,24 @@ class PurchaseUploadController extends Controller
 
     private function calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, ?string $side = 'normal'): float
     {
-        $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        // $grandTotal = (float) $amount + (float) $sgst + (float) $cgst + (float) $igst;
+        $grandTotal = $this->roundCurrency($amount)
+            + $this->roundCurrency($sgst)
+            + $this->roundCurrency($cgst)
+            + $this->roundCurrency($igst);
         $roundOff = $this->calculateRoundOffAmount($amount, $sgst, $cgst, $igst, $side);
 
         return round($grandTotal + $roundOff, 2);
+    }
+
+    private function totalsMatch(float $uploadedTotal, float $amount, float $sgst, float $cgst, float $igst, ?string $roundOffSide = 'normal'): bool
+    {
+        if ($uploadedTotal == 0) {
+            return true;
+        }
+
+        $calculatedTotal = $this->calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, $roundOffSide);
+        return abs($this->roundCurrency($uploadedTotal) - $this->roundCurrency($calculatedTotal)) <= 0.01;
     }
 
     public function upload(Request $request)
@@ -714,6 +737,17 @@ class PurchaseUploadController extends Controller
                     // ]);
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
+                    $amountMatched = $amountMatched && $this->totalsMatch(
+                        $sumTotalAmount,
+                        $sumAmount,
+                        $sumSgst,
+                        $sumCgst,
+                        $sumIgst,
+                        $roundOffSetting['side']
+                    );
+                    if (!$amountMatched) {
+                        $status = 'pending';
+                    }
                     
                     $transaction = PurchaseTransaction::create([
                         'iPartyId'              => $iPartyId,
@@ -1007,10 +1041,18 @@ class PurchaseUploadController extends Controller
                     );
                     $purchaseLedgerMapped = $this->purchaseLedgerIsMapped($iPartyId, $first['purchase_ledger'] ?? null);
                     $gstLedgersMapped = $this->customGstLedgersAreMapped($gstSlots, $isIgst);
-                    $amountMatched = $this->purchaseAmountsMatch([], $rows);
-                    $status = (!$hasRequiredDetails || !$purchaseLedgerMapped || !$gstLedgersMapped || !$amountMatched || !$hasValidGstSlab || $isDuplicateVoucher || !$partyLedgerMatched) ? 'pending' : 'saved';
                     $roundOffSetting = $this->getRoundOffSetting($iPartyId);
                     $roundOffLedger = $roundOffSetting['ledger'];
+
+                    $amountMatched = $this->purchaseAmountsMatch([], $rows) && $this->totalsMatch(
+                        $sumTotalAmount,
+                        $sumAmount,
+                        $sumSgst,
+                        $sumCgst,
+                        $sumIgst,
+                        $roundOffSetting['side']
+                    );
+                    $status = (!$hasRequiredDetails || !$purchaseLedgerMapped || !$gstLedgersMapped || !$amountMatched || !$hasValidGstSlab || $isDuplicateVoucher || !$partyLedgerMatched) ? 'pending' : 'saved';
 
                     $transaction = PurchaseTransaction::create([
                         'iPartyId'          => $iPartyId,
@@ -1746,21 +1788,35 @@ class PurchaseUploadController extends Controller
 
     private function purchaseTransactionAmountsMatch(PurchaseTransaction $transaction): bool
     {
+        $lineAmountsMatch = true;
         if ($transaction->items->isNotEmpty()) {
-            return $this->purchaseAmountsMatch($transaction->items->map(fn ($item) => [
+            $lineAmountsMatch = $this->purchaseAmountsMatch($transaction->items->map(fn ($item) => [
                 'quantity' => $item->quantity,
                 'rate' => $item->rate,
                 'amount' => $item->amount,
             ])->all());
-        }
-
-        if ($transaction->customGst->isNotEmpty()) {
-            return $this->purchaseAmountsMatch([], $transaction->customGst->map(fn ($slot) => [
+        } elseif ($transaction->customGst->isNotEmpty()) {
+            $lineAmountsMatch = $this->purchaseAmountsMatch([], $transaction->customGst->map(fn ($slot) => [
                 'amount' => $slot->amount ?? $slot->taxable,
             ])->all());
+        } else {
+            $lineAmountsMatch = (float) $transaction->amount > 0;
         }
 
-        return (float) $transaction->amount > 0;
+        if (!$lineAmountsMatch) {
+            return false;
+        }
+
+        $roundOffSide = $this->getRoundOffSetting($transaction->iPartyId)['side'];
+
+        return $this->totalsMatch(
+            (float) $transaction->total_amount,
+            (float) $transaction->amount,
+            (float) $transaction->sgst,
+            (float) $transaction->cgst,
+            (float) $transaction->igst,
+            $roundOffSide
+        );
     }
 
      private function rematchPendingPurchaseTransaction(PurchaseTransaction $transaction): bool
@@ -2296,7 +2352,14 @@ class PurchaseUploadController extends Controller
                 $request['gst_no'] ?? null
             );
             $purchaseLedgerMapped = $this->purchaseLedgerIsMapped($transaction->iPartyId, $purchase_ledger);
-            $amountMatched = $this->purchaseAmountsMatch($requestItems, $requestNoitemRows);
+            $amountMatched = $this->purchaseAmountsMatch($requestItems, $requestNoitemRows) && $this->totalsMatch(
+                (float) ($request->total_amount ?? $transaction->total_amount ?? 0),
+                $sumAmount,
+                $sumSgst,
+                $sumCgst,
+                $sumIgst,
+                $roundOffSetting['side']
+            );
             $gstLedgersMapped = $gstMode === 'custom'
                 ? $this->customGstLedgersAreMapped(
                     collect($request->custom_slots ?? [])
