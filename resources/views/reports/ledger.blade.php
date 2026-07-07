@@ -348,44 +348,41 @@
                 @if ($filteredList->count() > 0)
 
                 <div class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden group-block">
-                    <div
+                    <!-- <div
                         class="px-4 py-3  border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                         <div class="text-sm font-semibold text-black-700 dark:text-gray-200">
                             {{ $parent ?: 'Ungrouped' }} 
-                            <!-- — <span class="font-normal text-gray-500 dark:text-gray-400">{{ $list->count() }} ledgers</span> -->
                         </div>
                         <div class="text-xs md:text-sm text-black-600 dark:text-gray-300">
-                            <!-- <span class="mr-4">Dr: <strong
-                                    class="text-gray-600 dark:text-gray-300">{{ $inr($gDr) }}</strong></span>
-                            <span>Cr: <strong class="text-gray-600 dark:text-gray-300">{{ $inr($gCr) }}</strong></span> -->
                             @php
                                 $gOp = $filteredList->sum(fn($r) => $toFloat($r->decOpBl ?? 0));
                                 $gCl = $filteredList->sum(fn($r) => $toFloat($r->decClBl ?? 0));
                             @endphp
-
-                            <!-- <span>Op:
-                                <strong>
-                                    {{ $inr(abs($gOp)) }} {{ $gOp < 0 ? 'Cr' : 'Dr' }}
-                                </strong>
-                            </span> |
-
-                            <span>Dr:
-                                <strong>{{ $inr($gDr) }}</strong>
-                            </span> |
-
-                            <span>Cr:
-                                <strong>{{ $inr($gCr) }}</strong>
-                            </span> |
-
-                            <span>Cl:
-                                <strong>
-                                    {{ $inr(abs($gCl)) }} {{ $gCl < 0 ? 'Cr' : 'Dr' }}
-                                </strong>
-                            </span> -->
                         </div>
-                    </div>
+                    </div> -->
+                     @php
+                        $gOp = $filteredList->sum(fn($r) => $toFloat($r->decOpBl ?? 0));
+                        $gCl = $filteredList->sum(fn($r) => $toFloat($r->decClBl ?? 0));
+                    @endphp
+                    <button type="button"
+                        class="ledger-group-toggle w-full px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-2 text-left transition hover:bg-cyan-50/70 dark:hover:bg-cyan-950/30 md:flex-row md:items-center md:justify-between"
+                        aria-expanded="false">
+                        <span class="flex items-center gap-3 text-sm font-semibold text-black-700 dark:text-gray-200">
+                            <i class="fa-solid fa-chevron-right ledger-group-icon text-xs text-cyan-600 transition-transform duration-200 dark:text-cyan-300"></i>
+                            <span>{{ $parent ?: 'Ungrouped' }}</span>
+                            <span class="rounded-full bg-cyan-100 px-2 py-0.5 text-xs font-semibold text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-200">
+                                {{ $filteredList->count() }} ledgers
+                            </span>
+                        </span>
+                        <span class="flex flex-wrap gap-x-4 gap-y-1 text-xs md:text-sm text-black-600 dark:text-gray-300">
+                            <span>Opening: <strong>{{ abs($gOp) > 0 ? $inr(abs($gOp)) . ' ' . ($gOp < 0 ? 'Dr' : 'Cr') : '0.00' }}</strong></span>
+                            <span>Debit: <strong>{{ $inr($gDr) }}</strong></span>
+                            <span>Credit: <strong>{{ $inr($gCr) }}</strong></span>
+                            <span>Closing: <strong>{{ abs($gCl) > 0 ? $inr(abs($gCl)) . ' ' . ($gCl < 0 ? 'Dr' : 'Cr') : '0.00' }}</strong></span>
+                        </span>
+                    </button>
 
-                    <div class="overflow-x-auto">
+                    <div class="ledger-group-panel hidden overflow-x-auto">
                         <table class="min-w-full text-sm text-left">
                             <thead class="sticky top-0 z-10 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md border-b border-cyan-500/20">
                                 <tr class="text-black-600 dark:text-gray-300">
@@ -772,6 +769,39 @@
                 // You can add a loading spinner here if desired
                 console.log('Searching...');
             }
+        });
+
+        function closeLedgerGroup(groupBlock) {
+            const toggle = groupBlock.querySelector('.ledger-group-toggle');
+            const panel = groupBlock.querySelector('.ledger-group-panel');
+            const icon = groupBlock.querySelector('.ledger-group-icon');
+
+            panel?.classList.add('hidden');
+            toggle?.setAttribute('aria-expanded', 'false');
+            icon?.classList.remove('rotate-90');
+        }
+
+        function openLedgerGroup(groupBlock) {
+            const toggle = groupBlock.querySelector('.ledger-group-toggle');
+            const panel = groupBlock.querySelector('.ledger-group-panel');
+            const icon = groupBlock.querySelector('.ledger-group-icon');
+
+            panel?.classList.remove('hidden');
+            toggle?.setAttribute('aria-expanded', 'true');
+            icon?.classList.add('rotate-90');
+        }
+
+        document.querySelectorAll('.ledger-group-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const currentGroup = this.closest('.group-block');
+                const isOpen = this.getAttribute('aria-expanded') === 'true';
+
+                document.querySelectorAll('.group-block').forEach(closeLedgerGroup);
+
+                if (!isOpen && currentGroup) {
+                    openLedgerGroup(currentGroup);
+                }
+            });
         });
 
         document.getElementById('searchForm').addEventListener('submit', function(e) {
