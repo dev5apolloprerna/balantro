@@ -465,15 +465,33 @@ class LedgerMasterController extends Controller
 
 			$VchHistories = collect(data_get($voucherHistoryResult, 'data.rows', []));
 
-			$openingBalanceData = ['balance' => 0.0, 'side' => 'Dr'];
-            if ($startDate) {
-                $previousDay = date('Y-m-d', strtotime($startDate . ' -1 day'));
-                $openingBalanceData = $svc->getOpeningBalance($partyguid, $iledgerid, $previousDay);
+			// $openingBalanceData = ['balance' => 0.0, 'side' => 'Dr'];
+            // if ($startDate) {
+            //     $previousDay = date('Y-m-d', strtotime($startDate . ' -1 day'));
+            //     $openingBalanceData = $svc->getOpeningBalance($partyguid, $iledgerid, $previousDay);
+            $firstVoucherRow = $VchHistories->first();
+            $openingBalanceFromRows = $firstVoucherRow
+                ? $this->num($firstVoucherRow->OpeningBalance ?? $firstVoucherRow->openingBalance ?? $firstVoucherRow->opening_balance ?? null)
+                : 0.0;
+
+            // Keep the API aligned with the web voucher history report. The web report uses the
+            // OpeningBalance returned by GetVchHistoryByLedger as the period opening amount;
+            // getOpeningBalance() is only a fallback for result sets that do not include it.
+            if ($openingBalanceFromRows != 0.0) {
+                $openingSigned = $openingBalanceFromRows;
+            } else {
+                $openingBalanceData = ['balance' => 0.0, 'side' => 'Dr'];
+                if ($startDate) {
+                    $previousDay = date('Y-m-d', strtotime($startDate . ' -1 day'));
+                    $openingBalanceData = $svc->getOpeningBalance($partyguid, $iledgerid, $previousDay);
+                }
+
+                $openingSigned = ($openingBalanceData['side'] ?? 'Dr') === 'Cr'
+                    ? -abs($this->num($openingBalanceData['balance'] ?? 0))
+                    : abs($this->num($openingBalanceData['balance'] ?? 0));
             }
 			
-			$openingSigned = ($openingBalanceData['side'] ?? 'Dr') === 'Cr'
-                ? -abs($this->num($openingBalanceData['balance'] ?? 0))
-                : abs($this->num($openingBalanceData['balance'] ?? 0));
+			
             $previousBalance = $openingSigned;
             $lastOpeningForDisplay = $openingSigned;
             $totalDebit = 0.0;

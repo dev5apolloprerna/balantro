@@ -241,6 +241,7 @@ class BankUploadController extends Controller
         $debitIndex     = $find(['debit', 'withdrawal']);
         $creditIndex    = $find(['credit', 'deposit']);
         $amountIndex    = $find(['amount']);
+        $drCrIndex      = $find(['dr / cr', 'dr/cr', 'dr cr', 'debit/credit', 'debit credit']);
 
         if ($txnDateIndex === null || $narrationIndex === null || ($debitIndex === null && $creditIndex === null && $amountIndex === null)) {
             $upload->update(['status' => 'Failed']);
@@ -310,6 +311,7 @@ class BankUploadController extends Controller
                     $debitIndex,
                     $creditIndex,
                     $amountIndex,
+                    $drCrIndex,
                     $balanceIndex,
                 ], fn($index) => $index !== null && $index > $narrationIndex);
                 $narrationLength = $stopIndexes
@@ -355,19 +357,22 @@ class BankUploadController extends Controller
                 $amount = $debit > 0 ? $debit : $credit;
             }
 
-            if ($amount == 0) {
-                continue;
-            }
+            // if ($amount == 0) {
+            //     continue;
+            // }
 
-            // ✅ PRIORITY 3: Amount column
+            // ✅ PRIORITY 3: Single Amount column with Dr/Cr indicator
             if ($amount == 0 && $amountIndex !== null) {
 
-                $amount = $clean($row[$amountIndex]);
+                $amount = $clean($row[$amountIndex] ?? 0);
+                $drCr = strtoupper(trim((string) ($row[$drCrIndex] ?? '')));
 
-                if (stripos($narration, 'dr') !== false) {
-                    $debit = $amount;
-                } else {
-                    $credit = $amount;
+                if ($amount > 0) {
+                    if ($drCr === 'DR' || stripos($narration, ' dr') !== false) {
+                        $debit = $amount;
+                    } else {
+                        $credit = $amount;
+                    }
                 }
             }
 
@@ -385,6 +390,10 @@ class BankUploadController extends Controller
 
                 $prevBalance = $currentBalance;
                 $amount = $debit > 0 ? $debit : $credit;
+            }
+
+            if ($amount == 0) {
+                continue;
             }
 
             $balance = $clean($row[$balanceIndex] ?? 0);
