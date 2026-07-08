@@ -1461,9 +1461,18 @@ class ReportsService
 
     public function voucherDetails($guid, $strGUID, $vchType)
     {
-        return DB::select("
+        $requestedGuid = urldecode((string) $strGUID);
+         $rows = collect(DB::select("
             EXEC dbo.GetVoucherDetails ?, ?, ?
-        ", [$guid, $strGUID, $vchType]);
+        ", [$guid, $requestedGuid, $vchType]));
+
+        $matchedRows = $rows->filter(function ($row) use ($requestedGuid) {
+            $rowGuid = $row->strGUID ?? $row->StrGUID ?? $row->GUID ?? $row->guid ?? null;
+
+            return $rowGuid !== null && strcasecmp(trim((string) $rowGuid), $requestedGuid) === 0;
+        });
+
+        return $matchedRows->isNotEmpty() ? $matchedRows->values()->all() : $rows->all();
 
     }
 }

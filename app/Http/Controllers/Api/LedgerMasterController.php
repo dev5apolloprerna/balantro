@@ -844,21 +844,29 @@ class LedgerMasterController extends Controller
             ->limit(3)
             ->get();
 
-        $rangeSel = $request->input('range') ?: $this->defaultApiFinancialYearRange($financialYears);
+        // $rangeSel = $request->input('range') ?: $this->defaultApiFinancialYearRange($financialYears);
+        $explicitFrom = $request->input('from_custom') ?: $request->input('from') ?: $request->input('start_date');
+        $explicitTo = $request->input('to_custom') ?: $request->input('to') ?: $request->input('end_date');
+        $rangeInput = $request->input('range');
+        $rangeSel = $rangeInput ?: (($explicitFrom || $explicitTo) ? 'custom' : $this->defaultApiFinancialYearRange($financialYears));
 
         if ($rangeSel !== 'custom' && $financialYears->isNotEmpty() && !$financialYears->firstWhere('iYearId', (int) $rangeSel)) {
             $rangeSel = $this->defaultApiFinancialYearRange($financialYears);
         }
 
         if ($rangeSel === 'custom') {
-            $from = $request->input('from_custom') ?: $request->input('from') ?: $request->input('start_date');
-            $to = $request->input('to_custom') ?: $request->input('to') ?: $request->input('end_date');
+            // $from = $request->input('from_custom') ?: $request->input('from') ?: $request->input('start_date');
+            // $to = $request->input('to_custom') ?: $request->input('to') ?: $request->input('end_date');
+            $from = $explicitFrom;
+            $to = $explicitTo;
         } else {
             $range = $this->apiFinancialYearDateRange((string) $rangeSel, $financialYears)
                 ?: $this->apiLegacyFinancialYearDateRange((string) $rangeSel);
 
-            $from = $range['from'] ?? ($request->input('from') ?: $request->input('start_date'));
-            $to = $range['to'] ?? ($request->input('to') ?: $request->input('end_date'));
+            // $from = $range['from'] ?? ($request->input('from') ?: $request->input('start_date'));
+            // $to = $range['to'] ?? ($request->input('to') ?: $request->input('end_date'));
+            $from = $range['from'] ?? $explicitFrom;
+            $to = $range['to'] ?? $explicitTo;
         }
 
         return [$financialYears, $rangeSel, $this->normalizeApiDate($from), $this->normalizeApiDate($to)];

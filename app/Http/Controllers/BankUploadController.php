@@ -345,6 +345,7 @@ class BankUploadController extends Controller
             return is_numeric($val) ? (float)$val : 0;
         };
 
+        $availableLedgers = Ledger::getAllLedgers($iPartyId);
         $total = 0;
         $prevBalance = null;
 
