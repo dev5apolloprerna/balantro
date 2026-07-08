@@ -117,7 +117,7 @@
             @csrf
             
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 group-block">
-                <table class="min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                <table id="bankTable" class="min-w-[900px] w-full text-sm text-left text-gray-600 dark:text-gray-200">
                     <!-- Table Header -->
                     <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 text-xs uppercase sticky top-0 z-10">
                         <tr>
@@ -162,7 +162,7 @@
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums"><tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                         @foreach($rows as $index=>$row)
                         <tr data-cheque="{{ $row->cheque_no }}"
                             data-ref="{{ $row->ref_no }}"
@@ -1732,5 +1732,123 @@ $(document).on('keyup change', '.searchInput', function () {
     function closeRemarkModal() {
         $('#remarkModal').removeClass('flex').addClass('hidden');
     }
+
+    function normalizePreviewFilterText(value) {
+        return (value || '').toString().toLowerCase().trim();
+    }
+
+    function getPreviewCellText(cell) {
+        let parts = [];
+        parts.push(cell.text());
+        cell.find('input, textarea').each(function() {
+            parts.push($(this).val());
+        });
+        cell.find('select').each(function() {
+            parts.push($(this).val());
+            parts.push($(this).find('option:selected').text());
+        });
+        return normalizePreviewFilterText(parts.join(' '));
+    }
+
+    function getPreviewAmount(row) {
+        let amountText = row.find('td').eq(6).text().replace(/,/g, '').trim();
+        let amount = parseFloat(amountText);
+        return Number.isNaN(amount) ? 0 : amount;
+    }
+
+    function applyBankPreviewFilters() {
+        const typeFilter = normalizePreviewFilterText($('#typeFilter').val());
+        const descriptionFilter = normalizePreviewFilterText($('#descFilter').val());
+        const amountFromValue = parseFloat($('.amountFrom').val());
+        const amountToValue = parseFloat($('.amountTo').val());
+        const amountFrom = Number.isNaN(amountFromValue) ? -Infinity : amountFromValue;
+        const amountTo = Number.isNaN(amountToValue) ? Infinity : amountToValue;
+        const generalFilters = $('.generalFilter:checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        const columnFilters = [];
+        $('#bankTable thead tr').eq(1).find('th').each(function(index) {
+            const inputs = $(this).find('.searchInput').not('.amountFrom, .amountTo');
+            const value = normalizePreviewFilterText(inputs.map(function() {
+                return $(this).val();
+            }).get().join(' '));
+            if (value) {
+                columnFilters.push({ index, value });
+            }
+        });
+
+        $('#bankTable tbody tr').each(function() {
+            const row = $(this);
+            let show = true;
+
+            if (typeFilter) {
+                const rowType = normalizePreviewFilterText(row.find('select[name^="type"]').val());
+                show = rowType === typeFilter;
+            }
+
+            if (show && descriptionFilter) {
+                const rowDescription = normalizePreviewFilterText(row.find('input[name^="narration"]').val());
+                show = rowDescription.includes(descriptionFilter);
+            }
+
+            if (show && (amountFrom !== -Infinity || amountTo !== Infinity)) {
+                const amount = getPreviewAmount(row);
+                show = amount >= amountFrom && amount <= amountTo;
+            }
+
+            if (show) {
+                for (const filter of columnFilters) {
+                    const cellText = getPreviewCellText(row.find('td').eq(filter.index));
+                    if (!cellText.includes(filter.value)) {
+                        show = false;
+                        break;
+                    }
+                }
+            }
+
+            if (show && generalFilters.length) {
+                const status = normalizePreviewFilterText(row.find('td').eq(10).text());
+                if (generalFilters.includes('synced') && status === 'synced') {
+                    show = false;
+                }
+                if (generalFilters.includes('saved') && status !== 'saved') {
+                    show = false;
+                }
+                if (generalFilters.includes('failed') && status !== 'failed') {
+                    show = false;
+                }
+                if (generalFilters.includes('blank')) {
+                    const party = row.find('input[name^="party_name"]').val();
+                    const ledger = row.find('select[name^="ledger"]').val();
+                    if (party && ledger) {
+                        show = false;
+                    }
+                }
+            }
+
+            row.toggle(show);
+        });
+    }
+
+    let bankPreviewFilterTimer;
+    function scheduleBankPreviewFilters() {
+        clearTimeout(bankPreviewFilterTimer);
+        bankPreviewFilterTimer = setTimeout(applyBankPreviewFilters, 150);
+    }
+
+    $(function() {
+        $('#bankTable').attr('id', 'bankTable');
+        $('#descFilter').off('keyup');
+        $('.searchInput, .amountFrom, .amountTo').off('keyup change');
+        $('.generalFilter').off('change');
+        $(document).off('keyup change', '.searchInput');
+        $(document).off('keyup change', '.amountFrom, .amountTo, #descFilter');
+        $(document).off('keyup change', '.amountFrom, .amountTo');
+
+        $(document).on('keyup change', '#descFilter, #bankTable .searchInput, #bankTable .amountFrom, #bankTable .amountTo, .generalFilter', scheduleBankPreviewFilters);
+        $('#typeFilter').on('change', scheduleBankPreviewFilters);
+        $('#bankTable').on('change keyup', 'tbody input, tbody select, tbody textarea', scheduleBankPreviewFilters);
+    });
 </script>
 @endsection
