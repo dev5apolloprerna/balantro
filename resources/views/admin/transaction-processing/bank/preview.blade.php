@@ -78,8 +78,8 @@
                 </div> -->
                 <div>
                     <label class="text-sm">Description</label>
-                    <input type="text" id="descFilter" 
-                        class="border px-2 py-1 rounded mt-1" 
+                    <input type="text" id="descFilter"
+                        class="border px-2 py-1 rounded mt-1"
                         placeholder="Search Description">
                 </div>
                 <div>
@@ -196,10 +196,10 @@
                                 <select name="type[{{$row->id}}]" class="inputCell" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
                                     @foreach($vchTypes as $vchType)
                                         <option value="{{ $vchType }}"
-                                            {{ 
+                                            {{
                                                 ($row->credit > 0 && $vchType == 'Receipt') ||
-                                                ($row->debit > 0 && $vchType == 'Payment') 
-                                                ? 'selected' : '' 
+                                                ($row->debit > 0 && $vchType == 'Payment')
+                                                ? 'selected' : ''
                                             }}>
                                             {{ $vchType }}
                                         </option>
@@ -260,22 +260,6 @@
                         @endforeach
                     </tbody>
                 </table>
-                <div id="bankPagination" class="flex flex-wrap items-center justify-between gap-3 px-3 py-2 bg-white dark:bg-neutral-900 border-t border-gray-200 dark:border-gray-700 text-sm">
-                    <div class="flex items-center gap-2">
-                        <span id="bankPageInfo" class="text-gray-700 dark:text-gray-300"></span>
-                        <select id="bankPageSize" class="border rounded px-2 py-1 bg-white dark:bg-neutral-800 text-gray-800 dark:text-white">
-                            <option value="25">25</option>
-                            <option value="50" selected>50</option>
-                            <option value="100">100</option>
-                            <option value="200">200</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" id="bankPrevPage" class="border border-gray-300 dark:border-neutral-600 px-3 py-1 rounded text-gray-700 dark:text-gray-300 disabled:opacity-50">Previous</button>
-                        <span id="bankPageNumbers" class="text-gray-700 dark:text-gray-300"></span>
-                        <button type="button" id="bankNextPage" class="border border-gray-300 dark:border-neutral-600 px-3 py-1 rounded text-gray-700 dark:text-gray-300 disabled:opacity-50">Next</button>
-                    </div>
-                </div>
                 <div class="mt-3">
                     {{ $rows->links() }}
                 </div>
@@ -1031,9 +1015,36 @@ function rowMatchesFilters(row) {
     return show;
 }
 
+function bindBankPreviewFilters() {
+    $('#typeFilter, #descFilter, .generalFilter').off('change.bankPreview keyup.bankPreview').on('change.bankPreview keyup.bankPreview', function () {
+        refreshBankPagination(true);
+    });
+    $('.searchInput, .amountFrom, .amountTo').off('keyup.bankPreview change.bankPreview').on('keyup.bankPreview change.bankPreview', function () {
+        refreshBankPagination(true);
+    });
+    $('#bankPageSize').off('change.bankPreview').on('change.bankPreview', function () {
+        BANK_PAGE_STATE.pageSize = parseInt($(this).val(), 10) || 50;
+        refreshBankPagination(true);
+    });
+    $('#bankPrevPage').off('click.bankPreview').on('click.bankPreview', function () {
+        BANK_PAGE_STATE.page -= 1;
+        refreshBankPagination(false);
+    });
+    $('#bankNextPage').off('click.bankPreview').on('click.bankPreview', function () {
+        BANK_PAGE_STATE.page += 1;
+        refreshBankPagination(false);
+    });
+}
+
 function refreshBankPagination(resetPage = false) {
     if (resetPage) {
         BANK_PAGE_STATE.page = 1;
+    }
+
+    // A page refresh can be triggered before the DOM is fully ready from
+    // shared event handlers; bail out safely in that case.
+    if (!$('#bankTable tbody').length) {
+        return;
     }
 
     const rows = bankRows();
@@ -1055,6 +1066,18 @@ function refreshBankPagination(resetPage = false) {
     $('#bankPrevPage').prop('disabled', BANK_PAGE_STATE.page <= 1);
     $('#bankNextPage').prop('disabled', BANK_PAGE_STATE.page >= totalPages);
 }
+
+$('#bankPrevPage').on('click', function() {
+    if (BANK_PAGE_STATE.page > 1) {
+        BANK_PAGE_STATE.page -= 1;
+        refreshBankPagination();
+    }
+});
+
+$('#bankNextPage').on('click', function() {
+    BANK_PAGE_STATE.page += 1;
+    refreshBankPagination();
+});
 
 function getLedgerOptions(type) {
     let list = [];
@@ -1107,6 +1130,7 @@ $(document).ready(function () {
     $('#bulkLedger').select2(BULK_SELECT2_CONFIG);
 
     // Keep first paint fast: paginate first, then build ledger options and Select2 only for visible rows.
+    bindBankPreviewFilters();
     refreshBankPagination(true);
 
 });
@@ -1221,34 +1245,6 @@ function applyConfig() {
     closeConfigModal();
 }
 
-$(document).on('keyup change', '.searchInput', function () {
-
-    let input = $(this);
-    let value = input.val().toLowerCase();
-
-    let columnIndex = input.closest('th').index();
-
-    $('#bankTable tbody tr').each(function () {
-
-        let row = $(this);
-        let cell = row.find('td').eq(columnIndex);
-
-        let text = '';
-
-        // text
-        text += cell.text().toLowerCase();
-
-        // input value
-        let inputVal = cell.find('input').val();
-        if (inputVal) text += inputVal.toLowerCase();
-
-        // select
-        let selectVal = cell.find('select option:selected').text();
-        if (selectVal) text += selectVal.toLowerCase();
-
-        row.toggle(text.includes(value));
-    });
-});
 </script>
 <script>
     $('#bankTable').on('click', '.saveRowBtn', function () {
@@ -1526,11 +1522,6 @@ $(document).on('keyup change', '.searchInput', function () {
 
     $('.searchInput, .amountFrom, .amountTo').on('keyup change', applyColumnFilters);
 
-    
-    $('.searchInput').on('keyup change', function () {
-        refreshBankPagination(true);
-    });
-
     $('.deleteBtn').click(function() {
         if (!confirm('Are you sure you want to delete this transaction?')) {
             return;
@@ -1621,6 +1612,7 @@ $(document).on('keyup change', '.searchInput', function () {
         }
         // 🔥 re-init select2
         bulkLedger.select2(BULK_SELECT2_CONFIG);
+        refreshBankPagination(true);
     });
 
     $('#bulkLedger').change(function () {

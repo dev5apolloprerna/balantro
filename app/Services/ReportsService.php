@@ -608,6 +608,30 @@ class ReportsService
         ', [$partyguid, $ledgerId, $startDate, $endDate]);
             $rows = collect($results);
 
+            $firstRow = $rows->first();
+            $openingBalanceFromRows = $firstRow
+                ? $this->signedAmount(
+                    $firstRow->OpeningBalance
+                        ?? $firstRow->openingBalance
+                        ?? $firstRow->opening_balance
+                        ?? null
+                )
+                : 0.0;
+
+            if ($openingBalanceFromRows == 0.0 && $startDate) {
+                $previousDay = date('Y-m-d', strtotime($startDate . ' -1 day'));
+                $openingBalanceData = $this->getOpeningBalance($partyguid, $ledgerId, $previousDay);
+                $openingBalanceFromRows = ($openingBalanceData['side'] ?? 'Dr') === 'Cr'
+                    ? -abs($this->signedAmount($openingBalanceData['balance'] ?? 0))
+                    : abs($this->signedAmount($openingBalanceData['balance'] ?? 0));
+            }
+
+            if ($firstRow && $openingBalanceFromRows != 0.0) {
+                $firstRow->OpeningBalance = $openingBalanceFromRows;
+                $firstRow->openingBalance = $openingBalanceFromRows;
+                $firstRow->opening_balance = $openingBalanceFromRows;
+            }
+
             // Calculate totals
             $totalDr = 0.0;
             $totalCr = 0.0;
@@ -1318,6 +1342,14 @@ class ReportsService
         // }
     }
 
+    private function signedAmount($value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        return (float) str_replace(',', '', (string) $value);
+    }
 
     public function monthlyGraphs(int $partyId, ?string $from, ?string $to, array $opts = []): array
     {

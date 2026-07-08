@@ -228,9 +228,11 @@
                             <td class="px-3 py-2">
                                 <select name="ledger[{{$row->id}}]" class="ledgerSelect inputCell" data-selected="{{ $row->ledger_name }}" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
                                     <option value="">Select Ledger</option>
-                                    @if(!empty($row->ledger_name))
-                                        <option value="{{ $row->ledger_name }}" selected>{{ $row->ledger_name }}</option>
-                                    @endif
+                                    @foreach($ledgers as $ledger)
+                                    <option value="{{$ledger->name}}" {{ isset($row->ledger_name) && $row->ledger_name == $ledger->name ? 'selected' : '' }}>
+                                        {{$ledger->name}}
+                                    </option>
+                                    @endforeach
                                 </select>
                             </td>
                             <td class="px-3 py-2">
@@ -268,22 +270,6 @@
                         @endforeach
                     </tbody>
                 </table>
-                <div id="bankPagination" class="flex flex-wrap items-center justify-between gap-3 px-3 py-2 bg-white dark:bg-neutral-900 border-t border-gray-200 dark:border-gray-700 text-sm">
-                    <div class="flex items-center gap-2">
-                        <span id="bankPageInfo" class="text-gray-700 dark:text-gray-300"></span>
-                        <select id="bankPageSize" class="border rounded px-2 py-1 bg-white dark:bg-neutral-800 text-gray-800 dark:text-white">
-                            <option value="25">25</option>
-                            <option value="50" selected>50</option>
-                            <option value="100">100</option>
-                            <option value="200">200</option>
-                        </select>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" id="bankPrevPage" class="border border-gray-300 dark:border-neutral-600 px-3 py-1 rounded text-gray-700 dark:text-gray-300 disabled:opacity-50">Previous</button>
-                        <span id="bankPageNumbers" class="text-gray-700 dark:text-gray-300"></span>
-                        <button type="button" id="bankNextPage" class="border border-gray-300 dark:border-neutral-600 px-3 py-1 rounded text-gray-700 dark:text-gray-300 disabled:opacity-50">Next</button>
-                    </div>
-                </div>
                 <div class="mt-3">
                     {{ $rows->links() }}
                 </div>
@@ -1021,124 +1007,6 @@
     let ALL_LEDGERS = @json($allLedgers);
     let BANK_LEDGERS = @json($bankLedgers);
 
-    const BANK_PAGE_STATE = { page: 1, pageSize: 50 };
-    const SELECT2_CONFIG = { width: '100%', placeholder: 'Search Ledger...', allowClear: true };
-    const BULK_SELECT2_CONFIG = { width: '200px', placeholder: 'Search Ledger...', allowClear: true };
-
-    function bankRows() {
-        return $('#bankTable tbody tr');
-    }
-
-    function ensureLedgerOptions(ledgerDropdown, type) {
-        const selectedLedger = ledgerDropdown.data('selected') || ledgerDropdown.val() || '';
-        ledgerDropdown.html(getLedgerOptions(type));
-        if (selectedLedger && ledgerDropdown.find('option').filter(function () { return this.value === selectedLedger; }).length) {
-            ledgerDropdown.val(selectedLedger);
-        } else {
-            ledgerDropdown.val('');
-        }
-        ledgerDropdown.data('optionsLoaded', true);
-    }
-
-    function initLedgerSelect2(scope) {
-        if (!$.fn.select2) {
-            return;
-        }
-        $(scope).find('.ledgerSelect:visible').each(function () {
-            const ledgerDropdown = $(this);
-            if (!ledgerDropdown.data('optionsLoaded')) {
-                const type = (ledgerDropdown.closest('tr').find('select[name^="type"]').val() || '').toLowerCase();
-                ensureLedgerOptions(ledgerDropdown, type);
-            }
-            if (ledgerDropdown.hasClass('select2-hidden-accessible')) {
-                return;
-            }
-            ledgerDropdown.select2(SELECT2_CONFIG);
-        });
-    }
-
-    function destroyHiddenLedgerSelect2() {
-        if (!$.fn.select2) {
-            return;
-        }
-        $('#bankTable tbody tr:hidden .ledgerSelect.select2-hidden-accessible').each(function () {
-            $(this).select2('destroy');
-        });
-    }
-
-    function rowMatchesFilters(row) {
-        const type = ($('#typeFilter').val() || '').toLowerCase();
-        const desc = ($('#descFilter').val() || '').toLowerCase();
-        const filters = $('.generalFilter:checked').map(function () { return $(this).val(); }).get();
-        const rowType = (row.find('select[name^="type"]').val() || '').toLowerCase();
-        const rowDesc = (row.find('input[name^="narration"]').val() || '').toLowerCase();
-        let show = true;
-
-        if (type && rowType !== type) show = false;
-        if (desc && !rowDesc.includes(desc)) show = false;
-
-        const from = parseFloat($('.amountFrom').val()) || 0;
-        const to = parseFloat($('.amountTo').val()) || Infinity;
-        const amountText = row.find('td:eq(6)').text().replace(/,/g, '').trim();
-        const amount = parseFloat(amountText) || 0;
-        if (amount < from || amount > to) show = false;
-
-        $('#bankTable thead tr').eq(1).find('.searchInput').each(function () {
-            if ($(this).hasClass('amountFrom') || $(this).hasClass('amountTo')) {
-                return;
-            }
-            const value = ($(this).val() || '').toLowerCase();
-            if (!value) {
-                return;
-            }
-            const column = $(this).closest('th').index();
-            const cell = row.find('td').eq(column);
-            let text = cell.text().toLowerCase();
-            const input = cell.find('input').val();
-            const select = cell.find('select option:selected').text();
-            if (input) text += input.toLowerCase();
-            if (select) text += select.toLowerCase();
-            if (!text.includes(value)) show = false;
-        });
-
-        const status = row.find('td:last').text().trim().toLowerCase();
-        if (filters.includes('synced') && status === 'synced') show = false;
-        if (filters.includes('saved') && status !== 'saved') show = false;
-        if (filters.includes('failed') && status !== 'failed') show = false;
-        if (filters.includes('blank')) {
-            const party = row.find('input[name^="party_name"]').val();
-            const ledger = row.find('select[name^="ledger"]').val();
-            if (party && ledger) show = false;
-        }
-
-        return show;
-    }
-
-    function refreshBankPagination(resetPage = false) {
-        if (resetPage) {
-            BANK_PAGE_STATE.page = 1;
-        }
-
-        const rows = bankRows();
-        const matched = rows.filter(function () { return rowMatchesFilters($(this)); });
-        const total = matched.length;
-        const pageSize = BANK_PAGE_STATE.pageSize;
-        const totalPages = Math.max(1, Math.ceil(total / pageSize));
-        BANK_PAGE_STATE.page = Math.min(Math.max(BANK_PAGE_STATE.page, 1), totalPages);
-        const start = (BANK_PAGE_STATE.page - 1) * pageSize;
-        const end = start + pageSize;
-
-        rows.hide();
-        matched.slice(start, end).show();
-        destroyHiddenLedgerSelect2();
-        initLedgerSelect2($('#bankTable tbody'));
-
-        $('#bankPageInfo').text(total ? `Showing ${start + 1}-${Math.min(end, total)} of ${total}` : 'No records');
-        $('#bankPageNumbers').text(`Page ${BANK_PAGE_STATE.page} of ${totalPages}`);
-        $('#bankPrevPage').prop('disabled', BANK_PAGE_STATE.page <= 1);
-        $('#bankNextPage').prop('disabled', BANK_PAGE_STATE.page >= totalPages);
-    }
-
     function getLedgerOptions(type) {
         let list = [];
         if (type === 'contra') {
@@ -1158,7 +1026,6 @@
         let row = $(this).closest('tr');
         let ledgerDropdown = row.find('select[name^="ledger"]');
         ledgerDropdown.html(getLedgerOptions(type));
-        ledgerDropdown.data('optionsLoaded', true);
 
         // 🔥 clear old value
         ledgerDropdown.val('').trigger('change');
@@ -1185,12 +1052,11 @@
         let type = $('#typeFilter').val()?.toLowerCase() || '';
         let bulkLedger = $('#bulkLedger');
         bulkLedger.html(getLedgerOptions(type));
-        // bulkLedger.select2({
-        //     width: '200px',
-        //     placeholder: "Search Ledger...",
-        //     allowClear: true
-        // });
-        bulkLedger.select2(BULK_SELECT2_CONFIG);
+        bulkLedger.select2({
+            width: '200px',
+            placeholder: "Search Ledger...",
+            allowClear: true
+        });
 
 
         $('#bulkLedger').select2({
@@ -1729,13 +1595,46 @@
     });
 
     function applyColumnFilters() {
-        refreshBankPagination(true);
+
+        let from = parseFloat($('.amountFrom').val()) || 0;
+        let to = parseFloat($('.amountTo').val()) || Infinity;
+
+        $('#bankTable tbody tr').each(function() {
+
+            let row = $(this);
+
+            // amount
+            let amountText = row.find('td:eq(6)').text().replace(/,/g, '').trim();
+            let amount = parseFloat(amountText) || 0;
+
+            // description
+            let descFilter = $('th:eq(4) .searchInput').val()?.toLowerCase() || '';
+            let desc = row.find('input[name^="narration"]').val().toLowerCase();
+
+            let show = true;
+
+            if (amount < from || amount > to) show = false;
+            if (descFilter && !desc.includes(descFilter)) show = false;
+
+            row.toggle(show);
+        });
     }
 
     $('.searchInput, .amountFrom, .amountTo').on('keyup change', applyColumnFilters);
 
     $('.searchInput').on('keyup change', function() {
-        refreshBankPagination(true);
+        let column = $(this).closest('th').index();
+        let value = $(this).val().toLowerCase();
+        $('#bankTable tbody tr').each(function() {
+            let cell = $(this).find('td').eq(column);
+            let text = '';
+            text += cell.text().toLowerCase();
+            let input = cell.find('input').val();
+            if (input) text += input.toLowerCase();
+            let select = cell.find('select option:selected').text();
+            if (select) text += select.toLowerCase();
+            $(this).toggle(text.includes(value));
+        });
     });
 
     $('.deleteBtn').click(function() {
@@ -1901,7 +1800,11 @@
             bulkLedger.select2('destroy');
         }
         // 🔥 re-init select2
-        bulkLedger.select2(BULK_SELECT2_CONFIG);
+        bulkLedger.select2({
+            width: '200px',
+            placeholder: "Search Ledger...",
+            allowClear: true
+        });
     });
 
     $('#bulkLedger').change(function() {
@@ -1914,9 +1817,8 @@
                 let ledgerDropdown = row.find('select[name^="ledger"]');
                 // 🔥 rebind correct options based on type
                 ledgerDropdown.html(getLedgerOptions(type));
-                ledgerDropdown.data('optionsLoaded', true);
                 // 🔥 check if selected ledger exists
-                let exists = ledgerDropdown.find('option').filter(function () { return this.value === ledger; }).length;
+                let exists = ledgerDropdown.find(`option[value="${ledger}"]`).length;
                 if (exists) {
                     ledgerDropdown.val(ledger).trigger('change');
                 } else {
@@ -1926,7 +1828,11 @@
                 if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
                     ledgerDropdown.select2('destroy');
                 }
-                ledgerDropdown.select2(SELECT2_CONFIG);
+                ledgerDropdown.select2({
+                    width: '100%',
+                    placeholder: "Search Ledger...",
+                    allowClear: true
+                });
             }
         });
     });
@@ -1973,7 +1879,16 @@
     });
 
     function applySelect2() {
-        initLedgerSelect2($('#bankTable tbody'));
+        $('.ledgerSelect').each(function() {
+            if ($(this).hasClass("select2-hidden-accessible")) {
+                $(this).select2('destroy'); // destroy old
+            }
+            $(this).select2({
+                width: '100%',
+                placeholder: "Search Ledger...",
+                allowClear: true
+            });
+        });
     }
 
     $(document).on('keyup change', '.amountFrom, .amountTo, #descFilter', function() {
@@ -1981,7 +1896,27 @@
     });
 
     function applyAllFilters() {
-        refreshBankPagination(true);
+
+        let from = parseFloat($('.amountFrom').val()) || 0;
+        let to = parseFloat($('.amountTo').val()) || Infinity;
+        let descFilter = $('#descFilter').val()?.toLowerCase() || '';
+        $('#bankTable tbody tr').each(function() {
+            let row = $(this);
+            // ✅ GET AMOUNT PROPERLY
+            let debit = row.find('.text-red-400').text().replace(/,/g, '').trim();
+            let credit = row.find('.text-green-400').text().replace(/,/g, '').trim();
+            let amount = 0;
+            if (debit) amount = parseFloat(debit);
+            else if (credit) amount = parseFloat(credit);
+            // ✅ DESCRIPTION
+            let desc = row.find('input[name^="narration"]').val().toLowerCase();
+            let show = true;
+            // 🔥 Amount filter
+            if (amount < from || amount > to) show = false;
+            // 🔥 Description filter
+            if (descFilter && !desc.includes(descFilter)) show = false;
+            row.toggle(show);
+        });
     }
 
     $(document).on('click', '.suspenseBtn', function() {
