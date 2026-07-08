@@ -1462,17 +1462,43 @@ class ReportsService
     public function voucherDetails($guid, $strGUID, $vchType)
     {
         $requestedGuid = urldecode((string) $strGUID);
-         $rows = collect(DB::select("
+        $rows = collect(DB::select("
             EXEC dbo.GetVoucherDetails ?, ?, ?
         ", [$guid, $requestedGuid, $vchType]));
-
         $matchedRows = $rows->filter(function ($row) use ($requestedGuid) {
             $rowGuid = $row->strGUID ?? $row->StrGUID ?? $row->GUID ?? $row->guid ?? null;
-
             return $rowGuid !== null && strcasecmp(trim((string) $rowGuid), $requestedGuid) === 0;
         });
+        $voucherRows = $matchedRows->isNotEmpty() ? $matchedRows->values() : $rows->values();
+        return $this->filterVoucherRowsToBalancedEntry($voucherRows)->all();
+    }
 
-        return $matchedRows->isNotEmpty() ? $matchedRows->values()->all() : $rows->all();
-
+    private function filterVoucherRowsToBalancedEntry($rows)
+    {
+        if ($rows->count() <= 2) {
+            return $rows;
+        }
+        $partyRow = $rows->first();
+        $partyDr = abs((float) ($partyRow->DRAmount ?? 0));
+        $partyCr = abs((float) ($partyRow->CRAmount ?? 0));
+        $partyAmount = $partyDr > 0 ? $partyDr : $partyCr;
+        $oppositeColumn = $partyDr > 0 ? 'CRAmount' : 'DRAmount';
+        if ($partyAmount <= 0) {
+            return $rows;
+        }
+        $balancedRows = collect([$partyRow]);
+        $matchedAmount = 0.0;
+        foreach ($rows->slice(1) as $row) {
+            $amount = abs((float) ($row->{$oppositeColumn} ?? 0));
+            if ($amount <= 0 || $matchedAmount + $amount > $partyAmount + 0.01) {
+                continue;
+            }
+            $balancedRows->push($row);
+            $matchedAmount += $amount;
+            if (abs($matchedAmount - $partyAmount) <= 0.01) {
+                return $balancedRows->values();
+            }
+        }
+        return $rows;
     }
 }
