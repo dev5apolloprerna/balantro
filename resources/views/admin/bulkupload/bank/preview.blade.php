@@ -1006,33 +1006,75 @@
 
     let ALL_LEDGERS = @json($allLedgers);
     let BANK_LEDGERS = @json($bankLedgers);
+    let LEDGER_OPTIONS_CACHE = {};
 
-    function getLedgerOptions(type) {
-        let list = [];
-        if (type === 'contra') {
-            list = BANK_LEDGERS; // only bank + cash
-        } else {
-            list = ALL_LEDGERS; // all ledgers
-        }
-        let html = '<option value="">Select Ledger</option>';
-        list.forEach(l => {
-            html += `<option value="${l.name}">${l.name}</option>`;
-        });
-        return html;
+    // function getLedgerOptions(type) {
+    //     let list = [];
+    //     if (type === 'contra') {
+    //         list = BANK_LEDGERS; // only bank + cash
+    //     } else {
+    //         list = ALL_LEDGERS; // all ledgers
+    //     }
+    //     let html = '<option value="">Select Ledger</option>';
+    //     list.forEach(l => {
+    //         html += `<option value="${l.name}">${l.name}</option>`;
+    //     });
+    //     return html;
+    // }
+
+    function escapeLedgerOption(value) {
+        return $('<div>').text(value || '').html();
     }
 
-    $('#bankTable').on('change', 'select[name^="type"]', function() {
-        let type = $(this).val().toLowerCase();
-        let row = $(this).closest('tr');
-        let ledgerDropdown = row.find('select[name^="ledger"]');
-        ledgerDropdown.html(getLedgerOptions(type));
+    // $('#bankTable').on('change', 'select[name^="type"]', function() {
+    //     let type = $(this).val().toLowerCase();
+    //     let row = $(this).closest('tr');
+    //     let ledgerDropdown = row.find('select[name^="ledger"]');
+    //     ledgerDropdown.html(getLedgerOptions(type));
 
-        // 🔥 clear old value
-        ledgerDropdown.val('').trigger('change');
+    //     // 🔥 clear old value
+    //     ledgerDropdown.val('').trigger('change');
 
-        // 🔥 reinitialize select2 properly
-        if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
-            ledgerDropdown.select2('destroy');
+    //     // 🔥 reinitialize select2 properly
+    //     if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
+    //         ledgerDropdown.select2('destroy');
+    //     }
+
+    //     ledgerDropdown.select2({
+    //         width: '100%',
+    //         placeholder: "Search Ledger...",
+    //         allowClear: true
+    //     });
+    // });
+
+    function getLedgerList(type) {
+        return type === 'contra' ? BANK_LEDGERS : ALL_LEDGERS;
+    }
+
+    function getLedgerOptions(type, selectedLedger = '') {
+        type = normalizePreviewFilterText(type);
+        selectedLedger = (selectedLedger || '').toString();
+
+        if (!LEDGER_OPTIONS_CACHE[type]) {
+            let html = '<option value="">Select Ledger</option>';
+            getLedgerList(type).forEach(l => {
+                const name = escapeLedgerOption(l.name);
+                html += `<option value="${name}">${name}</option>`;
+            });
+            LEDGER_OPTIONS_CACHE[type] = html;
+        }
+
+        if (selectedLedger && !getLedgerList(type).some(l => l.name === selectedLedger)) {
+            const safeSelectedLedger = escapeLedgerOption(selectedLedger);
+            return LEDGER_OPTIONS_CACHE[type] + `<option value="${safeSelectedLedger}">${safeSelectedLedger}</option>`;
+        }
+
+        return LEDGER_OPTIONS_CACHE[type];
+    }
+
+    function initLedgerSelect(ledgerDropdown) {
+        if (!$.fn.select2 || !ledgerDropdown.length || ledgerDropdown.hasClass('select2-hidden-accessible')) {
+            return;
         }
 
         ledgerDropdown.select2({
@@ -1040,6 +1082,16 @@
             placeholder: "Search Ledger...",
             allowClear: true
         });
+    }
+
+    $('#bankTable').on('change', 'select[name^="type"]', function() {
+        let type = $(this).val().toLowerCase();
+        let row = $(this).closest('tr');
+        let ledgerDropdown = row.find('select[name^="ledger"]');
+        const selectedLedger = ledgerDropdown.val() || ledgerDropdown.data('selected') || '';
+        ledgerDropdown.html(getLedgerOptions(type, selectedLedger));
+        ledgerDropdown.val(selectedLedger);
+        ledgerDropdown.trigger('change.select2');
     });
 
     $(document).ready(function() {
@@ -1058,42 +1110,17 @@
             allowClear: true
         });
 
-
-        $('#bulkLedger').select2({
-            width: '200px',
-            placeholder: "Search Ledger...",
-            allowClear: true
-        });
-
         // 🔥 INITIAL LOAD FIX (MAIN SOLUTION)
         $('#bankTable tbody tr').each(function() {
 
             let row = $(this);
             let type = row.find('select[name^="type"]').val().toLowerCase();
             let ledgerDropdown = row.find('select[name^="ledger"]');
+            let selectedLedger = ledgerDropdown.data('selected') || ledgerDropdown.val();
 
-            // set options based on type
-            ledgerDropdown.html(getLedgerOptions(type));
-
-            // 🔥 set selected value again (IMPORTANT)
-            let selectedLedger = ledgerDropdown.data('selected');
-
-            if (selectedLedger) {
-                ledgerDropdown.val(selectedLedger);
-            } else {
-                ledgerDropdown.val('');
-            }
-
-            // reinit select2
-            if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
-                ledgerDropdown.select2('destroy');
-            }
-
-            ledgerDropdown.select2({
-                width: '100%',
-                placeholder: "Search Ledger...",
-                allowClear: true
-            });
+            // Keep the saved ledger selected even when the type-specific ledger list changes.
+            ledgerDropdown.html(getLedgerOptions(type, selectedLedger));
+            ledgerDropdown.val(selectedLedger || '');
 
         });
 
@@ -1689,6 +1716,10 @@
         applyPendingIssueHighlights(issues);
     });
 
+    $('#bankTable').on('focus mouseenter', '.ledgerSelect', function() {
+        initLedgerSelect($(this));
+    });
+
     $(document).on('select2:open', function() {
         setTimeout(function() {
             document.querySelector('.select2-container--open .select2-search__field')?.focus();
@@ -1815,24 +1846,8 @@
                 let row = $(this);
                 let type = row.find('select[name^="type"]').val().toLowerCase();
                 let ledgerDropdown = row.find('select[name^="ledger"]');
-                // 🔥 rebind correct options based on type
-                ledgerDropdown.html(getLedgerOptions(type));
-                // 🔥 check if selected ledger exists
-                let exists = ledgerDropdown.find(`option[value="${ledger}"]`).length;
-                if (exists) {
-                    ledgerDropdown.val(ledger).trigger('change');
-                } else {
-                    ledgerDropdown.val('').trigger('change');
-                }
-                // 🔥 reinit select2
-                if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
-                    ledgerDropdown.select2('destroy');
-                }
-                ledgerDropdown.select2({
-                    width: '100%',
-                    placeholder: "Search Ledger...",
-                    allowClear: true
-                });
+                ledgerDropdown.html(getLedgerOptions(type, ledger));
+                ledgerDropdown.val(ledger).data('selected', ledger).trigger('change.select2');
             }
         });
     });
@@ -1879,15 +1894,8 @@
     });
 
     function applySelect2() {
-        $('.ledgerSelect').each(function() {
-            if ($(this).hasClass("select2-hidden-accessible")) {
-                $(this).select2('destroy'); // destroy old
-            }
-            $(this).select2({
-                width: '100%',
-                placeholder: "Search Ledger...",
-                allowClear: true
-            });
+        $('#bankTable tbody tr:visible .ledgerSelect').slice(0, 25).each(function() {
+            initLedgerSelect($(this));
         });
     }
 
@@ -2006,7 +2014,16 @@
         let parts = [];
         parts.push(cell.text());
         cell.find('input, textarea').each(function() {
-            parts.push($(this).val());
+            const value = $(this).val();
+            parts.push(value);
+
+            if ($(this).attr('type') === 'date' && value) {
+                const dateParts = value.split('-');
+                if (dateParts.length === 3) {
+                    parts.push(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
+                    parts.push(`${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`);
+                }
+            }
         });
         cell.find('select').each(function() {
             parts.push($(this).val());
