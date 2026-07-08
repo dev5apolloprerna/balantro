@@ -507,6 +507,7 @@ class LedgerMasterController extends Controller
                 'CRAmount' => $this->fmt(0),
                 'CRAmountRaw' => 0.0,
                 'vchNo' => 'OPENING BALANCE',
+                'strGUID' => '',
                 'strVchDate' => $startDate ? date('d-m-Y', strtotime($startDate)) : '',
                 'opening_balance' => $this->fmt(abs($previousBalance)),
                 'opening_balance_raw' => $previousBalance,
@@ -543,6 +544,7 @@ class LedgerMasterController extends Controller
                     "CRAmount" => $this->fmt($cr),
                     "CRAmountRaw" => $cr,
                     "vchNo" => $VchHistory->vchNo ?? $VchHistory->voucherNo ?? '',
+                    "strGUID" => $VchHistory->strGUID ?? $VchHistory->StrGUID ?? $VchHistory->GUID ?? $VchHistory->guid ?? '',
                     "strVchDate" => $VchHistory->strVchDate ?? $VchHistory->vchDate ?? $VchHistory->transactionDate ?? '',
                     "opening_balance" => $this->fmt(abs($currentOpening)),
                     "opening_balance_raw" => $currentOpening,
@@ -573,6 +575,7 @@ class LedgerMasterController extends Controller
                 'CRAmount' => $this->fmt(0),
                 'CRAmountRaw' => 0.0,
                 'vchNo' => 'CLOSING BALANCE',
+                'strGUID' => '',
                 'strVchDate' => $endDate ? date('d-m-Y', strtotime($endDate)) : date('d-m-Y'),
                 'opening_balance' => $this->fmt(abs($lastOpeningForDisplay)),
                 'opening_balance_raw' => $lastOpeningForDisplay,
@@ -837,7 +840,8 @@ class LedgerMasterController extends Controller
     {
         $financialYears = DB::table('YearMaster')
             ->where('iPartyId', $partyId)
-            ->orderBy('iYearId', 'desc')
+            ->orderBy('iYearId', 'asc')
+            ->limit(3)
             ->get();
 
         $rangeSel = $request->input('range') ?: $this->defaultApiFinancialYearRange($financialYears);

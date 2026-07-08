@@ -33,6 +33,7 @@ class PurchaseUploadController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
 
         $clients = Client::orderBy('name')->get();

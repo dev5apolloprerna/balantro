@@ -162,7 +162,8 @@ class DashboardController extends BaseApiController
 
             $years = DB::table('YearMaster')
                 ->where('iPartyId', (int) $user->id)
-                ->orderBy('iYearId', 'desc')
+                ->orderBy('iYearId', 'asc')
+                ->limit(3)
                 ->get()
                 ->map(function ($year) use ($currentFinancialYear) {
                     $yearLabel = trim((string) $year->strYear);

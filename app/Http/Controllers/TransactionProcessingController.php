@@ -179,6 +179,7 @@ class TransactionProcessingController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
         return view('admin.transaction-processing.sales.index', compact('uploads', 'clients', 'stockItems', 'years'));
@@ -267,6 +268,7 @@ class TransactionProcessingController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
         return view('admin.transaction-processing.purchase.index', compact('uploads', 'clients', 'years'));
@@ -378,6 +380,7 @@ class TransactionProcessingController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
         return view('admin.transaction-processing.bank.index', compact('uploads', 'clients', 'banks', 'years'));
@@ -640,6 +643,7 @@ class TransactionProcessingController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
         return view('admin.transaction-processing.credit_note.index', compact('uploads', 'clients', 'years'));
@@ -774,6 +778,7 @@ class TransactionProcessingController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
         return view('admin.transaction-processing.debit_note.index', compact('uploads', 'clients', 'years'));
@@ -933,6 +938,7 @@ class TransactionProcessingController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
         return view('admin.transaction-processing.journal.index', compact('uploads', 'clients', 'years'));

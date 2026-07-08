@@ -28,12 +28,13 @@ class ReportsController extends Controller
     {
         // return DB::table('YearMaster')
         //     ->where('iPartyId', $userId)
-        //     ->orderBy('iYearId', 'desc')
+        //     ->orderBy('iYearId', 'asc')
         //     ->get();
         return Cache::remember(ReportCache::key('reports', $userId, 'financial_years'), ReportCache::ttl(), function () use ($userId) {
             return DB::table('YearMaster')
                 ->where('iPartyId', $userId)
-                ->orderBy('iYearId', 'desc')
+                ->orderBy('iYearId', 'asc')
+                ->limit(3)
                 ->get();
         });
     }

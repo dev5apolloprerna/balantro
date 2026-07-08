@@ -34,6 +34,7 @@ class SalesUploadController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
 

@@ -230,18 +230,8 @@
                 <a href="{{ route('clients.Gstindex', $client->guid) }}" class="rounded-full bg-cyan-100 p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800" 
                     title="GST Settings">
 
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="3"></circle>
-
                         <path
                             d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2
                             2 0 1 1-2.83 2.83l-.06-.06a1.65
@@ -272,31 +262,6 @@
                     </svg>
                 </a>
 
-
-                {{-- <div class="relative group">
-                    <button type="button"
-                        class="rounded-full bg-teal-100 p-2 text-teal-700 ring-1 ring-inset ring-teal-200 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-300 dark:ring-teal-800"
-                        title="Client Reports">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M3 5h18v2H3zm0 6h18v2H3zm0 6h18v2H3z" />
-                        </svg>
-                    </button>
-                    <div
-                        class="absolute right-0 mt-2 hidden w-40 rounded-md border border-gray-200 bg-white shadow-lg group-hover:block dark:border-gray-700 dark:bg-gray-800">
-                        <a href="{{ route('clients.reports.pnl', $client->guid) }}"
-                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700">
-                            Profit & Loss
-                        </a>
-                        <a href="{{ route('clients.reports.balanceSheet', $client->guid) }}"
-                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700">
-                            Balance Sheet
-                        </a>
-                        <a href="{{ route('clients.reports.ledger', $client->guid) }}"
-                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700">
-                            Ledger
-                        </a>
-                    </div>
-                </div> --}}
             @endif
         </div>
     </td>

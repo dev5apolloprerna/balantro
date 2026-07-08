@@ -1009,7 +1009,8 @@ class ClientsController extends Controller
         $financialYears = Cache::remember(ReportCache::key('clients', (int) $client->id, 'financial_years'), ReportCache::ttl(), function () use ($client) {
             return DB::table('YearMaster')
                 ->where('iPartyId', $client->id)
-                ->orderBy('iYearId', 'desc')
+                ->orderBy('iYearId', 'asc')
+                ->limit(3)
                 ->get();
         });
 
@@ -1119,7 +1120,8 @@ class ClientsController extends Controller
             $financialYears = Cache::remember(ReportCache::key('clients', (int) $user->id, 'financial_years'), ReportCache::ttl(), function () use ($user) {
                 return DB::table('YearMaster')
                     ->where('iPartyId', $user->id)
-                    ->orderBy('iYearId', 'desc')
+                    ->orderBy('iYearId', 'asc')
+                    ->limit(3)
                     ->get();
             });
 
@@ -1990,17 +1992,19 @@ class ClientsController extends Controller
             ->leftJoin('LedgerMaster as SGST','SI.SGSTLedgerId','=','SGST.iLedgerId')
             ->leftJoin('LedgerMaster as IGST','SI.IGSTLedgerId','=','IGST.iLedgerId')
             ->where('SI.iPartyId',$iPartyId)
-            ->where(function($q){
-                $q->whereNotNull('SI.CGSTLedgerId')
-                ->orWhereNotNull('SI.SGSTLedgerId')
-                ->orWhereNotNull('SI.IGSTLedgerId');
-            })
+            // ->where(function($q){
+            //     $q->whereNotNull('SI.CGSTLedgerId')
+            //     ->orWhereNotNull('SI.SGSTLedgerId')
+            //     ->orWhereNotNull('SI.IGSTLedgerId');
+            // })
             ->select(
                 'SI.*',
                 'CGST.strCustomerName as CGSTLedgerName',
                 'SGST.strCustomerName as SGSTLedgerName',
-                'IGST.strCustomerName as IGSTLedgerName'
+                'IGST.strCustomerName as IGSTLedgerName',
+                DB::raw('CASE WHEN SI.CGSTLedgerId IS NOT NULL OR SI.SGSTLedgerId IS NOT NULL OR SI.IGSTLedgerId IS NOT NULL THEN 1 ELSE 0 END as is_mapped')
             )
+            ->orderBy('SI.strItemName')
             ->get();
 
         $availableItems = DB::table('StockItemMaster')

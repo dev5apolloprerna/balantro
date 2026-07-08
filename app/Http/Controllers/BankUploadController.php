@@ -155,6 +155,7 @@ class BankUploadController extends Controller
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('strYear', 'asc')
+            ->limit(3)
             ->get();
         $clients = Client::orderBy('name')->get();
         return view('admin.bulkupload.bank.index', compact('uploads', 'clients', 'banks','years'));

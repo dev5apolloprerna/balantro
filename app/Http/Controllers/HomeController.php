@@ -166,12 +166,13 @@ class HomeController extends Controller
             }
             // $financialYears = DB::table('YearMaster')
             //     ->where('iPartyId', $userId)
-            //     ->orderBy('iYearId', 'desc')
+            //     ->orderBy('iYearId', 'asc')
             //     ->get();
             $financialYears = Cache::remember(ReportCache::key('client_dashboard', $userId, 'financial_years'), ReportCache::ttl(), function () use ($userId) {
                 return DB::table('YearMaster')
                     ->where('iPartyId', $userId)
-                    ->orderBy('iYearId', 'desc')
+                    ->orderBy('iYearId', 'asc')
+                    ->limit(3)
                     ->get();
             });
             // Restore from session if empty
