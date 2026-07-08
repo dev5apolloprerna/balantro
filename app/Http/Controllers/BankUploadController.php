@@ -17,6 +17,60 @@ class BankUploadController extends Controller
 {
     use VoucherValidation;
 
+    private function normalizeLedgerMatchText(?string $value): string
+    {
+        $value = strtolower((string) $value);
+        $value = preg_replace('/[^a-z0-9]+/', ' ', $value);
+
+        return trim(preg_replace('/\s+/', ' ', $value));
+    }
+
+    private function findLedgerNameInDescription(string $description, array $ledgers): ?string
+    {
+        $normalizedDescription = $this->normalizeLedgerMatchText($description);
+
+        if ($normalizedDescription === '') {
+            return null;
+        }
+
+        $bestMatch = null;
+        $bestScore = 0;
+
+        foreach ($ledgers as $ledger) {
+            $ledgerName = trim((string) ($ledger->name ?? ''));
+            $normalizedLedger = $this->normalizeLedgerMatchText($ledgerName);
+
+            if ($ledgerName === '' || strlen($normalizedLedger) < 3) {
+                continue;
+            }
+
+            $matched = false;
+            $score = 0;
+
+            if (str_contains($normalizedDescription, $normalizedLedger)) {
+                $matched = true;
+                $score = strlen($normalizedLedger);
+            } elseif (strlen($normalizedDescription) >= 4 && str_contains($normalizedLedger, $normalizedDescription)) {
+                $matched = true;
+                $score = strlen($normalizedDescription);
+            } else {
+                $ledgerWords = array_values(array_filter(explode(' ', $normalizedLedger), fn ($word) => strlen($word) >= 4));
+
+                foreach ($ledgerWords as $word) {
+                    if (str_contains($normalizedDescription, $word) && strlen($word) > $score) {
+                        $matched = true;
+                        $score = strlen($word);
+                    }
+                }
+            }
+
+            if ($matched && $score > $bestScore) {
+                $bestMatch = $ledgerName;
+                $bestScore = $score;
+            }
+        }
+        return $bestMatch;
+    }
 
     private function bankTransactionsHaveYearColumn(): bool
     {
@@ -409,6 +463,8 @@ class BankUploadController extends Controller
                 continue; // skip invalid rows
             }
 
+            $matchedLedgerName = $this->findLedgerNameInDescription($narration, $availableLedgers);
+
             $transactionData = [
                 'iPartyId'        => $iPartyId,
                 'upload_id'       => $upload->id,
@@ -422,7 +478,8 @@ class BankUploadController extends Controller
                 'amount'          => $amount,
                 'txn_type'        => $txn_type,
                 'balance'         => $balance,
-                'ledger_name'     => null,
+                // 'ledger_name'     => null,
+                'ledger_name'     => $matchedLedgerName,
                 'unique_key'      => $unique_key,
                 'is_reconciled'   => 0,
                 'source'          => 'upload',

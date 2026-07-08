@@ -424,11 +424,13 @@ class SalesUploadController extends Controller
     private function hasUploadedGstNoMatch(array $partyLookup, ?string $uploadedGstNo): bool
     {
         $uploadedGstNo = $this->normalizeGstNo($uploadedGstNo);
-        $ledgerGstNo = $this->normalizeGstNo($partyLookup['details']['gst_no'] ?? null);
+        // $ledgerGstNo = $this->normalizeGstNo($partyLookup['details']['gst_no'] ?? null);
 
         if ($uploadedGstNo === '') {
-            return $ledgerGstNo === '';
+            // return $ledgerGstNo === '';
+            return true;
         }
+        $ledgerGstNo = $this->normalizeGstNo($partyLookup['details']['gst_no'] ?? null);
 
         return $uploadedGstNo === $ledgerGstNo;
     }

@@ -1992,17 +1992,16 @@ class ClientsController extends Controller
             ->leftJoin('LedgerMaster as SGST','SI.SGSTLedgerId','=','SGST.iLedgerId')
             ->leftJoin('LedgerMaster as IGST','SI.IGSTLedgerId','=','IGST.iLedgerId')
             ->where('SI.iPartyId',$iPartyId)
-            // ->where(function($q){
-            //     $q->whereNotNull('SI.CGSTLedgerId')
-            //     ->orWhereNotNull('SI.SGSTLedgerId')
-            //     ->orWhereNotNull('SI.IGSTLedgerId');
-            // })
+            ->where(function($q){
+                $q->whereNotNull('SI.CGSTLedgerId')
+                ->orWhereNotNull('SI.SGSTLedgerId')
+                ->orWhereNotNull('SI.IGSTLedgerId');
+            })
             ->select(
                 'SI.*',
                 'CGST.strCustomerName as CGSTLedgerName',
                 'SGST.strCustomerName as SGSTLedgerName',
-                'IGST.strCustomerName as IGSTLedgerName',
-                DB::raw('CASE WHEN SI.CGSTLedgerId IS NOT NULL OR SI.SGSTLedgerId IS NOT NULL OR SI.IGSTLedgerId IS NOT NULL THEN 1 ELSE 0 END as is_mapped')
+                'IGST.strCustomerName as IGSTLedgerName'
             )
             ->orderBy('SI.strItemName')
             ->get();
