@@ -87,6 +87,7 @@
                 ]
                 )); ?>"
             title="Export PDF"
+            data-loader="false"
             class="group btn inline-flex items-center justify-center
                     w-10 h-10 rounded-md border border-gray-700
                     text-black dark:text-white
@@ -107,6 +108,7 @@
                     'guid' => urlencode($guid ?? '')
                 ])); ?>"
             title="Export Excel"
+            data-loader="false"
             class="group btn inline-flex items-center justify-center
                     w-10 h-10 rounded-md border border-gray-700
                     text-black dark:text-white
@@ -127,7 +129,7 @@
 
     
     <?php
-        $partyLedger = $header; // $voucher->firstWhere('CRAmount', '>', 0);
+        $partyLedger = $accountLedger ?? $header;
     ?>
 
     <div class="mt-4 border-b border-gray-600 pb-2">
@@ -135,7 +137,7 @@
         <div class="flex">
 
             <div class="w-48 text-black dark:text-white">
-                Party A/c Name
+                Account
             </div>
 
             <div class="font-semibold">
@@ -164,8 +166,7 @@
         </div>
 
         
-        <?php $__currentLoopData = $voucher; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-            <?php if($v->trnAccount != ($partyLedger->trnAccount ?? '')): ?>
+        <?php $__currentLoopData = ($particulars ?? $voucher); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $v): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <?php
                 $dr = (float) $v->DRAmount;
                 $cr = (float) $v->CRAmount;
@@ -179,7 +180,7 @@
                 <div class="flex-1">
                     
                     <?php if($v->trnAccount != ($partyLedger->trnAccount ?? '')): ?>
-                        <?php echo e(strtoupper($v->trnAccount)); ?>
+                        <?php echo e(strtoupper($v->trnAccount)); ?> <?php echo e($side); ?>
 
                     <?php endif; ?>
                 </div>
@@ -189,16 +190,14 @@
                     
                 </div>
             </div>
-            <?php endif; ?>
         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
     
     <div class="mt-6 border-t border-gray-600 pt-2">
         <div class="flex justify-end">
             <div class="w-40 text-right font-bold">
-                <?php echo e(number_format(abs($totalDr ?: $totalCr), 2)); ?>  <?php echo e($side); ?>
+                <?php echo e(number_format($displayTotal ?? abs($totalDr ?: $totalCr), 2)); ?> <?php echo e($displaySide ?? ($side ?? '')); ?>
 
-                <!-- <?php echo e(abs($totalDr) . ' DR' ?: abs($totalCr) . ' Cr'); ?> -->
             </div>
         </div>
     </div>

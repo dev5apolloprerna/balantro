@@ -1459,6 +1459,48 @@ class ReportsService
         }
     }
 
+    public function prepareVoucherDisplay($rows): array
+    {
+        $rows = collect($rows)->values();
+        $accountIndex = 0;
+
+        if ($rows->count() > 1) {
+            foreach ($rows as $index => $row) {
+                $dr = abs((float) ($row->DRAmount ?? 0));
+                $cr = abs((float) ($row->CRAmount ?? 0));
+                $amount = $dr > 0 ? $dr : $cr;
+                $oppositeTotal = $rows->except($index)->sum(function ($other) use ($dr) {
+                    return abs((float) ($other->{($dr > 0 ? 'CRAmount' : 'DRAmount')} ?? 0));
+                });
+
+                if ($amount > 0 && abs($amount - $oppositeTotal) <= 0.01) {
+                    $accountIndex = $index;
+                    break;
+                }
+            }
+        }
+
+        $accountLedger = $rows->get($accountIndex) ?? $rows->first();
+        $particulars = $rows->reject(fn ($row, $index) => $index === $accountIndex)->values();
+        $total = $particulars->sum(function ($row) {
+            $dr = abs((float) ($row->DRAmount ?? 0));
+            $cr = abs((float) ($row->CRAmount ?? 0));
+            return $dr > 0 ? $dr : $cr;
+        });
+        $firstParticular = $particulars->first();
+        $displaySide = '';
+        if ($firstParticular) {
+            $displaySide = (float) ($firstParticular->DRAmount ?? 0) > 0 ? 'Dr' : 'Cr';
+        }
+
+        return [
+            'accountLedger' => $accountLedger,
+            'particulars' => $particulars,
+            'total' => $total,
+            'displaySide' => $displaySide,
+        ];
+    }
+
     public function voucherDetails($guid, $strGUID, $vchType)
     {
         $requestedGuid = urldecode((string) $strGUID);

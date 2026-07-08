@@ -1060,7 +1060,12 @@ class ClientsController extends Controller
         // );
         //$voucher = collect(data_get($resp, 'data.rows', []));
         $voucher = collect($resp);
-        
+        $display = $svc->prepareVoucherDisplay($voucher);
+        $accountLedger = $display['accountLedger'];
+        $particulars = $display['particulars'];
+        $displayTotal = $display['total'];
+        $displaySide = $display['displaySide'];
+
         if ($voucher->isEmpty()) {
             abort(404);
         }
@@ -1081,6 +1086,10 @@ class ClientsController extends Controller
             'header',
             'totalDr',
             'totalCr',
+            'accountLedger',
+            'particulars',
+            'displayTotal',
+            'displaySide',
             'user',
             'guid'
         ));

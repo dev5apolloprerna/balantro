@@ -643,7 +643,7 @@ class LedgerMasterController extends Controller
 
 			return response()->json([
 				'success' => true,
-				'data' => $this->formatVoucherDetailsResponse($prepared['voucher'], $prepared['header'], $prepared['totalDr'], $prepared['totalCr']),
+				'data' => $this->formatVoucherDetailsResponse($prepared),
 			], 200);
 		} catch (\Throwable $e) {
 			\Log::error('Voucher Details API Error: ' . $e->getMessage());
@@ -679,6 +679,10 @@ class LedgerMasterController extends Controller
 				'header' => $prepared['header'],
 				'totalDr' => $prepared['totalDr'],
 				'totalCr' => $prepared['totalCr'],
+                'accountLedger' => $prepared['accountLedger'],
+				'particulars' => $prepared['particulars'],
+				'displayTotal' => $prepared['displayTotal'],
+				'displaySide' => $prepared['displaySide'],
 			]);
 
 			$disk->put($filePath, $pdf->output());
@@ -712,7 +716,7 @@ class LedgerMasterController extends Controller
 				$disk->makeDirectory('exports', 0755, true);
 			}
 
-			Excel::store(new VoucherExport($prepared['voucher'], $prepared['header'], $prepared['total']), $filePath, 'public');
+			Excel::store(new VoucherExport($prepared['voucher'], $prepared['header'], $prepared['displayTotal'], $prepared['accountLedger'], $prepared['particulars'], $prepared['displaySide']), $filePath, 'public');
 
 			if (!$disk->exists($filePath)) {
 				throw new \Exception('Excel file was not created in storage');
@@ -767,6 +771,7 @@ class LedgerMasterController extends Controller
 		$header = $voucher->first();
 		$totalDr = $voucher->sum(fn ($row) => abs((float) ($row->DRAmount ?? 0)));
 		$totalCr = $voucher->sum(fn ($row) => abs((float) ($row->CRAmount ?? 0)));
+		$display = $svc->prepareVoucherDisplay($voucher);
 
 		return [
 			'voucher' => $voucher,
@@ -774,57 +779,70 @@ class LedgerMasterController extends Controller
 			'totalDr' => $totalDr,
 			'totalCr' => $totalCr,
 			'total' => abs($totalDr ?: $totalCr),
+            'accountLedger' => $display['accountLedger'],
+			'particulars' => $display['particulars'],
+			'displayTotal' => $display['total'],
+			'displaySide' => $display['displaySide'],
 			'partyguid' => $partyguid,
 			'strGUID' => $strGUID,
 			'vchType' => $vchType,
 		];
 	}
 
-	private function formatVoucherDetailsResponse($voucher, $header, float $totalDr, float $totalCr): array
+    private function formatVoucherDetailsResponse(array $prepared): array
 	{
-        $partyLedgerName = trim((string) ($header->trnAccount ?? ''));
-		$particulars = $voucher
-			->filter(function ($row) use ($partyLedgerName) {
-				return trim((string) ($row->trnAccount ?? '')) !== $partyLedgerName;
-			})
+        $voucher = $prepared['voucher'];
+		$header = $prepared['header'];
+		$accountLedger = $prepared['accountLedger'] ?? $header;
+		$particulars = collect($prepared['particulars'] ?? $voucher);
+		$accountLedgerName = trim((string) ($accountLedger->trnAccount ?? ''));
+
+		$formattedParticulars = $particulars
 			->map(function ($row) {
 				$dr = (float) ($row->DRAmount ?? 0);
 				$cr = (float) ($row->CRAmount ?? 0);
 				$amount = abs($dr) > 0 ? abs($dr) : abs($cr);
+                $side = $dr > 0 ? 'Dr' : 'Cr';
 
 				return [
 					'iVchId' => $row->iVchId ?? null,
 					'iLedgerId' => $row->iLedgerId ?? null,
 					'trnAccount' => trim((string) ($row->trnAccount ?? '')),
 					'trnAccount_display' => strtoupper(trim((string) ($row->trnAccount ?? ''))),
+					'trnAccount_with_side' => trim(strtoupper(trim((string) ($row->trnAccount ?? ''))) . ' ' . $side),
 					'DRAmount' => $this->fmt(abs($dr)),
 					'DRAmountRaw' => abs($dr),
 					'CRAmount' => $this->fmt(abs($cr)),
 					'CRAmountRaw' => abs($cr),
 					'amount' => $this->fmt($amount),
 					'amount_raw' => $amount,
-					'side' => $dr > 0 ? 'Dr' : 'Cr',
+					'amount_with_side' => trim($this->fmt($amount) . ' ' . $side),
+					'side' => $side,
 				];
 			})
 			->values();
 
-		$totalAmount = abs($totalDr ?: $totalCr);
-		$totalSide = $totalDr > 0 ? 'Dr' : 'Cr';
+		$totalAmount = (float) ($prepared['displayTotal'] ?? 0);
+		$totalSide = $prepared['displaySide'] ?? '';
 
 		return [
 			'header' => $header,
 			'party_ledger' => [
-				'trnAccount' => $partyLedgerName,
+				'trnAccount' => $accountLedgerName,
 			],
-			'particulars' => $particulars,
+            'account_ledger' => [
+				'trnAccount' => $accountLedgerName,
+			],
+			'particulars' => $formattedParticulars,
 			'rows' => $voucher->values(),
 			'total' => $this->fmt($totalAmount),
 			'total_raw' => $totalAmount,
 			'total_side' => $totalSide,
-			'total_dr' => $this->fmt($totalDr),
-			'total_dr_raw' => $totalDr,
-			'total_cr' => $this->fmt($totalCr),
-			'total_cr_raw' => $totalCr,
+			'total_with_side' => trim($this->fmt($totalAmount) . ' ' . $totalSide),
+			'total_dr' => $this->fmt($prepared['totalDr']),
+			'total_dr_raw' => $prepared['totalDr'],
+			'total_cr' => $this->fmt($prepared['totalCr']),
+			'total_cr_raw' => $prepared['totalCr'],
 			'narration' => $header->Narration ?? '',
 		];
 	}

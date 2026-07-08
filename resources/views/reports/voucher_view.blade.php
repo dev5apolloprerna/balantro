@@ -53,6 +53,7 @@
                 ]
                 ) }}"
             title="Export PDF"
+            data-loader="false"
             class="group btn inline-flex items-center justify-center
                     w-10 h-10 rounded-md border border-gray-700
                     text-black dark:text-white
@@ -72,6 +73,7 @@
                     'vchType' => urlencode($header->vchType)
                 ]) }}"
             title="Export Excel"
+            data-loader="false"
             class="group btn inline-flex items-center justify-center
                     w-10 h-10 rounded-md border border-gray-700
                     text-black dark:text-white
@@ -108,7 +110,7 @@
 
     {{-- PARTY NAME --}}
     @php
-        $partyLedger = $header; // $voucher->firstWhere('CRAmount', '>', 0);
+        $partyLedger = $accountLedger ?? $header;
     @endphp
 
     <div class="mt-4 border-b border-gray-600 pb-2">
@@ -116,7 +118,7 @@
         <div class="flex">
 
             <div class="w-48 text-black dark:text-white">
-                Party A/c Name
+                Account
             </div>
 
             <div class="font-semibold">
@@ -144,8 +146,7 @@
         </div>
 
         {{-- ROWS --}}
-        @foreach($voucher as $v)
-            @if($v->trnAccount != ($partyLedger->trnAccount ?? ''))
+         @foreach(($particulars ?? $voucher) as $v)
             @php
                 $dr = (float) $v->DRAmount;
                 $cr = (float) $v->CRAmount;
@@ -159,7 +160,7 @@
                 <div class="flex-1">
                     {{-- Hide party ledger --}}
                     @if($v->trnAccount != ($partyLedger->trnAccount ?? ''))
-                        {{ strtoupper($v->trnAccount) }}
+                        {{ strtoupper($v->trnAccount) }} {{ $side }}
                     @endif
                 </div>
                 <div class="w-40 text-right">
@@ -167,14 +168,13 @@
                     
                 </div>
             </div>
-            @endif
         @endforeach
     </div>
     {{-- TOTAL --}}
     <div class="mt-6 border-t border-gray-600 pt-2">
         <div class="flex justify-end">
             <div class="w-40 text-right font-bold">
-                {{ number_format(abs($totalDr ?: $totalCr), 2) }}  {{ $side }}
+                {{ number_format($displayTotal ?? abs($totalDr ?: $totalCr), 2) }} {{ $displaySide ?? ($side ?? '') }}
                 <!-- {{ abs($totalDr) . ' DR' ?: abs($totalCr) . ' Cr' }} -->
             </div>
         </div>

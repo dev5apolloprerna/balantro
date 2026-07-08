@@ -752,12 +752,22 @@ class ReportsController extends Controller
         // );
         //$voucher = collect(data_get($resp, 'data.rows', []));
         $voucher = collect($resp);
+        $display = $svc->prepareVoucherDisplay($voucher);
+        $accountLedger = $display['accountLedger'];
+        $particulars = $display['particulars'];
+        $displayTotal = $display['total'];
+        $displaySide = $display['displaySide'];
         
         if ($voucher->isEmpty()) {
             abort(404);
         }
         // ✅ HEADER
         $header = $voucher->first();
+        $display = $svc->prepareVoucherDisplay($voucher);
+        $accountLedger = $display['accountLedger'];
+        $particulars = $display['particulars'];
+        $displayTotal = $display['total'];
+        $displaySide = $display['displaySide'];
         
         // ✅ TOTALS
         $totalDr = $voucher->sum(function ($r) {
@@ -772,7 +782,12 @@ class ReportsController extends Controller
             'voucher',
             'header',
             'totalDr',
-            'totalCr'
+            'totalCr',
+            'totalCr',
+            'accountLedger',
+            'particulars',
+            'displayTotal',
+            'displaySide'
         ));
     }
 
@@ -796,6 +811,11 @@ class ReportsController extends Controller
 
         $totalDr = $voucher->sum(fn($x) => abs((float)$x->DRAmount));
         $totalCr = $voucher->sum(fn($x) => abs((float)$x->CRAmount));
+        $display = $svc->prepareVoucherDisplay($voucher);
+        $accountLedger = $display['accountLedger'];
+        $particulars = $display['particulars'];
+        $displayTotal = $display['total'];
+        $displaySide = $display['displaySide'];
 
         $pdf = PDF::loadView(
             'reports.pdf.voucher_pdf',
@@ -803,7 +823,11 @@ class ReportsController extends Controller
                 'voucher',
                 'header',
                 'totalDr',
-                'totalCr'
+                'totalCr',
+                'accountLedger',
+                'particulars',
+                'displayTotal',
+                'displaySide'
             )
         );
         $safeVchNo = str_replace(['/', '\\'], '-', $vchNo);
@@ -827,14 +851,22 @@ class ReportsController extends Controller
         $header = $voucher->first();
         $totalDr = $voucher->sum(fn($x) => abs((float)$x->DRAmount));
         $totalCr = $voucher->sum(fn($x) => abs((float)$x->CRAmount));
-        $total = abs($totalDr ?: $totalCr);
+        // $total = abs($totalDr ?: $totalCr);
+        $display = $svc->prepareVoucherDisplay($voucher);
+        $accountLedger = $display['accountLedger'];
+        $particulars = $display['particulars'];
+        $displayTotal = $display['total'];
+        $displaySide = $display['displaySide'];
         $safeVchNo = str_replace(['/', '\\'], '-', $vchNo);
 
         return Excel::download(
             new VoucherExport(
                 $voucher,
                 $header,
-                $total
+                $displayTotal,
+                $accountLedger,
+                $particulars,
+                $displaySide
             ),
             'voucher_'.$safeVchNo.'.xlsx'
         );
