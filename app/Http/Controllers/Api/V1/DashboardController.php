@@ -101,8 +101,10 @@ class DashboardController extends BaseApiController
             $selectedGroups = $validSelectedGroups;
 
             // Build group cards with balances
+            $selectedGroupOrder = array_flip($selectedGroups);
             $groupCards = $allGroups
                 ->whereIn('iGroupId', $selectedGroups)
+                ->sortBy(fn($group) => $selectedGroupOrder[(int) $group->iGroupId] ?? PHP_INT_MAX)
                 ->map(function ($group) {
                     return [
                         'key' => 'group_' . $group->iGroupId,
@@ -446,6 +448,7 @@ class DashboardController extends BaseApiController
     {
         try {
             $user = auth()->user();
+
             if ($user->role != User::ROLES['client']) {
                 return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
             }
@@ -472,9 +475,11 @@ class DashboardController extends BaseApiController
     {
         try {
             $user = auth()->user();
+
             if ($user->role != User::ROLES['client']) {
                 return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
             }
+
             $validator = Validator::make($request->all(), [
                 'selected_groups' => 'required|array|min:1',
                 'selected_groups.*' => 'integer|distinct',
@@ -485,13 +490,16 @@ class DashboardController extends BaseApiController
             if ($validator->fails()) {
                 return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
             }
+
             $selectedGroups = array_values(array_unique(array_map('intval', $request->input('selected_groups', []))));
+
             if (count($selectedGroups) % 4 !== 0) {
                 return $this->error(
                     __('response_message.dashboard.groups_multiple_of_four', ['count' => count($selectedGroups)]),
                     422
                 );
             }
+
             [$from, $to] = $this->resolveDashboardDateRange($request);
             $allGroups = collect($this->getDashboardGroupsWithBalances((int) $user->id, $from, $to));
             $availableGroupIds = $allGroups
@@ -502,6 +510,7 @@ class DashboardController extends BaseApiController
                 ->reject(fn($groupId) => $availableGroupIds->contains((int) $groupId))
                 ->values()
                 ->toArray();
+
             if (!empty($invalidGroupIds)) {
                 return $this->error(
                     __('response_message.dashboard.invalid_groups'),
@@ -509,6 +518,7 @@ class DashboardController extends BaseApiController
                     ['selected_groups' => $invalidGroupIds]
                 );
             }
+
             UserCardPreference::updateOrCreate(
                 [
                     'user_id' => $user->id,
@@ -520,6 +530,7 @@ class DashboardController extends BaseApiController
             );
 
             session()->forget("user_{$user->id}_selected_groups");
+
             $payload = $this->buildCustomGroupPayload((int) $user->id, $from, $to);
             $payload['groups_count'] = count($selectedGroups);
 
