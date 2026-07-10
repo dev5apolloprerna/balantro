@@ -442,6 +442,93 @@ class DashboardController extends BaseApiController
         }
     }
 
+    public function customizeGroupList(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            if ($user->role != User::ROLES['client']) {
+                return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'from' => 'nullable|date_format:d-m-Y',
+                'to' => 'nullable|date_format:d-m-Y|after_or_equal:from',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
+            }
+
+            [$from, $to] = $this->resolveDashboardDateRange($request);
+            $payload = $this->buildCustomGroupPayload((int) $user->id, $from, $to);
+
+            return $this->success(__("response_message.dashboard.custom_groups_loaded"), $payload);
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.groups_error"), 500, $e->getMessage());
+        }
+    }
+
+    public function submitCustomizeGroups(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            if ($user->role != User::ROLES['client']) {
+                return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
+            }
+            $validator = Validator::make($request->all(), [
+                'selected_groups' => 'required|array|min:1',
+                'selected_groups.*' => 'integer|distinct',
+                'from' => 'nullable|date_format:d-m-Y',
+                'to' => 'nullable|date_format:d-m-Y|after_or_equal:from',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
+            }
+            $selectedGroups = array_values(array_unique(array_map('intval', $request->input('selected_groups', []))));
+            if (count($selectedGroups) % 4 !== 0) {
+                return $this->error(
+                    __('response_message.dashboard.groups_multiple_of_four', ['count' => count($selectedGroups)]),
+                    422
+                );
+            }
+            [$from, $to] = $this->resolveDashboardDateRange($request);
+            $allGroups = collect($this->getDashboardGroupsWithBalances((int) $user->id, $from, $to));
+            $availableGroupIds = $allGroups
+                ->pluck('iGroupId')
+                ->map(fn($groupId) => (int) $groupId)
+                ->values();
+            $invalidGroupIds = collect($selectedGroups)
+                ->reject(fn($groupId) => $availableGroupIds->contains((int) $groupId))
+                ->values()
+                ->toArray();
+            if (!empty($invalidGroupIds)) {
+                return $this->error(
+                    __('response_message.dashboard.invalid_groups'),
+                    422,
+                    ['selected_groups' => $invalidGroupIds]
+                );
+            }
+            UserCardPreference::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'party_id' => $user->id,
+                ],
+                [
+                    'selected_groups' => $selectedGroups,
+                ]
+            );
+
+            session()->forget("user_{$user->id}_selected_groups");
+            $payload = $this->buildCustomGroupPayload((int) $user->id, $from, $to);
+            $payload['groups_count'] = count($selectedGroups);
+
+            return $this->success(__("response_message.dashboard.preferences_saved"), $payload);
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.preferences_error"), 500, $e->getMessage());
+        }
+    }
+
     public function dropdown_type_list(Request $request)
     {
         try {
@@ -815,6 +902,124 @@ class DashboardController extends BaseApiController
         } catch (\Exception $e) {
             return $this->error(__("response_message.dashboard.groups_error"), 500, $e->getMessage());
         }
+    }
+
+    private function buildCustomGroupPayload(int $userId, ?string $from, ?string $to): array
+    {
+        $allGroups = collect($this->getDashboardGroupsWithBalances($userId, $from, $to));
+        $defaultGroupIds = $this->defaultDashboardGroupIds($allGroups);
+        $selectedGroups = $this->selectedDashboardGroupIds($userId, $allGroups, $defaultGroupIds);
+
+        $availableGroups = $allGroups
+            ->map(function ($group) use ($selectedGroups) {
+                $groupId = (int) $group->iGroupId;
+
+                return [
+                    'iGroupId' => $groupId,
+                    'strGroupName' => $group->strGroupName,
+                    'Closing' => (float) ($group->Closing ?? 0),
+                    'Opening' => (float) ($group->Opening ?? 0),
+                    'accent' => $this->getAccentColor($group->strGroupName),
+                    'icon' => $this->getGroupIcon($group->strGroupName),
+                    'is_selected' => in_array($groupId, $selectedGroups, true),
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        $groupCards = collect($availableGroups)
+            ->where('is_selected', true)
+            ->map(function ($group) {
+                return [
+                    'key' => 'group_' . $group['iGroupId'],
+                    'iGroupId' => $group['iGroupId'],
+                    'value' => $group['Closing'],
+                    'name' => $group['strGroupName'],
+                    'label' => $group['strGroupName'],
+                    'accent' => $group['accent'],
+                    'icon' => $group['icon'],
+                    'opening_balance' => $group['Opening'],
+                    'closing_balance' => $group['Closing'],
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        return [
+            'range' => ['from' => $from, 'to' => $to],
+            'available_groups' => $availableGroups,
+            'selected_group_ids' => $selectedGroups,
+            'default_group_ids' => $defaultGroupIds,
+            'group_cards' => $groupCards,
+            'selection_rules' => [
+                'multiple_of' => 4,
+                'allowed_counts' => [4, 8, 12, 16, 20],
+            ],
+        ];
+    }
+
+    private function getDashboardGroupsWithBalances(int $userId, ?string $from, ?string $to)
+    {
+        return Cache::remember("api_dashboard:{$userId}:groups:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($userId, $from, $to) {
+            return $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
+        });
+    }
+
+    private function defaultDashboardGroupIds($allGroups): array
+    {
+        $defaultGroupNames = [
+            'Sales Accounts',
+            'Purchase Accounts',
+            'Sundry Creditors',
+            'Sundry Debtors',
+            'Cash-in-Hand',
+            'Bank Accounts',
+            'Direct Incomes',
+            'Direct Expenses',
+        ];
+
+        $defaultGroupIds = $allGroups
+            ->whereIn('strGroupName', $defaultGroupNames)
+            ->pluck('iGroupId')
+            ->map(fn($groupId) => (int) $groupId)
+            ->values()
+            ->toArray();
+
+        if (empty($defaultGroupIds)) {
+            $defaultGroupIds = $allGroups
+                ->take(8)
+                ->pluck('iGroupId')
+                ->map(fn($groupId) => (int) $groupId)
+                ->values()
+                ->toArray();
+        }
+
+        return $defaultGroupIds;
+    }
+
+    private function selectedDashboardGroupIds(int $userId, $allGroups, array $defaultGroupIds): array
+    {
+        $preferences = UserCardPreference::where('user_id', $userId)
+            ->where('party_id', $userId)
+            ->first();
+
+        $selectedGroups = $defaultGroupIds;
+
+        if ($preferences && $preferences->selected_groups) {
+            $selectedGroups = is_array($preferences->selected_groups)
+                ? $preferences->selected_groups
+                : json_decode($preferences->selected_groups, true);
+            $selectedGroups = array_map('intval', $selectedGroups ?? []);
+        }
+
+        $validSelectedGroups = [];
+        foreach ($selectedGroups as $groupId) {
+            if ($allGroups->contains('iGroupId', $groupId)) {
+                $validSelectedGroups[] = (int) $groupId;
+            }
+        }
+
+        return empty($validSelectedGroups) ? $defaultGroupIds : array_values(array_unique($validSelectedGroups));
     }
 
     protected function getAccentColor($groupName)

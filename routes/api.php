@@ -88,6 +88,8 @@ Route::prefix('v1')->group(function () {
             Route::post('monthly-financial-columns', [\App\Http\Controllers\Api\V1\DashboardController::class, 'monthlyFinancialColumns']);
             Route::post('year-listing', [\App\Http\Controllers\Api\V1\DashboardController::class, 'yearListing']);
             Route::post('group-balances', [\App\Http\Controllers\Api\V1\DashboardController::class, 'getGroupBalances']);
+            Route::post('customize-groups/list', [\App\Http\Controllers\Api\V1\DashboardController::class, 'customizeGroupList']);
+            Route::post('customize-groups/submit', [\App\Http\Controllers\Api\V1\DashboardController::class, 'submitCustomizeGroups']);
         });
 
         Route::post('dropdown_type_list', [\App\Http\Controllers\Api\V1\DashboardController::class, 'dropdown_type_list']);
