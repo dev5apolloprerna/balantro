@@ -1153,6 +1153,8 @@ class SalesUploadController extends Controller
                 ->with('alert', 'Please select company first');
         }
 
+        $this->syncFinancialYearRangeFromSession();
+
         $upload = BulkSalesUpload::where('id', $id)
             ->where('iPartyId', $iPartyId)
             ->first();
@@ -1262,7 +1264,7 @@ class SalesUploadController extends Controller
             ];
         }
 
-        if (!$this->isUploadDateInSelectedYear($invoiceDate)) {
+        if (!$this->isUploadDateInSelectedYear($invoiceDate, $transaction->strYear ?? session('year'))) {
             $issues[] = [
                 'field' => 'date',
                 'message' => 'Invoice date is outside the selected financial year.',
@@ -1491,7 +1493,7 @@ class SalesUploadController extends Controller
             && $amountMatched
             && $this->hasUploadPartyMatch($partyLookup)
             && $this->hasUploadedGstNoMatch($partyLookup, $transaction->gst_no)
-            && $this->isUploadDateInSelectedYear($invoiceDate)
+            && $this->isUploadDateInSelectedYear($invoiceDate, $transaction->strYear ?? session('year'))
             && $this->hasOnlyValidGstSlabs($this->salesTransactionGstRates($transaction))
             && !$this->salesVoucherExists($partyId, $transaction->vchType, $transaction->invoice_no, $transaction->strYear ?? session('year'), $transaction->id);
     }
@@ -2487,13 +2489,58 @@ class SalesUploadController extends Controller
         return $timestamp ? date('Y-m-d', $timestamp) : '';
     }
 
-    private function isUploadDateInSelectedYear(?string $date): bool
+    // private function isUploadDateInSelectedYear(?string $date): bool
+    // {
+    //     if (empty($date) || empty(session('year_from')) || empty(session('year_to'))) {
+    //         return false;
+    //     }
+
+    //     return $date >= session('year_from') && $date <= session('year_to');
+    // }
+
+    private function syncFinancialYearRangeFromSession(?string $year = null): void
     {
-        if (empty($date) || empty(session('year_from')) || empty(session('year_to'))) {
+        $year = trim((string) ($year ?: session('year')));
+
+        if ($year === '' || !preg_match('/^(\d{4})-(\d{4})$/', $year, $matches)) {
+            return;
+        }
+
+        session([
+            'year' => $year,
+            'year_from' => $matches[1] . '-04-01',
+            'year_to' => $matches[2] . '-03-31',
+        ]);
+    }
+
+    private function getFinancialYearRange(?string $year = null): ?array
+    {
+        $year = trim((string) ($year ?: session('year')));
+
+        if (!preg_match('/^(\d{4})-(\d{4})$/', $year, $matches)) {
+            return null;
+        }
+
+        return [
+            'from' => $matches[1] . '-04-01',
+            'to' => $matches[2] . '-03-31',
+        ];
+    }
+
+    private function isUploadDateInSelectedYear(?string $date, ?string $year = null): bool
+    {
+        if (empty($date)) {
             return false;
         }
 
-        return $date >= session('year_from') && $date <= session('year_to');
+        $range = $this->getFinancialYearRange($year);
+        $from = $range['from'] ?? session('year_from');
+        $to = $range['to'] ?? session('year_to');
+
+        if (empty($from) || empty($to)) {
+            return false;
+        }
+        return $date >= $from && $date <= $to;
     }
 
     private function toNumber(mixed $value): float

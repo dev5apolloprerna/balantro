@@ -16,6 +16,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use App\Models\PurchaseCustomGst;
+use Illuminate\Support\Str;
 
 class PurchaseUploadController extends Controller
 {
@@ -93,9 +94,37 @@ class PurchaseUploadController extends Controller
         return back();
     }
 
+    private function normalizeLookupName(?string $value): string
+    {
+        $value = str_replace(["\xc2\xa0", '\u{00A0}'], ' ', (string) $value);
+        $value = preg_replace('/[\s\"\']+/u', '', $value) ?? '';
+
+        return Str::lower(trim($value));
+    }
+
+    private function getLedgerByNameNormalized($partyId, ?string $ledgerName)
+    {
+        $ledgerName = trim((string) $ledgerName);
+        if ($ledgerName === '') {
+            return null;
+        }
+
+        $ledger = Ledger::getLedgerByName($partyId, $ledgerName);
+        if ($ledger) {
+            return $ledger;
+        }
+
+        $normalizedLedgerName = $this->normalizeLookupName($ledgerName);
+
+        return collect(Ledger::getAllLedgers($partyId))
+            ->first(function ($candidate) use ($normalizedLedgerName) {
+                return $this->normalizeLookupName($candidate->name ?? '') === $normalizedLedgerName;
+            });
+    }
+
     private function findLedgerMasterByName($partyId, $ledgerName)
     {
-        $normalizedLedgerName = preg_replace('/\s+/', '', strtolower(trim((string) $ledgerName)));
+        $normalizedLedgerName = $this->normalizeLookupName($ledgerName);
 
         if ($normalizedLedgerName === '') {
             return null;
@@ -103,11 +132,10 @@ class PurchaseUploadController extends Controller
 
         return DB::table('LedgerMaster')
             ->where('iPartyId', $partyId)
-            ->whereRaw(
-                "LOWER(REPLACE(REPLACE(REPLACE(strCustomerName, ' ', ''), '\"', ''), '''', '')) = ?",
-                [$normalizedLedgerName]
-            )
-            ->first();
+            ->get()
+            ->first(function ($ledger) use ($normalizedLedgerName) {
+                return $this->normalizeLookupName($ledger->strCustomerName ?? '') === $normalizedLedgerName;
+            });
     }
 
     private function getGstMapping($partyId,$purchaseLedgerName,$itemName = null)
@@ -124,6 +152,7 @@ class PurchaseUploadController extends Controller
 
         if (!empty($itemName))
         {
+            $normalizedItemName = $this->normalizeLookupName($itemName);
             $item = DB::table('StockItemMaster')
                 ->select(
                     'iStockIdtemId',
@@ -134,8 +163,10 @@ class PurchaseUploadController extends Controller
                     'IGSTLedgerId'
                 )
                 ->where('iPartyId', $partyId)
-                ->where('strItemName', $itemName)
-                ->first();
+                ->get()
+                ->first(function ($item) use ($normalizedItemName) {
+                    return $this->normalizeLookupName($item->strItemName ?? '') === $normalizedItemName;
+                });
 
             if ($item)
             {
@@ -529,6 +560,7 @@ class PurchaseUploadController extends Controller
             return redirect()->route('data_entry_operators.bulkuploadpurchase')
                 ->with('error', 'Please select company first');
         }
+        $this->syncFinancialYearRangeFromSession();
 
         $request->validate([
             'purchase_file' => 'required|mimes:xlsx,xls|max:30720'
@@ -1166,6 +1198,52 @@ class PurchaseUploadController extends Controller
         }
     }
 
+    private function syncFinancialYearRangeFromSession(?string $year = null): void
+    {
+        $year = trim((string) ($year ?: session('year')));
+
+        if ($year === '' || !preg_match('/^(\d{4})-(\d{4})$/', $year, $matches)) {
+            return;
+        }
+
+        session([
+            'year' => $year,
+            'year_from' => $matches[1] . '-04-01',
+            'year_to' => $matches[2] . '-03-31',
+        ]);
+    }
+
+    private function getFinancialYearRange(?string $year = null): ?array
+    {
+        $year = trim((string) ($year ?: session('year')));
+
+        if (!preg_match('/^(\d{4})-(\d{4})$/', $year, $matches)) {
+            return null;
+        }
+
+        return [
+            'from' => $matches[1] . '-04-01',
+            'to' => $matches[2] . '-03-31',
+        ];
+    }
+
+    private function isDateInSelectedFinancialYear(?string $date, ?string $year = null): bool
+    {
+        if (empty($date)) {
+            return false;
+        }
+
+        $range = $this->getFinancialYearRange($year);
+        $from = $range['from'] ?? session('year_from');
+        $to = $range['to'] ?? session('year_to');
+
+        if (empty($from) || empty($to)) {
+            return false;
+        }
+
+        return $date >= $from && $date <= $to;
+    }
+
     private function parseDate(mixed $value): string
     {
         if ($value instanceof \DateTimeInterface) {
@@ -1375,7 +1453,7 @@ class PurchaseUploadController extends Controller
             return redirect()->route('data_entry_operators.bulkuploadpurchase')
                 ->with('alert', 'Please select company first');
         }
-
+        $this->syncFinancialYearRangeFromSession();
         $upload = BulkPurchaseUpload::where('id', $id)
             ->where('iPartyId', $iPartyId)
             ->first();
@@ -1623,7 +1701,7 @@ class PurchaseUploadController extends Controller
         $issues = [];
         $partyId = $transaction->iPartyId;
         $purchaseLedgerName = $transaction->purchase_ledger_name ?: $transaction->purchase_ledger;
-        $purchaseLedger = $purchaseLedgerName ? Ledger::getLedgerByName($partyId, $purchaseLedgerName) : null;
+        $purchaseLedger = $purchaseLedgerName ? $this->getLedgerByNameNormalized($partyId, $purchaseLedgerName) : null;
         $gstMapping = $gstMapping ?: $this->getGstMapping($partyId, $purchaseLedger?->name ?? $purchaseLedgerName);
         $partyLedgerDetails = $this->findPartyLedgerForUpload($partyId, $transaction->party_name, $transaction->gst_no);
 
@@ -1652,7 +1730,7 @@ class PurchaseUploadController extends Controller
             ];
         }
 
-        if ($invoiceDate && session('year_from') && session('year_to') && ($invoiceDate < session('year_from') || $invoiceDate > session('year_to'))) {
+        if ($invoiceDate && !$this->isDateInSelectedFinancialYear($invoiceDate, $transaction->strYear ?? session('year'))) {
             $issues[] = [
                 'field' => 'date',
                 'message' => 'Purchase date is outside the selected financial year.',
@@ -1714,11 +1792,13 @@ class PurchaseUploadController extends Controller
             if ($itemName === '') {
                 return true;
             }
-
+            $normalizedItemName = $this->normalizeLookupName($itemName);
             $exists = DB::table('StockItemMaster')
                 ->where('iPartyId', $transaction->iPartyId)
-                ->whereRaw('LOWER(TRIM(strItemName)) = ?', [strtolower($itemName)])
-                ->exists();
+                ->get()
+                ->contains(function ($stockItem) use ($normalizedItemName) {
+                    return $this->normalizeLookupName($stockItem->strItemName ?? '') === $normalizedItemName;
+                });
 
             if (!$exists) {
                 return true;
@@ -1829,7 +1909,7 @@ class PurchaseUploadController extends Controller
     {
         $partyId = $transaction->iPartyId;
         $purchaseLedgerName = $transaction->purchase_ledger_name ?: $transaction->purchase_ledger;
-        $purchaseLedger = $purchaseLedgerName ? Ledger::getLedgerByName($partyId, $purchaseLedgerName) : null;
+        $purchaseLedger = $purchaseLedgerName ? $this->getLedgerByNameNormalized($partyId, $purchaseLedgerName) : null;
         $mapping = $this->getGstMapping($partyId, $purchaseLedger?->name ?? $purchaseLedgerName);
         $partyLedgerDetails = $this->findPartyLedgerForUpload($partyId, $transaction->party_name, $transaction->gst_no);
 
@@ -1857,7 +1937,7 @@ class PurchaseUploadController extends Controller
 
         return $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $transaction->gst_no)
             && !empty($purchaseLedger)
-            && (!$invoiceDate || !session('year_from') || !session('year_to') || ($invoiceDate >= session('year_from') && $invoiceDate <= session('year_to')))
+            && (!$invoiceDate || $this->isDateInSelectedFinancialYear($invoiceDate, $transaction->strYear ?? session('year')))
             && $this->allGstRatesAreApplicable($this->purchaseTransactionGstRates($transaction))
             && $hasGstLedgers
             && $this->purchaseTransactionAmountsMatch($transaction)
@@ -2087,7 +2167,7 @@ class PurchaseUploadController extends Controller
         ]);
         $invoiceDate = $request->date;
 
-        if ($invoiceDate < session('year_from') || $invoiceDate > session('year_to')) {
+        if (!$this->isDateInSelectedFinancialYear($invoiceDate)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invoice date must be within selected financial year'
@@ -2128,7 +2208,7 @@ class PurchaseUploadController extends Controller
             // ===============================
             $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger" ? $request['purchase_ledger_name'] : $transaction->purchase_ledger;
             // $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
-            $purchase_ledger_id = Ledger::getLedgerByName($transaction->iPartyId, $purchase_ledger);
+            $purchase_ledger_id = $this->getLedgerByNameNormalized($transaction->iPartyId, $purchase_ledger);
             // $firstNoItemLedger = collect($request->noitem_rows ?? [])->firstWhere('ledger');
             // $purchaseLedgerId = $request->purchase_ledger_id ?: ($firstNoItemLedger['ledger'] ?? null);
             // $purchase_ledger = isset($request['purchase_ledger_name']) && $request['purchase_ledger_name'] != "Select Ledger"
@@ -2517,7 +2597,7 @@ class PurchaseUploadController extends Controller
         }
         $invoiceDate = $request->date;
 
-        if ($invoiceDate < session('year_from') || $invoiceDate > session('year_to')) {
+        if (!$this->isDateInSelectedFinancialYear($invoiceDate)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invoice date must be within selected financial year'
@@ -2549,7 +2629,7 @@ class PurchaseUploadController extends Controller
                 ]);
             }
             $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
-            $purcashe_ledger_id = Ledger::getLedgerByName($iPartyId, $purchase_ledger);
+            $purcashe_ledger_id = $this->getLedgerByNameNormalized($iPartyId, $purchase_ledger);
             
             // $gstMapping = $this->getGstMapping($iPartyId, $purcashe_ledger_id->name ?? $purchase_ledger);
             // $firstNoItemLedger = collect($request->noitem_rows ?? [])->firstWhere('ledger');

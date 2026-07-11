@@ -279,9 +279,37 @@ class DebitNoteController extends Controller
             ->all();
     }
 
+    private function normalizeLookupName(?string $value): string
+    {
+        $value = str_replace(["\xc2\xa0", '\u{00A0}'], ' ', (string) $value);
+        $value = preg_replace('/[\s\"\']+/u', '', $value) ?? '';
+
+        return Str::lower(trim($value));
+    }
+
+    private function getLedgerByNameNormalized($partyId, ?string $ledgerName)
+    {
+        $ledgerName = trim((string) $ledgerName);
+        if ($ledgerName === '') {
+            return null;
+        }
+
+        $ledger = Ledger::getLedgerByName($partyId, $ledgerName);
+        if ($ledger) {
+            return $ledger;
+        }
+
+        $normalizedLedgerName = $this->normalizeLookupName($ledgerName);
+
+        return collect(Ledger::getAllLedgers($partyId))
+            ->first(function ($candidate) use ($normalizedLedgerName) {
+                return $this->normalizeLookupName($candidate->name ?? '') === $normalizedLedgerName;
+            });
+    }
+
     private function findLedgerMasterByName($partyId, $ledgerName)
     {
-        $normalizedLedgerName = preg_replace('/\s+/', '', strtolower(trim((string) $ledgerName)));
+        $normalizedLedgerName = $this->normalizeLookupName($ledgerName);
 
         if ($normalizedLedgerName === '') {
             return null;
@@ -289,11 +317,10 @@ class DebitNoteController extends Controller
 
         return DB::table('LedgerMaster')
             ->where('iPartyId', $partyId)
-            ->whereRaw(
-                "LOWER(REPLACE(REPLACE(REPLACE(strCustomerName, ' ', ''), '\"', ''), '''', '')) = ?",
-                [$normalizedLedgerName]
-            )
-            ->first();
+            ->get()
+            ->first(function ($ledger) use ($normalizedLedgerName) {
+                return $this->normalizeLookupName($ledger->strCustomerName ?? '') === $normalizedLedgerName;
+            });
     }
 
     private function getGstMapping($partyId,$salesLedgerName,$itemName = null)
@@ -317,10 +344,13 @@ class DebitNoteController extends Controller
         if (!empty($itemName))
         {
             $itemName = trim((string) $itemName);
+            $normalizedItemName = $this->normalizeLookupName($itemName);
             $item = DB::table('StockItemMaster')
                 ->where('iPartyId', $partyId)
-                ->where('strItemName', $itemName)
-                ->first();
+                ->get()
+                ->first(function ($item) use ($normalizedItemName) {
+                    return $this->normalizeLookupName($item->strItemName ?? '') === $normalizedItemName;
+                });
 
             if ($item)
             {
@@ -530,7 +560,7 @@ class DebitNoteController extends Controller
             if (!isset($slots[$key])) {
                 $mapping = $this->getGstMapping($partyId, $row['sales_ledger'] ?? null);
                 $salesLedger = !empty($row['sales_ledger'])
-                    ? Ledger::getLedgerByName($partyId, $row['sales_ledger'])
+                    ? $this->getLedgerByNameNormalized($partyId, $row['sales_ledger'])
                     : null;
 
                 $slots[$key] = [
@@ -641,7 +671,7 @@ class DebitNoteController extends Controller
         if (!$iPartyId) {
             return back()->with('error', 'Please select company first');
         }
-
+        $this->syncFinancialYearRangeFromSession();
         $request->validate([
             'debit_notes_file' => 'required|mimes:xlsx,xls|max:30720'
         ]);
@@ -1454,7 +1484,7 @@ class DebitNoteController extends Controller
         ]);
         $invoiceDate = $request->date;
         
-        if ($invoiceDate < session('year_from') || $invoiceDate > session('year_to')) {
+        if (!$this->isDateInSelectedFinancialYear($invoiceDate)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invoice date must be within selected financial year'
@@ -1503,7 +1533,7 @@ class DebitNoteController extends Controller
                 : null;
 
             if (!$ledger && $ledgerName) {
-                $ledger = Ledger::getLedgerByName($transaction->iPartyId, $ledgerName);
+                $ledger = $this->getLedgerByNameNormalized($transaction->iPartyId, $ledgerName);
             }
 
             // ===============================
@@ -1809,7 +1839,7 @@ class DebitNoteController extends Controller
             return redirect()->route('dn.index')
                 ->with('alert', 'Please select company first');
         }
-
+        $this->syncFinancialYearRangeFromSession();
         $upload = BulkDebitNoteUpload::where('id', $id)
             ->where('iPartyId', $iPartyId)
             ->first();
@@ -1881,7 +1911,7 @@ class DebitNoteController extends Controller
     {
         $partyId = $transaction->iPartyId;
         $purchaseLedgerName = $transaction->purchase_ledger_name ?: $transaction->purchase_ledger;
-        $purchaseLedger = $purchaseLedgerName ? Ledger::getLedgerByName($partyId, $purchaseLedgerName) : null;
+        $purchaseLedger = $purchaseLedgerName ? $this->getLedgerByNameNormalized($partyId, $purchaseLedgerName) : null;
         $mapping = $this->getGstMapping($partyId, $purchaseLedger?->name ?? $purchaseLedgerName);
         $partyLedgerDetails = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
 
@@ -1950,7 +1980,7 @@ class DebitNoteController extends Controller
         $issues = [];
         $partyId = $transaction->iPartyId;
         $purchaseLedgerName = $transaction->purchase_ledger_name ?: $transaction->purchase_ledger;
-        $purchaseLedger = $purchaseLedgerName ? Ledger::getLedgerByName($partyId, $purchaseLedgerName) : null;
+        $purchaseLedger = $purchaseLedgerName ? $this->getLedgerByNameNormalized($partyId, $purchaseLedgerName) : null;
         $gstMapping = $gstMapping ?: $this->getGstMapping($partyId, $purchaseLedger?->name ?? $purchaseLedgerName);
         $partyLedgerDetails = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
 
@@ -1979,7 +2009,7 @@ class DebitNoteController extends Controller
             ];
         }
 
-        if ($noteDate && session('year_from') && session('year_to') && ($noteDate < session('year_from') || $noteDate > session('year_to'))) {
+        if ($noteDate && !$this->isDateInSelectedFinancialYear($noteDate, $transaction->strYear ?? session('year'))) {
             $issues[] = [
                 'field' => 'date',
                 'message' => 'Debit note date is outside the selected financial year.',
@@ -2055,11 +2085,13 @@ class DebitNoteController extends Controller
             if ($itemName === '') {
                 return true;
             }
-
+            $normalizedItemName = $this->normalizeLookupName($itemName);
             $exists = DB::table('StockItemMaster')
                 ->where('iPartyId', $transaction->iPartyId)
-                ->whereRaw('LOWER(TRIM(strItemName)) = ?', [strtolower($itemName)])
-                ->exists();
+                ->get()
+                ->contains(function ($stockItem) use ($normalizedItemName) {
+                    return $this->normalizeLookupName($stockItem->strItemName ?? '') === $normalizedItemName;
+                });
 
             if (!$exists) {
                 return true;
@@ -2399,7 +2431,7 @@ class DebitNoteController extends Controller
     ): bool {
         $hasPartyLedger = $this->hasMatchingPartyLedger($transaction->iPartyId, $partyName, $transaction->gst_no);
         $hasPurchaseLedger = !empty($transaction->purchase_ledger_id)
-            || !empty(Ledger::getLedgerByName($transaction->iPartyId, $ledgerName ?: $transaction->purchase_ledger_name ?: $transaction->purchase_ledger));
+            || !empty($this->getLedgerByNameNormalized($transaction->iPartyId, $ledgerName ?: $transaction->purchase_ledger_name ?: $transaction->purchase_ledger));
 
         return $hasPartyLedger
             && $hasPurchaseLedger
@@ -2433,7 +2465,7 @@ class DebitNoteController extends Controller
             $ledgerName = $request->purchase_ledger_name[$id] ?? ($request->ledger[$id] ?? null);
 
             $ledger = $ledgerName
-                ? Ledger::getLedgerByName($iPartyId, $ledgerName)
+                ? $this->getLedgerByNameNormalized($iPartyId, $ledgerName)
                 : null;
 
             $voucherType = $request->vch_type[$id] ?? ($request->voucher_type[$id] ?? $row->vch_type);
@@ -2527,6 +2559,52 @@ class DebitNoteController extends Controller
     private function toNumber($value)
     {
         return is_numeric($value) ? (float)$value : 0;
+    }
+
+    private function syncFinancialYearRangeFromSession(?string $year = null): void
+    {
+        $year = trim((string) ($year ?: session('year')));
+
+        if ($year === '' || !preg_match('/^(\d{4})-(\d{4})$/', $year, $matches)) {
+            return;
+        }
+
+        session([
+            'year' => $year,
+            'year_from' => $matches[1] . '-04-01',
+            'year_to' => $matches[2] . '-03-31',
+        ]);
+    }
+
+    private function getFinancialYearRange(?string $year = null): ?array
+    {
+        $year = trim((string) ($year ?: session('year')));
+
+        if (!preg_match('/^(\d{4})-(\d{4})$/', $year, $matches)) {
+            return null;
+        }
+
+        return [
+            'from' => $matches[1] . '-04-01',
+            'to' => $matches[2] . '-03-31',
+        ];
+    }
+
+    private function isDateInSelectedFinancialYear(?string $date, ?string $year = null): bool
+    {
+        if (empty($date)) {
+            return false;
+        }
+
+        $range = $this->getFinancialYearRange($year);
+        $from = $range['from'] ?? session('year_from');
+        $to = $range['to'] ?? session('year_to');
+
+        if (empty($from) || empty($to)) {
+            return false;
+        }
+
+        return $date >= $from && $date <= $to;
     }
 
     private function parseDate(mixed $value): string
@@ -2629,7 +2707,7 @@ class DebitNoteController extends Controller
         }
 
         $invoiceDate = $request->date;        
-        if ($invoiceDate < session('year_from') || $invoiceDate > session('year_to')) {
+        if (!$this->isDateInSelectedFinancialYear($invoiceDate)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Invoice date must be within selected financial year'
@@ -2664,7 +2742,7 @@ class DebitNoteController extends Controller
                 ]);
             }
             $purchase_ledger = isset($request['purchase_ledger']) && $request['purchase_ledger'] != "Select Ledger" ? $request['purchase_ledger'] : null;
-            $purcashe_ledger_id = Ledger::getLedgerByName($iPartyId, $purchase_ledger);
+            $purcashe_ledger_id = $this->getLedgerByNameNormalized($iPartyId, $purchase_ledger);
             $gstMapping = $this->getGstMapping(
                 $iPartyId,
                 $purcashe_ledger_id->name ?? $purchase_ledger,
