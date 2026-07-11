@@ -254,6 +254,23 @@ class CreditNoteController extends Controller
             ->all();
     }
 
+    private function findLedgerMasterByName($partyId, $ledgerName)
+    {
+        $normalizedLedgerName = preg_replace('/\s+/', '', strtolower(trim((string) $ledgerName)));
+
+        if ($normalizedLedgerName === '') {
+            return null;
+        }
+
+        return DB::table('LedgerMaster')
+            ->where('iPartyId', $partyId)
+            ->whereRaw(
+                "LOWER(REPLACE(REPLACE(REPLACE(strCustomerName, ' ', ''), '\"', ''), '''', '')) = ?",
+                [$normalizedLedgerName]
+            )
+            ->first();
+    }
+
     private function getGstMapping($partyId,$salesLedgerName,$itemName = null)
     {
         $mapping = [
@@ -300,10 +317,7 @@ class CreditNoteController extends Controller
             empty($mapping['igst_id'])
         )
         {
-            $ledger = DB::table('LedgerMaster')
-                ->where('iPartyId', $partyId)
-                ->where('strCustomerName', $salesLedgerName)
-                ->first();
+            $ledger = $this->findLedgerMasterByName($partyId, $salesLedgerName);
 
             if ($ledger)
             {
@@ -1161,10 +1175,7 @@ class CreditNoteController extends Controller
                     $first = $this->applyPartyLedgerDetails($items[0], $partyLedgerDetails);
                     $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $items[0]['gst_no'] ?? null);
                     
-                    $salesLedger = DB::table('LedgerMaster')
-                        ->where('iPartyId', $iPartyId)
-                        ->where('strCustomerName', $first['sales_ledger'])
-                        ->first();
+                    $salesLedger = $this->findLedgerMasterByName($iPartyId, $first['sales_ledger']);
 
                     $mapping = $this->getGstMapping(
                         $iPartyId,
@@ -1360,10 +1371,7 @@ class CreditNoteController extends Controller
                     $sumTotalAmount = array_sum(array_column($rows, 'total_amount'));
                     $isIgst = $sumIgst > 0;
 
-                    $salesLedger = DB::table('LedgerMaster')
-                        ->where('iPartyId', $iPartyId)
-                        ->where('strCustomerName', $first['sales_ledger'])
-                        ->first();
+                    $salesLedger = $this->findLedgerMasterByName($iPartyId, $first['sales_ledger']);
 
                     // Build custom GST slots from individual rows
                     $gstSlots = [];

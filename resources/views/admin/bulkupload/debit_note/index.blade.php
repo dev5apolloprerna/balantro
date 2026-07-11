@@ -2586,11 +2586,11 @@
         }
 
         function normalizeLedgerName(name) {
-            return String(name || '').trim().toLowerCase();
+            return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function normalizeName(value) {
-            return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+            return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {

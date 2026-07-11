@@ -93,6 +93,23 @@ class PurchaseUploadController extends Controller
         return back();
     }
 
+    private function findLedgerMasterByName($partyId, $ledgerName)
+    {
+        $normalizedLedgerName = preg_replace('/\s+/', '', strtolower(trim((string) $ledgerName)));
+
+        if ($normalizedLedgerName === '') {
+            return null;
+        }
+
+        return DB::table('LedgerMaster')
+            ->where('iPartyId', $partyId)
+            ->whereRaw(
+                "LOWER(REPLACE(REPLACE(REPLACE(strCustomerName, ' ', ''), '\"', ''), '''', '')) = ?",
+                [$normalizedLedgerName]
+            )
+            ->first();
+    }
+
     private function getGstMapping($partyId,$purchaseLedgerName,$itemName = null)
     {
         $mapping = [
@@ -134,10 +151,7 @@ class PurchaseUploadController extends Controller
             empty($mapping['igst_id'])
         )
         {
-            $ledger = DB::table('LedgerMaster')
-                ->where('iPartyId', $partyId)
-                ->where('strCustomerName', $purchaseLedgerName)
-                ->first();
+            $ledger = $this->findLedgerMasterByName($partyId, $purchaseLedgerName);
 
             if ($ledger)
             {
@@ -619,10 +633,7 @@ class PurchaseUploadController extends Controller
                         $items[0],
                         $partyLedgerDetails
                     );
-                    $purchaseLedger = DB::table('LedgerMaster')
-                        ->where('iPartyId', $iPartyId)
-                        ->where('strCustomerName', $first['purchase_ledger'])
-                        ->first();
+                    $purchaseLedger = $this->findLedgerMasterByName($iPartyId, $first['purchase_ledger']);
 
                     $mapping = $this->getGstMapping(
                         $iPartyId,
@@ -947,10 +958,7 @@ class PurchaseUploadController extends Controller
                     $sumTotalAmount = array_sum(array_column($rows, 'total_amount'));
                     $isIgst = $sumIgst > 0;
 
-                    $purchaseLedger = DB::table('LedgerMaster')
-                        ->where('iPartyId', $iPartyId)
-                        ->where('strCustomerName', $first['purchase_ledger'])
-                        ->first();
+                    $purchaseLedger = $this->findLedgerMasterByName($iPartyId, $first['purchase_ledger']);
 
                     // Build custom GST slots from individual rows (NOT grouped by rate)
                     $gstSlots = [];
@@ -969,10 +977,7 @@ class PurchaseUploadController extends Controller
                         // Get purchase ledger object for this row
                         $rowPurchaseLedger = null;
                         if (!empty($row['purchase_ledger'])) {
-                            $rowPurchaseLedger = DB::table('LedgerMaster')
-                                ->where('iPartyId', $iPartyId)
-                                ->where('strCustomerName', $row['purchase_ledger'])
-                                ->first();
+                            $rowPurchaseLedger = $this->findLedgerMasterByName($iPartyId, $row['purchase_ledger']);
                         }
                         
                         // Use row's purchase ledger or fallback to first row's purchase ledger

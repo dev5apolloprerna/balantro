@@ -753,7 +753,7 @@ function buildGstRateOptions(selected = '') {
 }
 
 function normalizeName(value) {
-    return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+    return String(value || '').replace(/['"]/g, '').replace(/\s+/g, '').trim().toLowerCase();
 }
 
 function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {

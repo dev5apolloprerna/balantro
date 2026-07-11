@@ -1166,7 +1166,7 @@
     }
 
     function normalizeLedgerName(name) {
-        return String(name || '').replace(/["']/g, '').trim().toLowerCase();
+        return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
     }
 
     function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {
@@ -1780,7 +1780,7 @@
     function openViewModal()  { document.getElementById('viewModal').classList.add('show'); }
     function closeViewModal() { document.getElementById('viewModal').classList.remove('show'); }
     function normalizeLedgerValue(value) {
-        return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+        return String(value || '').replace(/['"]/g, '').replace(/\s+/g, '').trim().toLowerCase();
     }
     function setSelectValueByTextOrValue($select, value) {
         if (!value) {

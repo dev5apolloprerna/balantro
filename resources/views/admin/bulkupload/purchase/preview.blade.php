@@ -996,7 +996,7 @@ function buildGstRateOptions(selected = '') {
 }
 
 function normalizedLedgerName(value) {
-    return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+    return String(value || '').replace(/['"]/g, '').replace(/\s+/g, '').trim().toLowerCase();
 }
 
 function findPartyLedgerDetails(value) {
@@ -2559,7 +2559,7 @@ window.addEventListener('load', function () {
     }
 
     function normalizeLedgerName(name) {
-        return String(name || '').trim().toLowerCase();
+        return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
     }
 
     function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {

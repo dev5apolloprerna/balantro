@@ -367,8 +367,8 @@ class Ledger extends Model
                 WHERE iPartyId = ?
             ) AS L
             WHERE 
-                LOWER(REPLACE(REPLACE(name, '\"', ''), '''', '')) = 
-                LOWER(REPLACE(REPLACE(?, '\"', ''), '''', ''))
+                LOWER(REPLACE(REPLACE(REPLACE(name, ' ', ''), '\"', ''), '''', '')) = 
+                LOWER(REPLACE(REPLACE(REPLACE(?, ' ', ''), '\"', ''), '''', ''))
         ", [$companyId, $companyId, $ledgerName]);
     }
 

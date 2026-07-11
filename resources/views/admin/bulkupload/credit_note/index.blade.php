@@ -1836,7 +1836,7 @@
         }
 
         function normalizePartyLedgerName(value) {
-            return String(value || '').replace(/["']/g, '').trim().toLowerCase();
+            return String(value || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
@@ -2754,11 +2754,11 @@
         }
 
         function normalizeName(value) {
-            return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+            return String(value || '').replace(/['"]/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function normalizeLedgerName(name) {
-            return String(name || '').trim().toLowerCase();
+            return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function findItemGstMapping(itemName = '') {

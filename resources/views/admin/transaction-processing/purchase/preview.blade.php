@@ -999,7 +999,7 @@
     }
 
     function normalizedLedgerName(value) {
-        return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+        return String(value || '').replace(/['"]/g, '').replace(/\s+/g, '').trim().toLowerCase();
     }
 
     function findPartyLedgerDetails(value) {
@@ -1391,7 +1391,7 @@
     function openViewModal()  { document.getElementById('viewModal').classList.add('show'); }
     function closeViewModal() { document.getElementById('viewModal').classList.remove('show'); }
     function normalizeLedgerValue(value) {
-        return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+        return String(value || '').replace(/['"]/g, '').replace(/\s+/g, '').trim().toLowerCase();
     }
     function setSelectValueByTextOrValue($select, value) {
         if (!value) {

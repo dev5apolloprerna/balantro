@@ -2015,7 +2015,7 @@
     </script>
     <script>
         function normalizedLedgerName(value) {
-            return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+            return String(value || '').replace(/['"]/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function findPartyLedgerDetails(value) {
@@ -2794,7 +2794,7 @@
         });
 
         function normalizeLedgerName(name) {
-            return String(name || '').trim().toLowerCase();
+            return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {
@@ -2820,7 +2820,7 @@
        
 
         function normalizeLedgerName(name) {
-            return String(name || '').trim().toLowerCase();
+            return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function findPurchaseLedgerMapping(ledgerValue = '', ledgerText = '') {

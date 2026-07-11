@@ -2015,7 +2015,7 @@
         let currentId = null;
 
         function normalizeLedgerName(name) {
-            return String(name || '').replace(/["']/g, '').trim().toLowerCase();
+            return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function findSalesLedgerMapping(ledgerValue = '', ledgerText = '') {

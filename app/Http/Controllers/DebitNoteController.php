@@ -279,6 +279,23 @@ class DebitNoteController extends Controller
             ->all();
     }
 
+    private function findLedgerMasterByName($partyId, $ledgerName)
+    {
+        $normalizedLedgerName = preg_replace('/\s+/', '', strtolower(trim((string) $ledgerName)));
+
+        if ($normalizedLedgerName === '') {
+            return null;
+        }
+
+        return DB::table('LedgerMaster')
+            ->where('iPartyId', $partyId)
+            ->whereRaw(
+                "LOWER(REPLACE(REPLACE(REPLACE(strCustomerName, ' ', ''), '\"', ''), '''', '')) = ?",
+                [$normalizedLedgerName]
+            )
+            ->first();
+    }
+
     private function getGstMapping($partyId,$salesLedgerName,$itemName = null)
     {
         $mapping = [
@@ -325,10 +342,7 @@ class DebitNoteController extends Controller
             empty($mapping['igst_id'])
         )
         {
-            $ledger = DB::table('LedgerMaster')
-                ->where('iPartyId', $partyId)
-                ->where('strCustomerName', $salesLedgerName)
-                ->first();
+            $ledger = $this->findLedgerMasterByName($partyId, $salesLedgerName);
 
             if ($ledger)
             {
@@ -726,10 +740,7 @@ class DebitNoteController extends Controller
                     $sumTotal = array_sum(array_column($items, 'total'));
 
                     $first = $items[0];
-                    $purchaseLedger = DB::table('LedgerMaster')
-                        ->where('iPartyId', $iPartyId)
-                        ->where('strCustomerName', $first['purchase_ledger'])
-                        ->first();
+                    $purchaseLedger = $this->findLedgerMasterByName($iPartyId, $first['purchase_ledger']);
 
                     $mapping = $this->getGstMapping(
                         $iPartyId,
@@ -1005,10 +1016,7 @@ class DebitNoteController extends Controller
                     $sumTotalAmount = array_sum(array_column($rows, 'total_amount'));
                     $isIgst = $sumIgst > 0;
 
-                    $purchaseLedger = DB::table('LedgerMaster')
-                        ->where('iPartyId', $iPartyId)
-                        ->where('strCustomerName', $first['purchase_ledger'])
-                        ->first();
+                    $purchaseLedger = $this->findLedgerMasterByName($iPartyId, $first['purchase_ledger']);
 
                     // 🔥 IMPORTANT: Build custom GST slots from individual rows (ONE PER ROW)
                     $gstSlots = [];
@@ -1027,10 +1035,7 @@ class DebitNoteController extends Controller
                         // Get purchase ledger object for this row
                         $rowPurchaseLedger = null;
                         if (!empty($row['purchase_ledger'])) {
-                            $rowPurchaseLedger = DB::table('LedgerMaster')
-                                ->where('iPartyId', $iPartyId)
-                                ->where('strCustomerName', $row['purchase_ledger'])
-                                ->first();
+                            $rowPurchaseLedger = $this->findLedgerMasterByName($iPartyId, $row['purchase_ledger']);
                         }
                         
                         // Use row's purchase ledger or fallback to first row's purchase ledger

@@ -1213,7 +1213,7 @@
     const SALES_LEDGERS = @json($salesLedgers ?? []);
 
     function normalizeLedgerName(name) {
-        return String(name || '').replace(/["']/g, '').trim().toLowerCase();
+        return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
     }
 
     function findSalesLedgerMapping(ledgerValue = '', ledgerText = '') {
@@ -1568,7 +1568,9 @@
                 // $('#edit_total_amount').val(res.total_amount);
                 // Items
                 let tbody = $('#editItemsBody').empty();
-                $('#noitem_sales_ledger').val(res.sales_ledger).trigger('change.select2');
+                // $('#noitem_sales_ledger').val(res.sales_ledger).trigger('change.select2');
+                setSelectValueByTextOrValue($('#noitem_sales_ledger'), res.sales_ledger_id || res.sales_ledger_name || res.sales_ledger);
+                $('#noitem_sales_ledger').trigger('change.select2');
                 if (res.items && res.items.length > 0) {
 
                     $('#standard_items_section').show();
@@ -1683,7 +1685,7 @@
     function closeViewModal() { document.getElementById('viewModal').classList.remove('show'); }
 
     function normalizeLedgerValue(value) {
-        return String(value || '').replace(/['"]/g, '').trim().toLowerCase();
+        return String(value || '').replace(/['"]/g, '').replace(/\s+/g, '').trim().toLowerCase();
     }
 
     function setSelectValueByTextOrValue($select, value) {
@@ -1859,7 +1861,8 @@
                 $('#sgst_ledger').val(mappedGstLedgerId('sgst', res.sgst_id, res.sales_ledger, res.sales_ledger)).trigger('change');
 
                 // setSelectValueByTextOrValue($('#noitem_sales_ledger'), res.sales_ledger);
-                $('#noitem_sales_ledger').val(res.sales_ledger).trigger('change.select2');
+                setSelectValueByTextOrValue($('#noitem_sales_ledger'), res.sales_ledger_id || res.sales_ledger_name || res.sales_ledger);
+                $('#noitem_sales_ledger').trigger('change.select2');
                 let tbody = $('#editItemsBody').empty();
                 // (res.items || []).forEach(item => tbody.append(buildItemRow(item)));
                 if (res.items && res.items.length > 0) {

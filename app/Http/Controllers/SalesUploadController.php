@@ -20,6 +20,14 @@ use Illuminate\Support\Carbon;
 
 class SalesUploadController extends Controller
 {
+    private array $debtorLedgerCache = [];
+    private array $gstMappingCache = [];
+    private array $ledgerByIdCache = [];
+    private array $ledgerByNameCache = [];
+    private array $roundOffSettingCache = [];
+    private array $stockItemCache = [];
+    private array $salesVoucherExistsCache = [];
+
     // LIST PAGE
     public function index()
     {
@@ -187,13 +195,14 @@ class SalesUploadController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        $cacheKey = $partyId . '|' . strtolower(trim((string) $salesLedgerName)) . '|' . strtolower(trim((string) $itemName));
+        if (array_key_exists($cacheKey, $this->gstMappingCache)) {
+            return $this->gstMappingCache[$cacheKey];
+        }
+
         if (!empty($itemName))
         {
-            $item = DB::table('StockItemMaster')
-                ->where('iPartyId', $partyId)
-                ->where('strItemName', $itemName)
-                ->first();
-
+            $item = $this->getStockItemByName($partyId, $itemName);
             if ($item)
             {
                 $mapping['cgst_id'] = $item->CGSTLedgerId;
@@ -214,9 +223,13 @@ class SalesUploadController extends Controller
             empty($mapping['igst_id'])
         )
         {
+            $normalizedSalesLedgerName = preg_replace('/\s+/', '', strtolower(trim((string) $salesLedgerName)));
             $ledger = DB::table('LedgerMaster')
                 ->where('iPartyId', $partyId)
-                ->where('strCustomerName', $salesLedgerName)
+                ->whereRaw(
+                    "LOWER(REPLACE(REPLACE(REPLACE(strCustomerName, ' ', ''), '\"', ''), '''', '')) = ?",
+                    [$normalizedSalesLedgerName]
+                )
                 ->first();
 
             if ($ledger)
@@ -245,7 +258,27 @@ class SalesUploadController extends Controller
             $mapping['igst_name'] = $this->gstLedgerName($partyId, $mapping['igst_id']);
         }
 
+        $this->gstMappingCache[$cacheKey] = $mapping;
+
         return $mapping;
+    }
+
+    private function getStockItemByName($partyId, ?string $itemName)
+    {
+        $itemName = trim((string) $itemName);
+        if ($itemName === '') {
+            return null;
+        }
+
+        $cacheKey = $partyId . '|' . strtolower($itemName);
+        if (!array_key_exists($cacheKey, $this->stockItemCache)) {
+            $this->stockItemCache[$cacheKey] = DB::table('StockItemMaster')
+                ->where('iPartyId', $partyId)
+                ->where('strItemName', $itemName)
+                ->first();
+        }
+
+        return $this->stockItemCache[$cacheKey];
     }
 
     private function resolveGstLedgerId($partyId, $submittedId, ?array $mapping, string $key)
@@ -255,7 +288,16 @@ class SalesUploadController extends Controller
 
     private function gstLedgerName($partyId, $ledgerId): ?string
     {
-        return $ledgerId ? (Ledger::getLedgerById($partyId, $ledgerId)?->name ?? null) : null;
+        if (!$ledgerId) {
+            return null;
+        }
+
+        $cacheKey = $partyId . '|' . $ledgerId;
+        if (!array_key_exists($cacheKey, $this->ledgerByIdCache)) {
+            $this->ledgerByIdCache[$cacheKey] = Ledger::getLedgerById($partyId, $ledgerId);
+        }
+
+        return $this->ledgerByIdCache[$cacheKey]?->name ?? null;
     }
 
     private function applyGstMappingToCustomSlot(array $slot, array $mapping): array
@@ -296,7 +338,7 @@ class SalesUploadController extends Controller
             if (!isset($slots[$key])) {
                 $mapping = $this->getGstMapping($partyId, $row['sales_ledger'] ?? null);
                 $salesLedger = !empty($row['sales_ledger'])
-                    ? Ledger::getLedgerByName($partyId, $row['sales_ledger'])
+                    ? $this->getCachedLedgerByName($partyId, $row['sales_ledger'])
                     : null;
 
                 $slots[$key] = [
@@ -369,7 +411,10 @@ class SalesUploadController extends Controller
         //             );
         //     }, 'party_ledgers');
 
-        $debtorLedgers = collect(Ledger::getAllDebtorsLedgers($partyId));
+        if (!isset($this->debtorLedgerCache[$partyId])) {
+            $this->debtorLedgerCache[$partyId] = collect(Ledger::getAllDebtorsLedgers($partyId));
+        }
+        $debtorLedgers = $this->debtorLedgerCache[$partyId];
         $ledger = null;
         $matchedBy = null;
 
@@ -526,6 +571,10 @@ class SalesUploadController extends Controller
 
     private function getRoundOffSetting($partyId): array
     {
+        if (isset($this->roundOffSettingCache[$partyId])) {
+            return $this->roundOffSettingCache[$partyId];
+        }
+
         $profile = DB::table('profiles')->where('user_id', $partyId)->first();
         $roundOffLedger = null;
 
@@ -539,7 +588,7 @@ class SalesUploadController extends Controller
                 ->first();
         }
 
-        return [
+        return $this->roundOffSettingCache[$partyId] = [
             'side' => $roundOffSide ?: 'normal',
             'ledger' => $roundOffLedger ?: $this->getRoundOffLedger($partyId),
         ];
@@ -579,6 +628,9 @@ class SalesUploadController extends Controller
 
     public function upload(Request $request)
     {
+        @set_time_limit(0);
+        ini_set('max_execution_time', '0');
+
         $iPartyId = session('iPartyId');
         if (!$iPartyId) {
             return redirect()->route('data_entry_operators.bulkuploadsales')
@@ -830,10 +882,7 @@ class SalesUploadController extends Controller
                                 ) * 100
                             ) / $item['amount'];
                         }
-                        $stockItem = DB::table('StockItemMaster')
-                            ->where('iPartyId',$iPartyId)
-                            ->where('strItemName',$item['item_name'])
-                            ->first();
+                        $stockItem = $this->getStockItemByName($iPartyId, $item['item_name']);
                         SalesTransactionItem::create([
                             'iPartyId'          => $iPartyId,
                             'transaction_id'    => $transaction->id,
@@ -1173,7 +1222,7 @@ class SalesUploadController extends Controller
         $issues = [];
         $partyId = $transaction->iPartyId;
         $salesLedgerName = $transaction->sales_ledger_name ?: $transaction->sales_ledger;
-        $salesLedger = $salesLedgerName ? Ledger::getLedgerByName($partyId, $salesLedgerName) : null;
+        $salesLedger = $salesLedgerName ? $this->getCachedLedgerByName($partyId, $salesLedgerName) : null;
         $gstMapping = $gstMapping ?: $this->getGstMapping($partyId, $salesLedger?->name ?? $salesLedgerName);
         $partyLookup = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
         $invoiceDate = $transaction->date instanceof \DateTimeInterface
@@ -1261,10 +1310,7 @@ class SalesUploadController extends Controller
                 return true;
             }
 
-            $exists = DB::table('StockItemMaster')
-                ->where('iPartyId', $transaction->iPartyId)
-                ->whereRaw('LOWER(TRIM(strItemName)) = ?', [strtolower($itemName)])
-                ->exists();
+            $exists = (bool) $this->getStockItemByName($transaction->iPartyId, $itemName);
 
             if (!$exists) {
                 return true;
@@ -1409,7 +1455,7 @@ class SalesUploadController extends Controller
     {
         $partyId = $transaction->iPartyId;
         $salesLedgerName = $transaction->sales_ledger_name ?: $transaction->sales_ledger;
-        $salesLedger = $salesLedgerName ? Ledger::getLedgerByName($partyId, $salesLedgerName) : null;
+        $salesLedger = $salesLedgerName ? $this->getCachedLedgerByName($partyId, $salesLedgerName) : null;
         $mapping = $this->getGstMapping($partyId, $salesLedger?->name ?? $salesLedgerName);
         $partyLookup = $this->getUploadPartyLedgerDetails($partyId, $transaction->party_name, $transaction->gst_no);
         $partyDetails = $partyLookup['details'] ?? null;
@@ -1879,8 +1925,33 @@ class SalesUploadController extends Controller
         }
 
         return is_numeric($ledgerValue)
-            ? Ledger::getLedgerById($partyId, $ledgerValue)
-            : Ledger::getLedgerByName($partyId, $ledgerValue);
+            ? $this->getCachedLedgerById($partyId, $ledgerValue)
+            : $this->getCachedLedgerByName($partyId, $ledgerValue);
+    }
+
+    private function getCachedLedgerById($partyId, $ledgerId)
+    {
+        $cacheKey = $partyId . '|' . $ledgerId;
+        if (!array_key_exists($cacheKey, $this->ledgerByIdCache)) {
+            $this->ledgerByIdCache[$cacheKey] = Ledger::getLedgerById($partyId, $ledgerId);
+        }
+
+        return $this->ledgerByIdCache[$cacheKey];
+    }
+
+    private function getCachedLedgerByName($partyId, ?string $ledgerName)
+    {
+        $ledgerName = trim((string) $ledgerName);
+        if ($ledgerName === '') {
+            return null;
+        }
+
+        $cacheKey = $partyId . '|' . strtolower($ledgerName);
+        if (!array_key_exists($cacheKey, $this->ledgerByNameCache)) {
+            $this->ledgerByNameCache[$cacheKey] = Ledger::getLedgerByName($partyId, $ledgerName);
+        }
+
+        return $this->ledgerByNameCache[$cacheKey];
     }
 
     private function resolveSubmittedSalesLedger(SalesTransaction $transaction, Request $request)
@@ -1905,8 +1976,8 @@ class SalesUploadController extends Controller
         }
 
         return is_numeric($ledgerValue)
-            ? Ledger::getLedgerById($transaction->iPartyId, $ledgerValue)
-            : Ledger::getLedgerByName($transaction->iPartyId, $ledgerValue);
+            ? $this->getCachedLedgerById($transaction->iPartyId, $ledgerValue)
+            : $this->getCachedLedgerByName($transaction->iPartyId, $ledgerValue);
     }
 
     // ── UPDATE (called by Edit modal save) ────────────────────────────────────────
@@ -2296,6 +2367,11 @@ class SalesUploadController extends Controller
             return false;
         }
 
+        $cacheKey = implode('|', [$partyId, strtolower(trim((string) $vchType)), strtolower(trim((string) $vchNo)), strtolower(trim((string) $year)), $ignoreId ?? '']);
+        if (array_key_exists($cacheKey, $this->salesVoucherExistsCache)) {
+            return $this->salesVoucherExistsCache[$cacheKey];
+        }
+
         $transactionExists = SalesTransaction::where('iPartyId', $partyId)
             ->whereRaw('LOWER(TRIM(vchType)) = ?', [strtolower(trim($vchType))])
             ->whereRaw('LOWER(TRIM(invoice_no)) = ?', [strtolower(trim($vchNo))])
@@ -2305,7 +2381,7 @@ class SalesUploadController extends Controller
             ->exists();
 
         if ($transactionExists) {
-            return true;
+            return $this->salesVoucherExistsCache[$cacheKey] = true;
         }
 
         $yearId = DB::table('YearMaster')
@@ -2313,7 +2389,7 @@ class SalesUploadController extends Controller
             ->where('strYear', $year)
             ->value('iYearId');
 
-        return DB::table('VchHistory')
+        return $this->salesVoucherExistsCache[$cacheKey] = DB::table('VchHistory')
             ->where('iPartyId', $partyId)
             ->whereRaw('LOWER(TRIM(vchType)) = ?', [strtolower(trim($vchType))])
             ->whereRaw('LOWER(TRIM(vchNo)) = ?', [strtolower(trim($vchNo))])
