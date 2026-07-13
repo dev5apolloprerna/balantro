@@ -13,12 +13,15 @@ class DocumentsController extends BaseApiController
 {
     public function store(Request $request)
     {
-        $data = $request->all();
+        $data = $request->input('document', $request->all());
+        unset($data['file']);
         $filePath = null;
 
         // ✅ Handle file upload
         if ($request->hasFile('document.file')) {
             $file = $request->file('document.file');
+            $originalName = $file->getClientOriginalName();
+            $fileSize = $file->getSize();
             //$filename = time() . '_' . $file->getClientOriginalName();
             $filename = 'document_' . time() . '.' . $file->getClientOriginalExtension();
             $destination = public_path('documents');
@@ -39,6 +42,13 @@ class DocumentsController extends BaseApiController
 
         $document = auth()->user()->documents()->create($data);
         if ($document) {
+            if ($filePath) {
+                $document->files()->create([
+                    'path' => $filePath,
+                    'original_name' => $originalName ?? basename($filePath),
+                    'size' => $fileSize ?? null,
+                ]);
+            }
             \App\Jobs\DocumentActivityNotificationJob::dispatch($document->id, auth()->id(), 'create');
             return $this->success(
                 __("response_message.document.create_success"),
@@ -155,6 +165,7 @@ class DocumentsController extends BaseApiController
             $responseData = [
                 'documents' => $paginated->getCollection()->map(function ($doc) {
                     $latestFile = $doc->files->first();
+                    $filePath = $latestFile?->path ?: $doc->file;
 
                     return [
                         'id' => $doc->id,
@@ -164,11 +175,11 @@ class DocumentsController extends BaseApiController
                         'notes' => $doc->notes,
                         'created_at' => $doc->created_at?->toISOString(),
                         'updated_at' => $doc->updated_at?->toISOString(),
-                        'file' => $latestFile ? [
-                            'path' => $latestFile->path,
-                            'original_name' => $latestFile->original_name,
-                            'size' => $latestFile->size,
-                            'created_at' => $latestFile->created_at?->toISOString(),
+                        'file' => $filePath ? [
+                            'path' => $filePath,
+                            'original_name' => $latestFile?->original_name ?: basename($filePath),
+                            'size' => $latestFile?->size,
+                            'created_at' => $latestFile?->created_at?->toISOString() ?: $doc->created_at?->toISOString(),
                         ] : null
                     ];
                 }),
@@ -201,7 +212,8 @@ class DocumentsController extends BaseApiController
         try {
             // Get the document ID from the request data
             $data = $request->all();
-            $id = $data['document']['id'] ?? null;
+            $documentData = $request->input('document', []);
+            $id = $documentData['id'] ?? $data['document']['id'] ?? null;
 
             if (!$id) {
                 return $this->error(__("response_message.document.id_required"), 400);
@@ -214,13 +226,18 @@ class DocumentsController extends BaseApiController
             }
 
             $updateData = [
-                'status' => $data['document']['status'] ?? $document->status,
-                'rejection_reason' => $data['document']['rejection_reason'] ?? $document->rejection_reason,
+                'status' => $documentData['status'] ?? $document->status,
+                'rejection_reason' => $documentData['rejection_reason'] ?? $document->rejection_reason,
+                'title' => $documentData['title'] ?? $document->title,
+                'reference_no' => $documentData['reference_no'] ?? $document->reference_no,
+                'notes' => $documentData['notes'] ?? $document->notes,
             ];
 
             // ✅ Handle file upload if provided
             if ($request->hasFile('document.file')) {
                 $file = $request->file('document.file');
+                $originalName = $file->getClientOriginalName();
+                $fileSize = $file->getSize();
                 $filename = 'document_' . time() . '.' . $file->getClientOriginalExtension();
                 $destination = public_path('documents');
 
@@ -232,6 +249,11 @@ class DocumentsController extends BaseApiController
                 $file->move($destination, $filename);
                 $filePath = 'documents/' . $filename;
                 $updateData['file'] = $filePath;
+                $newFilePayload = [
+                    'path' => $filePath,
+                    'original_name' => $originalName,
+                    'size' => $fileSize,
+                ];
 
                 // Optional: Delete old file if exists
                 if ($document->file && file_exists(public_path($document->file))) {
@@ -240,6 +262,9 @@ class DocumentsController extends BaseApiController
             }
 
             if ($document->update($updateData)) {
+                if (isset($newFilePayload)) {
+                    $document->files()->create($newFilePayload);
+                }
                 \App\Jobs\DocumentActivityNotificationJob::dispatch($document->id, auth()->id(), 'update');
                 return $this->success(__("response_message.document.update_success"), $this->documentResponse($document));
             } else {

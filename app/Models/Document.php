@@ -40,6 +40,9 @@ class Document extends Model
         'status',
         'rejection_reason',
         'message_id',
+        'title',
+        'reference_no',
+        'notes',
         'file'
     ];
 
