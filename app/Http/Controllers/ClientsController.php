@@ -368,7 +368,7 @@ class ClientsController extends Controller
         // }
 
         // Optional: send welcome email & reset link (wrap to avoid hard-fails)
-        $welcomeEmailSent = $this->sendWelcomeEmail($client, $plainPassword);
+        $welcomeEmailResult = $this->sendWelcomeEmail($client, $plainPassword);
         $welcomeEmailSent = $welcomeEmailResult['sent'];
         
         // Respond
