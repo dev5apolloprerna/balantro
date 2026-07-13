@@ -403,7 +403,10 @@ class TransactionProcessingController extends Controller
             ->where('iPartyId', $iPartyId)
             ->whereIn('vchType', ['Contra', 'Payment', 'Receipt'])
             ->distinct()
-            ->pluck('vchType');
+            ->pluck('vchType')
+            ->merge(['Contra', 'Payment', 'Receipt'])
+            ->unique()
+            ->values();
         $states = DB::table('state')
             ->pluck('stateName');
         $groups = DB::table('GroupMaster')

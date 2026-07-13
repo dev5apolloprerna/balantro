@@ -193,17 +193,18 @@
                                     class="inputCell">
                             </td>
                             <td class="px-3 py-2">
+                                @php($selectedVchType = trim((string) ($row->vch_type ?: ($row->debit > 0 ? 'Payment' : 'Receipt'))))
                                 <select name="type[{{$row->id}}]" class="inputCell" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
                                     @foreach($vchTypes as $vchType)
-                                        <option value="{{ $vchType }}"
-                                            {{ 
-                                                ($row->credit > 0 && $vchType == 'Receipt') ||
-                                                ($row->debit > 0 && $vchType == 'Payment') 
-                                                ? 'selected' : '' 
-                                            }}>
+                                        <option value="{{ $vchType }}" {{ strcasecmp($selectedVchType, $vchType) === 0 ? 'selected' : '' }}>
                                             {{ $vchType }}
                                         </option>
                                     @endforeach
+                                    @if($selectedVchType !== '' && !collect($vchTypes)->contains(fn ($vchType) => strcasecmp($selectedVchType, $vchType) === 0))
+                                        <option value="{{ $selectedVchType }}" selected>
+                                            {{ $selectedVchType }}
+                                        </option>
+                                    @endif
                                 </select>
                             </td>
                             <td class="px-3 py-2">
@@ -219,13 +220,19 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2">
-                                <select name="ledger[{{$row->id}}]"  {{ $row->is_suspense == 1 ? 'disabled' : '' }} class="ledgerSelect inputCell" data-selected="{{$row->ledger_name}}">
+                                @php($selectedLedgerName = trim((string) ($row->ledger_name ?? '')))
+                                <select name="ledger[{{$row->id}}]" {{ $row->is_suspense == 1 ? 'disabled' : '' }} class="ledgerSelect inputCell" data-selected="{{ $selectedLedgerName }}">
                                     <option value="">Select Ledger</option>
-                                    @foreach($ledgers as $ledger)
-                                    <option value="{{$ledger->name}}" {{ isset($row->ledger_name) && $row->ledger_name == $ledger->name ? 'selected' : '' }}>
+                                    @foreach($allLedgers as $ledger)
+                                    <option value="{{$ledger->name}}" {{ $selectedLedgerName === $ledger->name ? 'selected' : '' }}>
                                         {{$ledger->name}}
                                     </option>
                                     @endforeach
+                                    @if($selectedLedgerName !== '' && !collect($allLedgers)->contains('name', $selectedLedgerName))
+                                    <option value="{{ $selectedLedgerName }}" selected>
+                                        {{ $selectedLedgerName }}
+                                    </option>
+                                    @endif
                                 </select>
                             </td>
                             <td class="px-3 py-2">
@@ -975,26 +982,26 @@ $('#bankTable').on('change', 'select[name^="type"]', function () {
     ledgerDropdown.trigger('change.select2');
 });
 
-$('#bankTable').on('change', 'select[name^="type"]', function () {
-    let type = $(this).val().toLowerCase();
-    let row = $(this).closest('tr');
-    let ledgerDropdown = row.find('select[name^="ledger"]');
-    ledgerDropdown.html(getLedgerOptions(type));
+// $('#bankTable').on('change', 'select[name^="type"]', function () {
+//     let type = $(this).val().toLowerCase();
+//     let row = $(this).closest('tr');
+//     let ledgerDropdown = row.find('select[name^="ledger"]');
+//     ledgerDropdown.html(getLedgerOptions(type));
 
-    // 🔥 clear old value
-    // ledgerDropdown.val('').trigger('change');
+//     // 🔥 clear old value
+//     // ledgerDropdown.val('').trigger('change');
 
-    // 🔥 reinitialize select2 properly
-    if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
-        ledgerDropdown.select2('destroy');
-    }
+//     // 🔥 reinitialize select2 properly
+//     if (ledgerDropdown.hasClass("select2-hidden-accessible")) {
+//         ledgerDropdown.select2('destroy');
+//     }
 
-    ledgerDropdown.select2({
-        width: '100%',
-        placeholder: "Search Ledger...",
-        allowClear: true
-    });
-});
+//     ledgerDropdown.select2({
+//         width: '100%',
+//         placeholder: "Search Ledger...",
+//         allowClear: true
+//     });
+// });
 
 $(document).ready(function () {
     applyBankPendingIssuesToRows();

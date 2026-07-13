@@ -454,6 +454,7 @@ class BankUploadController extends Controller
 
             $balance = $clean($row[$balanceIndex] ?? 0);
             $txn_type = $debit > 0 ? 'Debit' : 'Credit';
+            $vch_type = $debit > 0 ? 'Payment' : 'Receipt';
 
             $unique_key = md5($txn_date . $amount . $narration . $ref_no);
 
@@ -478,6 +479,7 @@ class BankUploadController extends Controller
                 'credit'          => $credit,
                 'amount'          => $amount,
                 'txn_type'        => $txn_type,
+                'vch_type'        => $vch_type,
                 'balance'         => $balance,
                 // 'ledger_name'     => null,
                 'ledger_name'     => $matchedLedgerName,
@@ -607,7 +609,10 @@ class BankUploadController extends Controller
             ->where('iPartyId', $iPartyId)
             ->whereIn('vchType', ['Contra', 'Payment', 'Receipt'])
             ->distinct()
-            ->pluck('vchType');
+            ->pluck('vchType')
+            ->merge(['Contra', 'Payment', 'Receipt'])
+            ->unique()
+            ->values();
         $states = DB::table('state')
             ->pluck('stateName');
         $groups = DB::table('GroupMaster')

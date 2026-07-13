@@ -210,16 +210,20 @@
                                     class="inputCell">
                             </td>
                             <td class="px-3 py-2">
+                                <?php ($selectedVchType = trim((string) ($row->vch_type ?: ($row->debit > 0 ? 'Payment' : 'Receipt')))); ?>
                                 <select name="type[<?php echo e($row->id); ?>]" class="inputCell" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>>
                                     <?php $__currentLoopData = $vchTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $vchType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($vchType); ?>"
-                                        <?php echo e(($row->credit > 0 && $vchType == 'Receipt') ||
-                                                ($row->debit > 0 && $vchType == 'Payment') 
-                                                ? 'selected' : ''); ?>>
+                                    <option value="<?php echo e($vchType); ?>" <?php echo e(strcasecmp($selectedVchType, $vchType) === 0 ? 'selected' : ''); ?>>
                                         <?php echo e($vchType); ?>
 
                                     </option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php if($selectedVchType !== '' && !collect($vchTypes)->contains(fn ($vchType) => strcasecmp($selectedVchType, $vchType) === 0)): ?>
+                                    <option value="<?php echo e($selectedVchType); ?>" selected>
+                                        <?php echo e($selectedVchType); ?>
+
+                                    </option>
+                                    <?php endif; ?>
                                 </select>
                             </td>
                             <td class="px-3 py-2">
