@@ -7,59 +7,99 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class DocumentsController extends BaseApiController
 {
     public function store(Request $request)
     {
+        try {
+            $uploadedFiles = $this->uploadedDocumentFiles($request);
+            $request->validate([
+                'files' => $request->hasFile('files') ? ['required', 'array'] : ['sometimes', 'array'],
+                'files.*' => ['required', 'file', 'mimes:jpg,jpeg,png,heic,heif,pdf,xls,xlsx', 'max:30720'],
+                'document.file' => $request->hasFile('document.file') ? ['required', 'file', 'mimes:jpg,jpeg,png,heic,heif,pdf,xls,xlsx', 'max:30720'] : ['sometimes', 'file'],
+                'file' => $request->hasFile('file') ? ['required', 'file', 'mimes:jpg,jpeg,png,heic,heif,pdf,xls,xlsx', 'max:30720'] : ['sometimes', 'file'],
+            ]);
+        } catch (ValidationException $e) {
+            return $this->error($e->validator->errors()->first(), 422, $e->errors());
+        }
+
+        if (empty($uploadedFiles)) {
+            return $this->error(['Please attach at least one document file.'], 422);
+        }
+
+        $user = auth()->user();
         $data = $request->input('document', $request->all());
-        unset($data['file']);
-        $filePath = null;
+        unset($data['file'], $data['files']);
 
-        // ✅ Handle file upload
-        if ($request->hasFile('document.file')) {
-            $file = $request->file('document.file');
-            $originalName = $file->getClientOriginalName();
-            $fileSize = $file->getSize();
-            //$filename = time() . '_' . $file->getClientOriginalName();
-            $filename = 'document_' . time() . '.' . $file->getClientOriginalExtension();
-            $destination = public_path('documents');
+        $userDocumentDir = 'documents/' . $user->id;
+        $publicDir = public_path($userDocumentDir);
 
-            // Create folder if not exists
-            if (!file_exists($destination)) {
-                mkdir($destination, 0777, true);
-            }
-
-            $file->move($destination, $filename);
-            $filePath = 'documents/' . $filename;
+        if (!File::isDirectory($publicDir)) {
+            File::makeDirectory($publicDir, 0755, true, true);
         }
 
-        // Add file path to data
-        if ($filePath) {
-            $data['file'] = $filePath;
-        }
+        $documents = [];
+        $movedPaths = [];
 
-        $document = auth()->user()->documents()->create($data);
-        if ($document) {
-            if ($filePath) {
+        DB::beginTransaction();
+        try {
+            foreach ($uploadedFiles as $uploaded) {
+                $originalName = $uploaded->getClientOriginalName();
+                $ext = $uploaded->getClientOriginalExtension();
+                $size = $uploaded->getSize();
+                $mime = $uploaded->getMimeType();
+                $name = 'document_' . now()->format('Ymd_Hisv') . '_' . Str::random(8) . ($ext ? ".{$ext}" : '');
+
+                $uploaded->move($publicDir, $name);
+                $relativePath = $userDocumentDir . '/' . $name;
+                $movedPaths[] = public_path($relativePath);
+
+                if (empty($size)) {
+                    $size = File::size($publicDir . DIRECTORY_SEPARATOR . $name);
+                }
+
+                $documentData = $data;
+                $documentData['status'] = $documentData['status'] ?? Document::STATUS_UPLOADED;
+                $documentData['file'] = $relativePath;
+
+                $document = $user->documents()->create($documentData);
                 $document->files()->create([
-                    'path' => $filePath,
-                    'original_name' => $originalName ?? basename($filePath),
-                    'size' => $fileSize ?? null,
+                    'path' => $document->file,
+                    'original_name' => $originalName,
+                    'size' => $size,
+                    'mime_type' => $mime,
                 ]);
-            }
-            \App\Jobs\DocumentActivityNotificationJob::dispatch($document->id, auth()->id(), 'create');
-            return $this->success(
-                __("response_message.document.create_success"),
-                $this->documentResponse($document)
-                
-            );
-        } else {
-            return $this->error(['Unable to create document'], 617);
-        }
-    }
 
+                $documents[] = $document->fresh('files');
+                \App\Jobs\DocumentActivityNotificationJob::dispatch($document->id, auth()->id(), 'create')->afterCommit();
+            }
+             DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            foreach ($movedPaths as $movedPath) {
+                if (File::exists($movedPath)) {
+                    File::delete($movedPath);
+                }
+            }
+
+            return $this->error(['Unable to create document'], 617, $e->getMessage());
+        }
+
+        $response = count($documents) === 1
+            ? $this->documentResponse($documents[0])
+            : collect($documents)->map(fn ($document) => $this->documentResponse($document))->values();
+
+        return $this->success(
+            __("response_message.document.create_success"),
+            $response
+        );
+    }
+    
     public function index(Request $request)
     {
         try {
@@ -167,6 +207,8 @@ class DocumentsController extends BaseApiController
                     $latestFile = $doc->files->first();
                     $filePath = $latestFile?->path ?: $doc->file;
 
+                    $fileUrl = $filePath ? asset($filePath) : null;
+
                     return [
                         'id' => $doc->id,
                         'title' => $doc->title,
@@ -175,8 +217,10 @@ class DocumentsController extends BaseApiController
                         'notes' => $doc->notes,
                         'created_at' => $doc->created_at?->toISOString(),
                         'updated_at' => $doc->updated_at?->toISOString(),
+                        'file_url' => $fileUrl,
                         'file' => $filePath ? [
                             'path' => $filePath,
+                            'url' => $fileUrl,
                             'original_name' => $latestFile?->original_name ?: basename($filePath),
                             'size' => $latestFile?->size,
                             'created_at' => $latestFile?->created_at?->toISOString() ?: $doc->created_at?->toISOString(),
@@ -326,6 +370,26 @@ class DocumentsController extends BaseApiController
         }
     }
 
+    /**
+     * Return uploaded API document files using the same inputs as the web uploader.
+     */
+    private function uploadedDocumentFiles(Request $request): array
+    {
+        if ($request->hasFile('files')) {
+            return array_values((array) $request->file('files', []));
+        }
+
+        if ($request->hasFile('document.file')) {
+            return [$request->file('document.file')];
+        }
+
+        if ($request->hasFile('file')) {
+            return [$request->file('file')];
+        }
+
+        return [];
+    }
+
     /*private function documentResponse(Document $document)
     {
         return [
@@ -337,6 +401,8 @@ class DocumentsController extends BaseApiController
             'updated_at' => $document->updated_at->toDateTimeString()
         ];
     }*/
+
+    
 
     private function documentResponse(Document $document)
     {

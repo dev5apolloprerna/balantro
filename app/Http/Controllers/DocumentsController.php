@@ -167,8 +167,8 @@ class DocumentsController extends Controller
         $documents = $query->orderByDesc('documents.created_at')
             ->select([
                 'documents.*',
-                'df.path as file_path',
-                'df.original_name as file_name',
+                DB::raw("COALESCE(NULLIF(df.path, ''), documents.[file]) as file_path"),
+                DB::raw("COALESCE(NULLIF(df.original_name, ''), NULLIF(df.path, ''), documents.[file]) as file_name"),
                 'df.size as file_size',
                 'document_clients.name as client_name',
             ])

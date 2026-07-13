@@ -375,13 +375,17 @@
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
                 @forelse($documents as $doc)
+                @php
+                    $displayFileName = $doc->file_name ?: ($doc->file_path ?: $doc->file);
+                    $displayFileName = $displayFileName ? basename($displayFileName) : 'Document #' . $doc->id;
+                @endphp
                 <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
                     <td class="px-2 py-1.5 group-hover:text-black">
                         <div class="flex items-center gap-3">
                             <div
                                 class="h-5 w-5 sm:h-8 sm:w-8 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex-shrink-0">
                                 @php
-                                $fileName = str_replace("documents/", "", $doc->file_name);
+                                $fileName = $displayFileName;
                                 $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
                                 $icon = 'fa-file';
@@ -431,7 +435,7 @@
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                    @php $fileName = str_replace("documents/", "", $doc->file_name); @endphp
+                                    @php $fileName = $displayFileName; @endphp
                                     {{ $fileName }}
                                 </div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">
@@ -594,7 +598,7 @@
                             <button type="button"
                                 class="rounded-full bg-blue-100 p-1.5 sm:p-2 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-800"
                                 title="Edit" data-edit-id="{{ $doc->id }}"
-                                data-edit-name="{{ $doc->display_name ?? str_replace('documents/', '', $doc->file_name) }}"
+                                data-edit-name="{{ $doc->display_name ?? $displayFileName }}"
                                 data-edit-action="{{ route('documents.update', $doc->id) }}"
                                 onclick="openEditModal(this)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"

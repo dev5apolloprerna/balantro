@@ -271,7 +271,7 @@ class ClientsController extends Controller
         }
 
         if ($client->save()) {
-            $this->sendWelcomeEmail($client, $generatedPassword, true);
+            $this->sendWelcomeEmail($client, $generatedPassword);
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['status' => 'success', 'message' => __('admin.clients.flash.client_update_msg')], 422);
             }
@@ -368,7 +368,8 @@ class ClientsController extends Controller
         // }
 
         // Optional: send welcome email & reset link (wrap to avoid hard-fails)
-        $welcomeEmailSent = $this->sendWelcomeEmail($client, $plainPassword, true);
+        $welcomeEmailSent = $this->sendWelcomeEmail($client, $plainPassword);
+        $welcomeEmailSent = $welcomeEmailResult['sent'];
         
         // Respond
         if ($request->expectsJson()) {
@@ -376,15 +377,17 @@ class ClientsController extends Controller
                 'status'  => 'success',
                 'message' => __('admin.clients.flash.client_update_msg'),
                 'client'  => $client->load(['profile', 'groups', 'managers', 'supervisors', 'dataEntryOperators']),
-                'mail_queued' => $welcomeEmailSent,
-                'mail_warning' => $welcomeEmailSent ? null : __('Welcome email could not be queued. Please verify queue/mail settings.'),
+                'mail_sent' => $welcomeEmailSent,
+                'mail_message_id' => $welcomeEmailResult['message_id'],
+                'mail_warning' => $welcomeEmailSent ? null : __('Welcome email could not be sent. Please verify mail settings.'),
+                'mail_error' => app()->hasDebugModeEnabled() ? $welcomeEmailResult['error'] : null,
             ]);
         }
 
         $redirect = redirect()->route('clients.index')->with('notice', __('admin.clients.flash.client_update_msg'));
 
         if (!$welcomeEmailSent) {
-            $redirect->with('alert', __('Client was saved, but the welcome email could not be queued. Please verify queue/mail settings.'));
+            $redirect->with('alert', __('Client was saved, but the welcome email could not be sent. Please verify mail settings. Check laravel.log for the SMTP error details.'));
         }
 
         return $redirect;
@@ -394,26 +397,41 @@ class ClientsController extends Controller
     /**
      * Send or queue a client welcome email without letting mail transport failures break the request.
      */
-    protected function sendWelcomeEmail(Client $client, ?string $plainPassword = null, bool $queue = false): bool
+    protected function sendWelcomeEmail(Client $client, ?string $plainPassword = null): array
     {
+        $debugContext = [
+            'client_id' => $client->id,
+            'email' => $client->email,
+            'mailer' => config('mail.default'),
+            'transport' => config('mail.mailers.' . config('mail.default') . '.transport'),
+            'from_address' => config('mail.from.address'),
+        ];
         try {
-            $pendingMail = Mail::to($client->email);
-            $welcomeMail = new WelcomeMail($client, $plainPassword);
-
-            $queue ? $pendingMail->queue($welcomeMail) : $pendingMail->send($welcomeMail);
-
-            return true;
+            $sentMessage = Mail::to($client->email)->send(new WelcomeMail($client, $plainPassword));
+            $messageId = $sentMessage?->getSymfonySentMessage()?->getMessageId();
+            Log::info('Client welcome email accepted by mail transport.', $debugContext + [
+                'message_id' => $messageId,
+            ]);
+            return [
+                'sent' => true,
+                'message_id' => $messageId,
+                'error' => null,
+            ];
         } catch (Throwable $e) {
             report($e);
 
-            Log::warning('Unable to send client welcome email.', [
+            Log::warning('Unable to send client welcome email.', $debugContext + [
                 'client_id' => $client->id,
                 'email' => $client->email,
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
             ]);
 
-            return false;
+            return [
+                'sent' => false,
+                'message_id' => null,
+                'error' => $e->getMessage(),
+            ];
         }
     }
 

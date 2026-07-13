@@ -1,3 +1,7 @@
+@php
+    $displayFileName = $document->file_name ?: ($document->file_path ?: $document->file);
+    $displayFileName = $displayFileName ? basename($displayFileName) : 'Document #' . $document->id;
+@endphp
 <tr>
     <td>
         <div class="flex items-center">
@@ -6,7 +10,7 @@
             </div>
             <div>
                 <div class="font-medium break-all max-w-xl">
-                    {{ $document->file_name }}
+                    {{ $displayFileName }}
                 </div>
                 <div class="text-sm text-neutral-500 dark:text-neutral-400">
                     {{ \Illuminate\Support\Str::fileSize($document->file_size) }}
