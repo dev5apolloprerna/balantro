@@ -29,9 +29,23 @@
     window.showGlobalLoader = showLoader;
     window.hideGlobalLoader = hideLoader;
 
+    const downloadOrExportPattern = /(?:\/download(?:\/|$)|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$)|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
+
+    const shouldSkipLoaderForUrl = (url) => downloadOrExportPattern.test(url.pathname + url.search);
+
+    const shouldSkipLoaderForForm = (form) => {
+        const action = form.getAttribute('action') || window.location.href;
+        const method = (form.getAttribute('method') || 'get').toLowerCase();
+        const url = new URL(action, window.location.href);
+
+        return form.target && form.target !== '_self'
+            || method === 'get' && shouldSkipLoaderForUrl(url)
+            || method === 'post' && /(?:download|export|excel|pdf)/i.test(url.pathname);
+    };
+
     document.addEventListener('submit', function (event) {
         const form = event.target;
-        if (!(form instanceof HTMLFormElement) || form.dataset.loader === 'false') return;
+        if (!(form instanceof HTMLFormElement) || form.dataset.loader === 'false' || shouldSkipLoaderForForm(form)) return;
 
         setTimeout(function () {
             if (!event.defaultPrevented) showLoader();
@@ -52,7 +66,8 @@
         const url = new URL(link.href, window.location.href);
         if (url.origin !== window.location.origin) return;
         if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
-
+        if (shouldSkipLoaderForUrl(url)) return;
+        
         setTimeout(function () {
             if (!event.defaultPrevented) showLoader();
         }, 0);

@@ -235,14 +235,21 @@
                                 <?php endif; ?>
                             </td>
                             <td class="px-3 py-2">
-                                <select name="ledger[<?php echo e($row->id); ?>]" class="ledgerSelect inputCell" data-selected="<?php echo e($row->ledger_name); ?>" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>>
+                                <?php ($selectedLedgerName = trim((string) ($row->ledger_name ?? ''))); ?>
+                                <select name="ledger[<?php echo e($row->id); ?>]" class="ledgerSelect inputCell" data-selected="<?php echo e($selectedLedgerName); ?>" <?php echo e($row->is_suspense == 1 ? 'disabled' : ''); ?>>
                                     <option value="">Select Ledger</option>
-                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($ledger->name); ?>" <?php echo e(isset($row->ledger_name) && $row->ledger_name == $ledger->name ? 'selected' : ''); ?>>
+                                    <?php $__currentLoopData = $allLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($ledger->name); ?>" <?php echo e($selectedLedgerName === $ledger->name ? 'selected' : ''); ?>>
                                         <?php echo e($ledger->name); ?>
 
                                     </option>
                                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <?php if($selectedLedgerName !== '' && !collect($allLedgers)->contains('name', $selectedLedgerName)): ?>
+                                    <option value="<?php echo e($selectedLedgerName); ?>" selected>
+                                        <?php echo e($selectedLedgerName); ?>
+
+                                    </option>
+                                    <?php endif; ?>
                                 </select>
                             </td>
                             <td class="px-3 py-2">

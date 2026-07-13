@@ -226,13 +226,19 @@
                                 @endif
                             </td>
                             <td class="px-3 py-2">
-                                <select name="ledger[{{$row->id}}]" class="ledgerSelect inputCell" data-selected="{{ $row->ledger_name }}" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
+                                @php($selectedLedgerName = trim((string) ($row->ledger_name ?? '')))
+                                <select name="ledger[{{$row->id}}]" class="ledgerSelect inputCell" data-selected="{{ $selectedLedgerName }}" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
                                     <option value="">Select Ledger</option>
-                                    @foreach($ledgers as $ledger)
-                                    <option value="{{$ledger->name}}" {{ isset($row->ledger_name) && $row->ledger_name == $ledger->name ? 'selected' : '' }}>
+                                    @foreach($allLedgers as $ledger)
+                                    <option value="{{$ledger->name}}" {{ $selectedLedgerName === $ledger->name ? 'selected' : '' }}>
                                         {{$ledger->name}}
                                     </option>
                                     @endforeach
+                                    @if($selectedLedgerName !== '' && !collect($allLedgers)->contains('name', $selectedLedgerName))
+                                    <option value="{{ $selectedLedgerName }}" selected>
+                                        {{ $selectedLedgerName }}
+                                    </option>
+                                    @endif
                                 </select>
                             </td>
                             <td class="px-3 py-2">
