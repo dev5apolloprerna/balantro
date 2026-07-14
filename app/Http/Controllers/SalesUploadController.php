@@ -369,6 +369,26 @@ class SalesUploadController extends Controller
         return array_values($slots);
     }
 
+     private function buildSalesItemGstLedgerSlots(int $partyId, array $items, ?string $salesLedgerName): array
+    {
+        return collect($items)->map(function ($item) use ($partyId, $salesLedgerName) {
+            $itemMapping = $this->getGstMapping(
+                $partyId,
+                $salesLedgerName,
+                $item['item_name'] ?? null
+            );
+
+            return [
+                'cgst_amount' => $item['cgst'] ?? 0,
+                'sgst_amount' => $item['sgst'] ?? 0,
+                'igst_amount' => $item['igst'] ?? 0,
+                'cgst_ledger_id' => $itemMapping['cgst_id'],
+                'sgst_ledger_id' => $itemMapping['sgst_id'],
+                'igst_ledger_id' => $itemMapping['igst_id'],
+            ];
+        })->all();
+    }
+
     private function hasRequiredGstLedgers(array $slots, bool $isIgst): bool
     {
         foreach ($slots as $slot) {
@@ -808,14 +828,10 @@ class SalesUploadController extends Controller
                         $sumIgst,
                         $roundOffSetting['side']
                     );
-                    $hasGstLedgers = $this->hasRequiredGstLedgers([[
-                        'cgst_amount' => $sumCgst,
-                        'sgst_amount' => $sumSgst,
-                        'igst_amount' => $sumIgst,
-                        'cgst_ledger_id' => $mapping['cgst_id'],
-                        'sgst_ledger_id' => $mapping['sgst_id'],
-                        'igst_ledger_id' => $mapping['igst_id'],
-                    ]], (bool) $is_igst);
+                    $hasGstLedgers = $this->hasRequiredGstLedgers(
+                        $this->buildSalesItemGstLedgerSlots($iPartyId, $items, $first['sales_ledger']),
+                        (bool) $is_igst
+                    );
                     $status = (
                         $this->hasSalesLedgerMatch($salesLedger) &&
                         $partyMatched &&
