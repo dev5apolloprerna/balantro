@@ -12,7 +12,7 @@ class ReportCache
      */
     public static function ttl()
     {
-        return now()->addMinutes(2);
+        return now()->addMinutes(1);
     }
 
     /**

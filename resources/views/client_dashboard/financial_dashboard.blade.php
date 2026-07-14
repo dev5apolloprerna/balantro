@@ -37,13 +37,14 @@
             })
             ->filter()
             ->values();
+
         $currentFinancialYearLabel = $currStart->format('Y') . '-' . $currEnd->format('Y');
         $selectedFinancialYear = old('range', request('range', $fyRangeSel ?? $currentFinancialYearLabel));
-        
-        if ($financialYearOptions->pluck('value')->contains($selectedFinancialYear)) {
+
+        if (! $financialYearOptions->pluck('value')->contains($selectedFinancialYear)) {
             $selectedFinancialYear = $financialYearOptions->first()['value'] ?? $currentFinancialYearLabel;
         }
-        
+
         // Define color mapping for groups
         $colorMap = [
             'blue' => 'bg-blue-500',
@@ -293,7 +294,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
 
                 <div class="flex items-center gap-2">
-                    @dd($selectedFinancialYear);
+                    
                     <div class="relative"
                         x-data="{
                             open: false,
@@ -339,10 +340,9 @@
                                 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
                                 @forelse ($financialYearOptions as $financialYear)
-                                <!-- @click="selected=@js($financialYear['value']); open=false" -->
                                     <li>
                                         <button type="button"
-                                            @click="selected = @js($financialYear['value']); open = false; handleRangeChange(@js($financialYear['value']))"
+                                            @click="selected=@js($financialYear['value']); open=false"
                                             class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
                                             {{ $financialYear['label'] }}
                                         </button>

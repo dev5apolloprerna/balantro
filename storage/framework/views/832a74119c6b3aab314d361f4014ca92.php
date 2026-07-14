@@ -37,12 +37,13 @@
             })
             ->filter()
             ->values();
+
         $currentFinancialYearLabel = $currStart->format('Y') . '-' . $currEnd->format('Y');
-        $selectedFinancialYear = old('range', request('range', $fyRangeSel ?? $currentFinancialYearLabel));
-        
-        if ($financialYearOptions->pluck('value')->contains($selectedFinancialYear)) {
+        $selectedFinancialYear = request('range', $currentFinancialYearLabel);
+        if (!$financialYearOptions->pluck('value')->contains($selectedFinancialYear)) {
             $selectedFinancialYear = $financialYearOptions->first()['value'] ?? $currentFinancialYearLabel;
         }
+        dd($selectedFinancialYear);
         
         // Define color mapping for groups
         $colorMap = [
