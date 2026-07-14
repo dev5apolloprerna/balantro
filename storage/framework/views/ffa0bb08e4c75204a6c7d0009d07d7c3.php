@@ -712,10 +712,26 @@
         const indirectCr = Number(plData.IndirectIncomes?.[0]?.decMainAmount || 0);
         const indirectDr = Number(plData.IndirectExpenses?.[0]?.decMainAmount || 0);
 
-        const incomeBreakdownLabels = ['Sales', 'Direct Income'];
-        const incomeBreakdownData = [Math.abs(salesAccountsCr), Math.abs(directCr)];
-        const expenseBreakdownLabels = ['Purchase', 'Direct Expenses'];
-        const expenseBreakdownData = [Math.abs(purchaseAccounts), Math.abs(directDr)];
+        const incomeBreakdownLabels = ['Sales'];
+        const incomeBreakdownData = [Math.abs(salesAccountsCr)];
+        const expenseBreakdownLabels = ['Purchase'];
+        const expenseBreakdownData = [Math.abs(purchaseAccounts)];
+
+        if (directCr < 0) {
+            expenseBreakdownLabels.push('Direct Income');
+            expenseBreakdownData.push(Math.abs(directCr));
+        } else {
+            incomeBreakdownLabels.push('Direct Income');
+            incomeBreakdownData.push(Math.abs(directCr));
+        }
+
+        if (directDr < 0) {
+            incomeBreakdownLabels.push('Direct Expenses');
+            incomeBreakdownData.push(Math.abs(directDr));
+        } else {
+            expenseBreakdownLabels.push('Direct Expenses');
+            expenseBreakdownData.push(Math.abs(directDr));
+        }
 
         if (indirectCr < 0) {
             expenseBreakdownLabels.push('Indirect Income');
@@ -733,8 +749,8 @@
             expenseBreakdownData.push(Math.abs(indirectDr));
         }
 
-        const incomeBreakdownColors = ['#22d3ee', '#f472b6', '#fbbf24', '#34d399'];
-        const expenseBreakdownColors = ['#fbbf24', '#f472b6', '#22d3ee', '#34d399'];
+        const incomeBreakdownColors = ['#22d3ee', '#f472b6', '#fbbf24', '#34d399', '#a78bfa'];
+        const expenseBreakdownColors = ['#fbbf24', '#f472b6', '#22d3ee', '#34d399', '#a78bfa'];
 
         //const totalIncome = <?php echo e($totalIncomeForCharts ?? 0); ?>;
         const totalExpenses = <?php echo e($totalExpensesForCharts ?? 0); ?>;

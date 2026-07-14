@@ -131,18 +131,7 @@ class SalesUploadController extends Controller
             'salesLedgers' => Ledger::getSalesLedgers($iPartyId),
             'salesGstMappings' => $this->getSalesLedgerGstMappings($iPartyId),
             'roundOffSide' => $this->getRoundOffSetting($iPartyId)['side'],
-            'stockItems' => DB::table('StockItemMaster')
-                ->select(
-                    'iStockIdtemId',
-                    'strItemName',
-                    'strBaseUnits',
-                    'CGSTLedgerId',
-                    'SGSTLedgerId',
-                    'IGSTLedgerId'
-                )
-                ->where('iPartyId', $iPartyId)
-                ->orderBy('strItemName', 'asc')
-                ->get(),
+            'stockItems' => Ledger::getStockItemsForPreview($iPartyId),
         ];
     }
 

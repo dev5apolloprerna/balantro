@@ -75,11 +75,7 @@ class DebitNoteController extends Controller
 
         // ✅ SALES RETURN LEDGER (IMPORTANT 🔥)
         $purchaseLedgers = Ledger::getPurchaseLedgers($iPartyId);
-        $stockItems = DB::table('StockItemMaster')
-            ->select('*', 'CGSTLedgerId as cgst_id', 'SGSTLedgerId as sgst_id', 'IGSTLedgerId as igst_id')
-            ->where('iPartyId', $iPartyId)
-            ->orderBy('strItemName', 'asc') // optional (recommended)
-            ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $purchaseGstMappings = $this->getPurchaseLedgerGstMappings($iPartyId);
         $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
         return view('admin.bulkupload.debit_note.index', compact('uploads', 'clients','vchTypes','states','groups','parents'
@@ -1307,11 +1303,7 @@ class DebitNoteController extends Controller
 
         // ✅ SALES RETURN LEDGER (IMPORTANT 🔥)
         $purchaseLedgers = Ledger::getPurchaseLedgers($iPartyId);
-        $stockItems = DB::table('StockItemMaster')
-            ->select('*', 'CGSTLedgerId as cgst_id', 'SGSTLedgerId as sgst_id', 'IGSTLedgerId as igst_id')
-            ->where('iPartyId', $iPartyId)
-            ->orderBy('strItemName', 'asc') // optional (recommended)
-            ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $purchaseGstMappings = $this->getPurchaseLedgerGstMappings($iPartyId);
         $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
         return view('admin.bulkupload.debit_note.preview', compact(

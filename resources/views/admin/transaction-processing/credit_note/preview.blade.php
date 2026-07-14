@@ -947,6 +947,7 @@
 </style>
 @endsection
 @section('scripts')
+@include('admin.partials.lazy-select2')
 <script>
     const GST_RATE_OPTIONS = [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0];
 
@@ -984,23 +985,23 @@
 
         $('.searchInput').on('input keyup change', applyColumnSearch);
 
-        $('.placeSelect').select2({
+        window.initLazySelect2('.placeSelect', {
             width: '100%',
             placeholder: "Search Place...",
             allowClear: true,
             dropdownAutoWidth: true
         });
 
-        $('.ledgerSelect').select2({
+        window.initLazySelect2('.ledgerSelect', {
             width: '100%',
             placeholder: "Search Ledger...",
             allowClear: true,
             dropdownAutoWidth: true
         });
 
-        $(document).on('focus', '.ledgerSelect', function() {
-            $(this).select2('open');
-        });
+        // $(document).on('focus', '.ledgerSelect', function() {
+        //     $(this).select2('open');
+        // });
     });
 
     function openLedgerModal() {
@@ -2653,7 +2654,7 @@
     }
 
     function initItemSelect2() {
-        $('.itemSelect').select2({
+        window.initLazySelect2('.itemSelect', {
             width: '100%',
             placeholder: 'Select Item',
             dropdownAutoWidth: true

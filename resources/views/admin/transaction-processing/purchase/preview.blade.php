@@ -984,7 +984,7 @@
 </style>
 @endsection
 @section('scripts')
-
+@include('admin.partials.lazy-select2')
 <script>
     const ITEM_MASTER = @json($stockItems);
     const PARTY_LEDGER_DETAILS = @json($ledgers ?? []);
@@ -1079,7 +1079,7 @@
             });
         });
 
-        $('.placeSelect').select2({
+        window.initLazySelect2('.placeSelect', {
             width: '100%',
             placeholder: "Search Place...",
             allowClear: true,
@@ -1092,7 +1092,7 @@
             }, 0);
         });
 
-        $('.ledgerSelect').select2({
+        window.initLazySelect2('.ledgerSelect', {
             width: '100%'
         });
     });

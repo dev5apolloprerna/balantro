@@ -728,7 +728,7 @@
 <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script> -->
-
+@include('admin.partials.lazy-select2')
 <script>
 // ─── CONSTANTS (from server) ───────────────────────────────────────────────
 const LEDGER_NAMES    = @json(collect($ledgers)->pluck('name'));
@@ -1016,7 +1016,7 @@ $(document).ready(function () {
     }
     $('.searchInput').on('input keyup change', applyColumnSearch);
 
-    $('.placeSelect').select2({
+    window.initLazySelect2('.placeSelect', {
         width: '100%',
         placeholder: "Search Place...",
         allowClear: true,
@@ -1024,7 +1024,7 @@ $(document).ready(function () {
     });
 
     // Init Select2 on table ledger dropdowns
-    $('.ledgerSelect').select2({ width:'100%', placeholder:'Search Ledger...', allowClear:true });
+    window.initLazySelect2('.ledgerSelect',{ width:'100%', placeholder:'Search Ledger...', allowClear:true });
 
     // Sync ledger → party name in table rows
     $(document).on('change', 'select[name^="ledger"]', function () {

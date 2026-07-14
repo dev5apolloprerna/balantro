@@ -4,9 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class Ledger extends Model
 {
+    private const PREVIEW_CACHE_SECONDS = 60;
+
+    private static function rememberPreviewLookup(int|string $companyId, string $lookup, callable $callback)
+    {
+        return Cache::remember(
+            "preview_lookup:{$companyId}:{$lookup}",
+            self::PREVIEW_CACHE_SECONDS,
+            $callback
+        );
+    }
+
     protected $table = 'ledgers';
 
     protected $fillable = [
@@ -28,7 +40,7 @@ class Ledger extends Model
 
     public static function getAllLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'all_ledgers', fn () => DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
                 FROM LedgerMaster
             WHERE iPartyId = ?
@@ -38,7 +50,7 @@ class Ledger extends Model
                 FROM ledgers
             WHERE iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId]));
     }
 
     public static function getLedgerById($companyId, $ledgerId)
@@ -61,7 +73,7 @@ class Ledger extends Model
 
     public static function getAllDebtorsLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'debtors_ledgers', fn () => DB::select("
             SELECT 
                 iLedgerId AS id,
                 strCustomerName AS name,
@@ -91,12 +103,12 @@ class Ledger extends Model
             FROM ledgers
             WHERE Parent like 'Sundry Debtors' and  iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]));
     }
     
     public static function getAllCreditorsLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'creditors_ledgers', fn () => DB::select("
             SELECT
                 iLedgerId AS id,
                 strCustomerName AS name,
@@ -126,12 +138,12 @@ class Ledger extends Model
             FROM ledgers
             WHERE Parent like 'Sundry Creditors' and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]));
     }
 
     public static function getAllPartyLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'party_ledgers', fn () => DB::select("
             SELECT
                 iLedgerId AS id,
                 strCustomerName AS name,
@@ -161,12 +173,12 @@ class Ledger extends Model
             FROM ledgers
             WHERE Parent IN ('Sundry Creditors', 'Sundry Debtors') and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]));
     }
 
     public static function getAllBankLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'bank_ledgers', fn () => DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
             WHERE strParents like 'Bank Accounts' and iPartyId = ?
@@ -176,12 +188,12 @@ class Ledger extends Model
             FROM ledgers
             WHERE Parent like 'Bank Accounts' and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId]));
     }
 
     public static function getAllBankCashLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'bank_cash_ledgers', fn () => DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
             WHERE (strParents in ('Bank Accounts','Cash-in-hand')) and iPartyId = ?
@@ -191,12 +203,12 @@ class Ledger extends Model
             FROM ledgers
             WHERE (Parent in ('Bank Accounts','Cash-in-hand')) and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId]));
     }
 
     public static function getAlliGstLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'igst_ledgers', fn () => DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
             WHERE iPartyId = ? AND (
@@ -211,12 +223,12 @@ class Ledger extends Model
                 LOWER(Name) like '%integrated%'
             )
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId]));
     }
 
     public static function getAllcGstLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'cgst_ledgers', fn () => DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
             WHERE iPartyId = ? AND (
@@ -232,12 +244,12 @@ class Ledger extends Model
                 LOWER(Name) like '%central%'
             )
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId]));
     }
 
     public static function getAllsGstLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'sgst_ledgers', fn () => DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
             WHERE iPartyId = ? AND (
@@ -257,7 +269,7 @@ class Ledger extends Model
                 LOWER(Name) like '%union%'
             )
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId]));
     }
 
     public static function mergeLedgersByIds($companyId, $ledgers, array $ledgerIds): array
@@ -309,7 +321,7 @@ class Ledger extends Model
 
     public static function getPurchaseLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'purchase_ledgers', fn () => DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
             WHERE iPartyId = ? and (strParents like 'Purchase Accounts'
@@ -326,12 +338,12 @@ class Ledger extends Model
             FROM ledgers
             WHERE Parent like 'Purchase Accounts' and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]));
     }
 
     public static function getSalesLedgers($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'sales_ledgers', fn () => DB::select("
             SELECT iLedgerId AS id, strCustomerName AS name
             FROM LedgerMaster
             WHERE  iPartyId = ? and (iPrimaryGroupId IN (
@@ -347,7 +359,26 @@ class Ledger extends Model
             FROM ledgers
             WHERE Parent like 'Sales Accounts' and iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId, $companyId]);
+        ", [$companyId, $companyId, $companyId]));
+    }
+
+    public static function getStockItemsForPreview($companyId)
+    {
+        return self::rememberPreviewLookup($companyId, 'stock_items_preview', fn () => DB::table('StockItemMaster')
+            ->select(
+                'iStockIdtemId',
+                'strItemName',
+                'strBaseUnits',
+                'CGSTLedgerId',
+                'SGSTLedgerId',
+                'IGSTLedgerId',
+                'CGSTLedgerId as cgst_id',
+                'SGSTLedgerId as sgst_id',
+                'IGSTLedgerId as igst_id'
+            )
+            ->where('iPartyId', $companyId)
+            ->orderBy('strItemName', 'asc')
+            ->get());
     }
 
     public static function getLedgerByName($companyId, $ledgerName)
@@ -375,7 +406,7 @@ class Ledger extends Model
     // getSalesReturnLedgers
     public static function getLedgerDetailsForAutofill($companyId)
     {
-        return DB::select("
+        return self::rememberPreviewLookup($companyId, 'ledger_details_autofill', fn () => DB::select("
             SELECT
                 iLedgerId AS id,
                 strCustomerName AS name,
@@ -400,6 +431,6 @@ class Ledger extends Model
             FROM ledgers
             WHERE iPartyId = ?
             ORDER BY name
-        ", [$companyId, $companyId]);
+        ", [$companyId, $companyId]));
     }
 }

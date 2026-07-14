@@ -976,7 +976,7 @@
 </style>
 @endsection
 @section('scripts')
-
+@include('admin.partials.lazy-select2')
 <script>
     $(document).ready(function() {
         $('#selectAll').click(function() {
@@ -1001,30 +1001,30 @@
             });
         });
 
-        $('.placeSelect').select2({
+        window.initLazySelect2('.placeSelect', {
             width: '100%',
             placeholder: "Search Place...",
             allowClear: true,
             dropdownAutoWidth: true
         });
 
-        $('.ledgerSelect').select2({
+        window.initLazySelect2('.ledgerSelect', {
             width: '100%',
             placeholder: "Search Ledger...",
             allowClear: true,
             dropdownAutoWidth: true
         });
 
-        $('.itemSelect').select2({
+        window.initLazySelect2('.itemSelect', {
             width: '100%',
             placeholder: "Search Item...",
             allowClear: true,
             dropdownAutoWidth: true
         });
 
-        $('.ledgerSelect').select2({
-            width: '100%'
-        });
+        // $('.ledgerSelect').select2({
+        //     width: '100%'
+        // });
     });
 
     function openLedgerModal() {

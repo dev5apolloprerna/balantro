@@ -65,18 +65,7 @@ class PurchaseUploadController extends Controller
         $cGstLedgers = Ledger::getAllcGstLedgers($iPartyId);
         $sGstLedgers = Ledger::getAllsGstLedgers($iPartyId);
         $purcasheLedgers = Ledger::getPurchaseLedgers($iPartyId);
-        $stockItems = DB::table('StockItemMaster')
-            ->select(
-                    'iStockIdtemId',
-                    'strItemName',
-                    'strBaseUnits',
-                    'CGSTLedgerId',
-                    'SGSTLedgerId',
-                    'IGSTLedgerId'
-                )
-            ->where('iPartyId', $iPartyId)
-            ->orderBy('strItemName', 'asc') // optional (recommended)
-            ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         
         $purchaseGstMappings = $this->getPurchaseLedgerGstMappings($iPartyId);
         $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
@@ -1577,18 +1566,7 @@ class PurchaseUploadController extends Controller
         $cGstLedgers = Ledger::getAllcGstLedgers($iPartyId);
         $sGstLedgers = Ledger::getAllsGstLedgers($iPartyId);
         $purcasheLedgers = Ledger::getPurchaseLedgers($iPartyId);
-        $stockItems = DB::table('StockItemMaster')
-            ->select(
-                'iStockIdtemId',
-                'strItemName',
-                'strBaseUnits',
-                'CGSTLedgerId',
-                'SGSTLedgerId',
-                'IGSTLedgerId'
-            )
-            ->where('iPartyId', $iPartyId)
-            ->orderBy('strItemName', 'asc') // optional (recommended)
-            ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $purchaseGstMappings = $this->getPurchaseLedgerGstMappings($iPartyId);
         $roundOffSide = $this->getRoundOffSetting($iPartyId)['side'];
         return view('admin.bulkupload.purchase.preview', compact(

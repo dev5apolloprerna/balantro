@@ -172,10 +172,7 @@ class TransactionProcessingController extends Controller
         $iPartyId = session('iPartyId');
         $uploads = BulkSalesUpload::where('iPartyId', $iPartyId)->where('saved', '>', 0)->latest()->get();
         $clients = Client::orderBy('name')->get();
-        $stockItems = DB::table('StockItemMaster')
-                ->where('iPartyId', $iPartyId)
-                ->orderBy('strItemName', 'asc')
-                ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('iYearId', 'asc')
@@ -246,10 +243,7 @@ class TransactionProcessingController extends Controller
             array_merge($rows->pluck('sales_ledger_id')->all(), $customGstSlots->pluck('ledger_id')->all())
         );
         $salesGstMappings = $this->getLedgerGstMappings($iPartyId, 'Sales Accounts');
-        $stockItems = DB::table('StockItemMaster')
-                ->where('iPartyId', $iPartyId)
-                ->orderBy('strItemName', 'asc')
-                ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $roundOffSide = $this->getRoundOffSide($iPartyId);
         return view('admin.transaction-processing.sales.preview', compact('rows', 'ledgers', 'vchTypes', 'groups', 'states', 'parents','iGstLedgers',
             'cGstLedgers',
@@ -340,10 +334,7 @@ class TransactionProcessingController extends Controller
         $cGstLedgers = Ledger::getAllcGstLedgers($iPartyId);
         $sGstLedgers = Ledger::getAllsGstLedgers($iPartyId);
         $purchaseLedgers = Ledger::getPurchaseLedgers($iPartyId);
-        $stockItems = DB::table('StockItemMaster')
-            ->where('iPartyId', $iPartyId)
-            ->orderBy('strItemName', 'asc') // optional (recommended)
-            ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $purchaseGstMappings = $this->getPurchaseLedgerGstMappings($iPartyId);
         $roundOffSide = $this->getRoundOffSide($iPartyId);
         return view('admin.transaction-processing.purchase.preview', compact(
@@ -688,10 +679,7 @@ class TransactionProcessingController extends Controller
         $iGstLedgers = Ledger::getAlliGstLedgers($iPartyId);
         $cGstLedgers = Ledger::getAllcGstLedgers($iPartyId);
         $sGstLedgers = Ledger::getAllsGstLedgers($iPartyId);
-        $stockItems = DB::table('StockItemMaster')
-            ->where('iPartyId', $iPartyId)
-            ->orderBy('strItemName', 'asc') // optional (recommended)
-            ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $salesLedgers = Ledger::getSalesLedgers($iPartyId);
         $salesGstMappings = $this->getLedgerGstMappings($iPartyId, 'Sales Accounts');
         $ledgerDetails = $ledgers;
@@ -826,10 +814,7 @@ class TransactionProcessingController extends Controller
 
         $purchaseLedgers = Ledger::getPurchaseLedgers($iPartyId);
         $purchaseGstMappings = $this->getLedgerGstMappings($iPartyId, 'Purchase Accounts');
-        $stockItems = DB::table('StockItemMaster')
-            ->where('iPartyId', $iPartyId)
-            ->orderBy('strItemName', 'asc')
-            ->get();
+        $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $roundOffSide = $this->getRoundOffSide($iPartyId);
         return view('admin.transaction-processing.debit_note.preview', compact(
             'rows',
