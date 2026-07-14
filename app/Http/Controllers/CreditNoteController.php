@@ -615,6 +615,26 @@ class CreditNoteController extends Controller
         return true;
     }
 
+    private function buildCreditNoteItemGstLedgerSlots(int $partyId, array $items, ?string $salesLedgerName): array
+    {
+        return collect($items)->map(function ($item) use ($partyId, $salesLedgerName) {
+            $itemMapping = $this->getGstMapping(
+                $partyId,
+                $salesLedgerName,
+                $item['item_name'] ?? $item['item'] ?? null
+            );
+
+            return [
+                'cgst_amount' => $item['cgst'] ?? 0,
+                'sgst_amount' => $item['sgst'] ?? 0,
+                'igst_amount' => $item['igst'] ?? 0,
+                'cgst_ledger_id' => $itemMapping['cgst_id'],
+                'sgst_ledger_id' => $itemMapping['sgst_id'],
+                'igst_ledger_id' => $itemMapping['igst_id'],
+            ];
+        })->all();
+    }
+
     private function getRoundOffLedger($partyId)
     {
         return DB::table('LedgerMaster')
@@ -1237,20 +1257,14 @@ class CreditNoteController extends Controller
                     $status = 'pending';
                    
                     
-                    $is_igst = 0;
-                    if($amountMatched)
-                    {
-                        if ($sumIgst > 0) {
-                            if (!empty($mapping['igst_id'])) {
-                                $status = 'saved';
-                            }
-                            $is_igst = 1;
-                        } else {
-                            if (!empty($mapping['cgst_id']) && !empty($mapping['sgst_id'])) {
-                                $status = 'saved';
-                            }
-                            $is_igst = 0;
-                        }
+                    $is_igst = $sumIgst > 0 ? 1 : 0;
+                    $hasGstLedgers = $this->hasRequiredGstLedgers(
+                        $this->buildCreditNoteItemGstLedgerSlots($iPartyId, $items, $first['sales_ledger'] ?? null),
+                        (bool) $is_igst
+                    );
+
+                    if ($amountMatched && $hasGstLedgers) {
+                        $status = 'saved';
                     }
 
                     $noteNo = explode('|', $groupKey)[0];

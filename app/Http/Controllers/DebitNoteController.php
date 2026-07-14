@@ -609,6 +609,26 @@ class DebitNoteController extends Controller
         return true;
     }
 
+    private function buildDebitNoteItemGstLedgerSlots(int $partyId, array $items, ?string $purchaseLedgerName): array
+    {
+        return collect($items)->map(function ($item) use ($partyId, $purchaseLedgerName) {
+            $itemMapping = $this->getGstMapping(
+                $partyId,
+                $purchaseLedgerName,
+                $item['item_name'] ?? $item['item'] ?? null
+            );
+
+            return [
+                'cgst_amount' => $item['cgst'] ?? 0,
+                'sgst_amount' => $item['sgst'] ?? 0,
+                'igst_amount' => $item['igst'] ?? 0,
+                'cgst_ledger_id' => $itemMapping['cgst_id'],
+                'sgst_ledger_id' => $itemMapping['sgst_id'],
+                'igst_ledger_id' => $itemMapping['igst_id'],
+            ];
+        })->all();
+    }
+
     private function getRoundOffLedger($partyId)
     {
         return DB::table('LedgerMaster')
@@ -799,29 +819,14 @@ class DebitNoteController extends Controller
                             break;
                         }
                     }
-                    if($amountMatched)
-                    {
-                        if($sumIgst > 0)
-                        {
-                            if(!empty($mapping['igst_id']))
-                            {
-                                $status = 'saved';
-                            }
+                    $is_igst = $sumIgst > 0 ? 1 : 0;
+                    $hasGstLedgers = $this->hasRequiredGstLedgers(
+                        $this->buildDebitNoteItemGstLedgerSlots($iPartyId, $items, $first['purchase_ledger'] ?? null),
+                        (bool) $is_igst
+                    );
 
-                            $is_igst = 1;
-                        }
-                        else
-                        {
-                            if(
-                                !empty($mapping['cgst_id']) &&
-                                !empty($mapping['sgst_id'])
-                            )
-                            {
-                                $status = 'saved';
-                            }
-
-                            $is_igst = 0;
-                        }
+                    if ($amountMatched && $hasGstLedgers) {
+                        $status = 'saved';
                     }
 
                     $rates = array_unique($rates);
