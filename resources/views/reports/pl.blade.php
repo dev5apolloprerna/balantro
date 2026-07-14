@@ -704,6 +704,31 @@
 
         const indirectCr = Number(plData.IndirectIncomes?.[0]?.decMainAmount || 0);
         const indirectDr = Number(plData.IndirectExpenses?.[0]?.decMainAmount || 0);
+
+        const incomeBreakdownLabels = ['Sales', 'Direct Income'];
+        const incomeBreakdownData = [Math.abs(salesAccountsCr), Math.abs(directCr)];
+        const expenseBreakdownLabels = ['Purchase', 'Direct Expenses'];
+        const expenseBreakdownData = [Math.abs(purchaseAccounts), Math.abs(directDr)];
+
+        if (indirectCr < 0) {
+            expenseBreakdownLabels.push('Indirect Income');
+            expenseBreakdownData.push(Math.abs(indirectCr));
+        } else {
+            incomeBreakdownLabels.push('Indirect Income');
+            incomeBreakdownData.push(Math.abs(indirectCr));
+        }
+
+        if (indirectDr < 0) {
+            incomeBreakdownLabels.push('Indirect Expenses');
+            incomeBreakdownData.push(Math.abs(indirectDr));
+        } else {
+            expenseBreakdownLabels.push('Indirect Expenses');
+            expenseBreakdownData.push(Math.abs(indirectDr));
+        }
+
+        const incomeBreakdownColors = ['#22d3ee', '#f472b6', '#fbbf24', '#34d399'];
+        const expenseBreakdownColors = ['#fbbf24', '#f472b6', '#22d3ee', '#34d399'];
+
         //const totalIncome = {{ $totalIncomeForCharts ?? 0 }};
         const totalExpenses = {{ $totalExpensesForCharts ?? 0 }};
 
@@ -712,16 +737,16 @@
         // Initialize Pie Charts
         document.addEventListener('DOMContentLoaded', function() {
             // Breakdown Chart
-            const breakdowncolors = ['#22d3ee', '#f472b6','#fbbf24'];
+            const breakdowncolors = incomeBreakdownColors;
             const breakdownCtx = document.getElementById('breakdownChart').getContext('2d');
 
             // Initial breakdown chart (Income Breakdown by default)
             breakdownChart = new Chart(breakdownCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Sales','Direct Income', 'Indirect Income'],
+                    labels: incomeBreakdownLabels,
                     datasets: [{
-                        data: [salesAccountsCr, directCr, indirectCr],
+                        data: incomeBreakdownData,
                         backgroundColor: (ctx) => {
                             const chart = ctx.chart;
                             const { ctx: c, chartArea } = chart;
@@ -781,9 +806,9 @@
             });
             renderBreakdownLegend(
                 'breakdownLegend',
-                ['Sales','Direct Income', 'Indirect Income'],
-                [salesAccountsCr ,directCr, indirectCr],
-                ['#22d3ee', '#f472b6','#fbbf24']
+                incomeBreakdownLabels,
+                incomeBreakdownData,
+                breakdowncolors
             );
 
         });
@@ -791,16 +816,16 @@
         function updateBreakdown(type) {
 
             const colors = type === 'income'
-                ? ['#22d3ee', '#f472b6','#fbbf24']
-                : ['#fbbf24', '#f472b6','#22d3ee'];
+                 ? incomeBreakdownColors
+                : expenseBreakdownColors;
 
             breakdownChart.data.labels = type === 'income'
-                ? ['Sales', 'Direct Income', 'Indirect Income']
-                : ['Purchase','Direct Expenses', 'Indirect Expenses'];
+                ? incomeBreakdownLabels
+                : expenseBreakdownLabels;
 
             breakdownChart.data.datasets[0].data = type === 'income'
-                ? [salesAccountsCr,directCr, indirectCr]
-                : [purchaseAccounts, directDr, indirectDr];
+                ? incomeBreakdownData
+                : expenseBreakdownData;
 
             // 🔥 APPLY SAME GRADIENT AS FIRST PIE
             breakdownChart.data.datasets[0].backgroundColor = (ctx) => {
