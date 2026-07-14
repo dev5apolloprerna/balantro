@@ -171,19 +171,53 @@ class HomeController extends Controller
             $financialYears = Cache::remember(ReportCache::key('client_dashboard', $userId, 'financial_years'), ReportCache::ttl(), function () use ($userId) {
                 return DB::table('YearMaster')
                     ->where('iPartyId', $userId)
-                    ->orderBy('iYearId', 'asc')
+                    //->orderBy('iYearId', 'asc')
+                    ->orderBy('strYear', 'desc')
+                    ->orderBy('iYearId', 'desc')
                     ->limit(3)
                     ->get();
             });
             // Restore from session if empty
             
-            $defaultRange = $financialYears->first()->strYear ?? null;
-            $selectedRange = $range ?: session('selectedRange', $defaultRange);
-            $from = $r->input('from', session('selectedFrom'));
-            $to   = $r->input('to', session('selectedTo'));
-            if ((! $from || ! $to) && preg_match('/^(\d{4})-(\d{4})$/', (string) $selectedRange, $matches)) {
-                $from = $matches[1] . '-04-01';
-                $to = $matches[2] . '-03-31';
+            // $defaultRange = $financialYears->first()->strYear ?? null;
+            // $selectedRange = $range ?: session('selectedRange', $defaultRange);
+            // $from = $r->input('from', session('selectedFrom'));
+            // $to   = $r->input('to', session('selectedTo'));
+            // if ((! $from || ! $to) && preg_match('/^(\d{4})-(\d{4})$/', (string) $selectedRange, $matches)) {
+            //     $from = $matches[1] . '-04-01';
+            //     $to = $matches[2] . '-03-31';
+            // }
+
+            $currentFinancialYear = $this->currentFinancialYear();
+            $availableFinancialYears = $financialYears->pluck('strYear')->filter()->values();
+            $defaultRange = $availableFinancialYears->contains($currentFinancialYear)
+                ? $currentFinancialYear
+                : ($availableFinancialYears->first() ?? null);
+
+            // Keep the dashboard selection and the global financial-year session in sync.
+            $selectedRange = $range ?: session('selectedRange', session('year', $defaultRange));
+            if ($selectedRange && $availableFinancialYears->isNotEmpty() && ! $availableFinancialYears->contains($selectedRange)) {
+                $selectedRange = $defaultRange;
+            }
+            $from = $r->input('from');
+            $to   = $r->input('to');
+
+            if (! $range && ! $from && ! $to) {
+                $from = session('selectedFrom', session('year_from'));
+                $to   = session('selectedTo', session('year_to'));
+            }
+
+            if (preg_match('/^(\d{4})-(\d{4})$/', (string) $selectedRange, $matches)) {
+                $yearFrom = $matches[1] . '-04-01';
+                $yearTo = $matches[2] . '-03-31';
+
+                if ($range || ! $from || ! $to) {
+                    $from = $yearFrom;
+                    $to = $yearTo;
+                }
+            } else {
+                $yearFrom = $from;
+                $yearTo = $to;
             }
 
             if ($selectedRange || $from || $to) {
@@ -191,6 +225,9 @@ class HomeController extends Controller
                     'selectedRange' => $selectedRange,
                     'selectedFrom'  => $from,
                     'selectedTo'    => $to,
+                    'year'          => $selectedRange,
+                    'year_from'     => $yearFrom,
+                    'year_to'       => $yearTo,
                 ]);
             }
             
@@ -652,6 +689,14 @@ class HomeController extends Controller
         } else {
             abort(403, 'Unauthorized role');
         }
+    }
+
+    private function currentFinancialYear(): string
+    {
+        $today = now('Asia/Kolkata');
+        $startYear = $today->month < 4 ? $today->year - 1 : $today->year;
+
+        return $startYear . '-' . ($startYear + 1);
     }
 
     protected function getAccentColor($groupName)
