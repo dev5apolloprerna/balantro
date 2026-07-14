@@ -708,13 +708,16 @@
     
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
  <script>
+        let plData = <?php echo json_encode($pl ?? [], 15, 512) ?>;
         const directCr = <?php echo e($directCr ?? 0); ?>;
         const salesAccountsCr = <?php echo e($salesAccountsCr ?? 0); ?>;
        
         const directDr = <?php echo e($directDr ?? 0); ?>;
         const purchaseAccounts = <?php echo e($purchaseAccounts ?? 0); ?>;
-        const indirectCr = <?php echo e($indirectCr ?? 0); ?>;
-        const indirectDr = <?php echo e($indirectDr ?? 0); ?>;
+        
+        const indirectCr = Number(plData.IndirectIncomes?.[0]?.decMainAmount || 0);
+        const indirectDr = Number(plData.IndirectExpenses?.[0]?.decMainAmount || 0);
+
         //const totalIncome = <?php echo e($totalIncomeForCharts ?? 0); ?>;
         const totalExpenses = <?php echo e($totalExpensesForCharts ?? 0); ?>;
 
@@ -724,50 +727,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Data from PHP - all variables are now properly defined
             
-
-            // Income vs Expenses Chart
-            // const incomeExpenseCtx = document.getElementById('incomeExpenseChart').getContext('2d');
-            // incomeExpenseChart = new Chart(incomeExpenseCtx, {
-            //     type: 'pie',
-            //     data: {
-            //         labels: ['Income', 'Expenses'],
-            //         datasets: [{
-            //             data: [totalIncome, totalExpenses],
-            //             backgroundColor: ['#34d399', '#a78bfa'],
-            //             borderWidth: 2,
-            //             borderColor: '#fff'
-            //         }]
-            //     },
-            //     options: {
-            //         responsive: true,
-            //         maintainAspectRatio: false,
-                    
-            //         plugins: {
-            //             // legend: {
-            //             //     position: 'bottom',
-            //             //     labels: {
-            //             //         padding: 20,
-            //             //         usePointStyle: true,
-            //             //         pointStyle: 'circle',
-            //             //     }
-            //             // },
-            //             legend: {
-            //                 display: false
-            //             },
-            //             tooltip: {
-            //                 usePointStyle: true,
-            //                 callbacks: {
-            //                     label: function(context) {
-            //                         const value = context.raw;
-            //                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
-            //                         const percentage = ((value / total) * 100).toFixed(1);
-            //                         return `${context.label}: ₹${value.toLocaleString()} (${percentage}%)`;
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            // });
 
             // Breakdown Chart
             const breakdowncolors = ['#22d3ee', '#f472b6','#fbbf24'];
@@ -844,45 +803,6 @@
                 ['#22d3ee', '#f472b6','#fbbf24']
             );
 
-            // Dropdown change handler
-            // document.getElementById('breakdownType').addEventListener('change', function() {
-            //     const breakdownType = this.value;
-            //     const incomeLegend = document.getElementById('incomeLegend');
-            //     const expensesLegend = document.getElementById('expensesLegend');
-
-            //     if (breakdownType === 'income') {
-            //         // Update to Income Breakdown
-            //         breakdownChart.data.labels = ['Direct Income', 'Indirect Income'];
-            //         breakdownChart.data.datasets[0].data = [directCr, indirectCr];
-            //         breakdownChart.data.datasets[0].backgroundColor = ['#22d3ee', '#f472b6'];
-
-            //         // Show income legend, hide expenses legend
-            //         // incomeLegend.classList.remove('hidden');
-            //         // expensesLegend.classList.add('hidden');
-            //         renderBreakdownLegend('breakdownLegend',
-            //             ['Direct Income', 'Indirect Income'],
-            //             [directCr, indirectCr],
-            //             ['#22d3ee', '#f472b6']
-            //         );
-            //     } else {
-            //         // Update to Expenses Breakdown
-            //         breakdownChart.data.labels = ['Direct Expenses', 'Indirect Expenses'];
-            //         breakdownChart.data.datasets[0].data = [directDr, indirectDr];
-            //         breakdownChart.data.datasets[0].backgroundColor = ['#fbbf24', '#f472b6'];
-
-            //         // Show expenses legend, hide income legend
-            //         // incomeLegend.classList.add('hidden');
-            //         // expensesLegend.classList.remove('hidden');
-
-            //         renderBreakdownLegend('breakdownLegend',
-            //             ['Direct Expenses', 'Indirect Expenses'],
-            //             [directDr, indirectDr],
-            //             ['#fbbf24', '#f472b6']
-            //         );
-            //     }
-
-            //     breakdownChart.update();
-            // });
         });
 
         function updateBreakdown(type) {
@@ -934,7 +854,7 @@
             breakdownChart.update();
         }
        
-        let plData = <?php echo json_encode($pl ?? [], 15, 512) ?>;
+        
 
         // ===== SAFE FIND FUNCTION =====
         const getValue = (arr, name) => {
@@ -1223,7 +1143,7 @@
 
                 let value = Math.round(Number(values[i] || 0));
                  // ✅ HIDE ZERO VALUES
-                if (value <= 0) return;
+                if (value == 0) return;
                 html += `
                     <div class="flex flex-col gap-1">
 

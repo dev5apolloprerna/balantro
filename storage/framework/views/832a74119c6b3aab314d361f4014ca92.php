@@ -37,14 +37,13 @@
             })
             ->filter()
             ->values();
-
         $currentFinancialYearLabel = $currStart->format('Y') . '-' . $currEnd->format('Y');
         $selectedFinancialYear = old('range', request('range', $fyRangeSel ?? $currentFinancialYearLabel));
-
-        if (! $financialYearOptions->pluck('value')->contains($selectedFinancialYear)) {
+        
+        if ($financialYearOptions->pluck('value')->contains($selectedFinancialYear)) {
             $selectedFinancialYear = $financialYearOptions->first()['value'] ?? $currentFinancialYearLabel;
         }
-
+        
         // Define color mapping for groups
         $colorMap = [
             'blue' => 'bg-blue-500',
@@ -294,7 +293,6 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-4">
 
                 <div class="flex items-center gap-2">
-                    
                     <div class="relative"
                         x-data="{
                             open: false,
@@ -340,9 +338,10 @@
                                 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
                                 <?php $__empty_1 = true; $__currentLoopData = $financialYearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                <!-- @click="selected=<?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>; open=false" -->
                                     <li>
                                         <button type="button"
-                                            @click="selected=<?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>; open=false"
+                                            @click="selected = <?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>; open = false; handleRangeChange(<?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>)"
                                             class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
                                             <?php echo e($financialYear['label']); ?>
 
@@ -680,10 +679,12 @@
     </div>
 
 
-    <div class=" rounded-lg pt-1 p-1">
+    <!-- <div class=" rounded-lg pt-1 p-1"> 
         <div class="h-80 w-full">
-            <canvas id="mainChart"></canvas>
-
+            <canvas id="mainChart"></canvas> -->
+    <div class="rounded-lg pt-1 p-1">
+        <div class="w-full" style="height: 20rem; min-height: 20rem;">
+            <canvas id="mainChart" style="width: 100%; height: 100%;"></canvas>
         </div>
     </div>
 

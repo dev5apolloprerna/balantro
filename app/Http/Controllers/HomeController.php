@@ -176,6 +176,7 @@ class HomeController extends Controller
                     ->get();
             });
             // Restore from session if empty
+            
             $defaultRange = $financialYears->first()->strYear ?? null;
             $selectedRange = $range ?: session('selectedRange', $defaultRange);
             $from = $r->input('from', session('selectedFrom'));
@@ -192,7 +193,7 @@ class HomeController extends Controller
                     'selectedTo'    => $to,
                 ]);
             }
-
+            
             $activeTab = $r->get('tab') === 'documents' ? 'documents' : 'financial';
             $type = (int) $r->input('type', 1);
 
