@@ -157,45 +157,85 @@ class DashboardController extends BaseApiController
                 return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
             }
 
-            $currentFinancialYearStart = Carbon::now()->month >= 4
-                ? Carbon::now()->year
-                : Carbon::now()->year - 1;
-            $currentFinancialYear = sprintf('%d-%04d', $currentFinancialYearStart, $currentFinancialYearStart + 1);
-
-            $years = DB::table('YearMaster')
-                ->where('iPartyId', (int) $user->id)
-                ->orderBy('iYearId', 'asc')
-                ->limit(3)
-                ->get()
-                ->map(function ($year) use ($currentFinancialYear) {
-                    $yearLabel = trim((string) $year->strYear);
-                    $from = null;
-                    $to = null;
-
-                    if (preg_match('/^(\d{4})-(\d{4})$/', $yearLabel, $matches)) {
-                        $from = '01-04-' . $matches[1];
-                        $to =  '31-03-' . $matches[2];
-                    }
-
-                    return [
-                        'iYearId' => (int) $year->iYearId,
-                        'key' => $yearLabel,
-                        'value' => $yearLabel,
-                        'label' => $yearLabel,
-                        'from' => $from,
-                        'to' => $to,
-                        'is_current' => $yearLabel === $currentFinancialYear,
-                    ];
-                })
-                ->values()
-                ->toArray();
-
-            return $this->success(__("response_message.dashboard.year_listing"), [
-                'years' => $years,
-                'current_year' => $currentFinancialYear,
-            ]);
+            return $this->success(__("response_message.dashboard.year_listing"), $this->buildYearListingPayload((int) $user->id));
         } catch (\Exception $e) {
             return $this->error(__("response_message.dashboard.year_listing_error"), 500, $e->getMessage());
+        }
+    }
+
+    private function buildYearListingPayload(int $partyId): array
+    {
+        $currentFinancialYearStart = Carbon::now()->month >= 4
+            ? Carbon::now()->year
+            : Carbon::now()->year - 1;
+        $currentFinancialYear = sprintf('%d-%04d', $currentFinancialYearStart, $currentFinancialYearStart + 1);
+
+        $years = DB::table('YearMaster')
+            ->where('iPartyId', $partyId)
+            ->orderBy('iYearId', 'asc')
+            ->limit(3)
+            ->get()
+            ->map(function ($year) use ($currentFinancialYear) {
+                $yearLabel = trim((string) $year->strYear);
+                $from = null;
+                $to = null;
+
+                if (preg_match('/^(\d{4})-(\d{4})$/', $yearLabel, $matches)) {
+                    $from = '01-04-' . $matches[1];
+                    $to =  '31-03-' . $matches[2];
+                }
+
+                return [
+                    'iYearId' => (int) $year->iYearId,
+                    'key' => $yearLabel,
+                    'value' => $yearLabel,
+                    'label' => $yearLabel,
+                    'from' => $from,
+                    'to' => $to,
+                    'is_current' => $yearLabel === $currentFinancialYear,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        return [
+            'years' => $years,
+            'current_year' => $currentFinancialYear,
+        ];
+    }
+
+    public function summary(Request $request)
+    {
+        try {
+            $user = auth()->user();
+
+            if ($user->role != User::ROLES['client']) {
+                return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'from' => 'nullable|date_format:d-m-Y',
+                'to' => 'nullable|date_format:d-m-Y|after_or_equal:from',
+                'fySel' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
+            }
+
+            [$from, $to] = $this->resolveDashboardDateRange($request);
+            $partyId = (int) $user->id;
+
+            return $this->success(__("response_message.dashboard.dashboard_data"), [
+                'range' => ['from' => $from, 'to' => $to],
+                'year_listing' => $this->buildYearListingPayload($partyId),
+                'dropdown_type_list' => $this->buildDropdownTypeListPayload(),
+                'monthly_financial_columns' => $this->buildMonthlyFinancialColumnsPayload($partyId, $from, $to),
+                'group_balances' => $this->buildGroupBalancesPayload($partyId, $from, $to),
+                'profit_loss_balance_sheet' => $this->buildProfitLossBalanceSheetPayload($user, $partyId, $from, $to),
+            ]);
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.dashboard_error"), 500, $e->getMessage());
         }
     }
 
@@ -220,6 +260,16 @@ class DashboardController extends BaseApiController
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
             $partyId = (int) $user->id;
+            $payload = $this->buildProfitLossBalanceSheetPayload($user, $partyId, $from, $to);
+
+            return $this->success(__("response_message.dashboard.financial_summary"), $payload);
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.financial_summary_error"), 500, $e->getMessage());
+        }
+    }
+
+    private function buildProfitLossBalanceSheetPayload(User $user, int $partyId, ?string $from, ?string $to): array
+    {
             $bankSuspenseCount = DB::table('bank_transactions')
                 ->where('is_suspense', 1)
                 ->where('iPartyId', $partyId)
@@ -286,7 +336,7 @@ class DashboardController extends BaseApiController
             });
             $row = $rows[0] ?? (object) [];
 
-            return $this->success(__("response_message.dashboard.financial_summary"), [
+            return [
                 'range' => ['from' => $from, 'to' => $to],
                 'bank_suspense_count' => (int) $bankSuspenseCount,
                 'document_summary' => [
@@ -310,10 +360,7 @@ class DashboardController extends BaseApiController
                     'total_equity' => round($equity, 2),
                     'raw' => $bsResponse['data'] ?? [],
                 ],
-            ]);
-        } catch (\Exception $e) {
-            return $this->error(__("response_message.dashboard.financial_summary_error"), 500, $e->getMessage());
-        }
+            ];
     }
 
     public function monthlyFinancialColumns(Request $request)
@@ -337,7 +384,16 @@ class DashboardController extends BaseApiController
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
             $partyId = (int) $user->id;
+            $payload = $this->buildMonthlyFinancialColumnsPayload($partyId, $from, $to);
 
+            return $this->success(__("response_message.dashboard.monthly_financial_columns"), $payload);
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.monthly_financial_columns_error"), 500, $e->getMessage());
+        }
+    }
+
+    private function buildMonthlyFinancialColumnsPayload(int $partyId, ?string $from, ?string $to): array
+    {
             $salesPurchase = $this->reportsService->monthlyGraph($partyId, $from, $to, 1, [
                 'outflow_negative' => false,
                 'groups' => null,
@@ -378,16 +434,13 @@ class DashboardController extends BaseApiController
                 ];
             }
 
-            return $this->success(__("response_message.dashboard.monthly_financial_columns"), [
+            return [
                 'range' => ['from' => $from, 'to' => $to],
                 'months' => $months,
                 'columns' => $columns,
                 'rows' => $rows,
                 'totals' => array_map(fn($values) => round(array_sum(array_map('floatval', $values)), 2), $columns),
-            ]);
-        } catch (\Exception $e) {
-            return $this->error(__("response_message.dashboard.monthly_financial_columns_error"), 500, $e->getMessage());
-        }
+            ];
     }
 
     public function saveCardPreferences(Request $request)
@@ -549,44 +602,83 @@ class DashboardController extends BaseApiController
                 return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
             }
 
-            $summary = [
-                'chart_types' => [
-                    ['key' => '1', 'value' => "Sales & Purchase"],
-                    ['key' => '2', 'value' => "Creditors & Debtors"],
-                    ['key' => '3', 'value' => "Receipt & Payment"],
-                    ['key' => '4', 'value' => "Cash & Bank balance"]
-                ],
-                'metric_options' => [
-                    ['key' => '', 'value' => "Select Metric", 'group' => 'All'],
-                    ['key' => 'Sales Accounts', 'value' => "Sales", 'group' => 'Sales & Purchase'],
-                    ['key' => 'Purchase Accounts', 'value' => "Purchase", 'group' => 'Sales & Purchase'],
-                    ['key' => 'Sundry Debtors', 'value' => "Debtors", 'group' => 'Credit & Debit'],
-                    ['key' => 'Sundry Creditors', 'value' => "Creditors", 'group' => 'Credit & Debit'],
-                    ['key' => 'Rcpt', 'value' => "Receipts", 'group' => 'Receipt & Payment'],
-                    ['key' => 'Pymt', 'value' => "Payments", 'group' => 'Receipt & Payment'],
-                    ['key' => 'Cash-in-Hand', 'value' => "Cash", 'group' => 'Cash & Bank'],
-                    ['key' => 'Bank Accounts', 'value' => "Bank Flow", 'group' => 'Cash & Bank']
-                ],
-                'comparison_options' => [
-                    ['key' => 'none', 'value' => "No Comparison"],
-                    ['key' => 'prev-month', 'value' => "Compare with Previous Month"],
-                    ['key' => 'prev-quarter', 'value' => "Compare with Previous Quarter"],
-                    ['key' => 'prev-year', 'value' => "Compare with Previous Year"]
-                ],
-                'Bargraph' => [
-                    ['key' => 'sales', 'value' => "Sales"],
-                    ['key' => 'purchase', 'value' => "Purchase"],
-                    ['key' => 'direct_income', 'value' => "Direct Income"],
-                    ['key' => 'direct_expense', 'value' => "Direct Expense"],
-                    ['key' => 'indirect_income', 'value' => "Indirect Income"],
-                    ['key' => 'indirect_expense', 'value' => "Indirect Expense"],
-                ]
-            ];
+            // $summary = [
+            //     'chart_types' => [
+            //         ['key' => '1', 'value' => "Sales & Purchase"],
+            //         ['key' => '2', 'value' => "Creditors & Debtors"],
+            //         ['key' => '3', 'value' => "Receipt & Payment"],
+            //         ['key' => '4', 'value' => "Cash & Bank balance"]
+            //     ],
+            //     'metric_options' => [
+            //         ['key' => '', 'value' => "Select Metric", 'group' => 'All'],
+            //         ['key' => 'Sales Accounts', 'value' => "Sales", 'group' => 'Sales & Purchase'],
+            //         ['key' => 'Purchase Accounts', 'value' => "Purchase", 'group' => 'Sales & Purchase'],
+            //         ['key' => 'Sundry Debtors', 'value' => "Debtors", 'group' => 'Credit & Debit'],
+            //         ['key' => 'Sundry Creditors', 'value' => "Creditors", 'group' => 'Credit & Debit'],
+            //         ['key' => 'Rcpt', 'value' => "Receipts", 'group' => 'Receipt & Payment'],
+            //         ['key' => 'Pymt', 'value' => "Payments", 'group' => 'Receipt & Payment'],
+            //         ['key' => 'Cash-in-Hand', 'value' => "Cash", 'group' => 'Cash & Bank'],
+            //         ['key' => 'Bank Accounts', 'value' => "Bank Flow", 'group' => 'Cash & Bank']
+            //     ],
+            //     'comparison_options' => [
+            //         ['key' => 'none', 'value' => "No Comparison"],
+            //         ['key' => 'prev-month', 'value' => "Compare with Previous Month"],
+            //         ['key' => 'prev-quarter', 'value' => "Compare with Previous Quarter"],
+            //         ['key' => 'prev-year', 'value' => "Compare with Previous Year"]
+            //     ],
+            //     'Bargraph' => [
+            //         ['key' => 'sales', 'value' => "Sales"],
+            //         ['key' => 'purchase', 'value' => "Purchase"],
+            //         ['key' => 'direct_income', 'value' => "Direct Income"],
+            //         ['key' => 'direct_expense', 'value' => "Direct Expense"],
+            //         ['key' => 'indirect_income', 'value' => "Indirect Income"],
+            //         ['key' => 'indirect_expense', 'value' => "Indirect Expense"],
+            //     ]
+            // ];
+
+            $summary = $this->buildDropdownTypeListPayload();
 
             return $this->success(__("response_message.dashboard.dropdown_type_list"), $summary);
         } catch (\Exception $e) {
             return $this->error(__("response_message.dashboard.dropdown_type_error"), 500, $e->getMessage());
         }
+    }
+
+    private function buildDropdownTypeListPayload(): array
+    {
+        return [
+            'chart_types' => [
+                ['key' => '1', 'value' => "Sales & Purchase"],
+                ['key' => '2', 'value' => "Creditors & Debtors"],
+                ['key' => '3', 'value' => "Receipt & Payment"],
+                ['key' => '4', 'value' => "Cash & Bank balance"]
+            ],
+            'metric_options' => [
+                ['key' => '', 'value' => "Select Metric", 'group' => 'All'],
+                ['key' => 'Sales Accounts', 'value' => "Sales", 'group' => 'Sales & Purchase'],
+                ['key' => 'Purchase Accounts', 'value' => "Purchase", 'group' => 'Sales & Purchase'],
+                ['key' => 'Sundry Debtors', 'value' => "Debtors", 'group' => 'Credit & Debit'],
+                ['key' => 'Sundry Creditors', 'value' => "Creditors", 'group' => 'Credit & Debit'],
+                ['key' => 'Rcpt', 'value' => "Receipts", 'group' => 'Receipt & Payment'],
+                ['key' => 'Pymt', 'value' => "Payments", 'group' => 'Receipt & Payment'],
+                ['key' => 'Cash-in-Hand', 'value' => "Cash", 'group' => 'Cash & Bank'],
+                ['key' => 'Bank Accounts', 'value' => "Bank Flow", 'group' => 'Cash & Bank']
+            ],
+            'comparison_options' => [
+                ['key' => 'none', 'value' => "No Comparison"],
+                ['key' => 'prev-month', 'value' => "Compare with Previous Month"],
+                ['key' => 'prev-quarter', 'value' => "Compare with Previous Quarter"],
+                ['key' => 'prev-year', 'value' => "Compare with Previous Year"]
+            ],
+            'Bargraph' => [
+                ['key' => 'sales', 'value' => "Sales"],
+                ['key' => 'purchase', 'value' => "Purchase"],
+                ['key' => 'direct_income', 'value' => "Direct Income"],
+                ['key' => 'direct_expense', 'value' => "Direct Expense"],
+                ['key' => 'indirect_income', 'value' => "Indirect Income"],
+                ['key' => 'indirect_expense', 'value' => "Indirect Expense"],
+            ]
+        ];
     }
 
     public function financialGraphs(Request $request)
@@ -808,76 +900,34 @@ class DashboardController extends BaseApiController
             }
 
             $userId = (int) $user->id;
-            $from = $request->input('from');
-            $to = $request->input('to');
             [$from, $to] = $this->resolveDashboardDateRange($request);
 
-            $defaultGroupNames = [
-                'Sales Accounts',
-                'Purchase Accounts',
-                'Sundry Creditors',
-                'Sundry Debtors',
-                'Cash-in-Hand',
-                'Bank Accounts',
-                'Direct Incomes',
-                'Direct Expenses',
-            ];
-            $allGroups = collect($this->reportsService->getAllGroupsWithBalances($userId, $from, $to));
-           
-            $defaultGroupIds = $allGroups
-                ->whereIn('strGroupName', $defaultGroupNames)
-                ->pluck('iGroupId')
-                ->map(fn($groupId) => (int) $groupId)
-                ->values()
-                ->toArray();
-
-            if (empty($defaultGroupIds)) {
-                $defaultGroupIds = $allGroups
-                    ->take(8)
-                    ->pluck('iGroupId')
-                    ->map(fn($groupId) => (int) $groupId)
-                    ->values()
-                    ->toArray();
-            }
-
-            $preferences = UserCardPreference::where('user_id', $userId)
-                ->where('party_id', $userId)
-                ->first();
-
-            if ($preferences && $preferences->selected_groups) {
-                $selectedGroups = is_array($preferences->selected_groups)
-                    ? $preferences->selected_groups
-                    : json_decode($preferences->selected_groups, true);
-                $selectedGroups = array_map('intval', $selectedGroups ?? []);
-            } else {
-                $selectedGroups = $defaultGroupIds;
-            }
-
-            $validSelectedGroups = [];
-            foreach ($selectedGroups as $groupId) {
-                if ($allGroups->contains('iGroupId', $groupId)) {
-                    $validSelectedGroups[] = (int) $groupId;
-                }
-            }
-
-            if (empty($validSelectedGroups)) {
-                $validSelectedGroups = $defaultGroupIds;
-            }
-
-            $groups = $allGroups
-                ->whereIn('iGroupId', $validSelectedGroups)
-                ->map(function ($group) {
-                    return [
-                        'iGroupId' => (int) $group->iGroupId,
-                        'strGroupName' => $group->strGroupName,
-                        'Closing' => (float) ($group->Closing ?? 0),
-                        'Opening' => (float) ($group->Opening ?? 0),
-                        'accent' => $this->getAccentColor($group->strGroupName),
-                        'icon' => $this->getGroupIcon($group->strGroupName),
-                    ];
-                })
-                ->values()
-                ->toArray();
+            return $this->success(__("response_message.dashboard.groups_loaded"), $this->buildGroupBalancesPayload($userId, $from, $to));
+        } catch (\Exception $e) {
+            return $this->error(__("response_message.dashboard.groups_error"), 500, $e->getMessage());
+        }
+    }
+    
+    private function buildGroupBalancesPayload(int $userId, ?string $from, ?string $to): array
+    {
+        $allGroups = collect($this->getDashboardGroupsWithBalances($userId, $from, $to));
+        $defaultGroupIds = $this->defaultDashboardGroupIds($allGroups);
+        $validSelectedGroups = $this->selectedDashboardGroupIds($userId, $allGroups, $defaultGroupIds);
+        
+        $groups = $allGroups
+            ->whereIn('iGroupId', $validSelectedGroups)
+            ->map(function ($group) {
+                return [
+                    'iGroupId' => (int) $group->iGroupId,
+                    'strGroupName' => $group->strGroupName,
+                    'Closing' => (float) ($group->Closing ?? 0),
+                    'Opening' => (float) ($group->Opening ?? 0),
+                    'accent' => $this->getAccentColor($group->strGroupName),
+                    'icon' => $this->getGroupIcon($group->strGroupName),
+                ];
+            })
+            ->values()
+            ->toArray();
 
             $selectedGroupsWithBalances = collect($groups)->map(function ($group) {
                 return [
@@ -902,17 +952,14 @@ class DashboardController extends BaseApiController
                 ];
             })->values()->toArray();
 
-            return $this->success(__("response_message.dashboard.groups_loaded"), [
+            return [
                 'range' => ['from' => $from, 'to' => $to],
                 'groups' => $groups,
                 'selected_group_ids' => $validSelectedGroups,
                 'selected_groups_with_balances' => $selectedGroupsWithBalances,
                 'default_group_ids' => $defaultGroupIds,
                 'group_cards' => $groupCards,
-            ]);
-        } catch (\Exception $e) {
-            return $this->error(__("response_message.dashboard.groups_error"), 500, $e->getMessage());
-        }
+            ];
     }
 
     private function buildCustomGroupPayload(int $userId, ?string $from, ?string $to): array

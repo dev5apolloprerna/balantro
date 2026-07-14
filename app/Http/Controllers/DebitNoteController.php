@@ -2517,7 +2517,8 @@ class DebitNoteController extends Controller
                 'status' => 'Pending',
             ]);
             $row->loadMissing(['items', 'customGst']);
-            $row->status = empty($this->getDebitNotePendingIssues($row)) ? 'saved' : 'Pending';
+            // $row->status = empty($this->getDebitNotePendingIssues($row)) ? 'saved' : 'Pending';
+            $row->status = $this->rematchPendingDebitNoteTransaction($row) ? 'saved' : 'Pending';
             $row->save();
         }
 
