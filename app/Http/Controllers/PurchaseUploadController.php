@@ -33,7 +33,7 @@ class PurchaseUploadController extends Controller
 
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
 

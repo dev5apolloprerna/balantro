@@ -41,7 +41,7 @@ class SalesUploadController extends Controller
         
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
@@ -461,6 +461,14 @@ class SalesUploadController extends Controller
         ];
     }
 
+    private function preferredGstNo(?array $partyLedgerDetails, ?string $uploadedGstNo): ?string
+    {
+        $ledgerGstNo = trim((string) ($partyLedgerDetails['gst_no'] ?? ''));
+        $uploadedGstNo = trim((string) $uploadedGstNo);
+
+        return $ledgerGstNo !== '' ? $ledgerGstNo : ($uploadedGstNo !== '' ? $uploadedGstNo : null);
+    }
+
     private function hasUploadPartyMatch(array $partyLookup): bool
     {
         return in_array($partyLookup['matched_by'] ?? null, ['gst_no', 'party_name'], true);
@@ -822,7 +830,7 @@ class SalesUploadController extends Controller
                         'invoice_no'        => $invoiceNo,
                         'date'              => $first['date'],
 
-                        'gst_no'            => $partyLedgerDetails['gst_no'] ?? $first['gst_no'],
+                        'gst_no'            => $this->preferredGstNo($partyLedgerDetails, $first['gst_no']),
                         'party_name'        => $partyLedgerDetails['name'] ?? $first['party_name'],
                         'place_of_supply'   => $partyLedgerDetails['state'] ?? $first['place_of_supply'],
                         'address'           => $partyLedgerDetails['address'] ?? null,
@@ -1017,7 +1025,7 @@ class SalesUploadController extends Controller
                         'upload_id'         => $upload->id,
                         'invoice_no'        => $first['invoice_no'],
                         'date'              => $this->parseDate($first['date']),
-                        'gst_no'            => $partyLedgerDetails['gst_no'] ?? $first['gst_no'],
+                        'gst_no'            => $this->preferredGstNo($partyLedgerDetails, $first['gst_no']),
                         'party_name'        => $partyLedgerDetails['name'] ?? $first['party_name'],
                         'place_of_supply'   => $partyLedgerDetails['state'] ?? $first['place_of_supply'],
                         'address'           => $partyLedgerDetails['address'] ?? null,
@@ -1466,7 +1474,7 @@ class SalesUploadController extends Controller
 
         $transaction->fill([
             'party_name' => $partyDetails['name'] ?? $transaction->party_name,
-            'gst_no' => $partyDetails['gst_no'] ?? $transaction->gst_no,
+            'gst_no' => $this->preferredGstNo($partyDetails, $transaction->gst_no),
             'place_of_supply' => $partyDetails['state'] ?? $transaction->place_of_supply,
             'address' => $partyDetails['address'] ?? $transaction->address,
             'pincode' => $partyDetails['pincode'] ?? $transaction->pincode,

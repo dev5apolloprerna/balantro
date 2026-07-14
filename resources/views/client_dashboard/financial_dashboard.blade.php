@@ -679,10 +679,12 @@
     </div>
 
 
-    <div class=" rounded-lg pt-1 p-1">
+    <!-- <div class=" rounded-lg pt-1 p-1"> 
         <div class="h-80 w-full">
-            <canvas id="mainChart"></canvas>
-
+            <canvas id="mainChart"></canvas> -->
+    <div class="rounded-lg pt-1 p-1">
+        <div class="w-full" style="height: 20rem; min-height: 20rem;">
+            <canvas id="mainChart" style="width: 100%; height: 100%;"></canvas>
         </div>
     </div>
 

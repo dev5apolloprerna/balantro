@@ -208,7 +208,7 @@ class BankUploadController extends Controller
             ->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         $clients = Client::orderBy('name')->get();

@@ -178,7 +178,7 @@ class TransactionProcessingController extends Controller
                 ->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
@@ -267,7 +267,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
@@ -379,7 +379,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
@@ -645,7 +645,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
@@ -780,7 +780,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);
@@ -940,7 +940,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         $this->ensureFinancialYearInSession($years);

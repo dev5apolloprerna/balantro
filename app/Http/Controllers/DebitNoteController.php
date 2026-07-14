@@ -37,7 +37,7 @@ class DebitNoteController extends Controller
         $clients = Client::orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
-            ->orderBy('strYear', 'asc')
+            ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
         // ✅ Voucher Types
