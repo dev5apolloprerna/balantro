@@ -359,7 +359,11 @@
     function fillPartyDetailsFromLedger() {
         const selected = $('#edit_party option:selected');
 
-        $('#edit_gst').val(selected.data('gst') || '');
+        // $('#edit_gst').val(selected.data('gst') || '');
+        const ledgerGst = String(selected.data('gst') || '').trim();
+        if (ledgerGst || !String($('#edit_gst').val() || '').trim()) {
+            $('#edit_gst').val(ledgerGst);
+        }
         $('#edit_address').val(selected.data('address') || '');
         $('#edit_pincode').val(selected.data('pincode') || '');
         $('#edit_city').val(selected.data('city') || '');

@@ -484,6 +484,10 @@ class SalesUploadController extends Controller
             return true;
         }
         $ledgerGstNo = $this->normalizeGstNo($partyLookup['details']['gst_no'] ?? null);
+        
+        if ($ledgerGstNo === '') {
+            return true;
+        }
 
         return $uploadedGstNo === $ledgerGstNo;
     }
