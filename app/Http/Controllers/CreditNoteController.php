@@ -1723,20 +1723,21 @@ class CreditNoteController extends Controller
             }
             $partyName = $request->party_name[$id] ?: ($request->ledger[$id] ?? $row->party_name);
             $salesLedgerName = $request->sales_ledger[$id] ?? $row->sales_ledger;
-            $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($row->iPartyId, [
-                'gst_no' => $row->gst_no,
-                'party_name' => $partyName,
-            ]);
-            $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $row->gst_no);
+            // $partyLedgerDetails = $this->resolveUploadPartyLedgerDetails($row->iPartyId, [
+            //     'gst_no' => $row->gst_no,
+            //     'party_name' => $partyName,
+            // ]);
+            // $partyLedgerMatched = $this->isPartyLedgerAcceptedForUpload($partyLedgerDetails, $row->gst_no);
             $salesLedger = $salesLedgerName ? $this->getLedgerByNameNormalized($row->iPartyId, $salesLedgerName) : null;
-            $gstLedgersMatched = $row->is_igst == 1
-                ? ((float) $row->igst <= 0 || !empty($row->igst_id))
-                : (((float) $row->cgst <= 0 || !empty($row->cgst_id)) && ((float) $row->sgst <= 0 || !empty($row->sgst_id)));
-            $gstRatesValid = $this->hasOnlyValidGstSlabs([$row->gst_rate]);
-            $amountMatched = $this->amountsMatchCalculatedTotal((float) $row->taxable_amount, (float) $row->sgst, (float) $row->cgst, (float) $row->igst, $row->total_amount);
-            $rowStatus = ($partyLedgerMatched && !empty($salesLedger) && $gstLedgersMatched && $gstRatesValid && $amountMatched) ? 'saved' : 'pending';
+            // $gstLedgersMatched = $row->is_igst == 1
+            //     ? ((float) $row->igst <= 0 || !empty($row->igst_id))
+            //     : (((float) $row->cgst <= 0 || !empty($row->cgst_id)) && ((float) $row->sgst <= 0 || !empty($row->sgst_id)));
+            // $gstRatesValid = $this->hasOnlyValidGstSlabs([$row->gst_rate]);
+            // $amountMatched = $this->amountsMatchCalculatedTotal((float) $row->taxable_amount, (float) $row->sgst, (float) $row->cgst, (float) $row->igst, $row->total_amount);
+            // $rowStatus = ($partyLedgerMatched && !empty($salesLedger) && $gstLedgersMatched && $gstRatesValid && $amountMatched) ? 'saved' : 'pending';
 
-            $row->update([
+            // $row->update([
+            $row->fill([
                 'note_no'         => $request->note_no[$id] ?? $request->invoice_no[$id] ?? $row->note_no,
                 'note_date'       => $request->note_date[$id] ?? $request->date[$id] ?? $row->note_date,
                 'party_name'      => $partyName,
@@ -1748,9 +1749,14 @@ class CreditNoteController extends Controller
                 'sales_ledger_name' => $salesLedger->name ?? $salesLedger->strCustomerName ?? $row->sales_ledger_name,
                 'remarks'         => $request->remarks[$id] ?? $row->remarks,
 
-                'status'          => $rowStatus,
-                'vch_type'        => $request->voucher_type[$id] ?? 'Credit Note'
+                // 'status'          => $rowStatus,
+                // 'vch_type'        => $request->voucher_type[$id] ?? 'Credit Note'
+                'vch_type'        => $request->voucher_type[$id] ?? 'Credit Note',
+                'status'          => 'pending',
             ]);
+            $row->loadMissing(['items', 'customGst']);
+            $row->status = $this->rematchPendingCreditNoteTransaction($row) ? 'saved' : 'pending';
+            $row->save();
         }
 
         // ===============================
