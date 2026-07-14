@@ -274,8 +274,11 @@
 
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('scripts'); ?>
+<?php echo $__env->make('admin.partials.lazy-select2', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <script>
     $(document).ready(function() {
+        window.showGlobalLoader?.('Preparing sales preview controls...');
+
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
@@ -305,29 +308,32 @@
 
         $('.searchInput').on('input change', applySalesTableFilters);
 
-        $('.placeSelect').select2({
+        window.initLazySelect2('.placeSelect', {
             width: '100%',
             placeholder: "Search Place...",
             allowClear: true,
             dropdownAutoWidth: true
         });
 
-        $('.ledgerSelect').select2({
+        window.initLazySelect2('.ledgerSelect', {
             width: '100%',
             placeholder: "Search Ledger...",
             allowClear: true,
             dropdownAutoWidth: true
         });
 
-        $('.itemSelect').select2({
+        window.initLazySelect2('.itemSelect', {
             width: '100%',
             placeholder: "Search Item...",
             allowClear: true,
             dropdownAutoWidth: true
         });
 
-        $(document).on('focus', '.ledgerSelect', function() {
-            $(this).select2('open');
+        // $(document).on('focus', '.ledgerSelect', function() {
+        //     $(this).select2('open');
+        // });
+        requestAnimationFrame(function() {
+            window.hideGlobalLoader?.();
         });
     });
 
@@ -1610,7 +1616,14 @@
             },
             success: (res) => {
                 if (res.status) {
-                    showToast(res.message || 'Inserted successfully', 'success');
+                    applyPendingIssueHighlights(res.pending_issues || [], res.entry_status || '');
+
+                    if (String(res.entry_status || '').toLowerCase() === 'pending') {
+                        showToast(res.message || 'Updated, but this entry is still pending.', 'error');
+                        return;
+                    }
+
+                    showToast(res.message || 'Updated successfully', 'success');
                     //closeEditModal();
                     location.reload();
                 } else {

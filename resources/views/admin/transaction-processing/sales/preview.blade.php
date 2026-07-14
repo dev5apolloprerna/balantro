@@ -1006,6 +1006,7 @@
     }
 
     $(document).ready(function() {
+        window.showGlobalLoader?.('Preparing sales preview controls...');
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
@@ -1057,6 +1058,10 @@
         // $(document).on('focus', '.ledgerSelect', function() {
         //     $(this).select2('open');
         // });
+
+        requestAnimationFrame(function() {
+            window.hideGlobalLoader?.();
+        });
     });
 
     $(document).on('select2:open', function() {

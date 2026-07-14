@@ -10,10 +10,12 @@ class Ledger extends Model
 {
     private const PREVIEW_CACHE_SECONDS = 60;
 
-    private static function rememberPreviewLookup(int|string $companyId, string $lookup, callable $callback)
+    private static function rememberPreviewLookup(int|string|null $companyId, string $lookup, callable $callback)
     {
+        $cacheCompanyId = $companyId ?? 'none';
+
         return Cache::remember(
-            "preview_lookup:{$companyId}:{$lookup}",
+            "preview_lookup:{$cacheCompanyId}:{$lookup}",
             self::PREVIEW_CACHE_SECONDS,
             $callback
         );

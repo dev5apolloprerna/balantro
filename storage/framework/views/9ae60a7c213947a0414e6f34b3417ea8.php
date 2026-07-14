@@ -2,7 +2,7 @@
 <div id="globalPageLoader" class="fixed inset-0 z-[99999] hidden items-center justify-center bg-black/50" aria-hidden="true">
   <div class="flex flex-col items-center gap-3 rounded-xl bg-white/90 px-6 py-5 shadow-xl dark:bg-gray-900/90">
     <img src="<?php echo e(asset('images/loader.svg')); ?>" class="h-14 w-14 animate-spin" alt="Loading indicator">
-    <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Loading...</span>
+    <span id="globalPageLoaderText" class="text-sm font-medium text-gray-700 dark:text-gray-200">Loading...</span>
   </div>
 </div>
 
@@ -12,9 +12,24 @@
     window.__globalPageLoaderInitialized = true;
 
     const loader = document.getElementById('globalPageLoader');
+    const loaderText = document.getElementById('globalPageLoaderText');
     if (!loader) return;
 
-    const showLoader = () => {
+    const defaultMessage = 'Loading...';
+    const messageForUrl = (url) => {
+        const path = (url.pathname || '').toLowerCase();
+        if (path.includes('/reports') || path.includes('/clients/reports')) return 'Loading report...';
+        if (path.includes('/transaction-processing')) return 'Loading transaction processing...';
+        if (path.includes('/bulkupload') || path.includes('/bulk-upload')) return 'Loading bulk upload preview...';
+        return defaultMessage;
+    };
+
+    const setLoaderMessage = (message) => {
+        if (loaderText) loaderText.textContent = message || defaultMessage;
+    };
+
+    const showLoader = (message) => {
+        setLoaderMessage(message);
         loader.classList.remove('hidden');
         loader.classList.add('flex');
         loader.setAttribute('aria-hidden', 'false');
@@ -48,7 +63,7 @@
         if (!(form instanceof HTMLFormElement) || form.dataset.loader === 'false' || shouldSkipLoaderForForm(form)) return;
 
         setTimeout(function () {
-            if (!event.defaultPrevented) showLoader();
+            if (!event.defaultPrevented) showLoader(messageForUrl(new URL(form.getAttribute('action') || window.location.href, window.location.href)));
         }, 0);
     });
 
@@ -69,8 +84,21 @@
         if (shouldSkipLoaderForUrl(url)) return;
         
         setTimeout(function () {
-            if (!event.defaultPrevented) showLoader();
+            if (!event.defaultPrevented) showLoader(messageForUrl(url));
         }, 0);
+    });
+
+     document.addEventListener('change', function (event) {
+        const field = event.target;
+        if (!(field instanceof HTMLSelectElement) || field.dataset.loader === 'false') return;
+        const hasInlineNavigation = /window\.location|location\.href|location\.assign/i.test(field.getAttribute('onchange') || '');
+        if (hasInlineNavigation && field.value) {
+            showLoader(messageForUrl(new URL(field.value, window.location.href)));
+        }
+    }, true);
+
+    window.addEventListener('beforeunload', function () {
+        showLoader(messageForUrl(new URL(window.location.href)));
     });
 
     window.addEventListener('pageshow', hideLoader);
