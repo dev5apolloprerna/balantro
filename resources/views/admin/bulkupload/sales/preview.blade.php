@@ -1600,7 +1600,14 @@
             },
             success: (res) => {
                 if (res.status) {
-                    showToast(res.message || 'Inserted successfully', 'success');
+                    applyPendingIssueHighlights(res.pending_issues || [], res.entry_status || '');
+
+                    if (String(res.entry_status || '').toLowerCase() === 'pending') {
+                        showToast(res.message || 'Updated, but this entry is still pending.', 'error');
+                        return;
+                    }
+
+                    showToast(res.message || 'Updated successfully', 'success');
                     //closeEditModal();
                     location.reload();
                 } else {

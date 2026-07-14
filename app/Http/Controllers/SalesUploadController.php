@@ -2103,8 +2103,10 @@ class SalesUploadController extends Controller
             ]);
         }
 
+        $updatedTransaction = null;
+
         try {
-            DB::transaction(function () use ($data, $request) {
+            DB::transaction(function () use ($data, $request, &$updatedTransaction) {
 
             $transaction = SalesTransaction::findOrFail($data['id']);
             $voucherType = $request['vchType'] ?? $transaction->vchType;
@@ -2346,6 +2348,7 @@ class SalesUploadController extends Controller
             \Log::info("Final transaction update", ['data' => $updateData]);
 
             $transaction->update($updateData);
+            $updatedTransaction = $transaction->fresh(['items', 'customGst']);
             if ($transaction) {
                 $saved = SalesTransaction::where('upload_id', $transaction->upload_id)
                     ->where('status', 'saved')
@@ -2372,7 +2375,19 @@ class SalesUploadController extends Controller
                 'message' => $e->getMessage()
             ], 422);
         }
-        return response()->json(['status' => true,'message' => 'Updated Successfully']);
+        $pendingIssues = $updatedTransaction
+            ? $this->getSalesPendingIssues($updatedTransaction)
+            : [];
+        $currentStatus = strtolower((string) ($updatedTransaction?->status ?? ''));
+
+        return response()->json([
+            'status' => true,
+            'message' => $currentStatus === 'pending'
+                ? 'Updated, but this sales entry is still pending. Please review the listed issue(s).'
+                : 'Updated Successfully',
+            'entry_status' => $updatedTransaction?->status,
+            'pending_issues' => $pendingIssues,
+        ]);
     }
 
     private function salesVoucherExists($partyId, ?string $vchType, ?string $vchNo, ?string $year, ?int $ignoreId = null): bool
