@@ -906,9 +906,9 @@ class SalesUploadController extends Controller
 
                             'gst_rate'          => round($itemRate,2),
                             'unit'              => $stockItem->strBaseUnits ?? 'NOS',
-                            'cgst_id'           => $itemMapping['cgst_id'],
-                            'sgst_id'           => $itemMapping['sgst_id'],
-                            'igst_id'           => $itemMapping['igst_id'],
+                            // 'cgst_id'           => $itemMapping['cgst_id'],
+                            // 'sgst_id'           => $itemMapping['sgst_id'],
+                            // 'igst_id'           => $itemMapping['igst_id'],
 
                             'amount'            => $item['amount'],
                             'sgst'              => $item['sgst'],
@@ -1334,6 +1334,59 @@ class SalesUploadController extends Controller
         return false;
     }
 
+    private function salesTransactionItemPayload(array $itemData): array
+    {
+        unset(
+            $itemData['id'],
+            $itemData['cgst_id'],
+            $itemData['sgst_id'],
+            $itemData['igst_id'],
+            $itemData['cgst_ledger_id'],
+            $itemData['sgst_ledger_id'],
+            $itemData['igst_ledger_id']
+        );
+
+        return $itemData;
+    }
+
+    private function salesGstLedgerSlotsForSave(Request $request, SalesTransaction $transaction, string $gstMode, float $sumCgst, float $sumSgst, float $sumIgst, array $fallbackMapping): array
+    {
+        if ($gstMode === 'custom' && !empty($request->custom_slots)) {
+            return array_map(fn ($slot) => [
+                'cgst_amount' => $slot['cgst_amount'] ?? 0,
+                'sgst_amount' => $slot['sgst_amount'] ?? 0,
+                'igst_amount' => $slot['igst_amount'] ?? 0,
+                'cgst_ledger_id' => $slot['cgst_ledger_id'] ?? null,
+                'sgst_ledger_id' => $slot['sgst_ledger_id'] ?? null,
+                'igst_ledger_id' => $slot['igst_ledger_id'] ?? null,
+            ], (array) $request->custom_slots);
+        }
+
+        if ((int) $transaction->isWithItem === 1 && !empty($request->items)) {
+            return collect($request->items)->map(function ($item) use ($transaction, $fallbackMapping) {
+                $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item['item_name'] ?? null);
+
+                return [
+                    'cgst_amount' => $item['cgst'] ?? 0,
+                    'sgst_amount' => $item['sgst'] ?? 0,
+                    'igst_amount' => $item['igst'] ?? 0,
+                    'cgst_ledger_id' => $itemMapping['cgst_id'] ?? $fallbackMapping['cgst_id'] ?? null,
+                    'sgst_ledger_id' => $itemMapping['sgst_id'] ?? $fallbackMapping['sgst_id'] ?? null,
+                    'igst_ledger_id' => $itemMapping['igst_id'] ?? $fallbackMapping['igst_id'] ?? null,
+                ];
+            })->all();
+        }
+
+        return [[
+            'cgst_amount' => $sumCgst,
+            'sgst_amount' => $sumSgst,
+            'igst_amount' => $sumIgst,
+            'cgst_ledger_id' => $transaction->cgst_id,
+            'sgst_ledger_id' => $transaction->sgst_id,
+            'igst_ledger_id' => $transaction->igst_id,
+        ]];
+    }
+
     private function hasPendingItemGstLedgers(SalesTransaction $transaction): bool
     {
         foreach ($transaction->items as $item) {
@@ -1516,10 +1569,10 @@ class SalesUploadController extends Controller
 
         foreach ($transaction->items as $item) {
             $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item->item_name);
-            $item->cgst_id = $itemMapping['cgst_id'];
-            $item->sgst_id = $itemMapping['sgst_id'];
-            $item->igst_id = $itemMapping['igst_id'];
-            $item->save();
+            // $item->cgst_id = $itemMapping['cgst_id'];
+            // $item->sgst_id = $itemMapping['sgst_id'];
+            // $item->igst_id = $itemMapping['igst_id'];
+            // $item->save();
 
             if (!$this->hasRequiredGstLedgers([[
                 'cgst_amount' => $item->cgst,
@@ -2175,8 +2228,10 @@ class SalesUploadController extends Controller
                     $itemId = $itemData['id'] ?? null;
 
                     // Prepare data for item (remove id for updates)
-                    $itemDataToSave = $itemData;
-                    unset($itemDataToSave['id']);
+                    // $itemDataToSave = $itemData;
+                    // unset($itemDataToSave['id']);
+                    // Prepare data for item (remove id and non-persisted GST ledger fields for updates)
+                    $itemDataToSave = $this->salesTransactionItemPayload($itemData);
                     $itemDataToSave['iPartyId'] = $transaction->iPartyId;
                     $itemDataToSave['transaction_id'] = $transaction->id;
                     $itemDataToSave['upload_id'] = $transaction->upload_id;
@@ -2308,23 +2363,32 @@ class SalesUploadController extends Controller
             $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
             $partyLookup = $this->getUploadPartyLedgerDetails($transaction->iPartyId, $request['party_name'] ?? null, $request['gst_no'] ?? null);
-            $gstLedgerSlots = $gstMode === 'custom' && !empty($request->custom_slots)
-                ? array_map(fn ($slot) => [
-                    'cgst_amount' => $slot['cgst_amount'] ?? 0,
-                    'sgst_amount' => $slot['sgst_amount'] ?? 0,
-                    'igst_amount' => $slot['igst_amount'] ?? 0,
-                    'cgst_ledger_id' => $slot['cgst_ledger_id'] ?? null,
-                    'sgst_ledger_id' => $slot['sgst_ledger_id'] ?? null,
-                    'igst_ledger_id' => $slot['igst_ledger_id'] ?? null,
-                ], (array) $request->custom_slots)
-                : [[
-                'cgst_amount' => $sumCgst,
-                'sgst_amount' => $sumSgst,
-                'igst_amount' => $sumIgst,
-                'cgst_ledger_id' => $transaction->cgst_id,
-                'sgst_ledger_id' => $transaction->sgst_id,
-                'igst_ledger_id' => $transaction->igst_id,
-            ]];
+            // $gstLedgerSlots = $gstMode === 'custom' && !empty($request->custom_slots)
+            //     ? array_map(fn ($slot) => [
+            //         'cgst_amount' => $slot['cgst_amount'] ?? 0,
+            //         'sgst_amount' => $slot['sgst_amount'] ?? 0,
+            //         'igst_amount' => $slot['igst_amount'] ?? 0,
+            //         'cgst_ledger_id' => $slot['cgst_ledger_id'] ?? null,
+            //         'sgst_ledger_id' => $slot['sgst_ledger_id'] ?? null,
+            //         'igst_ledger_id' => $slot['igst_ledger_id'] ?? null,
+            //     ], (array) $request->custom_slots)
+            //     : [[
+            //     'cgst_amount' => $sumCgst,
+            //     'sgst_amount' => $sumSgst,
+            //     'igst_amount' => $sumIgst,
+            //     'cgst_ledger_id' => $transaction->cgst_id,
+            //     'sgst_ledger_id' => $transaction->sgst_id,
+            //     'igst_ledger_id' => $transaction->igst_id,
+            // ]];
+            $gstLedgerSlots = $this->salesGstLedgerSlotsForSave(
+                $request,
+                $transaction,
+                $gstMode,
+                $sumCgst,
+                $sumSgst,
+                $sumIgst,
+                $gstMapping
+            );
             $hasGstLedgers = $this->hasRequiredGstLedgers($gstLedgerSlots, ((int) ($request->is_igst ?? 0)) === 1);
             $canSave = $this->hasSalesLedgerMatch($sales_ledger_id) &&
                 $this->hasUploadPartyMatch($partyLookup) &&
@@ -2900,23 +2964,32 @@ class SalesUploadController extends Controller
             $roundOffSetting = $this->getRoundOffSetting($iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
             $partyLookup = $this->getUploadPartyLedgerDetails($iPartyId, $request->party, $request->gst);
-            $gstLedgerSlots = ($request->gst_mode ?? 'standard') === 'custom' && !empty($request->custom_slots)
-                ? array_map(fn ($slot) => [
-                    'cgst_amount' => $slot['cgst_amount'] ?? 0,
-                    'sgst_amount' => $slot['sgst_amount'] ?? 0,
-                    'igst_amount' => $slot['igst_amount'] ?? 0,
-                    'cgst_ledger_id' => $slot['cgst_ledger_id'] ?? null,
-                    'sgst_ledger_id' => $slot['sgst_ledger_id'] ?? null,
-                    'igst_ledger_id' => $slot['igst_ledger_id'] ?? null,
-                ], (array) $request->custom_slots)
-                : [[
-                    'cgst_amount' => $sumCgst,
-                    'sgst_amount' => $sumSgst,
-                    'igst_amount' => $sumIgst,
-                    'cgst_ledger_id' => $transaction->cgst_id,
-                    'sgst_ledger_id' => $transaction->sgst_id,
-                    'igst_ledger_id' => $transaction->igst_id,
-                ]];
+            // $gstLedgerSlots = ($request->gst_mode ?? 'standard') === 'custom' && !empty($request->custom_slots)
+            //     ? array_map(fn ($slot) => [
+            //         'cgst_amount' => $slot['cgst_amount'] ?? 0,
+            //         'sgst_amount' => $slot['sgst_amount'] ?? 0,
+            //         'igst_amount' => $slot['igst_amount'] ?? 0,
+            //         'cgst_ledger_id' => $slot['cgst_ledger_id'] ?? null,
+            //         'sgst_ledger_id' => $slot['sgst_ledger_id'] ?? null,
+            //         'igst_ledger_id' => $slot['igst_ledger_id'] ?? null,
+            //     ], (array) $request->custom_slots)
+            //     : [[
+            //         'cgst_amount' => $sumCgst,
+            //         'sgst_amount' => $sumSgst,
+            //         'igst_amount' => $sumIgst,
+            //         'cgst_ledger_id' => $transaction->cgst_id,
+            //         'sgst_ledger_id' => $transaction->sgst_id,
+            //         'igst_ledger_id' => $transaction->igst_id,
+            //     ]];
+            $gstLedgerSlots = $this->salesGstLedgerSlotsForSave(
+                $request,
+                $transaction,
+                $request->gst_mode ?? 'standard',
+                $sumCgst,
+                $sumSgst,
+                $sumIgst,
+                $gstMapping
+            );
             $canSave = $this->hasSalesLedgerMatch($sales_ledger_id) &&
                 $this->hasUploadPartyMatch($partyLookup) &&
                 $this->hasUploadedGstNoMatch($partyLookup, $request->gst) &&
