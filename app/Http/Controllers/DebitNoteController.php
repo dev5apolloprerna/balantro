@@ -1262,7 +1262,8 @@ class DebitNoteController extends Controller
         $rows = DebitNoteTransaction::where('upload_id', $id)
             ->where('status', 'Pending') // or 'pending' if using string
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
 
         // ✅ Voucher Types
         $vchTypes = DB::table('VchHistory')

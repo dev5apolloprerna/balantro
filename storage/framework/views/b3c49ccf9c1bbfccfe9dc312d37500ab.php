@@ -188,15 +188,11 @@
                                 </br >
                                 <!-- Ledger -->
                                 <select name="ledger[<?php echo e($row->id); ?>]"
-                                    class="ledgerSelect inputCell">
-                                    <option value="">Select Ledger</option>
-                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($ledger->name); ?>"
-                                        <?php echo e($row->party_name==$ledger->name ? 'selected' : ''); ?>>
-                                        <?php echo e($ledger->name); ?>
-
-                                    </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    class="ledgerSelect inputCell js-deferred-options"
+                                    data-options-source="previewLedgerOptions"
+                                    data-placeholder="Select Ledger"
+                                    data-selected="<?php echo e($row->party_name); ?>">
+                                    <option value="<?php echo e($row->party_name); ?>" selected><?php echo e($row->party_name ?: 'Select Ledger'); ?></option>
                                 </select>
                             </td>
                             <td class="">
@@ -205,15 +201,11 @@
                             </td>
                             <td class="">
                                 <select name="place_of_supply[<?php echo e($row->id); ?>]"
-                                    class="placeSelect inputCell">
-                                    <option value="">Select State</option>
-                                    <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($state); ?>"
-                                        <?php echo e(strtolower(trim($state)) == strtolower(trim($row->place_of_supply)) ? 'selected':''); ?>>
-                                        <?php echo e($state); ?>
-
-                                    </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    class="placeSelect inputCell js-deferred-options"
+                                    data-options-source="previewStateOptions"
+                                    data-placeholder="Select State"
+                                    data-selected="<?php echo e($row->place_of_supply); ?>">
+                                    <option value="<?php echo e($row->place_of_supply); ?>" selected><?php echo e($row->place_of_supply ?: 'Select State'); ?></option>
                                 </select>
                             </td>
                             <td class=" text-right">
@@ -274,9 +266,13 @@
 
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('scripts'); ?>
+<?php echo $__env->make('admin.partials.deferred-select-options', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <?php echo $__env->make('admin.partials.lazy-select2', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <script>
     $(document).ready(function() {
+        window.previewLedgerOptions = <?php echo json_encode(collect($ledgers)->pluck('name')->values(), 15, 512) ?>;
+        window.previewStateOptions = <?php echo json_encode(collect($states)->values(), 15, 512) ?>;
+        window.hydrateDeferredSelectOptions?.('#salesTable .js-deferred-options');
         window.showGlobalLoader?.('Preparing preview table...');    
 
         $('#selectAll').click(function() {

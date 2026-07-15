@@ -26,7 +26,7 @@
     align-items: center;
     justify-content: center;
     gap: 1.4rem;
-    width: min(92vw, 15.25rem);
+    width: min(92vw, 8.25rem);
     min-height: 9.4rem;
     border: 1px solid rgba(59, 130, 246, 0.28);
     border-radius: 0.875rem;

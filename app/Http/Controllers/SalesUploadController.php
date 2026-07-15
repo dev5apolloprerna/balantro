@@ -1666,10 +1666,28 @@ class SalesUploadController extends Controller
             return redirect()->route('data_entry_operators.bulkuploadsales')
                 ->with('error', 'Please select company first');
         }
-        $rows = SalesTransaction::where('upload_id', $id)
+        $rows = SalesTransaction::query()
+            ->select([
+                'id',
+                'upload_id',
+                'iPartyId',
+                'invoice_no',
+                'date',
+                'gst_no',
+                'party_name',
+                'place_of_supply',
+                'total_amount',
+                'status',
+                'vchType',
+                'igst_id',
+                'cgst_id',
+                'sgst_id',
+            ])
+            ->where('upload_id', $id)
             ->where('status', 'pending')
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
 
         $commonData = $this->getCommonData();
         $commonData['iGstLedgers'] = Ledger::mergeLedgersByIds(

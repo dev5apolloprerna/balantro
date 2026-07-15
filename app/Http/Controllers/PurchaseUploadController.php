@@ -1539,7 +1539,8 @@ class PurchaseUploadController extends Controller
         $rows = PurchaseTransaction::where('upload_id', $id)
             ->where('status', 'pending')
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
             ->where('vchType', 'Purchase')

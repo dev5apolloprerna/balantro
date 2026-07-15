@@ -1006,7 +1006,7 @@
     }
 
     $(document).ready(function() {
-        window.showGlobalLoader?.('Preparing preview table...');
+        window.showGlobalLoader?.('Loading...');
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });

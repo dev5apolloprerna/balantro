@@ -229,17 +229,7 @@
                             <td class="px-3 py-2">
                                 @php($selectedLedgerName = trim((string) ($row->ledger_name ?? '')))
                                 <select name="ledger[{{$row->id}}]" class="ledgerSelect inputCell" data-selected="{{ $selectedLedgerName }}" {{ $row->is_suspense == 1 ? 'disabled' : '' }}>
-                                    <option value="">Select Ledger</option>
-                                    @foreach($allLedgers as $ledger)
-                                    <option value="{{$ledger->name}}" {{ $selectedLedgerName === $ledger->name ? 'selected' : '' }}>
-                                        {{$ledger->name}}
-                                    </option>
-                                    @endforeach
-                                    @if($selectedLedgerName !== '' && !collect($allLedgers)->contains('name', $selectedLedgerName))
-                                    <option value="{{ $selectedLedgerName }}" selected>
-                                        {{ $selectedLedgerName }}
-                                    </option>
-                                    @endif
+                                    <option value="{{ $selectedLedgerName }}" selected>{{ $selectedLedgerName ?: 'Select Ledger' }}</option>
                                 </select>
                             </td>
                             <td class="px-3 py-2">
@@ -1084,6 +1074,15 @@
             return;
         }
 
+        const row = ledgerDropdown.closest('tr');
+        const type = row.find('select[name^="type"]').val()?.toLowerCase() || '';
+        const selectedLedger = ledgerDropdown.val() || ledgerDropdown.data('selected') || '';
+        if (ledgerDropdown.data('optionsHydrated') !== 1) {
+            ledgerDropdown.html(getLedgerOptions(type, selectedLedger));
+            ledgerDropdown.val(selectedLedger || '');
+            ledgerDropdown.data('optionsHydrated', 1);
+        }
+
         ledgerDropdown.select2({
             width: '100%',
             placeholder: "Search Ledger...",
@@ -1118,18 +1117,19 @@
         });
 
         // 🔥 INITIAL LOAD FIX (MAIN SOLUTION)
-        $('#bankTable tbody tr').each(function() {
+        // $('#bankTable tbody tr').each(function() {
 
-            let row = $(this);
-            let type = row.find('select[name^="type"]').val().toLowerCase();
-            let ledgerDropdown = row.find('select[name^="ledger"]');
-            let selectedLedger = ledgerDropdown.data('selected') || ledgerDropdown.val();
+        //     let row = $(this);
+        //     let type = row.find('select[name^="type"]').val().toLowerCase();
+        //     let ledgerDropdown = row.find('select[name^="ledger"]');
+        //     let selectedLedger = ledgerDropdown.data('selected') || ledgerDropdown.val();
 
-            // Keep the saved ledger selected even when the type-specific ledger list changes.
-            ledgerDropdown.html(getLedgerOptions(type, selectedLedger));
-            ledgerDropdown.val(selectedLedger || '');
+        //     // Keep the saved ledger selected even when the type-specific ledger list changes.
+        //     ledgerDropdown.html(getLedgerOptions(type, selectedLedger));
+        //     ledgerDropdown.val(selectedLedger || '');
 
-        });
+        // });
+        // Row ledger options are hydrated only when the user opens a row dropdown.
 
     });
 

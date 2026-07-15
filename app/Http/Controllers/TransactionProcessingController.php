@@ -192,7 +192,8 @@ class TransactionProcessingController extends Controller
         $rows = SalesTransaction::where('upload_id', $id)
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
         
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
@@ -310,7 +311,8 @@ class TransactionProcessingController extends Controller
         $rows = PurchaseTransaction::where('upload_id', $id)
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
             ->where('vchType', 'Purchase')
@@ -388,7 +390,8 @@ class TransactionProcessingController extends Controller
         $rows = BankTransaction::where('upload_id', $id)
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
         
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
@@ -653,7 +656,8 @@ class TransactionProcessingController extends Controller
         $rows = CreditNoteTransaction::where('upload_id', $id)
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
         
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
@@ -786,7 +790,8 @@ class TransactionProcessingController extends Controller
         $rows = DebitNoteTransaction::where('upload_id', $id)
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
         
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
@@ -943,7 +948,8 @@ class TransactionProcessingController extends Controller
         $rows = JournalTransaction::where('upload_id', $id)
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
-            ->paginate(50);
+            ->orderBy('id')
+            ->simplePaginate(50);
         $ledgers = Ledger::getAllLedgers($iPartyId);
         return view('admin.transaction-processing.journal.preview', compact(
             'rows',
