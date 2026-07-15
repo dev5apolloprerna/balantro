@@ -2,7 +2,7 @@
 <div id="globalPageLoader" class="global-page-loader hidden" aria-hidden="true" role="status" aria-live="polite">
   <div class="global-page-loader__panel">
     <div class="global-page-loader__mark" aria-hidden="true">
-      <span></span><span></span><span></span>
+      <img src="<?php echo e(asset('images/loader.svg')); ?>" alt="" class="global-page-loader__image">
     </div>
     <div class="global-page-loader__copy">
       <span id="globalPageLoaderText" class="global-page-loader__title">Loading...</span>
@@ -40,40 +40,27 @@
     background: rgba(15, 23, 42, 0.96);
   }
   .global-page-loader__mark {
-    position: relative;
-    width: 3rem;
-    height: 3rem;
+    width: 4rem;
+    height: 4rem;
     flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .global-page-loader__mark::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 9999px;
-    border: 3px solid rgba(37, 99, 235, 0.16);
-    border-top-color: #2563eb;
-    animation: globalPageLoaderSpin 0.85s linear infinite;
+  
+  .global-page-loader__image {
+    width: 4rem;
+    height: 4rem;
+    object-fit: contain;
+    filter: invert(1) brightness(0);
   }
-  .global-page-loader__mark span {
-    position: absolute;
-    top: 50%;
-    width: 0.38rem;
-    height: 0.38rem;
-    margin-top: -0.19rem;
-    border-radius: 9999px;
-    background: #2563eb;
-    animation: globalPageLoaderPulse 1.05s ease-in-out infinite;
-  }
-  .global-page-loader__mark span:nth-child(1) { left: 0.92rem; animation-delay: 0s; }
-  .global-page-loader__mark span:nth-child(2) { left: 1.34rem; animation-delay: 0.12s; }
-  .global-page-loader__mark span:nth-child(3) { left: 1.76rem; animation-delay: 0.24s; }
+
   .global-page-loader__copy { display: flex; min-width: 0; flex-direction: column; gap: 0.2rem; }
   .global-page-loader__title { color: #0f172a; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
   .global-page-loader__subtitle { color: #64748b; font-size: 0.78rem; font-weight: 500; }
   .dark .global-page-loader__title { color: #f8fafc; }
   .dark .global-page-loader__subtitle { color: #cbd5e1; }
-  @keyframes globalPageLoaderSpin { to { transform: rotate(360deg); } }
-  @keyframes globalPageLoaderPulse { 0%, 80%, 100% { opacity: 0.35; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+  
 </style>
 
 <script>

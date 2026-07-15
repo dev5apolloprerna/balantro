@@ -122,7 +122,7 @@
         html.bulk-preview-preparing .dashboard-main-body::before {
             content: '';
             width: 244px;
-            min-height: 128px;
+            min-height: 150px;
             border: 1px solid rgba(148, 163, 184, 0.12);
             border-radius: 0.875rem;
             background: rgba(15, 23, 42, 0.96);
@@ -130,19 +130,23 @@
         }
 
         html.bulk-preview-preparing .dashboard-main-body::after {
-            content: '⏳\A Loading preview table...';
-            white-space: pre-line;
+            content: 'Loading preview table...';
             width: 244px;
-            min-height: 128px;
+            min-height: 150px;
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             justify-content: center;
-            gap: 0.75rem;
+            padding-bottom: 1.65rem;
             color: #e5e7eb;
             text-align: center;
             font-weight: 700;
-            line-height: 2.2;
+            line-height: 1.4;
             letter-spacing: 0.01em;
+            background-image: url('{{ asset('images/loader.svg') }}');
+            background-repeat: no-repeat;
+            background-position: center 1.35rem;
+            background-size: 4rem 4rem;
+            filter: invert(1) brightness(1.8);
             animation: previewTablePulse 1.1s ease-in-out infinite;
         }
 
