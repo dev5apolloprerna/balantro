@@ -1006,7 +1006,7 @@
     }
 
     $(document).ready(function() {
-        window.showGlobalLoader?.('Preparing sales preview controls...');
+        window.showGlobalLoader?.('Preparing preview table...');
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
         });
@@ -1059,9 +1059,7 @@
         //     $(this).select2('open');
         // });
 
-        requestAnimationFrame(function() {
-            window.hideGlobalLoader?.();
-        });
+        window.hideGlobalLoaderWhenIdle?.(180);
     });
 
     $(document).on('select2:open', function() {

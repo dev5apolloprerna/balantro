@@ -267,7 +267,7 @@
 @include('admin.partials.lazy-select2')
 <script>
     $(document).ready(function() {
-        window.showGlobalLoader?.('Preparing sales preview controls...');
+        window.showGlobalLoader?.('Preparing preview table...');    
 
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);
@@ -322,9 +322,7 @@
         // $(document).on('focus', '.ledgerSelect', function() {
         //     $(this).select2('open');
         // });
-        requestAnimationFrame(function() {
-            window.hideGlobalLoader?.();
-        });
+        window.hideGlobalLoaderWhenIdle?.(180);
     });
 
     function resetSalesModalState() {
