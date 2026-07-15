@@ -84,6 +84,17 @@
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
+         html.bulk-preview-preparing .dashboard-main-body {
+            position: relative;
+            min-height: 420px;
+        }
+
+        html.bulk-preview-preparing .group-block {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
         /* Stabilize bulk upload and transaction-processing preview tables.
            These pages render many inputs/select2 controls; fixed layout prevents the
            browser from repeatedly recalculating column widths while controls hydrate. */
