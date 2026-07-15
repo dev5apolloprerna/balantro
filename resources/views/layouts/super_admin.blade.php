@@ -98,7 +98,6 @@
         /* Stabilize bulk upload and transaction-processing preview tables.
            These pages render many inputs/select2 controls; fixed layout prevents the
            browser from repeatedly recalculating column widths while controls hydrate. */
-        .group-block > table,
         .group-block .preview-stable-table {
             table-layout: fixed;
         }
