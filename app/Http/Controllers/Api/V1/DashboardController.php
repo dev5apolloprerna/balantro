@@ -225,14 +225,15 @@ class DashboardController extends BaseApiController
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
             $partyId = (int) $user->id;
+            $profitLossBalanceSheet = $this->buildProfitLossBalanceSheetPayload($user, $partyId, $from, $to);
 
             return $this->success(__("response_message.dashboard.dashboard_data"), [
                 'range' => ['from' => $from, 'to' => $to],
                 'year_listing' => $this->buildYearListingPayload($partyId),
                 'dropdown_type_list' => $this->buildDropdownTypeListPayload(),
                 'monthly_financial_columns' => $this->buildMonthlyFinancialColumnsPayload($partyId, $from, $to),
-                'group_balances' => $this->buildGroupBalancesPayload($partyId, $from, $to),
-                'profit_loss_balance_sheet' => $this->buildProfitLossBalanceSheetPayload($user, $partyId, $from, $to),
+                'group_balances' => $this->buildGroupBalancesPayload($partyId, $from, $to, $profitLossBalanceSheet),
+                'profit_loss_balance_sheet' => $profitLossBalanceSheet,
             ]);
         } catch (\Exception $e) {
             return $this->error(__("response_message.dashboard.dashboard_error"), 500, $e->getMessage());
@@ -837,50 +838,6 @@ class DashboardController extends BaseApiController
 		}
 	}
 
-    // public function getGroupBalances(Request $request)
-    // {
-    //     try {
-    //         $user = auth()->user();
-
-    //         if ($user->role != User::ROLES['client']) {
-    //             return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
-    //         }
-
-    //         $validator = Validator::make($request->all(), [
-    //             'from' => 'nullable|date_format:Y-m-d',
-    //             'to' => 'nullable|date_format:Y-m-d|after_or_equal:from'
-    //         ]);
-
-    //         if ($validator->fails()) {
-    //             return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
-    //         }
-
-    //         $userId = (int) $user->id;
-    //         $from = $request->input('from');
-    //         $to = $request->input('to');
-
-    //         // $groupsWithBalances = $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
-    //         $groupsWithBalances = Cache::remember("api_dashboard:{$userId}:group_balances:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($userId, $from, $to) {
-    //             return $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
-    //         });
-
-    //         $groups = collect($groupsWithBalances)->map(function ($group) {
-    //             return [
-    //                 'iGroupId' => (int)$group->iGroupId,
-    //                 'strGroupName' => $group->strGroupName,
-    //                 'Closing' => (float)($group->Closing ?? 0),
-    //                 'Opening' => (float)($group->Opening ?? 0),
-    //                 'accent' => $this->getAccentColor($group->strGroupName),
-    //                 'icon' => $this->getGroupIcon($group->strGroupName)
-    //             ];
-    //         })->values()->toArray();
-
-    //         return $this->success(__("response_message.dashboard.groups_loaded"), $groups);
-    //     } catch (\Exception $e) {
-    //         return $this->error(__("response_message.dashboard.groups_error"), 500, $e->getMessage());
-    //     }
-    // }
-
     public function getGroupBalances(Request $request)
     {
         try {
@@ -901,26 +858,32 @@ class DashboardController extends BaseApiController
 
             $userId = (int) $user->id;
             [$from, $to] = $this->resolveDashboardDateRange($request);
+            $profitLossBalanceSheet = $this->buildProfitLossBalanceSheetPayload($user, $userId, $from, $to);
 
-            return $this->success(__("response_message.dashboard.groups_loaded"), $this->buildGroupBalancesPayload($userId, $from, $to));
+            return $this->success(__("response_message.dashboard.groups_loaded"), $this->buildGroupBalancesPayload($userId, $from, $to, $profitLossBalanceSheet));
         } catch (\Exception $e) {
             return $this->error(__("response_message.dashboard.groups_error"), 500, $e->getMessage());
         }
     }
     
-    private function buildGroupBalancesPayload(int $userId, ?string $from, ?string $to): array
+    private function buildGroupBalancesPayload(int $userId, ?string $from, ?string $to, array $profitLossBalanceSheet): array
     {
         $allGroups = collect($this->getDashboardGroupsWithBalances($userId, $from, $to));
         $defaultGroupIds = $this->defaultDashboardGroupIds($allGroups);
         $validSelectedGroups = $this->selectedDashboardGroupIds($userId, $allGroups, $defaultGroupIds);
-        
+        $profitLossAmount = $this->profitLossAmountFromBalanceSheetPayload($profitLossBalanceSheet);
         $groups = $allGroups
             ->whereIn('iGroupId', $validSelectedGroups)
-            ->map(function ($group) {
+            ->map(function ($group) use ($profitLossAmount) {
+                $closing = (float) ($group->Closing ?? 0);
+
+                if ($group->strGroupName === 'Capital Account') {
+                    $closing += $profitLossAmount;
+                }
                 return [
                     'iGroupId' => (int) $group->iGroupId,
                     'strGroupName' => $group->strGroupName,
-                    'Closing' => (float) ($group->Closing ?? 0),
+                    'Closing' => round($closing),
                     'Opening' => (float) ($group->Opening ?? 0),
                     'accent' => $this->getAccentColor($group->strGroupName),
                     'icon' => $this->getGroupIcon($group->strGroupName),
@@ -960,6 +923,19 @@ class DashboardController extends BaseApiController
                 'default_group_ids' => $defaultGroupIds,
                 'group_cards' => $groupCards,
             ];
+    }
+
+     private function profitLossAmountFromBalanceSheetPayload(array $profitLossBalanceSheet): float
+    {
+        foreach (($profitLossBalanceSheet['balance_sheet']['raw']['rows'] ?? []) as $row) {
+            $row = (array) $row;
+
+            if (($row['Side'] ?? null) === 'CR' && ($row['strGroupName'] ?? null) === 'Profit & Loss A/c') {
+                return (float) ($row['decMainAmount'] ?? 0);
+            }
+        }
+
+        return 0.0;
     }
 
     private function buildCustomGroupPayload(int $userId, ?string $from, ?string $to): array

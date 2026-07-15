@@ -42,6 +42,14 @@
     <script>
         window.jQuery || document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"><\/script>');
     </script>
+    <script>
+        (function() {
+            var path = window.location.pathname;
+            if (/\/(sales|purchase|bank|credit[-_]note|debit[-_]note|journal)[-_]preview\//.test(path) || /\/(sales|purchase|bank|credit[-_]note|debit[-_]note|journal)\/preview\//.test(path)) {
+                document.documentElement.classList.add('bulk-preview-preparing');
+            }
+        })();
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script>
         window.jQuery && window.jQuery.fn && window.jQuery.fn.select2 || document.write('<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"><\/script>');
@@ -82,6 +90,41 @@
         header,
         .theme-transition {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Professional loading state for heavy bulk upload and transaction preview tables.
+           The table is revealed after page/select controls finish hydrating to avoid visible jitter. */
+        html.bulk-preview-preparing .dashboard-main-body {
+            position: relative;
+            min-height: 420px;
+        }
+
+        html.bulk-preview-preparing .group-block {
+            opacity: 0;
+        }
+
+        html.bulk-preview-preparing .dashboard-main-body::after {
+            content: 'Preparing preview table...';
+            position: absolute;
+            inset: 96px 24px auto 24px;
+            min-height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 0.75rem;
+            background: linear-gradient(90deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.92));
+            background-size: 200% 100%;
+            color: #e5e7eb;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            z-index: 30;
+            animation: previewTableShimmer 1.4s ease-in-out infinite;
+        }
+
+        @keyframes previewTableShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
         /* Stabilize bulk upload and transaction-processing preview tables.
@@ -313,6 +356,19 @@
                             color: #ffffff !important;
                         }
                     </style>
+                    <script>
+                        (function() {
+                            function revealPreviewTables() {
+                                document.documentElement.classList.remove('bulk-preview-preparing');
+                            }
+
+                            window.addEventListener('load', function() {
+                                window.setTimeout(revealPreviewTables, 150);
+                            });
+
+                            window.setTimeout(revealPreviewTables, 4500);
+                        })();
+                    </script>
                     <script>
                         $(document).on('select2:open', function() {
                             const isDark = document.documentElement.classList.contains('dark');

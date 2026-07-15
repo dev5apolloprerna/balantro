@@ -232,8 +232,8 @@
                                                 <button
                                                     type="submit"
                                                     title="Re-Match pending entries"
-                                                    class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
-                                                    <i class="fa-solid fa-repeat"></i>
+                                                    class="inline-flex items-center gap-1 rounded-md border border-blue-500/70 bg-blue-600/10 px-2 py-1 text-blue-400 hover:bg-blue-600 hover:text-white font-semibold text-xs transition" aria-label="Re-match pending entries">
+                                                    <i class="fa-solid fa-arrows-rotate action-icon"></i>
                                                 </button>
                                             </form>
                                             @endif
