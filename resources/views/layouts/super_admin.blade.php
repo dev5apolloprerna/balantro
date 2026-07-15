@@ -45,7 +45,11 @@
     <script>
         (function() {
             var path = window.location.pathname;
-            if (/\/(sales|purchase|bank|credit[-_]note|debit[-_]note|journal)[-_]preview\//.test(path) || /\/(sales|purchase|bank|credit[-_]note|debit[-_]note|journal)\/preview\//.test(path)) {
+            var previewPattern = /\/(sales|purchase|bank|credit[-_]note|debit[-_]note|journal)[-_]preview\//;
+            var nestedPreviewPattern = /\/(sales|purchase|bank|credit[-_]note|debit[-_]note|journal)\/preview\//;
+            var processingPreviewPattern = /\/processing-(sales|purchase|bank|credit[-_]note|debit[-_]note|journal)\/preview\//;
+
+            if (previewPattern.test(path) || nestedPreviewPattern.test(path) || processingPreviewPattern.test(path)) {
                 document.documentElement.classList.add('bulk-preview-preparing');
             }
         })();
@@ -101,30 +105,62 @@
 
         html.bulk-preview-preparing .group-block {
             opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        html.bulk-preview-preparing .dashboard-main-body::before,
+        html.bulk-preview-preparing .dashboard-main-body::after {
+            position: absolute;
+            z-index: 30;
+            pointer-events: none;
+        }
+        
+        html.bulk-preview-preparing .dashboard-main-body::before {
+           content: '';
+            top: 224px;
+            left: 50%;
+            width: 44px;
+            height: 44px;
+            margin-left: -22px;
+            border-radius: 9999px;
+            border: 3px solid rgba(14, 165, 233, 0.18);
+            border-top-color: #38bdf8;
+            box-shadow: 0 0 22px rgba(56, 189, 248, 0.25);
+            animation: previewTableSpin 0.8s linear infinite;
         }
 
         html.bulk-preview-preparing .dashboard-main-body::after {
-            content: 'Preparing preview table...';
-            position: absolute;
+            content: 'Preparing preview table\A Loading rows and controls. Please wait...';
+            white-space: pre-line;
             inset: 96px 24px auto 24px;
             min-height: 320px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            border-radius: 0.75rem;
-            background: linear-gradient(90deg, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.92));
-            background-size: 200% 100%;
+            padding-top: 86px;
+            border: 1px solid rgba(56, 189, 248, 0.28);
+            border-radius: 0.875rem;
+            background:
+                linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.12), transparent) 0 0 / 220% 100%,
+                repeating-linear-gradient(0deg, rgba(148, 163, 184, 0.08) 0 1px, transparent 1px 44px),
+                linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.98));
             color: #e5e7eb;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            z-index: 30;
-            animation: previewTableShimmer 1.4s ease-in-out infinite;
+            text-align: center;
+            font-weight: 700;
+            line-height: 1.65;
+            letter-spacing: 0.01em;
+            box-shadow: 0 18px 45px rgba(2, 6, 23, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: previewTableShimmer 1.35s ease-in-out infinite;
+        }
+
+        @keyframes previewTableSpin {
+            to { transform: rotate(360deg); }
         }
 
         @keyframes previewTableShimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% { background-position: 220% 0, 0 0, 0 0; }
+            100% { background-position: -220% 0, 0 0, 0 0; }
         }
 
         /* Stabilize bulk upload and transaction-processing preview tables.
@@ -363,10 +399,14 @@
                             }
 
                             window.addEventListener('load', function() {
-                                window.setTimeout(revealPreviewTables, 150);
+                                window.requestAnimationFrame(function() {
+                                    window.requestAnimationFrame(function() {
+                                        window.setTimeout(revealPreviewTables, 250);
+                                    });
+                                });
                             });
 
-                            window.setTimeout(revealPreviewTables, 4500);
+                            window.setTimeout(revealPreviewTables, 5000);
                         })();
                     </script>
                     <script>
