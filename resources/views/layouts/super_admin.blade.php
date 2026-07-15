@@ -42,18 +42,6 @@
     <script>
         window.jQuery || document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"><\/script>');
     </script>
-    <script>
-        (function() {
-            var path = window.location.pathname;
-            var previewPattern = /\/(sales|purchase|bank|credit|credit[-_]note|debit|debit[-_]note|journal)[-_]preview\//;
-            var nestedPreviewPattern = /\/(sales|purchase|bank|credit|credit[-_]note|debit|debit[-_]note|journal)\/preview\//;
-            var processingPreviewPattern = /\/processing-(sales|purchase|bank|credit|credit[-_]note|debit|debit[-_]note|journal)\/preview\//;
-
-            if (previewPattern.test(path) || nestedPreviewPattern.test(path) || processingPreviewPattern.test(path)) {
-                document.documentElement.classList.add('bulk-preview-preparing');
-            }
-        })();
-    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script>
         window.jQuery && window.jQuery.fn && window.jQuery.fn.select2 || document.write('<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"><\/script>');
@@ -94,65 +82,6 @@
         header,
         .theme-transition {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        }
-
-        /* Professional loading state for heavy bulk upload and transaction preview tables.
-           The table is revealed after page/select controls finish hydrating to avoid visible jitter. */
-        html.bulk-preview-preparing .dashboard-main-body {
-            position: relative;
-            min-height: 420px;
-        }
-
-        html.bulk-preview-preparing .group-block {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        html.bulk-preview-preparing .dashboard-main-body::before,
-        html.bulk-preview-preparing .dashboard-main-body::after {
-            position: fixed;
-            z-index: 99998;
-            pointer-events: none;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        html.bulk-preview-preparing .dashboard-main-body::before {
-            content: '';
-            width: 244px;
-            min-height: 150px;
-            border: 1px solid rgba(148, 163, 184, 0.12);
-            border-radius: 0.875rem;
-            background: rgba(15, 23, 42, 0.96);
-            box-shadow: 0 24px 70px rgba(2, 6, 23, 0.42);
-        }
-
-        html.bulk-preview-preparing .dashboard-main-body::after {
-            content: 'Loading preview table...';
-            width: 244px;
-            min-height: 150px;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding-bottom: 1.65rem;
-            color: #e5e7eb;
-            text-align: center;
-            font-weight: 700;
-            line-height: 1.4;
-            letter-spacing: 0.01em;
-            background-image: url('{{ asset('images/loader.svg') }}');
-            background-repeat: no-repeat;
-            background-position: center 1.35rem;
-            background-size: 4rem 4rem;
-            filter: invert(1) brightness(1.8);
-            animation: previewTablePulse 1.1s ease-in-out infinite;
-        }
-
-        @keyframes previewTablePulse {
-            0%, 100% { opacity: 0.72; }
-            50% { opacity: 1; }
         }
 
         /* Stabilize bulk upload and transaction-processing preview tables.
@@ -384,23 +313,7 @@
                             color: #ffffff !important;
                         }
                     </style>
-                    <script>
-                        (function() {
-                            function revealPreviewTables() {
-                                document.documentElement.classList.remove('bulk-preview-preparing');
-                            }
-
-                            window.addEventListener('load', function() {
-                                window.requestAnimationFrame(function() {
-                                    window.requestAnimationFrame(function() {
-                                        window.setTimeout(revealPreviewTables, 250);
-                                    });
-                                });
-                            });
-
-                            window.setTimeout(revealPreviewTables, 5000);
-                        })();
-                    </script>
+                    
                     <script>
                         $(document).on('select2:open', function() {
                             const isDark = document.documentElement.classList.contains('dark');

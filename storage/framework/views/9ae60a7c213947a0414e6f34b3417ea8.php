@@ -1,13 +1,8 @@
 
 <div id="globalPageLoader" class="global-page-loader hidden" aria-hidden="true" role="status" aria-live="polite">
   <div class="global-page-loader__panel">
-    <div class="global-page-loader__mark" aria-hidden="true">
-      <img src="<?php echo e(asset('images/loader.svg')); ?>" alt="" class="global-page-loader__image">
-    </div>
-    <div class="global-page-loader__copy">
-      <span id="globalPageLoaderText" class="global-page-loader__title">Loading...</span>
-      <span class="global-page-loader__subtitle">Please wait while we prepare the data.</span>
-    </div>
+    <img src="<?php echo e(asset('images/loader.svg')); ?>" alt="" class="global-page-loader__image" aria-hidden="true">
+    <span id="globalPageLoaderText" class="global-page-loader__title">Loading...</span>
   </div>
 </div>
 <style>
@@ -19,47 +14,46 @@
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    background: rgba(15, 23, 42, 0.58);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background: transparent;
+    pointer-events: none;
   }
-  .global-page-loader.hidden { display: none; }
+    .global-page-loader.hidden { display: none; }
+  html.bulk-preview-preparing #globalPageLoader { display: flex; }
+
   .global-page-loader__panel {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    min-width: min(92vw, 23rem);
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.96);
-    padding: 1rem 1.15rem;
-    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
-  }
-  .dark .global-page-loader__panel {
-    border-color: rgba(71, 85, 105, 0.7);
-    background: rgba(15, 23, 42, 0.96);
-  }
-  .global-page-loader__mark {
-    width: 4rem;
-    height: 4rem;
-    flex: 0 0 auto;
-    display: flex;
+     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 1.4rem;
+    width: min(92vw, 15.25rem);
+    min-height: 9.4rem;
+    border: 1px solid rgba(59, 130, 246, 0.28);
+    border-radius: 0.875rem;
+    background: rgba(15, 23, 42, 0.94);
+    padding: 1.8rem 1.25rem 1.55rem;
+    box-shadow: 0 24px 70px rgba(2, 6, 23, 0.34);
   }
   
   .global-page-loader__image {
     width: 4rem;
     height: 4rem;
     object-fit: contain;
-    filter: invert(1) brightness(0);
   }
 
-  .global-page-loader__copy { display: flex; min-width: 0; flex-direction: column; gap: 0.2rem; }
-  .global-page-loader__title { color: #0f172a; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
-  .global-page-loader__subtitle { color: #64748b; font-size: 0.78rem; font-weight: 500; }
-  .dark .global-page-loader__title { color: #f8fafc; }
-  .dark .global-page-loader__subtitle { color: #cbd5e1; }
+.global-page-loader__title {
+    color: #e5e7eb;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: center;
+    letter-spacing: -0.01em;
+  }
+
+  .dark .global-page-loader__panel {
+    border-color: rgba(59, 130, 246, 0.32);
+    background: rgba(15, 23, 42, 0.94);
+  }
   
 </style>
 
@@ -140,7 +134,7 @@
 
     if (isHeavyPreviewPage()) {
         showLoader(messageForUrl(new URL(window.location.href)));
-        hideLoaderWhenIdle(260);
+        hideLoaderWhenIdle(120);
     }
 
     document.addEventListener('submit', function (event) {
