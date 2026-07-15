@@ -84,6 +84,32 @@
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
+        /* Stabilize bulk upload and transaction-processing preview tables.
+           These pages render many inputs/select2 controls; fixed layout prevents the
+           browser from repeatedly recalculating column widths while controls hydrate. */
+        .group-block > table,
+        .group-block .preview-stable-table {
+            table-layout: fixed;
+        }
+
+        .group-block th,
+        .group-block td {
+            overflow-wrap: anywhere;
+            vertical-align: top;
+        }
+
+        .group-block input,
+        .group-block select,
+        .group-block textarea,
+        .group-block .select2-container {
+            max-width: 100% !important;
+            min-width: 0;
+        }
+
+        .group-block .select2-container {
+            width: 100% !important;
+        }
+        
         /* Responsive action icons: compact on small screens, clearer on large displays. */
         .action-icon {
             font-size: 0.875rem;
