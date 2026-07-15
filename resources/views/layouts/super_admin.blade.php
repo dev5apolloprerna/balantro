@@ -37,6 +37,17 @@
         };
     </script>
 
+    <!-- jQuery and Select2 are loaded before page content so inline preview scripts can use $ safely. -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        window.jQuery || document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"><\/script>');
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script>
+        window.jQuery && window.jQuery.fn && window.jQuery.fn.select2 || document.write('<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"><\/script>');
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
     <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 
     <style>
@@ -228,19 +239,6 @@
                     </div>
 
                     @yield('content')
-                    <!-- jQuery -->
-                    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                    <script>
-                        window.jQuery || document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"><\/script>');
-                    </script>
-                    <!-- Select2 -->
-                    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script> -->
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-                    <script>
-                        window.jQuery && window.jQuery.fn && window.jQuery.fn.select2 || document.write('<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"><\/script>');
-                    </script>
-                    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-
                     <style>
                         /* Keep native and Select2 dropdowns dark immediately when the page is in dark mode. */
                         .dark select,
