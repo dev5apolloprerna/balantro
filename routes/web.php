@@ -124,7 +124,9 @@ Route::middleware(['auth:web', 'nocache'])->group(function () {
             
             Session::put('year_from', $fromDate);
             Session::put('year_to', $toDate);
-
+            Session::put('selectedRange', $year);
+            Session::put('selectedFrom', $fromDate);
+            Session::put('selectedTo', $toDate);
             return back();
         })->name('sales.select.year');
         Route::post('/sales-update',[\App\Http\Controllers\SalesUploadController::class,'update'])->name('sales.update');

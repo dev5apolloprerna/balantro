@@ -1,10 +1,80 @@
-{{-- Global page loader. Hidden by default; shown for normal same-page form submits and same-window navigation. --}}
-<div id="globalPageLoader" class="fixed inset-0 z-[99999] hidden items-center justify-center bg-black/50" aria-hidden="true">
-  <div class="flex flex-col items-center gap-3 rounded-xl bg-white/90 px-6 py-5 shadow-xl dark:bg-gray-900/90">
-    <img src="{{ asset('images/loader.svg') }}" class="h-14 w-14 animate-spin" alt="Loading indicator">
-    <span id="globalPageLoaderText" class="text-sm font-medium text-gray-700 dark:text-gray-200">Loading...</span>
+{{-- Global page loader. Hidden by default; shown for normal same-page form submits, same-window navigation, and heavy preview table hydration. --}}
+<div id="globalPageLoader" class="global-page-loader hidden" aria-hidden="true" role="status" aria-live="polite">
+  <div class="global-page-loader__panel">
+    <div class="global-page-loader__mark" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="global-page-loader__copy">
+      <span id="globalPageLoaderText" class="global-page-loader__title">Loading...</span>
+      <span class="global-page-loader__subtitle">Please wait while we prepare the data.</span>
+    </div>
   </div>
 </div>
+<style>
+  .global-page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .global-page-loader.hidden { display: none; }
+  .global-page-loader__panel {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: min(92vw, 23rem);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 1rem 1.15rem;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+  }
+  .dark .global-page-loader__panel {
+    border-color: rgba(71, 85, 105, 0.7);
+    background: rgba(15, 23, 42, 0.96);
+  }
+  .global-page-loader__mark {
+    position: relative;
+    width: 3rem;
+    height: 3rem;
+    flex: 0 0 auto;
+  }
+  .global-page-loader__mark::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    border: 3px solid rgba(37, 99, 235, 0.16);
+    border-top-color: #2563eb;
+    animation: globalPageLoaderSpin 0.85s linear infinite;
+  }
+  .global-page-loader__mark span {
+    position: absolute;
+    top: 50%;
+    width: 0.38rem;
+    height: 0.38rem;
+    margin-top: -0.19rem;
+    border-radius: 9999px;
+    background: #2563eb;
+    animation: globalPageLoaderPulse 1.05s ease-in-out infinite;
+  }
+  .global-page-loader__mark span:nth-child(1) { left: 0.92rem; animation-delay: 0s; }
+  .global-page-loader__mark span:nth-child(2) { left: 1.34rem; animation-delay: 0.12s; }
+  .global-page-loader__mark span:nth-child(3) { left: 1.76rem; animation-delay: 0.24s; }
+  .global-page-loader__copy { display: flex; min-width: 0; flex-direction: column; gap: 0.2rem; }
+  .global-page-loader__title { color: #0f172a; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
+  .global-page-loader__subtitle { color: #64748b; font-size: 0.78rem; font-weight: 500; }
+  .dark .global-page-loader__title { color: #f8fafc; }
+  .dark .global-page-loader__subtitle { color: #cbd5e1; }
+  @keyframes globalPageLoaderSpin { to { transform: rotate(360deg); } }
+  @keyframes globalPageLoaderPulse { 0%, 80%, 100% { opacity: 0.35; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+</style>
 
 <script>
 (function () {
@@ -16,11 +86,12 @@
     if (!loader) return;
 
     const defaultMessage = 'Loading...';
+    let hideTimer = null;
     const messageForUrl = (url) => {
         const path = (url.pathname || '').toLowerCase();
         if (path.includes('/reports') || path.includes('/clients/reports')) return 'Loading report...';
-        if (path.includes('/transaction-processing')) return 'Loading transaction processing...';
-        if (path.includes('/bulkupload') || path.includes('/bulk-upload')) return 'Loading bulk upload preview...';
+        if (path.includes('/transaction-processing')) return 'Preparing transaction preview...';
+        if (path.includes('/bulkupload') || path.includes('/bulk-upload')) return 'Preparing bulk upload preview...';
         return defaultMessage;
     };
 
@@ -29,20 +100,35 @@
     };
 
     const showLoader = (message) => {
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
         setLoaderMessage(message);
         loader.classList.remove('hidden');
-        loader.classList.add('flex');
         loader.setAttribute('aria-hidden', 'false');
     };
 
     const hideLoader = () => {
         loader.classList.add('hidden');
-        loader.classList.remove('flex');
         loader.setAttribute('aria-hidden', 'true');
     };
 
+    const hideLoaderWhenIdle = (minimumDelay = 120) => {
+        const delay = Math.max(Number(minimumDelay) || 0, 0);
+        if (hideTimer) clearTimeout(hideTimer);
+        const hide = () => { hideTimer = setTimeout(hideLoader, delay); };
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(hide, { timeout: 900 });
+        } else {
+            window.requestAnimationFrame(() => window.requestAnimationFrame(hide));
+        }
+    };
+
+
     window.showGlobalLoader = showLoader;
     window.hideGlobalLoader = hideLoader;
+    window.hideGlobalLoaderWhenIdle = hideLoaderWhenIdle;
 
     const downloadOrExportPattern = /(?:\/download(?:\/|$)|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$)|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
 
@@ -57,6 +143,18 @@
             || method === 'get' && shouldSkipLoaderForUrl(url)
             || method === 'post' && /(?:download|export|excel|pdf)/i.test(url.pathname);
     };
+
+    const isHeavyPreviewPage = () => {
+        const path = window.location.pathname.toLowerCase();
+        return (path.includes('/transaction-processing/') || path.includes('/bulkupload/'))
+            && path.includes('/preview')
+            && document.querySelector('table tbody tr');
+    };
+
+    if (isHeavyPreviewPage()) {
+        showLoader(messageForUrl(new URL(window.location.href)));
+        hideLoaderWhenIdle(260);
+    }
 
     document.addEventListener('submit', function (event) {
         const form = event.target;
@@ -102,6 +200,6 @@
     });
 
     window.addEventListener('pageshow', hideLoader);
-    window.addEventListener('load', hideLoader);
+    window.addEventListener('load', function () { hideLoaderWhenIdle(120); });
 })();
 </script>

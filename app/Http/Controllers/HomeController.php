@@ -195,7 +195,7 @@ class HomeController extends Controller
                 : ($availableFinancialYears->first() ?? null);
 
             // Keep the dashboard selection and the global financial-year session in sync.
-            $selectedRange = $range ?: session('selectedRange', session('year', $defaultRange));
+            $selectedRange = $range ?: session('year', session('selectedRange', $defaultRange));
             if ($selectedRange && $availableFinancialYears->isNotEmpty() && ! $availableFinancialYears->contains($selectedRange)) {
                 $selectedRange = $defaultRange;
             }

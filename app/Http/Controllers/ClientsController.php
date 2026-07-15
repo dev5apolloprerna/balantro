@@ -1060,6 +1060,12 @@ class ClientsController extends Controller
             "{$sessionPrefix}_selectedRange" => $rangeSel,
             "{$sessionPrefix}_selectedFrom" => $from,
             "{$sessionPrefix}_selectedTo" => $to,
+            'year' => $rangeSel,
+            'year_from' => $from,
+            'year_to' => $to,
+            'selectedRange' => $rangeSel,
+            'selectedFrom' => $from,
+            'selectedTo' => $to,
         ]);
 
         return [$financialYears, $rangeSel, $from, $to];
@@ -1168,6 +1174,12 @@ class ClientsController extends Controller
                     "client_{$user->id}_selectedRange" => $selectedRangeLabel,
                     "client_{$user->id}_selectedFrom" => $from,
                     "client_{$user->id}_selectedTo" => $to,
+                    'year' => $selectedRangeLabel,
+                    'year_from' => $from,
+                    'year_to' => $to,
+                    'selectedRange' => $selectedRangeLabel,
+                    'selectedFrom' => $from,
+                    'selectedTo' => $to,
                 ]);
             }
 

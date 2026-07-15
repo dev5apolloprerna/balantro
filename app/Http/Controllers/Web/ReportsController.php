@@ -105,10 +105,15 @@ class ReportsController extends Controller
         
         $financialYears = $this->getFinancialYears($userId);
         $requestedRange = $r->input('range');
-        $rangeSel = $requestedRange ?: session('selectedRange', $this->defaultFinancialYearRange($financialYears));
+        $sessionYear = session('year');
+        $sessionYearId = $sessionYear
+            ? optional($financialYears->firstWhere('strYear', $sessionYear))->iYearId
+            : null;
+        $rangeSel = $requestedRange
+            ?: session('selectedReportRange', $sessionYearId ?: $this->defaultFinancialYearRange($financialYears));
 
         if ($rangeSel !== 'custom' && $financialYears->isNotEmpty() && !$financialYears->firstWhere('iYearId', (int) $rangeSel)) {
-            $rangeSel = $this->defaultFinancialYearRange($financialYears);
+            $rangeSel = $sessionYearId ?: $this->defaultFinancialYearRange($financialYears);
         }
 
         if ($rangeSel === 'custom') {
@@ -122,10 +127,19 @@ class ReportsController extends Controller
             $to = $range['to'] ?? $r->input('to', session('selectedTo'));
         }
 
+        $selectedYearLabel = null;
+        if ($rangeSel !== 'custom') {
+            $selectedYearLabel = optional($financialYears->firstWhere('iYearId', (int) $rangeSel))->strYear;
+        }
+
         session([
-            'selectedRange' => $rangeSel,
+            // 'selectedRange' => $rangeSel,
+            'selectedReportRange' => $rangeSel,
             'selectedFrom' => $from,
             'selectedTo' => $to,
+            'year' => $selectedYearLabel ?: session('year'),
+            'year_from' => $selectedYearLabel ? $from : session('year_from'),
+            'year_to' => $selectedYearLabel ? $to : session('year_to'),
         ]);
 
         return [$financialYears, $rangeSel, $from, $to];
