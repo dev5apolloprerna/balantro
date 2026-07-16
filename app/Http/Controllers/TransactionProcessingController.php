@@ -193,7 +193,7 @@ class TransactionProcessingController extends Controller
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
         
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
@@ -312,7 +312,7 @@ class TransactionProcessingController extends Controller
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
             ->where('vchType', 'Purchase')
@@ -391,7 +391,7 @@ class TransactionProcessingController extends Controller
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
         
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
@@ -657,7 +657,7 @@ class TransactionProcessingController extends Controller
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
         
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
@@ -791,7 +791,7 @@ class TransactionProcessingController extends Controller
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
         
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)
@@ -949,7 +949,7 @@ class TransactionProcessingController extends Controller
             ->where('status', 'saved')
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
         $ledgers = Ledger::getAllLedgers($iPartyId);
         return view('admin.transaction-processing.journal.preview', compact(
             'rows',

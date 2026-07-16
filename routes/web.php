@@ -406,7 +406,7 @@ Route::get('/insights', [FrontendController::class, 'insights'])->name('insights
 // Route::get('/insight-detail', [FrontendController::class, 'insightDetail'])->name('insight.detail');
 Route::get('/insight-detail/{slugname}', [FrontendController::class, 'insightDetail'])
     ->name('insight.detail');
-
+Route::get('/privacy-policy', [FrontendController::class, 'privacypolicy'])->name('privacypolicy');
 
 Route::post('/logout-idle', function () {
     Cache::flush();

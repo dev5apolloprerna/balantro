@@ -1590,7 +1590,7 @@ class CreditNoteController extends Controller
             ->where('status', 'pending') // or 'pending' if using string
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
 
         // ✅ Voucher Types
         $vchTypes = DB::table('VchHistory')

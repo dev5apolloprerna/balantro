@@ -273,7 +273,7 @@
         window.previewLedgerOptions = <?php echo json_encode(collect($ledgers)->pluck('name')->values(), 15, 512) ?>;
         window.previewStateOptions = <?php echo json_encode(collect($states)->values(), 15, 512) ?>;
         window.hydrateDeferredSelectOptions?.('#salesTable .js-deferred-options');
-        window.showGlobalLoader?.('Preparing preview table...');    
+        window.showGlobalLoader?.('Loading...');    
 
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);

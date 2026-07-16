@@ -604,7 +604,7 @@ class BankUploadController extends Controller
             ->whereIn('status', ['pending','suspense'])
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
         $rows = $this->attachBankPendingIssues($rows);
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)

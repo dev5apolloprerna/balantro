@@ -921,7 +921,9 @@ class SalesUploadController extends Controller
                             'igst'              => $item['igst'],
                             'total_amount'      => $item['total_amount'],
                         ]);
-                    }   
+                    }  
+                    
+                    $this->updateSalesTransactionMatchStatus($transaction);
                     $totalInvoices++;
                 }
             });
@@ -1081,6 +1083,8 @@ class SalesUploadController extends Controller
                             }
                         }
                     }
+
+                    $this->updateSalesTransactionMatchStatus($transaction);
                     // $asis_igst = 0;
                     $total++;
                 }
@@ -1523,6 +1527,13 @@ class SalesUploadController extends Controller
         return $this->salesAmountsMatch($transaction);
     }
 
+    private function updateSalesTransactionMatchStatus(SalesTransaction $transaction): void
+    {
+        $transaction->loadMissing(['items', 'customGst']);
+        $transaction->status = $this->rematchPendingSalesTransaction($transaction) ? 'saved' : 'pending';
+        $transaction->save();
+    }
+
     private function rematchPendingSalesTransaction(SalesTransaction $transaction): bool
     {
         $partyId = $transaction->iPartyId;
@@ -1687,7 +1698,7 @@ class SalesUploadController extends Controller
             ->where('status', 'pending')
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
-            ->simplePaginate(50);
+            ->paginate(50);
 
         $commonData = $this->getCommonData();
         $commonData['iGstLedgers'] = Ledger::mergeLedgersByIds(

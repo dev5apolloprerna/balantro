@@ -184,14 +184,11 @@
                                     <br />
                                 <!-- Ledger -->
                                 <select name="ledger[{{$row->id}}]"
-                                    class="ledgerSelect inputCell">
-                                    <option value="">Select Ledger</option>
-                                    @foreach($ledgers as $ledger)
-                                    <option value="{{$ledger->name}}"
-                                        {{ $row->party_name==$ledger->name?'selected':'' }}>
-                                        {{$ledger->name}}
-                                    </option>
-                                    @endforeach
+                                    class="ledgerSelect inputCell js-deferred-options"
+                                    data-options-source="previewLedgerOptions"
+                                    data-placeholder="Select Ledger"
+                                    data-selected="{{ $row->party_name }}">
+                                    <option value="{{ $row->party_name }}" selected>{{ $row->party_name ?: 'Select Ledger' }}</option>
                                 </select>
                             </td>
                             <td>
@@ -199,14 +196,11 @@
                             </td>
                             <td>
                                 <select name="place_of_supply[{{$row->id}}]"
-                                    class="placeSelect inputCell">
-                                    <option value="">Select State</option>
-                                    @foreach($states as $state)
-                                    <option value="{{$state}}"
-                                        {{ strtolower(trim($state)) == strtolower(trim($row->place_of_supply)) ? 'selected':''}}>
-                                        {{$state}}
-                                    </option>
-                                    @endforeach
+                                    class="inputCell placeSelect js-deferred-options"
+                                    data-options-source="previewStateOptions"
+                                    data-placeholder="Select State"
+                                    data-selected="{{ $row->place_of_supply }}">
+                                    <option value="{{ $row->place_of_supply }}" selected>{{ $row->place_of_supply ?: 'Select State' }}</option>
                                 </select>
                             </td>
                             <td class="text-right">
@@ -993,6 +987,7 @@
 </style>
 @endsection
 @section('scripts')
+@include('admin.partials.deferred-select-options')
 @include('admin.partials.lazy-select2')
 <script>
     const GST_RATE_OPTIONS = [0.0, 0.05, 0.1, 0.125, 0.25, 0.5, 1.0, 1.5, 2.5, 3.0, 5.0, 6.0, 7.5, 9.0, 12.0, 14.0, 18.0, 28.0];
@@ -1006,6 +1001,9 @@
     }
 
     $(document).ready(function() {
+        window.previewLedgerOptions = @json(collect($ledgers)->pluck('name')->values());
+        window.previewStateOptions = @json(collect($states)->values());
+        window.hydrateDeferredSelectOptions?.('#salesTable .js-deferred-options');
         window.showGlobalLoader?.('Loading...');
         $('#selectAll').click(function() {
             $('tbody input[type=checkbox]').prop('checked', this.checked);

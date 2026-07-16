@@ -222,17 +222,7 @@
                             <td class="px-3 py-2">
                                 @php($selectedLedgerName = trim((string) ($row->ledger_name ?? '')))
                                 <select name="ledger[{{$row->id}}]" {{ $row->is_suspense == 1 ? 'disabled' : '' }} class="ledgerSelect inputCell" data-selected="{{ $selectedLedgerName }}">
-                                    <option value="">Select Ledger</option>
-                                    @foreach($allLedgers as $ledger)
-                                    <option value="{{$ledger->name}}" {{ $selectedLedgerName === $ledger->name ? 'selected' : '' }}>
-                                        {{$ledger->name}}
-                                    </option>
-                                    @endforeach
-                                    @if($selectedLedgerName !== '' && !collect($allLedgers)->contains('name', $selectedLedgerName))
-                                    <option value="{{ $selectedLedgerName }}" selected>
-                                        {{ $selectedLedgerName }}
-                                    </option>
-                                    @endif
+                                    <option value="{{ $selectedLedgerName }}" selected>{{ $selectedLedgerName ?: 'Select Ledger' }}</option>
                                 </select>
                             </td>
                             <td class="px-3 py-2">
@@ -965,6 +955,15 @@ function initLedgerSelect(ledgerDropdown) {
         return;
     }
 
+    const row = ledgerDropdown.closest('tr');
+    const type = row.find('select[name^="type"]').val()?.toLowerCase() || '';
+    const selectedLedger = ledgerDropdown.val() || ledgerDropdown.data('selected') || '';
+    if (ledgerDropdown.data('optionsHydrated') !== 1) {
+        ledgerDropdown.html(getLedgerOptions(type, selectedLedger));
+        ledgerDropdown.val(selectedLedger || '');
+        ledgerDropdown.data('optionsHydrated', 1);
+    }
+
     ledgerDropdown.select2({
         width: '100%',
         placeholder: "Search Ledger...",
@@ -1674,16 +1673,16 @@ $(document).on('keyup change', '.searchInput', function () {
     $(document).ready(function () {
         if (!$.fn.select2) {
             console.error('Select2 not loaded');
-            return;
+            // return;
         }
-        applySelect2(); // ✅ important
+        // applySelect2(); // ✅ important
     });
 
-    function applySelect2() {
-        $('#bankTable tbody tr:visible .ledgerSelect').slice(0, 25).each(function () {
-            initLedgerSelect($(this));
-        });
-    }
+    // function applySelect2() {
+    //     $('#bankTable tbody tr:visible .ledgerSelect').slice(0, 25).each(function () {
+    //         initLedgerSelect($(this));
+    //     });
+    // }
 
     $('#bankTable').on('focus mouseenter', '.ledgerSelect', function() {
         initLedgerSelect($(this));

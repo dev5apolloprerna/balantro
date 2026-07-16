@@ -163,4 +163,10 @@ class FrontendController extends Controller
 
         return view('frontend.insight-detail', compact('blog', 'relatedBlogs'));
     }
+
+    public function privacypolicy()
+    {
+        return view('frontend.privacypolicy');
+    }
+    
 }
