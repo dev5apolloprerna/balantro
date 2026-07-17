@@ -956,7 +956,7 @@
 
     document.getElementById('journalSampleSelect')?.addEventListener('change', function() {
         if (this.value) {
-            window.location.href = this.value;
+            window.location.href = window.downloadFile(this.value);
             this.value = '';
         }
     });

@@ -1850,10 +1850,10 @@
             $('#sampleDownload').change(function() {
                 let type = $(this).val();
                 if (type == 'with-item') {
-                    window.location.href = "/samples/debit-notes-with-item-sample-file.xlsx";
+                    window.location.href = window.downloadFile("/samples/debit-notes-with-item-sample-file.xlsx");
                 }
                 if (type == 'without-item') {
-                    window.location.href = "/samples/debit-notes-without-item-sample-file.xlsx";
+                    window.location.href = window.downloadFile("/samples/debit-notes-without-item-sample-file.xlsx");
                 }
                 // reset dropdown
                 $(this).val('');

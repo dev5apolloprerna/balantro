@@ -1975,10 +1975,10 @@
             $('#sampleDownload').change(function() {
                 let type = $(this).val();
                 if (type == 'with-item') {
-                    window.location.href = "/samples/Purchase-with-item-sample-file.xlsx";
+                    window.location.href = window.downloadFile("/samples/Purchase-with-item-sample-file.xlsx");
                 }
                 if (type == 'without-item') {
-                    window.location.href = "/samples/Purchase-without-item-sample-file.xlsx";
+                    window.location.href = window.downloadFile("/samples/Purchase-without-item-sample-file.xlsx");
                 }
                 // reset dropdown
                 $(this).val('');

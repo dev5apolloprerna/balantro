@@ -111,6 +111,22 @@
     window.hideGlobalLoader = hideLoader;
     window.hideGlobalLoaderWhenIdle = hideLoaderWhenIdle;
 
+    // Downloads must not replace the current page. Using a temporary link with the
+    // download attribute prevents the beforeunload handler below from leaving the
+    // page loader visible after the browser receives a file response.
+    window.downloadFile = (url) => {
+        if (!url) return;
+
+        hideLoader();
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '';
+        link.hidden = true;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
     const downloadOrExportPattern = /(?:\/download(?:\/|$)|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$)|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
 
     const shouldSkipLoaderForUrl = (url) => downloadOrExportPattern.test(url.pathname + url.search);
