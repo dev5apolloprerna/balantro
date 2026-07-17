@@ -68,6 +68,7 @@
 
     const defaultMessage = 'Loading...';
     let hideTimer = null;
+    let downloadRequested = false;
     const messageForUrl = (url) => {
         const path = (url.pathname || '').toLowerCase();
         if (path.includes('/reports') || path.includes('/clients/reports')) return 'Loading report...';
@@ -117,6 +118,7 @@
     window.downloadFile = (url) => {
         if (!url) return;
 
+        downloadRequested = true;
         hideLoader();
 
         const link = document.createElement('a');
@@ -166,9 +168,10 @@
         if (!(event.target instanceof Element)) return;
 
         const link = event.target.closest('a[href]');
-        if (!link || link.dataset.loader === 'false') return;
+        // if (!link || link.dataset.loader === 'false') return;
+        if (!link) return;
         if (link.target && link.target !== '_self') return;
-        if (link.hasAttribute('download')) return;
+        // if (link.hasAttribute('download')) return;
 
         const href = link.getAttribute('href') || '';
         if (!href || href === '#' || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
@@ -176,7 +179,14 @@
         const url = new URL(link.href, window.location.href);
         if (url.origin !== window.location.origin) return;
         if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
-        if (shouldSkipLoaderForUrl(url)) return;
+        // if (shouldSkipLoaderForUrl(url)) return;
+        if (link.dataset.loader === 'false' || link.hasAttribute('download') || shouldSkipLoaderForUrl(url)) {
+            // File responses keep this page open, so beforeunload may fire without
+            // a subsequent load/pageshow event to clear the loader.
+            downloadRequested = true;
+            hideLoader();
+            return;
+        }
         
         setTimeout(function () {
             if (!event.defaultPrevented) showLoader(messageForUrl(url));
@@ -193,6 +203,7 @@
     }, true);
 
     window.addEventListener('beforeunload', function () {
+        if (downloadRequested) return;
         showLoader(messageForUrl(new URL(window.location.href)));
     });
 

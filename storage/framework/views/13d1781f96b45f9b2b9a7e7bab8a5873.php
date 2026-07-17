@@ -341,6 +341,11 @@
             document.getElementById('cf-whatsapp-error').textContent = '';
         }
 
+        function restoreClientSaveButton(originalText) {
+            cfSave.disabled = false;
+            cfSave.innerHTML = originalText;
+        }
+
         function validateRequiredClientFields() {
             clearClientErrors();
 
@@ -531,7 +536,6 @@
                         url = R.clientStore;
                     }
 
-
                     const res = await fetch(url, opts);
                     if (!res.ok) {
                         const data = await res.json(); // Assuming the server returns a JSON response
@@ -557,6 +561,8 @@
                             if (data.errors['profile.whatsapp_no']) document.getElementById('cf-whatsapp-error')
                                 .textContent = data.errors['profile.whatsapp_no'][0];
                         }
+                        // Validation failures (such as a duplicate GUID) must allow correction and resubmission.
+                        restoreClientSaveButton(originalText);
                         return;
                     }
                     cfDlg.close();
@@ -564,8 +570,9 @@
                 } catch (error) {
                     showToast('Unable to save client. Please try again.', 'error');
                 } finally {
-                    cfSave.disabled = false;
-                    cfSave.innerHTML = originalText;
+                    // cfSave.disabled = false;
+                    // cfSave.innerHTML = originalText;
+                    restoreClientSaveButton(originalText);
                 }
             });
         }
