@@ -220,7 +220,7 @@
                             Service</a>
                     </li>
                     <li>
-                        <a href="#" class="hover:text-black hover:translate-x-1 transition-all block">Privacy
+                        <a href="{{ route('privacypolicy') }}" class="hover:text-black hover:translate-x-1 transition-all block">Privacy
                             Policy</a>
                     </li>
                     <li>
