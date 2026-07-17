@@ -147,7 +147,7 @@
                     },
                     body: fd
                 });
-                if (!res.ok) return showToast('Failed to assign users','error');
+                if (!res.ok) return showToast('Failed to assign users', 'error');
                 auDlg.close();
                 location.reload();
             });
@@ -193,7 +193,7 @@
                     },
                     body: fd
                 });
-                if (!res.ok) return showToast('Failed to save groups','error');
+                if (!res.ok) return showToast('Failed to save groups', 'error');
                 $('#modal-assign-groups').close();
                 location.reload();
             });
@@ -281,7 +281,7 @@
                     },
                     body: fd
                 });
-                if (!res.ok) return showToast('Failed to save permissions','error');
+                if (!res.ok) return showToast('Failed to save permissions', 'error');
                 $('#modal-assign-permissions').close();
                 location.reload();
             });
@@ -324,8 +324,46 @@
         const cfPan = $('#cf-pan');
         const cfGst = $('#cf-gst');
         const cfAddress = $('#cf-address');
-        const cfisStockManagement = $('#cf-isStockManagement');        
+        const cfisStockManagement = $('#cf-isStockManagement');
         const cfSave = $('#cf-save');
+
+        const clientRequiredFields = [
+            [cfName, 'cf-name-error'],
+            [cfEmail, 'cf-email-error'],
+            [cfGuid, 'cf-guid-error'],
+        ];
+
+        function clearClientErrors() {
+            document.getElementById('cf-name-error').textContent = '';
+            document.getElementById('cf-email-error').textContent = '';
+            document.getElementById('cf-guid-error').textContent = '';
+            document.getElementById('cf-mobile-error').textContent = '';
+            document.getElementById('cf-whatsapp-error').textContent = '';
+        }
+
+        function validateRequiredClientFields() {
+            clearClientErrors();
+
+            const firstInvalidField = clientRequiredFields.find(([field, errorId]) => {
+                if (field.value.trim()) return false;
+
+                document.getElementById(errorId).textContent = `${field.labels[0].textContent.replace('*', '').trim()} is required.`;
+                return true;
+            });
+
+            if (firstInvalidField) {
+                firstInvalidField[0].focus();
+                return false;
+            }
+
+            if (!cfEmail.validity.valid) {
+                document.getElementById('cf-email-error').textContent = 'Please enter a valid email address.';
+                cfEmail.focus();
+                return false;
+            }
+
+            return true;
+        }
 
         function resetClientForm() {
             cfId.value = '';
@@ -349,7 +387,7 @@
                     'Accept': 'application/json'
                 }
             });
-            if (!res.ok) return showToast('Failed to load client','error');
+            if (!res.ok) return showToast('Failed to load client', 'error');
             const c = await res.json();
             cfId.value = c.id || '';
             cfName.value = c.name || '';
@@ -390,11 +428,16 @@
         // Save
         if (cfSave) {
             cfSave.addEventListener('click', async () => {
-                
-             cfSave.disabled = true;
-            const originalText = cfSave.innerHTML;
 
-            cfSave.innerHTML = `
+                //  cfSave.disabled = true;
+                // const originalText = cfSave.innerHTML;
+                if (!validateRequiredClientFields()) return;
+
+                const originalText = cfSave.innerHTML;
+                cfSave.disabled = true;
+
+
+                cfSave.innerHTML = `
                 <svg class="animate-spin h-4 w-4 inline-block mr-2"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -412,55 +455,94 @@
                 Saving...
             `;
                 //await fillDeviceInfo();
-                const id = cfId.value;
-                const fd = new FormData();
-                fd.append('name', cfName.value.trim());
-                fd.append('email', cfEmail.value.trim());
-                fd.append('guid', cfGuid.value.trim());
+                // const id = cfId.value;
+                // const fd = new FormData();
+                // fd.append('name', cfName.value.trim());
+                // fd.append('email', cfEmail.value.trim());
+                // fd.append('guid', cfGuid.value.trim());
 
-                fd.append('fcm_token', cfcmToken.value.trim());
-                fd.append('device_type', cDeviceType.value.trim());
-                fd.append('browser_name', cBrowserName.value.trim());
-                fd.append('os_name', cOsName.value.trim());
+                // fd.append('fcm_token', cfcmToken.value.trim());
+                // fd.append('device_type', cDeviceType.value.trim());
+                // fd.append('browser_name', cBrowserName.value.trim());
+                // fd.append('os_name', cOsName.value.trim());
 
-                // Optional profile fields (if your controller accepts them)
-                fd.append('profile[business_type]', cfBizType.value);
-                fd.append('profile[mobile_no]', cfMobile.value);
-                fd.append('profile[whatsapp_no]', cfWhatsApp.value);
-                fd.append('profile[pan_no]', cfPan.value);
-                fd.append('profile[gst_no]', cfGst.value);
-                fd.append('profile[address]', cfAddress.value);
-                fd.append('isStockManagement', cfisStockManagement.value.trim());
-                    
-                const opts = {
-                    method: id ? 'POST' : 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': csrf,
-                        'Accept': 'application/json'
-                    },
-                    body: fd
-                };
-
-                // For update, send method spoof
-                let url;
-                if (id) {
-                    url = route(R.clientUpdate, id);
-                    fd.append('_method', 'PUT');
-                } else {
-                    url = R.clientStore;
-                }
-
+                // // Optional profile fields (if your controller accepts them)
+                // fd.append('profile[business_type]', cfBizType.value);
+                // fd.append('profile[mobile_no]', cfMobile.value);
+                // fd.append('profile[whatsapp_no]', cfWhatsApp.value);
+                // fd.append('profile[pan_no]', cfPan.value);
+                // fd.append('profile[gst_no]', cfGst.value);
+                // fd.append('profile[address]', cfAddress.value);
+                // fd.append('isStockManagement', cfisStockManagement.value.trim());
                 try {
+                    //await fillDeviceInfo();
+                    const id = cfId.value;
+                    const fd = new FormData();
+                    fd.append('name', cfName.value.trim());
+                    fd.append('email', cfEmail.value.trim());
+                    fd.append('guid', cfGuid.value.trim());
+
+                    fd.append('fcm_token', cfcmToken.value.trim());
+                    fd.append('device_type', cDeviceType.value.trim());
+                    fd.append('browser_name', cBrowserName.value.trim());
+                    fd.append('os_name', cOsName.value.trim());
+
+                    // Optional profile fields (if your controller accepts them)
+                    fd.append('profile[business_type]', cfBizType.value);
+                    fd.append('profile[mobile_no]', cfMobile.value);
+                    fd.append('profile[whatsapp_no]', cfWhatsApp.value);
+                    fd.append('profile[pan_no]', cfPan.value);
+                    fd.append('profile[gst_no]', cfGst.value);
+                    fd.append('profile[address]', cfAddress.value);
+                    fd.append('isStockManagement', cfisStockManagement.value.trim());
+                    // const opts = {
+                    //     method: id ? 'POST' : 'POST',
+                    //     headers: {
+                    //         'X-CSRF-TOKEN': csrf,
+                    //         'Accept': 'application/json'
+                    //     },
+                    //     body: fd
+                    // };
+
+                    // // For update, send method spoof
+                    // let url;
+                    // if (id) {
+                    //     url = route(R.clientUpdate, id);
+                    //     fd.append('_method', 'PUT');
+                    // } else {
+                    //     url = R.clientStore;
+                    // }
+
+                    const opts = {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
+                        body: fd
+                    };
+
+                    // For update, send method spoof
+                    let url;
+                    if (id) {
+                        url = route(R.clientUpdate, id);
+                        fd.append('_method', 'PUT');
+                    } else {
+                        url = R.clientStore;
+                    }
+
+
                     const res = await fetch(url, opts);
                     if (!res.ok) {
                         const data = await res.json(); // Assuming the server returns a JSON response
 
                         // Clear previous error messages
-                        document.getElementById('cf-name-error').textContent = '';
-                        document.getElementById('cf-email-error').textContent = '';
-                        document.getElementById('cf-guid-error').textContent = '';
-                        document.getElementById('cf-mobile-error').textContent = '';
-                        document.getElementById('cf-whatsapp-error').textContent = '';
+                        // document.getElementById('cf-name-error').textContent = '';
+                        // document.getElementById('cf-email-error').textContent = '';
+                        // document.getElementById('cf-guid-error').textContent = '';
+                        // document.getElementById('cf-mobile-error').textContent = '';
+                        // document.getElementById('cf-whatsapp-error').textContent = '';
+                        clearClientErrors();
 
                         // Display errors for each field, including Laravel's nested profile keys.
                         if (data.errors) {
@@ -545,7 +627,7 @@
     //     else if (/Linux/i.test(navigator.userAgent)) osName = "Linux";
     //     else if (/Android/i.test(navigator.userAgent)) osName = "Android";
     //     else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) osName = "iOS";
-    
+
     //     document.getElementById("c_device_type").value = deviceType;
     //     document.getElementById("c_browser_name").value = browserName;
     //     document.getElementById("c_os_name").value = osName;
@@ -566,7 +648,4 @@
     //     //     console.warn("FCM token skipped:", e);
     //     // }
     // }
-
-    
-</script>
-<?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/clients/modals_js.blade.php ENDPATH**/ ?>
+</script><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/clients/modals_js.blade.php ENDPATH**/ ?>

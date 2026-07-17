@@ -31,14 +31,14 @@
                     <div>
                         <label for="cf-name" class="block text-sm font-semibold mb-1"><?php echo e(__('Name')); ?> <span
                                 class="text-rose-600">*</span></label>
-                        <input id="cf-name" type="text" class="w-full px-1 py-1 border rounded-lg">
+                        <input id="cf-name" type="text" required  class="w-full px-1 py-1 border rounded-lg">
                         <div id="cf-name-error" class="text-sm text-rose-600 mt-1"></div>
                     </div>
 
                     <div>
                         <label for="cf-email" class="block text-sm font-semibold mb-1"><?php echo e(__('Email')); ?> <span
                                 class="text-rose-600">*</span></label>
-                        <input id="cf-email" type="email" class="w-full px-1 py-1 border rounded-lg">
+                        <input id="cf-email" type="email" required  class="w-full px-1 py-1 border rounded-lg">
                         <div id="cf-email-error" class="text-sm text-rose-600 mt-1"></div>
                     </div>
                 </div>
@@ -71,7 +71,7 @@
                 <div>
                     <label for="cf-guid" class="block text-sm font-semibold mb-1"><?php echo e(__('GUID')); ?> <span
                             class="text-rose-600">*</span></label>
-                    <input id="cf-guid" type="text" class="w-full px-1 py-1 border rounded-lg">
+                    <input id="cf-guid" type="text" required class="w-full px-1 py-1 border rounded-lg">
                     <div id="cf-guid-error" class="text-sm text-rose-600 mt-1"></div>
                 </div>
 
