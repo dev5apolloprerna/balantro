@@ -1958,10 +1958,12 @@
             $('#sampleDownload').change(function() {
                 let type = $(this).val();
                 if (type == 'with-item') {
-                    window.location.href = window.downloadFile("/samples/Sales-with-item-sample-file.xlsx");
+                    //window.location.href = window.downloadFile("/samples/Sales-with-item-sample-file.xlsx");
+                    window.downloadFile("/samples/Sales-with-item-sample-file.xlsx");
                 }
                 if (type == 'without-item') {
-                    window.location.href = window.downloadFile("/samples/Sales-without-item-sample-file.xlsx");
+                    // window.location.href = window.downloadFile("/samples/Sales-without-item-sample-file.xlsx");
+                    window.downloadFile("/samples/Sales-without-item-sample-file.xlsx");
                 }
                 // reset dropdown
                 $(this).val('');
