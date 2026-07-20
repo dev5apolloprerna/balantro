@@ -70,6 +70,7 @@
     let hideTimer = null;
     let downloadRequested = false;
     let downloadResetTimer = null;
+    let downloadLoaderTimer = null;
     const messageForUrl = (url) => {
         const path = (url.pathname || '').toLowerCase();
         if (path.includes('/reports') || path.includes('/clients/reports')) return 'Loading report...';
@@ -92,6 +93,17 @@
         loader.setAttribute('aria-hidden', 'false');
     };
 
+    const clearDownloadTimers = () => {
+        if (downloadResetTimer) {
+            clearTimeout(downloadResetTimer);
+            downloadResetTimer = null;
+        }
+        if (downloadLoaderTimer) {
+            clearTimeout(downloadLoaderTimer);
+            downloadLoaderTimer = null;
+        }
+    };
+
     const hideLoader = () => {
         loader.classList.add('hidden');
         loader.setAttribute('aria-hidden', 'true');
@@ -99,7 +111,7 @@
 
     const markDownloadRequested = () => {
         downloadRequested = true;
-        if (downloadResetTimer) clearTimeout(downloadResetTimer);
+        clearDownloadTimers();
         downloadResetTimer = setTimeout(() => {
             downloadRequested = false;
             downloadResetTimer = null;
@@ -123,7 +135,12 @@
     window.hideGlobalLoaderWhenIdle = hideLoaderWhenIdle;
 
     const hideDownloadLoaderSoon = (minimumDelay = 1500) => {
-        setTimeout(hideLoader, minimumDelay);
+        // setTimeout(hideLoader, minimumDelay);
+        if (downloadLoaderTimer) clearTimeout(downloadLoaderTimer);
+        downloadLoaderTimer = setTimeout(() => {
+            downloadLoaderTimer = null;
+            hideLoader();
+        }, minimumDelay);
     };
     // Downloads must not replace the current page. Use the browser's native file
     // download flow so PDF/Excel responses save normally, then clear the loader
@@ -177,6 +194,10 @@
 
         markDownloadRequested();
         showLoader('Preparing download...');
+        // Attachment downloads do not reliably fire page lifecycle events, and a
+        // fetch may stay pending while the browser saves the file. Always clear
+        // the temporary download loader after a short grace period.
+        hideDownloadLoaderSoon(5000);
 
         // const frame = createDownloadFrame();
         let settled = false;
@@ -186,10 +207,7 @@
             // frame.removeEventListener('load', finish);
             // frame.removeEventListener('error', finish);
             downloadRequested = false;
-            if (downloadResetTimer) {
-                clearTimeout(downloadResetTimer);
-                downloadResetTimer = null;
-            }
+            clearDownloadTimers();
             hideDownloadLoaderSoon(250);
         };
 
@@ -343,10 +361,7 @@
 
     window.addEventListener('pageshow', function () {
         downloadRequested = false;
-        if (downloadResetTimer) {
-            clearTimeout(downloadResetTimer);
-            downloadResetTimer = null;
-        }
+        clearDownloadTimers();
         hideLoader();
     });
     window.addEventListener('load', function () { hideLoaderWhenIdle(120); });
