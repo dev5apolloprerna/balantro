@@ -28,7 +28,7 @@ class CreditNoteController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('iYearId', 'asc')

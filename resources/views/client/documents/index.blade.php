@@ -915,6 +915,7 @@
             const dropArea = document.getElementById('dropArea');
             const fileInput = document.getElementById('fileInput');
             const fileList = document.getElementById('fileList');
+            const fileListContainer = document.getElementById('fileListContainer');
             const form = document.getElementById('uploadForm');
             const uploadBtn = document.getElementById('uploadBtn');
             const progressWrap = document.getElementById('progressWrap');
@@ -946,6 +947,7 @@
             function reset() {
                 filesBuffer = [];
                 fileList.innerHTML = '';
+                fileListContainer?.classList.add('hidden');
                 fileInput.value = '';
                 progressWrap.classList.add('hidden');
                 progressBar.style.width = '0%';
@@ -1006,6 +1008,7 @@
 
             function renderList() {
                 fileList.innerHTML = '';
+                fileListContainer?.classList.toggle('hidden', filesBuffer.length === 0);
                 filesBuffer.forEach((f, idx) => {
                     const li = document.createElement('li');
                     li.className =

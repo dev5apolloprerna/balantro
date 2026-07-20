@@ -211,7 +211,7 @@ class BankUploadController extends Controller
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         return view('admin.bulkupload.bank.index', compact('uploads', 'clients', 'banks','years'));
     }
 

@@ -171,7 +171,7 @@ class TransactionProcessingController extends Controller
     {
         $iPartyId = session('iPartyId');
         $uploads = BulkSalesUpload::where('iPartyId', $iPartyId)->where('saved', '>', 0)->latest()->get();
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
@@ -259,7 +259,7 @@ class TransactionProcessingController extends Controller
             ->latest()
             ->get();
         
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('iYearId', 'asc')
@@ -369,7 +369,7 @@ class TransactionProcessingController extends Controller
             ->where('strParents', 'Bank Accounts')
             ->get();
 
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('iYearId', 'asc')
@@ -636,7 +636,7 @@ class TransactionProcessingController extends Controller
     {
         $iPartyId = session('iPartyId');
         $uploads = BulkCreditNoteUpload::where('iPartyId', $iPartyId)->where('saved', '>', 0)->latest()->get();
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('iYearId', 'asc')
@@ -769,7 +769,7 @@ class TransactionProcessingController extends Controller
             ->latest()
             ->get();
         
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('iYearId', 'asc')
@@ -927,7 +927,7 @@ class TransactionProcessingController extends Controller
             ->latest()
             ->get();
         
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
             ->orderBy('iYearId', 'asc')

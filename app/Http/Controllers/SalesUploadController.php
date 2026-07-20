@@ -37,7 +37,7 @@ class SalesUploadController extends Controller
             ->whereIn('status', ['Pending','Processing'])
             ->latest()->get();
 
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
@@ -88,7 +88,7 @@ class SalesUploadController extends Controller
     // SELECT COMPANY
     public function selectCompany($id)
     {
-        $client = Client::where('id', $id)->first();
+        $client = Client::whereNotNull('guid')->where('id', $id)->first();
         Session::put('iPartyId', $id);
         Session::put('client_name', $client->name);
         Session::put('guid', $client->guid);

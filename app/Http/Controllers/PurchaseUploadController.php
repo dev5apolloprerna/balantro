@@ -37,7 +37,7 @@ class PurchaseUploadController extends Controller
             ->limit(3)
             ->get();
 
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         // $purcasheLedgers = Ledger::getPurchaseLedgers($iPartyId);
         $vchTypes = DB::table('VchHistory')
             ->where('iPartyId', $iPartyId)

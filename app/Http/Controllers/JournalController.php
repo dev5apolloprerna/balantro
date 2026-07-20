@@ -31,7 +31,7 @@ class JournalController extends Controller
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
-        $clients = Client::orderBy('name')->get();
+        $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $ledgers = Ledger::getAllLedgers($iPartyId);
         return view('admin.bulkupload.journal.index', compact('uploads', 'clients','ledgers','years'));
     }
