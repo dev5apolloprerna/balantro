@@ -138,7 +138,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const initButtons = () => {
         const links = document.querySelectorAll('a');
         links.forEach(a => {
-            if (a.textContent.trim() === 'Get Started' && a.classList.contains('bg-gradient-to-r')) {
+            const text = a.textContent.replace(/\s+/g, ' ').trim();
+            if ((text === 'Get Started' || text.toLowerCase() === 'talk to our team') && a.classList.contains('bg-gradient-to-r')) {
                 new MagicButtonEffect(a);
             }
         });

@@ -1,4 +1,4 @@
-html, body {
+﻿html, body {
   background-color: #02040a;
   color: white;
   overflow-x: hidden;
@@ -796,7 +796,7 @@ footer {
   }
 }
 
-/* Corner accent glows — top-left and bottom-right */
+/* Corner accent glows â€” top-left and bottom-right */
 .hero-grid-corner-tr {
   position: absolute;
   top: 0;
@@ -925,4 +925,36 @@ footer {
     padding-top: 5rem;
     padding-bottom: 3rem;
   }
-}
+}
+
+/* Compact Footer for short screens (laptops at 150% scale) */
+@media (min-width: 768px) and (max-height: 850px) {
+  footer {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1rem !important;
+  }
+  footer .grid {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+  footer h4 {
+    margin-bottom: 0.75rem !important;
+  }
+  footer .mb-6 {
+    margin-bottom: 0.75rem !important;
+  }
+  footer .space-y-5 > :not([hidden]) ~ :not([hidden]),
+  footer .space-y-4 > :not([hidden]) ~ :not([hidden]),
+  footer .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.5rem !important;
+  }
+  footer .mt-8 {
+    margin-top: 1rem !important;
+  }
+  footer .pt-6 {
+    padding-top: 1rem !important;
+  }
+  footer .text-\[15vw\] {
+    font-size: min(12vw, 15vh) !important;
+  }
+}
