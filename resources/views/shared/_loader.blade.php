@@ -125,21 +125,56 @@
     // Downloads must not replace the current page. Using a temporary link with the
     // download attribute prevents the beforeunload handler below from leaving the
     // page loader visible after the browser receives a file response.
-    window.downloadFile = (url) => {
-        if (!url) return;
+    // window.downloadFile = (url) => {
+    //     if (!url) return;
 
-        // downloadRequested = true;
-        markDownloadRequested();
-        hideLoader();
+    //     // downloadRequested = true;
+    //     markDownloadRequested();
+    //     hideLoader();
+    const filenameFromDisposition = (disposition) => {
+        const match = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(disposition || '');
+        return match ? decodeURIComponent(match[1].replace(/["']/g, '').trim()) : '';
+    };
 
+    const saveBlob = (blob, filename) => {
+        const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url;
-        link.download = '';
+        // link.href = url;
+        // link.download = '';
         link.dataset.loader = 'false';
         link.hidden = true;
         document.body.appendChild(link);
         link.click();
         link.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    };
+
+    // Downloads must not replace the current page. Fetching same-origin exports
+    // lets the loader stay visible while the PDF/Excel file is generated, then
+    // hides it as soon as the browser has received the file response.
+    window.downloadFile = async (url) => {
+        if (!url) return;
+
+        markDownloadRequested();
+        showLoader('Preparing download...');
+
+        try {
+            const response = await fetch(url, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+
+            if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
+
+            const blob = await response.blob();
+            const filename = filenameFromDisposition(response.headers.get('Content-Disposition'));
+            saveBlob(blob, filename);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.location.href = url;
+        } finally {
+            hideLoader();
+        }
     };
     const downloadOrExportPattern = /(?:\/download(?:\/|$|[?#])|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$|[?#])|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
 
@@ -202,8 +237,8 @@
             // File responses keep this page open, so beforeunload may fire without
             // a subsequent load/pageshow event to clear the loader.
             // downloadRequested = true;
-            markDownloadRequested();
-            hideLoader();
+            // markDownloadRequested();
+            // hideLoader();
 
             if (!event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
                 event.preventDefault();
