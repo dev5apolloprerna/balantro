@@ -69,6 +69,7 @@
     const defaultMessage = 'Loading...';
     let hideTimer = null;
     let downloadRequested = false;
+    let downloadResetTimer = null;
     const messageForUrl = (url) => {
         const path = (url.pathname || '').toLowerCase();
         if (path.includes('/reports') || path.includes('/clients/reports')) return 'Loading report...';
@@ -96,6 +97,15 @@
         loader.setAttribute('aria-hidden', 'true');
     };
 
+    const markDownloadRequested = () => {
+        downloadRequested = true;
+        if (downloadResetTimer) clearTimeout(downloadResetTimer);
+        downloadResetTimer = setTimeout(() => {
+            downloadRequested = false;
+            downloadResetTimer = null;
+        }, 10000);
+    };
+
     const hideLoaderWhenIdle = (minimumDelay = 120) => {
         const delay = Math.max(Number(minimumDelay) || 0, 0);
         if (hideTimer) clearTimeout(hideTimer);
@@ -118,12 +128,14 @@
     window.downloadFile = (url) => {
         if (!url) return;
 
-        downloadRequested = true;
+        // downloadRequested = true;
+        markDownloadRequested();
         hideLoader();
 
         const link = document.createElement('a');
         link.href = url;
         link.download = '';
+        link.dataset.loader = 'false';
         link.hidden = true;
         document.body.appendChild(link);
         link.click();
@@ -180,11 +192,23 @@
         if (url.origin !== window.location.origin) return;
         if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
         // if (shouldSkipLoaderForUrl(url)) return;
-        if (link.dataset.loader === 'false' || link.hasAttribute('download') || shouldSkipLoaderForUrl(url)) {
+        // if (link.dataset.loader === 'false' || link.hasAttribute('download') || shouldSkipLoaderForUrl(url)) {
+        if (link.dataset.loader === 'false') {
+            hideLoader();
+            return;
+        }
+
+        if (link.hasAttribute('download') || shouldSkipLoaderForUrl(url)) {
             // File responses keep this page open, so beforeunload may fire without
             // a subsequent load/pageshow event to clear the loader.
-            downloadRequested = true;
+            // downloadRequested = true;
+            markDownloadRequested();
             hideLoader();
+
+            if (!event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+                event.preventDefault();
+                window.downloadFile(url.href);
+            }
             return;
         }
         
@@ -203,11 +227,31 @@
     }, true);
 
     window.addEventListener('beforeunload', function () {
-        if (downloadRequested) return;
+        // if (downloadRequested) return;
+        if (downloadRequested) {
+            hideLoader();
+            return;
+        }
         showLoader(messageForUrl(new URL(window.location.href)));
     });
 
-    window.addEventListener('pageshow', hideLoader);
+    // window.addEventListener('pageshow', hideLoader);
+    window.addEventListener('focus', function () {
+        if (downloadRequested) hideLoader();
+    });
+
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && downloadRequested) hideLoader();
+    });
+
+    window.addEventListener('pageshow', function () {
+        downloadRequested = false;
+        if (downloadResetTimer) {
+            clearTimeout(downloadResetTimer);
+            downloadResetTimer = null;
+        }
+        hideLoader();
+    });
     window.addEventListener('load', function () { hideLoaderWhenIdle(120); });
 })();
 </script>
