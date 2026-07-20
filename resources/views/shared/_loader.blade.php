@@ -142,20 +142,49 @@
         return frame;
     };
 
+     const filenameFromDisposition = (disposition) => {
+        if (!disposition) return '';
+
+        const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+        if (encoded && encoded[1]) {
+            try {
+                return decodeURIComponent(encoded[1].replace(/['"]/g, '').trim());
+            } catch (error) {
+                return encoded[1].replace(/['"]/g, '').trim();
+            }
+        }
+
+        const regular = disposition.match(/filename="?([^";]+)"?/i);
+        return regular && regular[1] ? regular[1].trim() : '';
+    };
+
+    const fallbackDownloadWithFrame = (url, finish) => {
+        const frame = createDownloadFrame();
+        const frameFinish = () => {
+            frame.removeEventListener('load', frameFinish);
+            frame.removeEventListener('error', frameFinish);
+            finish();
+        };
+
+        frame.addEventListener('load', frameFinish);
+        frame.addEventListener('error', frameFinish);
+        frame.src = url;
+        setTimeout(frameFinish, 5000);
+    };
+
     window.downloadFile = (url) => {
         if (!url) return;
 
-    //     // downloadRequested = true;
         markDownloadRequested();
         showLoader('Preparing download...');
 
-        const frame = createDownloadFrame();
+        // const frame = createDownloadFrame();
         let settled = false;
         const finish = () => {
             if (settled) return;
             settled = true;
-            frame.removeEventListener('load', finish);
-            frame.removeEventListener('error', finish);
+            // frame.removeEventListener('load', finish);
+            // frame.removeEventListener('error', finish);
             downloadRequested = false;
             if (downloadResetTimer) {
                 clearTimeout(downloadResetTimer);
@@ -164,10 +193,43 @@
             hideDownloadLoaderSoon(250);
         };
 
-        frame.addEventListener('load', finish);
-        frame.addEventListener('error', finish);
-        frame.src = url;
-        setTimeout(finish, 15000);
+        // frame.addEventListener('load', finish);
+        // frame.addEventListener('error', finish);
+        // frame.src = url;
+        // setTimeout(finish, 15000);
+
+        if (!window.fetch || !window.URL || !window.URL.createObjectURL) {
+            fallbackDownloadWithFrame(url, finish);
+            return;
+        }
+
+        fetch(url, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('Download request failed.');
+
+                const filename = filenameFromDisposition(response.headers.get('Content-Disposition'))
+                    || decodeURIComponent((new URL(url, window.location.href)).pathname.split('/').filter(Boolean).pop() || 'download');
+
+                return response.blob().then((blob) => ({ blob, filename }));
+            })
+            .then(({ blob, filename }) => {
+                const objectUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = objectUrl;
+                link.download = filename;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
+                finish();
+            })
+            .catch(() => {
+                fallbackDownloadWithFrame(url, finish);
+            });
     };
 
     const downloadOrExportPattern = /(?:\/download(?:\/|$|[?#])|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$|[?#])|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
