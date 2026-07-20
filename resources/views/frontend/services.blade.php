@@ -926,6 +926,4 @@
             }
         });
     </script>
-    <script src="{{ asset('js/magic-button.js') }}"></script>
-
 @endsection

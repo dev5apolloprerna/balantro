@@ -39,6 +39,187 @@
             },
         };
     </script>
+    <script>
+        if (sessionStorage.getItem("balantroIntroPlayed")) {
+            document.documentElement.classList.add("skip-intro");
+        } else {
+            document.documentElement.classList.add("intro-running");
+        }
+    </script>
+    <style>
+        html.intro-running body,
+        html.intro-running body * {
+            animation-play-state: paused !important;
+        }
+
+        html.skip-intro #intro-overlay {
+            display: none !important;
+        }
+
+        #intro-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: #02040a;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition:
+                opacity 0.8s ease-in-out,
+                visibility 0.8s ease-in-out;
+        }
+
+        #intro-white-bg {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background-color: #ffffff;
+            transform: translateY(-50%);
+            transition: height 0.6s cubic-bezier(0.85, 0, 0.15, 1);
+            z-index: 1;
+        }
+
+        #intro-white-bg.expand-line {
+            height: 1px;
+        }
+
+        #intro-white-bg.expand-full {
+            height: 100%;
+        }
+
+        .intro-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: scale(1.15);
+            transition:
+                transform 2.5s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 1.2s ease;
+            position: relative;
+            z-index: 2;
+            opacity: 0;
+        }
+
+        .intro-container.show {
+            opacity: 1;
+        }
+
+        .intro-logo-img {
+            height: clamp(60px, 12vw, 180px);
+            z-index: 10;
+            position: relative;
+            transition: transform 2.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .intro-text-wrapper {
+            overflow: hidden;
+            max-width: 0;
+            opacity: 0;
+            transition:
+                max-width 2.5s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.8s ease,
+                filter 1.5s ease;
+            display: flex;
+            align-items: center;
+            filter: blur(10px);
+        }
+
+        .intro-text-wrapper.expand {
+            max-width: 1500px;
+            opacity: 1;
+            filter: blur(0);
+        }
+
+        .intro-text {
+            font-family: "Outfit", sans-serif;
+            font-size: clamp(60px, 18vw, 220px);
+            font-weight: 700;
+            color: #02040a;
+            padding-left: clamp(10px, 2vw, 24px);
+            letter-spacing: -0.04em;
+            white-space: nowrap;
+            line-height: 1;
+        }
+
+        .intro-container.zoom-out {
+            transform: scale(1);
+            opacity: 0;
+        }
+
+        #intro-overlay.hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+    </style>
+
+    <!-- Intro Overlay -->
+    <div id="intro-overlay">
+        <div id="intro-white-bg"></div>
+        <div class="intro-container" id="intro-container">
+            <img src="<?php echo e(asset('images/Balantro%20logo%20final%20deliverables_Only%20Black.png')); ?>" alt="Balantro"
+                class="intro-logo-img" />
+            <div class="intro-text-wrapper" id="intro-text-wrapper">
+                <span class="intro-text">Balantro<span style="color: #22d3ee">.</span></span>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Intro sequence logic
+        if (!document.documentElement.classList.contains("skip-intro")) {
+            document.body.classList.add("overflow-hidden");
+            window.scrollTo(0, 0);
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const whiteBg = document.getElementById("intro-white-bg");
+                const textWrapper = document.getElementById("intro-text-wrapper");
+                const container = document.getElementById("intro-container");
+                const overlay = document.getElementById("intro-overlay");
+
+                // 1) Create 1px line
+                setTimeout(() => {
+                    whiteBg.classList.add("expand-line");
+                }, 100);
+
+                // 2) Expand white bg to full height
+                setTimeout(() => {
+                    whiteBg.classList.add("expand-full");
+                }, 600);
+
+                // 3) Show black logo once white background covers screen
+                setTimeout(() => {
+                    container.classList.add("show");
+                }, 1400);
+
+                // 4) Pause, then expand text from behind logo slowly
+                setTimeout(() => {
+                    textWrapper.classList.add("expand");
+                }, 2800);
+
+                // 5) Smooth transition into home hero
+                setTimeout(() => {
+                    container.classList.add("zoom-out");
+                    overlay.classList.add("hide");
+
+                    if (typeof window.initBalantroAnimations === "function") {
+                        window.initBalantroAnimations();
+                    }
+
+                    // Unlock scroll and save state
+                    setTimeout(() => {
+                        document.body.classList.remove("overflow-hidden");
+                        sessionStorage.setItem("balantroIntroPlayed", "true");
+                    }, 1200);
+                }, 6500);
+            });
+        } else {
+            // make sure scroll is allowed if skip-intro is active
+            document.body.classList.remove("overflow-hidden");
+            document.documentElement.classList.remove("intro-running");
+        }
+    </script>
     <!-- Main Stack Wrapper for Scroll Transitions -->
     <div class="main-stack-wrapper">
         <section class="scroll-section flex-col relative">
@@ -1389,8 +1570,6 @@
 
 
 
-<?php $__env->stopSection(); ?>
-<?php $__env->startSection('scripts'); ?>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -1890,8 +2069,6 @@
             }
         });
     </script>
-    <script src="<?php echo e(asset('js/nav-scroll.js')); ?>"></script>
-    <script src="<?php echo e(asset('js/magic-button.js')); ?>"></script>
 
 <?php $__env->stopSection(); ?>
 
