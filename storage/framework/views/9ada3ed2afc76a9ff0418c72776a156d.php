@@ -351,7 +351,7 @@
                                     hover:scale-105
                                     hover:-translate-y-1"
                                     style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">Search</button>
-                    <a href="<?php echo e(route('reports.ledger')); ?>"
+                    <a href="<?php echo e(route('clients.reports.ledger', $guid)); ?>"
                         class="rounded-md border border-gray-700 text-black dark:text-white px-4 py-2 text-sm transition duration-1000 ease-in-out
                                     transition-property: all;
                                     hover:border-[#a78bfa]

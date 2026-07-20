@@ -122,60 +122,32 @@
     window.hideGlobalLoader = hideLoader;
     window.hideGlobalLoaderWhenIdle = hideLoaderWhenIdle;
 
-    // Downloads must not replace the current page. Using a temporary link with the
-    // download attribute prevents the beforeunload handler below from leaving the
-    // page loader visible after the browser receives a file response.
-    // window.downloadFile = (url) => {
-    //     if (!url) return;
+    const hideDownloadLoaderSoon = () => {
+        setTimeout(hideLoader, 1500);
+    };
+    // Downloads must not replace the current page. Use the browser's native file
+    // download flow so PDF/Excel responses save normally, then clear the loader
+    // because attachment responses usually do not trigger a normal page load.
+
+    window.downloadFile = (url) => {
+        if (!url) return;
 
     //     // downloadRequested = true;
-    //     markDownloadRequested();
-    //     hideLoader();
-    const filenameFromDisposition = (disposition) => {
-        const match = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(disposition || '');
-        return match ? decodeURIComponent(match[1].replace(/["']/g, '').trim()) : '';
-    };
+        markDownloadRequested();
+        showLoader('Preparing download...');
 
-    const saveBlob = (blob, filename) => {
-        const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        // link.href = url;
-        // link.download = '';
+        link.href = url;
+        link.download = '';
         link.dataset.loader = 'false';
         link.hidden = true;
         document.body.appendChild(link);
         link.click();
         link.remove();
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+
+        hideDownloadLoaderSoon();
     };
 
-    // Downloads must not replace the current page. Fetching same-origin exports
-    // lets the loader stay visible while the PDF/Excel file is generated, then
-    // hides it as soon as the browser has received the file response.
-    window.downloadFile = async (url) => {
-        if (!url) return;
-
-        markDownloadRequested();
-        showLoader('Preparing download...');
-
-        try {
-            const response = await fetch(url, {
-                credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            });
-
-            if (!response.ok) throw new Error(`Download failed with status ${response.status}`);
-
-            const blob = await response.blob();
-            const filename = filenameFromDisposition(response.headers.get('Content-Disposition'));
-            saveBlob(blob, filename);
-        } catch (error) {
-            console.error('Download failed:', error);
-            window.location.href = url;
-        } finally {
-            hideLoader();
-        }
-    };
     const downloadOrExportPattern = /(?:\/download(?:\/|$|[?#])|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$|[?#])|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
 
     const shouldSkipLoaderForUrl = (url) => downloadOrExportPattern.test(url.pathname + url.search);

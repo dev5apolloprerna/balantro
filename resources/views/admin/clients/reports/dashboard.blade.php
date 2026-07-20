@@ -747,7 +747,7 @@
                             @if($card['name'] == 'Capital Account')                    
                                 @php $value = $value + $Profit_Loss_Amt; @endphp                        
                             @endif
-                            <form method="GET" action="{{ route('reports.ledger') }}" class="card-form">
+                            <form method="GET" action="{{ route('clients.reports.ledger', $guid ?? '') }}" class="card-form">
                                 <button type="submit"
                                     class="group block w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl card-hover color-{{ $loop->index % 6 }}">
                                     <div
@@ -808,7 +808,7 @@
                         @if($group->strGroupName == 'Capital Account')
                             @php $closingBalance += $Profit_Loss_Amt; @endphp
                         @endif
-                        <form method="GET" action="{{ route('reports.ledger') }}" class="card-form">
+                        <form method="GET" action="{{ route('clients.reports.ledger', $guid ?? '') }}" class="card-form">
                             <button type="submit"
                                 class="group block w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-xl card-hover">
                                 <div

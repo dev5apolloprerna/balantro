@@ -122,15 +122,19 @@
     window.hideGlobalLoader = hideLoader;
     window.hideGlobalLoaderWhenIdle = hideLoaderWhenIdle;
 
-    // Downloads must not replace the current page. Using a temporary link with the
-    // download attribute prevents the beforeunload handler below from leaving the
-    // page loader visible after the browser receives a file response.
+    const hideDownloadLoaderSoon = () => {
+        setTimeout(hideLoader, 1500);
+    };
+    // Downloads must not replace the current page. Use the browser's native file
+    // download flow so PDF/Excel responses save normally, then clear the loader
+    // because attachment responses usually do not trigger a normal page load.
+
     window.downloadFile = (url) => {
         if (!url) return;
 
-        // downloadRequested = true;
+    //     // downloadRequested = true;
         markDownloadRequested();
-        hideLoader();
+        showLoader('Preparing download...');
 
         const link = document.createElement('a');
         link.href = url;
@@ -140,8 +144,11 @@
         document.body.appendChild(link);
         link.click();
         link.remove();
+
+        hideDownloadLoaderSoon();
     };
-    const downloadOrExportPattern = /(?:\/download(?:\/|$)|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$)|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
+
+    const downloadOrExportPattern = /(?:\/download(?:\/|$|[?#])|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$|[?#])|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
 
     const shouldSkipLoaderForUrl = (url) => downloadOrExportPattern.test(url.pathname + url.search);
 
@@ -202,8 +209,8 @@
             // File responses keep this page open, so beforeunload may fire without
             // a subsequent load/pageshow event to clear the loader.
             // downloadRequested = true;
-            markDownloadRequested();
-            hideLoader();
+            // markDownloadRequested();
+            // hideLoader();
 
             if (!event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
                 event.preventDefault();

@@ -283,6 +283,8 @@ class PandLExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
         $exportData[] = ['Total Income', $calc['totalIncome']];
         $exportData[] = ['Total Expenses', $calc['totalExpenses']];
         $exportData[] = ['Gross ' . ($calc['grossIsProfit'] ? 'Profit' : 'Loss'), $calc['grossAbs']];
+        $exportData[] = ['Total Indirect Income', $calc['indirectIncome']];
+        $exportData[] = ['Total Indirect Expenses', $calc['indirectExpenses']];
         $exportData[] = ['Net ' . ($calc['netIsProfit'] ? 'Profit' : 'Loss'), $calc['netAbs']];
 
         return $exportData;
