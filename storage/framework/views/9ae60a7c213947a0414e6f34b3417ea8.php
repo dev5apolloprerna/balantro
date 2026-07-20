@@ -70,7 +70,6 @@
     let hideTimer = null;
     let downloadRequested = false;
     let downloadResetTimer = null;
-    let downloadLoaderTimer = null;
     const messageForUrl = (url) => {
         const path = (url.pathname || '').toLowerCase();
         if (path.includes('/reports') || path.includes('/clients/reports')) return 'Loading report...';
@@ -97,10 +96,6 @@
         if (downloadResetTimer) {
             clearTimeout(downloadResetTimer);
             downloadResetTimer = null;
-        }
-        if (downloadLoaderTimer) {
-            clearTimeout(downloadLoaderTimer);
-            downloadLoaderTimer = null;
         }
     };
 
@@ -134,14 +129,6 @@
     window.hideGlobalLoader = hideLoader;
     window.hideGlobalLoaderWhenIdle = hideLoaderWhenIdle;
 
-    const hideDownloadLoaderSoon = (minimumDelay = 1500) => {
-        // setTimeout(hideLoader, minimumDelay);
-        if (downloadLoaderTimer) clearTimeout(downloadLoaderTimer);
-        downloadLoaderTimer = setTimeout(() => {
-            downloadLoaderTimer = null;
-            hideLoader();
-        }, minimumDelay);
-    };
     // Downloads must not replace the current page. Use the browser's native file
     // download flow so PDF/Excel responses save normally, then clear the loader
     // because attachment responses usually do not trigger a normal page load.
@@ -177,7 +164,9 @@
         if (!url) return;
 
         markDownloadRequested();
-        showLoader('Preparing download...');
+        // Downloads keep the current page open, so never leave the global page
+        // loader visible while the browser prepares or saves the file.
+        hideLoader();
         
         let settled = false;
         const finish = () => {
@@ -185,7 +174,7 @@
             settled = true;
             downloadRequested = false;
             clearDownloadTimers();
-            hideDownloadLoaderSoon(250);
+            hideLoader();
         };
 
         // Do not fetch report exports with XHR. Laravel's PDF/Excel download
