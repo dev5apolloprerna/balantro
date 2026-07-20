@@ -122,12 +122,25 @@
     window.hideGlobalLoader = hideLoader;
     window.hideGlobalLoaderWhenIdle = hideLoaderWhenIdle;
 
-    const hideDownloadLoaderSoon = () => {
-        setTimeout(hideLoader, 1500);
+    const hideDownloadLoaderSoon = (minimumDelay = 150) => {
+        setTimeout(hideLoader, minimumDelay);
     };
     // Downloads must not replace the current page. Use the browser's native file
     // download flow so PDF/Excel responses save normally, then clear the loader
     // because attachment responses usually do not trigger a normal page load.
+
+     const createDownloadFrame = () => {
+        let frame = document.getElementById('globalDownloadFrame');
+        if (!frame) {
+            frame = document.createElement('iframe');
+            frame.id = 'globalDownloadFrame';
+            frame.name = 'globalDownloadFrame';
+            frame.hidden = true;
+            frame.style.display = 'none';
+            document.body.appendChild(frame);
+        }
+        return frame;
+    };
 
     window.downloadFile = (url) => {
         if (!url) return;
@@ -136,16 +149,25 @@
         markDownloadRequested();
         showLoader('Preparing download...');
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = '';
-        link.dataset.loader = 'false';
-        link.hidden = true;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        const frame = createDownloadFrame();
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            frame.removeEventListener('load', finish);
+            frame.removeEventListener('error', finish);
+            downloadRequested = false;
+            if (downloadResetTimer) {
+                clearTimeout(downloadResetTimer);
+                downloadResetTimer = null;
+            }
+            hideDownloadLoaderSoon(250);
+        };
 
-        hideDownloadLoaderSoon();
+        frame.addEventListener('load', finish);
+        frame.addEventListener('error', finish);
+        frame.src = url;
+        setTimeout(finish, 15000);
     };
 
     const downloadOrExportPattern = /(?:\/download(?:\/|$|[?#])|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$|[?#])|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
@@ -200,12 +222,18 @@
         if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
         // if (shouldSkipLoaderForUrl(url)) return;
         // if (link.dataset.loader === 'false' || link.hasAttribute('download') || shouldSkipLoaderForUrl(url)) {
+        const isDownloadLink = link.hasAttribute('download') || shouldSkipLoaderForUrl(url);
         if (link.dataset.loader === 'false') {
+            if (isDownloadLink && !event.defaultPrevented && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+                event.preventDefault();
+                window.downloadFile(url.href);
+                return;
+            }
             hideLoader();
             return;
         }
 
-        if (link.hasAttribute('download') || shouldSkipLoaderForUrl(url)) {
+        if (isDownloadLink) {
             // File responses keep this page open, so beforeunload may fire without
             // a subsequent load/pageshow event to clear the loader.
             // downloadRequested = true;
