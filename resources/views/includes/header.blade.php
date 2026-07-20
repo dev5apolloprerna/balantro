@@ -4,7 +4,7 @@
 <a href="{{ route('company') }}">Company</a>
 <a href="{{ route('resources') }}">Resources</a> --}}
 <nav id="main-nav"
-    class="fixed w-full z-50 transition-all duration-300 backdrop-blur-md bg-balantro-navy/50 border-b border-white/5">
+    class="absolute w-full z-50 transition-all duration-300 backdrop-blur-md bg-balantro-navy/50 border-b border-white/5">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-24">
             <div class="flex items-center gap-3 cursor-pointer">
