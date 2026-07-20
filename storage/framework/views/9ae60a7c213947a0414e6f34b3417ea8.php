@@ -159,22 +159,6 @@
         return frame;
     };
 
-     const filenameFromDisposition = (disposition) => {
-        if (!disposition) return '';
-
-        const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i);
-        if (encoded && encoded[1]) {
-            try {
-                return decodeURIComponent(encoded[1].replace(/['"]/g, '').trim());
-            } catch (error) {
-                return encoded[1].replace(/['"]/g, '').trim();
-            }
-        }
-
-        const regular = disposition.match(/filename="?([^";]+)"?/i);
-        return regular && regular[1] ? regular[1].trim() : '';
-    };
-
     const fallbackDownloadWithFrame = (url, finish) => {
         const frame = createDownloadFrame();
         const frameFinish = () => {
@@ -194,60 +178,24 @@
 
         markDownloadRequested();
         showLoader('Preparing download...');
-        // Attachment downloads do not reliably fire page lifecycle events, and a
-        // fetch may stay pending while the browser saves the file. Always clear
-        // the temporary download loader after a short grace period.
-        hideDownloadLoaderSoon(5000);
-
-        // const frame = createDownloadFrame();
+        
         let settled = false;
         const finish = () => {
             if (settled) return;
             settled = true;
-            // frame.removeEventListener('load', finish);
-            // frame.removeEventListener('error', finish);
             downloadRequested = false;
             clearDownloadTimers();
             hideDownloadLoaderSoon(250);
         };
 
-        // frame.addEventListener('load', finish);
-        // frame.addEventListener('error', finish);
-        // frame.src = url;
-        // setTimeout(finish, 15000);
-
-        if (!window.fetch || !window.URL || !window.URL.createObjectURL) {
-            fallbackDownloadWithFrame(url, finish);
-            return;
-        }
-
-        fetch(url, {
-            credentials: 'same-origin',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        })
-            .then((response) => {
-                if (!response.ok) throw new Error('Download request failed.');
-
-                const filename = filenameFromDisposition(response.headers.get('Content-Disposition'))
-                    || decodeURIComponent((new URL(url, window.location.href)).pathname.split('/').filter(Boolean).pop() || 'download');
-
-                return response.blob().then((blob) => ({ blob, filename }));
-            })
-            .then(({ blob, filename }) => {
-                const objectUrl = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = objectUrl;
-                link.download = filename;
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
-                finish();
-            })
-            .catch(() => {
-                fallbackDownloadWithFrame(url, finish);
-            });
+        // Do not fetch report exports with XHR. Laravel's PDF/Excel download
+        // responses are meant for browser navigation, and fetching them can leave
+        // the user with a stuck loader or a blob that the browser never saves.
+        // A hidden iframe starts the native attachment download while keeping the
+        // current report page open; the timeout handles attachment responses that
+        // do not fire iframe lifecycle events.
+        fallbackDownloadWithFrame(url, finish);
+        hideDownloadLoaderSoon(5000);
     };
 
     const downloadOrExportPattern = /(?:\/download(?:\/|$|[?#])|\/export(?:\/|[-_])|(?:^|[-_\/])(excel|pdf)(?:[-_\/]|$|[?#])|\.(?:pdf|xlsx?|csv)(?:$|[?#]))/i;
