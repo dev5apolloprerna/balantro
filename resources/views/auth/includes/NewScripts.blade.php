@@ -1,12 +1,31 @@
 <script>
     // Theme management functions
+    function getLocalStorageItem(key) {
+        try {
+            return window.localStorage ? window.localStorage.getItem(key) : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function setLocalStorageItem(key, value) {
+        try {
+            if (window.localStorage) {
+                window.localStorage.setItem(key, value);
+            }
+        } catch (error) {
+            // Ignore storage failures so the login page still works when browser storage is blocked or corrupted.
+        }
+    }
+
     function getStoredTheme() {
-        return localStorage.getItem('theme') || localStorage.getItem('color-theme');
+        // return localStorage.getItem('theme') || localStorage.getItem('color-theme');
+        return getLocalStorageItem('theme') || getLocalStorageItem('color-theme');
     }
 
     function setStoredTheme(theme) {
-        localStorage.setItem('theme', theme);
-        localStorage.setItem('color-theme', theme);
+        setLocalStorageItem('theme', theme);
+        setLocalStorageItem('color-theme', theme);
     }
 
     function getPreferredTheme() {

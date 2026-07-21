@@ -1,8 +1,6 @@
-@extends('layouts.front')
+<?php $__env->startSection('title', 'Insight Detail'); ?>
 
-@section('title', 'Insight Detail')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 
 <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap"
@@ -222,7 +220,8 @@
         <!-- Title -->
         <h1
             class="font-display text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.1] text-white opacity-0 animate-[fadeInUp_0.8s_ease-out_0.2s_forwards]">
-            {{ $blog->title }}
+            <?php echo e($blog->title); ?>
+
             <!-- <span class="relative inline-block mt-2">
                 <span
                     class="absolute -inset-2 bg-gradient-to-r from-balantro-primary via-[#a78bfa] to-balantro-secondary blur-2xl opacity-40"></span>
@@ -296,7 +295,8 @@
                     <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-balantro-primary/10 rounded-full blur-3xl"></div>
                 </div>
 
-                {!! $blog->description !!}
+                <?php echo $blog->description; ?>
+
 
                 <div class="grid sm:grid-cols-2 gap-4 my-8 not-prose">
                     <div
@@ -459,7 +459,7 @@
         </div>
 
         <!-- RELATED ARTICLES -->
-        @if ($relatedBlogs->count() > 0)
+        <?php if($relatedBlogs->count() > 0): ?>
         <div class="mt-24" data-aos="fade-up">
             <div class="flex items-center justify-between mb-8">
                 <h2 class="font-display font-bold text-white text-2xl">
@@ -474,31 +474,33 @@
                 </a>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @foreach ($relatedBlogs as $relatedBlog)
-                <a href="{{ route('insight.detail', $relatedBlog->slugname) }}"
+                <?php $__currentLoopData = $relatedBlogs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $relatedBlog): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <a href="<?php echo e(route('insight.detail', $relatedBlog->slugname)); ?>"
                     class="related-card group flex flex-col rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden transition-all duration-300">
                     <div class="aspect-video bg-[#0a0f1c] relative overflow-hidden">
-                        @if (!empty($relatedBlog->image))
-                            <img src="{{ asset('uploads/Blog/' . $relatedBlog->image) }}"
-                                alt="{{ $relatedBlog->title }}" class="h-full w-full object-cover">
-                        @else
+                        <?php if(!empty($relatedBlog->image)): ?>
+                            <img src="<?php echo e(asset('uploads/Blog/' . $relatedBlog->image)); ?>"
+                                alt="<?php echo e($relatedBlog->title); ?>" class="h-full w-full object-cover">
+                        <?php else: ?>
                             <div class="absolute inset-0 bg-gradient-to-br from-[#34d399]/20 to-transparent"></div>
                             <div class="absolute inset-0 flex items-center justify-center text-3xl">
                                 📋
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
                     <div class="p-6 flex flex-col flex-grow">
                         <div class="text-[11px] font-bold tracking-widest uppercase text-slate-500 mb-2 flex items-center gap-2">
                             <!-- <span>Compliance</span><span class="w-1 h-1 rounded-full bg-slate-500"></span><span>4 min read</span> -->
-                            <span>{{ $relatedBlog->category->name ?? 'Insight' }}</span>
+                            <span><?php echo e($relatedBlog->category->name ?? 'Insight'); ?></span>
                         </div>
                         <h3
                             class="text-base font-display font-bold text-white mb-2 group-hover:text-balantro-secondary transition-colors leading-snug">
-                            {{ $relatedBlog->title }}
+                            <?php echo e($relatedBlog->title); ?>
+
                         </h3>
                         <p class="text-slate-400 text-sm flex-grow">
-                            {{ \Illuminate\Support\Str::limit(strip_tags($relatedBlog->description), 80) }}
+                            <?php echo e(\Illuminate\Support\Str::limit(strip_tags($relatedBlog->description), 80)); ?>
+
                         </p>
                         <div
                             class="font-medium text-balantro-primary flex items-center group-hover:translate-x-1 transition-transform text-sm mt-4">
@@ -569,10 +571,10 @@
                         </div>
                     </div>
                 </a> -->
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
-        @endif
+        <?php endif; ?>
 
         <!-- CTA STRIP -->
         <div
@@ -763,4 +765,5 @@
         new ParticleNetwork("canvas-footer");
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.front', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/frontend/insight-detail.blade.php ENDPATH**/ ?>

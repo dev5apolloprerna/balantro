@@ -1,8 +1,6 @@
-@extends('layouts.front')
+<?php $__env->startSection('title', 'Features'); ?>
 
-@section('title', 'Features')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 
 <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap"
@@ -987,4 +985,5 @@
     });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.front', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/frontend/features.blade.php ENDPATH**/ ?>

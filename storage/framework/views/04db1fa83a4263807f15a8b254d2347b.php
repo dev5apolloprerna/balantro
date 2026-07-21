@@ -16,7 +16,15 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <script>
         (function () {
-            const savedTheme = localStorage.getItem('theme') || localStorage.getItem('color-theme');
+            // const savedTheme = localStorage.getItem('theme') || localStorage.getItem('color-theme');
+            function getStoredThemeValue(key) {
+                try {
+                    return window.localStorage ? window.localStorage.getItem(key) : null;
+                } catch (error) {
+                    return null;
+                }
+            }
+            const savedTheme = getStoredThemeValue('theme') || getStoredThemeValue('color-theme');
             const isDark = savedTheme ? savedTheme === 'dark' : true;
             document.documentElement.classList.toggle('dark', isDark);
         })();

@@ -1,8 +1,6 @@
-@extends('layouts.front')
+<?php $__env->startSection('title', 'Insights'); ?>
 
-@section('title', 'Insights')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 
 <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap"
@@ -131,11 +129,11 @@
                 <button
                     class="px-5 py-2 rounded-full border border-balantro-primary bg-balantro-primary/10 text-white text-sm font-medium transition-all hover:bg-balantro-primary/20">All
                     Themes</button>
-                @foreach ($categories as $category)
+                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <button
                     class="px-5 py-2 rounded-full border border-white/10 bg-white/5 text-slate-300 text-sm font-medium transition-all hover:bg-white/10 hover:text-white">
-                    {{ $category->name }}</button>
-                @endforeach
+                    <?php echo e($category->name); ?></button>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 <!-- <button
                     class="px-5 py-2 rounded-full border border-white/10 bg-white/5 text-slate-300 text-sm font-medium transition-all hover:bg-white/10 hover:text-white">GST
                     & compliance clarity</button>
@@ -152,32 +150,34 @@
 
             <!-- BLOG GRID -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" data-aos="fade-up" data-aos-delay="100">
-                @forelse ($blogs as $blog)
-                <a href="{{ route('insight.detail', $blog->slugname) }}"
+                <?php $__empty_1 = true; $__currentLoopData = $blogs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $blog): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <a href="<?php echo e(route('insight.detail', $blog->slugname)); ?>"
                     class="group flex flex-col rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md overflow-hidden hover:bg-white/[0.06] hover:border-balantro-primary/30 transition-all duration-300">
                     <div class="aspect-video bg-[#0a0f1c] relative overflow-hidden">
                         <div class="absolute inset-0 bg-gradient-to-br from-balantro-primary/20 to-transparent"></div>
-                            @if (!empty($blog->image))
-                            <img src="{{ asset('uploads/Blog/' . $blog->image) }}" alt="{{ $blog->title }}"
+                            <?php if(!empty($blog->image)): ?>
+                            <img src="<?php echo e(asset('uploads/Blog/' . $blog->image)); ?>" alt="<?php echo e($blog->title); ?>"
                                         class="h-full w-full object-cover">
-                            @else
+                            <?php else: ?>
                                 <div
                             class="absolute inset-0 flex items-center justify-center p-8 text-center text-white/50 font-display font-medium text-lg">
                             Featured Insight</div>
-                            @endif
+                            <?php endif; ?>
                     </div>
                     <div class="p-8 flex flex-col flex-grow">
                         <div class="text-[11px] font-bold tracking-widest uppercase text-slate-500 mb-3 flex items-center gap-2">
-                            <span>{{ $blog->category->name ?? 'Insight' }}</span>
+                            <span><?php echo e($blog->category->name ?? 'Insight'); ?></span>
                             <!-- <span class="w-1 h-1 rounded-full bg-slate-500"></span>
                             <span>5 min read</span> -->
                         </div>
                         <h3
                             class="text-xl font-display font-bold text-white mb-3 group-hover:text-balantro-secondary transition-colors leading-tight">
-                            {{ $blog->title }}
+                            <?php echo e($blog->title); ?>
+
                         </h3>
                         <p class="text-slate-400 text-sm mb-6 flex-grow">
-                            {{ \Illuminate\Support\Str::limit(strip_tags($blog->description), 100) }}
+                            <?php echo e(\Illuminate\Support\Str::limit(strip_tags($blog->description), 100)); ?>
+
                         </p>
                         <div
                             class="font-medium text-balantro-primary flex items-center group-hover:translate-x-2 transition-transform duration-300 text-sm">
@@ -188,11 +188,11 @@
                         </div>
                     </div>
                 </a>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center text-slate-400">
                         No INSIGHTS & BLOGS found.
                     </div>
-                @endforelse
+                <?php endif; ?>
 
                 <!-- <a href="insight-detail.html"
                     class="group flex flex-col rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md overflow-hidden hover:bg-white/[0.06] hover:border-balantro-primary/30 transition-all duration-300">
@@ -516,4 +516,5 @@
     });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.front', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/frontend/insights.blade.php ENDPATH**/ ?>

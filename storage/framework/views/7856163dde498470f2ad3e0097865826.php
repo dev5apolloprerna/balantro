@@ -1,11 +1,9 @@
-@extends('layouts.front')
+<?php $__env->startSection('title', 'Company'); ?>
 
-@section('title', 'Company')
+<?php $__env->startSection('content'); ?>
 
-@section('content')
-<link
-    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap"
-    rel="stylesheet" />
+
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
 <script>
     tailwind.config = {
         darkMode: "class",
@@ -42,6 +40,7 @@
         },
     };
 </script>
+<link href="css/style.css" rel="stylesheet" />
 <style>
     .feature-card {
         background: rgba(15, 23, 42, 0.4);
@@ -706,6 +705,7 @@
         </div>
     </section>
 </div>
+
 <!-- JOIN THE NEW GENERATION SECTION -->
 <section class="inner-section-vh relative py-32 flex-col w-full overflow-hidden">
     <!-- Background Video -->
@@ -761,7 +761,13 @@
 
 <!-- GLOBAL FOOTER -->
 
+<!-- GLOBAL FOOTER -->
+<?php $__env->stopSection(); ?>
 
+<?php $__env->startSection('scripts'); ?>
+
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
     class ParticleNetwork {
         constructor(canvasId, options = {}) {
@@ -910,6 +916,7 @@
         });
     });
 </script>
+<script src="<?php echo e(asset('js/nav-scroll.js')); ?>"></script>
 
 <script>
     // Mobile Menu Toggle
@@ -928,4 +935,7 @@
         }
     });
 </script>
-@endsection
+<script src="<?php echo e(asset('js/magic-button.js')); ?>"></script>
+
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.front', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/frontend/company.blade.php ENDPATH**/ ?>
