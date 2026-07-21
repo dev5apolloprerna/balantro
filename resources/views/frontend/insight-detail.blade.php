@@ -1,9 +1,17 @@
 @extends('layouts.front')
 
-@section('title', 'Insight Detail')
+@section('title', $blog->metaTitle ?: $blog->title)
 
 @section('content')
-
+@php
+    $plainDescription = trim(strip_tags($blog->description ?? ''));
+    $summary = $blog->metaDescription ?: \Illuminate\Support\Str::limit($plainDescription, 170);
+    $wordCount = str_word_count($plainDescription);
+    $readingTime = max(1, (int) ceil($wordCount / 200));
+    $publishedDate = optional($blog->created_at)->format('F j, Y');
+    $publishedMonth = optional($blog->created_at)->format('M Y');
+    $categoryName = $blog->category->name ?? 'Insight';
+@endphp
 <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap"
     rel="stylesheet" />
@@ -195,15 +203,15 @@
         <!-- Breadcrumb -->
         <nav
             class="flex items-center gap-2 text-sm text-slate-500 mb-8 opacity-0 animate-[fadeInUp_0.8s_ease-out_forwards]">
-            <a href="index.html" class="hover:text-balantro-secondary transition-colors">Home</a>
+            <a href="{{ route('homeindex') }}" class="hover:text-balantro-secondary transition-colors">Home</a>
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-            <a href="insights.html" class="hover:text-balantro-secondary transition-colors">Insights</a>
+            <a href="{{ route('insights') }}" class="hover:text-balantro-secondary transition-colors">Insights</a>
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-            <span class="text-slate-400 truncate">Clean Books</span>
+            <span class="text-slate-400 truncate">{{ $blog->title }}</span>
         </nav>
 
         <!-- Category & Meta -->
@@ -211,12 +219,14 @@
             <span
                 class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-balantro-primary/10 border border-balantro-primary/30 text-balantro-primary text-xs font-bold uppercase tracking-widest">
                 <span class="w-1.5 h-1.5 rounded-full bg-balantro-primary animate-pulse"></span>
-                Accounting
+                {{ $categoryName }}
             </span>
             <span class="text-slate-500 text-sm">·</span>
-            <span class="text-slate-400 text-sm">5 min read</span>
+            <span class="text-slate-400 text-sm">{{ $readingTime }} min read</span>
+             @if ($publishedDate)
             <span class="text-slate-500 text-sm">·</span>
-            <span class="text-slate-400 text-sm">March 3, 2026</span>
+            <span class="text-slate-400 text-sm">{{ $publishedDate }}</span>
+            @endif
         </div>
 
         <!-- Title -->
@@ -234,9 +244,7 @@
         <!-- Subtitle -->
         <p
             class="text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed mb-10 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.3s_forwards]">
-            A practical view on financial discipline. Most early-stage businesses
-            chase profits but the ones that survive and scale obsess over their
-            books first.
+            {{ $summary }}
         </p>
 
         <!-- Author Strip -->
@@ -284,82 +292,28 @@
                 <!-- Feature Banner -->
                 <div
                     class="rounded-2xl bg-gradient-to-br from-balantro-primary/10 via-[#0a0f1c] to-[#0a0f1c] border border-balantro-primary/20 aspect-video flex items-center justify-center mb-12 relative overflow-hidden">
-                    <div
-                        class="absolute inset-0 bg-gradient-to-br from-balantro-primary/20 via-transparent to-balantro-secondary/10">
-                    </div>
-                    <div class="relative z-10 text-center">
-                        <div class="text-6xl mb-4">📚</div>
-                        <p class="text-white/60 font-display font-medium text-lg">
-                            Financial Discipline in Early Growth
-                        </p>
-                    </div>
+                    @if (!empty($blog->image))
+                        <img src="{{ asset('uploads/Blog/' . $blog->image) }}" alt="{{ $blog->title }}"
+                            class="absolute inset-0 h-full w-full object-cover">
+                    @else
+                        <div class="absolute inset-0 bg-gradient-to-br from-balantro-primary/20 via-transparent to-balantro-secondary/10"></div>
+                        <div class="relative z-10 text-center">
+                            <div class="text-6xl mb-4">📚</div>
+                            <p class="text-white/60 font-display font-medium text-lg">{{ $blog->title }}</p>
+                        </div>
+                    @endif
                     <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-balantro-primary/10 rounded-full blur-3xl"></div>
                 </div>
 
                 {!! $blog->description !!}
 
-                <div class="grid sm:grid-cols-2 gap-4 my-8 not-prose">
-                    <div
-                        class="p-5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-balantro-primary/30 transition-all">
-                        <div class="text-2xl mb-3">🗂️</div>
-                        <h4 class="font-display font-semibold text-white mb-2">
-                            1. Separate Your Accounts
-                        </h4>
-                        <p class="text-slate-400 text-sm leading-relaxed">
-                            Open a dedicated current account for the business. Never use
-                            personal accounts for business transactions.
-                        </p>
-                    </div>
-                    <div
-                        class="p-5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-balantro-primary/30 transition-all">
-                        <div class="text-2xl mb-3">📅</div>
-                        <h4 class="font-display font-semibold text-white mb-2">
-                            2. Weekly Reconciliation
-                        </h4>
-                        <p class="text-slate-400 text-sm leading-relaxed">
-                            Set a fixed time each week even 30 minutes to update
-                            records and reconcile your bank statement.
-                        </p>
-                    </div>
-                    <div
-                        class="p-5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-balantro-primary/30 transition-all">
-                        <div class="text-2xl mb-3">🧾</div>
-                        <h4 class="font-display font-semibold text-white mb-2">
-                            3. Invoice Everything
-                        </h4>
-                        <p class="text-slate-400 text-sm leading-relaxed">
-                            Every sale gets an invoice. Every purchase gets a bill. No
-                            exceptions. This is the foundation of GST compliance.
-                        </p>
-                    </div>
-                    <div
-                        class="p-5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-balantro-primary/30 transition-all">
-                        <div class="text-2xl mb-3">📊</div>
-                        <h4 class="font-display font-semibold text-white mb-2">
-                            4. Monthly P&L Review
-                        </h4>
-                        <p class="text-slate-400 text-sm leading-relaxed">
-                            Review a basic P&L every month. Know your gross margin, your
-                            fixed costs, and your net position.
-                        </p>
-                    </div>
-                </div>
-
-                <h2 id="conclusion">The Bottom Line</h2>
+                
                 
                 <!-- Tags -->
                 <div class="flex flex-wrap gap-2 mt-12 pt-8 border-t border-white/10">
                     <span class="text-slate-500 text-sm mr-2">Tags:</span>
-                    <a href="insights.html"
-                        class="px-3 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all">Accounting</a>
-                    <a href="insights.html"
-                        class="px-3 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all">Financial
-                        Discipline</a>
-                    <a href="insights.html"
-                        class="px-3 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all">MSMEs</a>
-                    <a href="insights.html"
-                        class="px-3 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all">Early
-                        Growth</a>
+                    <a href="{{ route('insights', array_filter(['category' => $blog->category->slugname ?? null])) }}"
+                        class="px-3 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all">{{ $categoryName }}</a>
                 </div>
 
                 <!-- Author Box -->
@@ -397,26 +351,7 @@
                         </svg>
                         Table of Contents
                     </h3>
-                    <nav class="space-y-1">
-                        <a href="#the-real-problem"
-                            class="toc-link block text-slate-400 text-sm py-1.5 border-l border-white/10 pl-3 hover:text-balantro-secondary">The
-                            Real Problem</a>
-                        <a href="#what-clean-books-mean"
-                            class="toc-link block text-slate-400 text-sm py-1.5 border-l border-white/10 pl-3 hover:text-balantro-secondary">What
-                            Clean Books Mean</a>
-                        <a href="#why-early-stage"
-                            class="toc-link block text-slate-400 text-sm py-1.5 border-l border-white/10 pl-3 hover:text-balantro-secondary">Why
-                            Early-Stage Matters</a>
-                        <a href="#profit-vs-discipline"
-                            class="toc-link block text-slate-400 text-sm py-1.5 border-l border-white/10 pl-3 hover:text-balantro-secondary">Profit
-                            vs. Discipline</a>
-                        <a href="#practical-steps"
-                            class="toc-link block text-slate-400 text-sm py-1.5 border-l border-white/10 pl-3 hover:text-balantro-secondary">Practical
-                            Steps</a>
-                        <a href="#conclusion"
-                            class="toc-link block text-slate-400 text-sm py-1.5 border-l border-white/10 pl-3 hover:text-balantro-secondary">The
-                            Bottom Line</a>
-                    </nav>
+                    <p class="text-slate-400 text-sm leading-relaxed">{{ $summary }}</p>
                 </div>
 
                 <!-- Quick Stats -->
@@ -429,15 +364,15 @@
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
                             <span class="text-slate-400 text-xs">Reading Time</span>
-                            <span class="text-balantro-secondary font-semibold text-sm">5 min</span>
+                            <span class="text-balantro-secondary font-semibold text-sm">{{ $readingTime }} min</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-400 text-xs">Category</span>
-                            <span class="text-white font-semibold text-sm">Accounting</span>
+                            <span class="text-white font-semibold text-sm">{{ $categoryName }}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-400 text-xs">Published</span>
-                            <span class="text-white font-semibold text-sm">Mar 2026</span>
+                            <span class="text-white font-semibold text-sm">{{ $publishedMonth ?: '—' }}</span>
                         </div>
                     </div>
                 </div>
@@ -465,7 +400,7 @@
                 <h2 class="font-display font-bold text-white text-2xl">
                     More Insights
                 </h2>
-                <a href="insights.html"
+                <a href="{{ route('insights') }}"
                     class="text-balantro-primary text-sm font-medium hover:text-balantro-secondary transition-colors flex items-center gap-1">
                     View All
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -510,65 +445,6 @@
                     </div>
                 </a>
 
-                <!-- <a href="insight-detail.html"
-                    class="related-card group flex flex-col rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden transition-all duration-300">
-                    <div class="aspect-video bg-[#0a0f1c] relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-[#fbbf24]/20 to-transparent"></div>
-                        <div class="absolute inset-0 flex items-center justify-center text-3xl">
-                            ⚙️
-                        </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <div class="text-[11px] font-bold tracking-widest uppercase text-slate-500 mb-2 flex items-center gap-2">
-                            <span>Systems</span><span class="w-1 h-1 rounded-full bg-slate-500"></span><span>6 min read</span>
-                        </div>
-                        <h3
-                            class="text-base font-display font-bold text-white mb-2 group-hover:text-balantro-secondary transition-colors leading-snug">
-                            Process Over People: Designing The Backend
-                        </h3>
-                        <p class="text-slate-400 text-sm flex-grow">
-                            How resilient businesses structure their operations beyond
-                            individual dependencies.
-                        </p>
-                        <div
-                            class="font-medium text-balantro-primary flex items-center group-hover:translate-x-1 transition-transform text-sm mt-4">
-                            Read Article
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                        </div>
-                    </div>
-                </a>
-
-                <a href="insight-detail.html"
-                    class="related-card group flex flex-col rounded-2xl bg-white/[0.03] border border-white/10 overflow-hidden transition-all duration-300">
-                    <div class="aspect-video bg-[#0a0f1c] relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-balantro-primary/20 to-transparent"></div>
-                        <div class="absolute inset-0 flex items-center justify-center text-3xl">
-                            💼
-                        </div>
-                    </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <div class="text-[11px] font-bold tracking-widest uppercase text-slate-500 mb-2 flex items-center gap-2">
-                            <span>MSMEs</span><span class="w-1 h-1 rounded-full bg-slate-500"></span><span>7 min read</span>
-                        </div>
-                        <h3
-                            class="text-base font-display font-bold text-white mb-2 group-hover:text-balantro-secondary transition-colors leading-snug">
-                            5 Financial Mistakes That Kill Growing Businesses
-                        </h3>
-                        <p class="text-slate-400 text-sm flex-grow">
-                            Common but avoidable errors that set back even profitable
-                            companies.
-                        </p>
-                        <div
-                            class="font-medium text-balantro-primary flex items-center group-hover:translate-x-1 transition-transform text-sm mt-4">
-                            Read Article
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                            </svg>
-                        </div>
-                    </div>
-                </a> -->
                 @endforeach
             </div>
         </div>
@@ -589,7 +465,7 @@
                 <a href="#"
                     class="px-10 py-4 rounded-full bg-gradient-to-r from-balantro-secondary to-balantro-primary text-balantro-navy font-bold text-base hover:brightness-110 hover:scale-105 transition-all shadow-[0_0_30px_rgba(34,211,238,0.3)]">Talk
                     to Our Team</a>
-                <a href="insights.html"
+                <a href="{{ route('insights') }}"
                     class="px-10 py-4 rounded-full text-white font-medium text-base flex items-center justify-center gap-2 border border-white/20 hover:bg-white/10 transition-all">←
                     Back to Insights</a>
             </div>

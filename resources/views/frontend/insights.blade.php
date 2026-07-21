@@ -128,30 +128,24 @@
 
             <!-- FILTERS -->
             <div class="flex flex-wrap gap-3 justify-center mb-16" data-aos="fade-up">
-                <button
-                    class="px-5 py-2 rounded-full border border-balantro-primary bg-balantro-primary/10 text-white text-sm font-medium transition-all hover:bg-balantro-primary/20">All
-                    Themes</button>
-                @foreach ($categories as $category)
-                <button
-                    class="px-5 py-2 rounded-full border border-white/10 bg-white/5 text-slate-300 text-sm font-medium transition-all hover:bg-white/10 hover:text-white">
-                    {{ $category->name }}</button>
-                @endforeach
                 <!-- <button
-                    class="px-5 py-2 rounded-full border border-white/10 bg-white/5 text-slate-300 text-sm font-medium transition-all hover:bg-white/10 hover:text-white">GST
-                    & compliance clarity</button>
-                <button
-                    class="px-5 py-2 rounded-full border border-white/10 bg-white/5 text-slate-300 text-sm font-medium transition-all hover:bg-white/10 hover:text-white">Financial
-                    discipline for MSMEs</button>
-                <button
-                    class="px-5 py-2 rounded-full border border-white/10 bg-white/5 text-slate-300 text-sm font-medium transition-all hover:bg-white/10 hover:text-white">Common
-                    business mistakes</button>
-                <button
-                    class="px-5 py-2 rounded-full border border-white/10 bg-white/5 text-slate-300 text-sm font-medium transition-all hover:bg-white/10 hover:text-white">Process
-                    & systems thinking</button> -->
+                    class="px-5 py-2 rounded-full border border-balantro-primary bg-balantro-primary/10 text-white text-sm font-medium transition-all hover:bg-balantro-primary/20">All
+                    Themes</button> -->
+                <a href="{{ route('insights') }}"
+                    class="px-5 py-2 rounded-full border {{ request('category') ? 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white' : 'border-balantro-primary bg-balantro-primary/10 text-white hover:bg-balantro-primary/20' }} text-sm font-medium transition-all">All
+                    Themes</a>
+                @foreach ($categories as $category)
+                <!-- <button
+                    class="px-5 py-2 rounded-full border border-white/10 bg-white/5 text-slate-300 text-sm font-medium transition-all hover:bg-white/10 hover:text-white">
+                    {{ $category->name }}</button> -->
+                    <a href="{{ route('insights', ['category' => $category->slugname]) }}"
+                    class="px-5 py-2 rounded-full border {{ request('category') === $category->slugname ? 'border-balantro-primary bg-balantro-primary/10 text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white' }} text-sm font-medium transition-all">
+                    {{ $category->name }}</a>
+                @endforeach
             </div>
 
             <!-- BLOG GRID -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" data-aos="fade-up" data-aos-delay="100">
+            <div id="blog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" data-aos="fade-up" data-aos-delay="100">
                 @forelse ($blogs as $blog)
                 <a href="{{ route('insight.detail', $blog->slugname) }}"
                     class="group flex flex-col rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md overflow-hidden hover:bg-white/[0.06] hover:border-balantro-primary/30 transition-all duration-300">
@@ -194,68 +188,11 @@
                     </div>
                 @endforelse
 
-                <!-- <a href="insight-detail.html"
-                    class="group flex flex-col rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md overflow-hidden hover:bg-white/[0.06] hover:border-balantro-primary/30 transition-all duration-300">
-                    <div class="aspect-video bg-[#0a0f1c] relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-[#34d399]/20 to-transparent"></div>
-                        <div
-                            class="absolute inset-0 flex items-center justify-center p-8 text-center text-white/50 font-display font-medium text-lg">
-                            Featured Insight</div>
-                    </div>
-                    <div class="p-8 flex flex-col flex-grow">
-                        <div class="text-[11px] font-bold tracking-widest uppercase text-slate-500 mb-3 flex items-center gap-2">
-                            <span>Compliance</span>
-                            <span class="w-1 h-1 rounded-full bg-slate-500"></span>
-                            <span>4 min read</span>
-                        </div>
-                        <h3
-                            class="text-xl font-display font-bold text-white mb-3 group-hover:text-balantro-secondary transition-colors leading-tight">
-                            The Hidden Cost of Delayed GST Returns
-                        </h3>
-                        <p class="text-slate-400 text-sm mb-6 flex-grow">
-                            Why waiting until the last minute is breaking your working capital.
-                        </p>
-                        <div
-                            class="font-medium text-balantro-primary flex items-center group-hover:translate-x-2 transition-transform duration-300 text-sm">
-                            Read Article <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3">
-                                </path>
-                            </svg>
-                        </div>
-                    </div>
-                </a>
+               
 
-                <a href="insight-detail.html"
-                    class="group flex flex-col rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md overflow-hidden hover:bg-white/[0.06] hover:border-balantro-primary/30 transition-all duration-300">
-                    <div class="aspect-video bg-[#0a0f1c] relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-br from-[#fbbf24]/20 to-transparent"></div>
-                        <div
-                            class="absolute inset-0 flex items-center justify-center p-8 text-center text-white/50 font-display font-medium text-lg">
-                            Featured Insight</div>
-                    </div>
-                    <div class="p-8 flex flex-col flex-grow">
-                        <div class="text-[11px] font-bold tracking-widest uppercase text-slate-500 mb-3 flex items-center gap-2">
-                            <span>Systems</span>
-                            <span class="w-1 h-1 rounded-full bg-slate-500"></span>
-                            <span>6 min read</span>
-                        </div>
-                        <h3
-                            class="text-xl font-display font-bold text-white mb-3 group-hover:text-balantro-secondary transition-colors leading-tight">
-                            Process Over People: Designing The Backend
-                        </h3>
-                        <p class="text-slate-400 text-sm mb-6 flex-grow">
-                            How resilient businesses structure their operations beyond individual dependencies.
-                        </p>
-                        <div
-                            class="font-medium text-balantro-primary flex items-center group-hover:translate-x-2 transition-transform duration-300 text-sm">
-                            Read Article <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3">
-                                </path>
-                            </svg>
-                        </div>
-                    </div>
-                </a> -->
-
+            </div>
+            <div class="mt-12">
+                {{ $blogs->withQueryString()->links() }}
             </div>
         </div>
     </section>

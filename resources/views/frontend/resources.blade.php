@@ -116,7 +116,7 @@
         <div
             class="grid grid-cols-1 md:grid-cols-2 gap-6 opacity-0 animate-[fadeInUp_0.8s_ease-out_0.6s_forwards] w-full max-w-4xl mx-auto">
 
-            <a href="insights.html"
+            <a href="{{ route('insights') }}"
                 class="group relative flex flex-col p-8 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:bg-white/[0.06] hover:border-balantro-primary/30 transition-all duration-300 text-left overflow-hidden h-full min-h-[250px]">
                 <div class="relative z-10 flex flex-col h-full">
                     <div class="text-[10px] font-bold tracking-widest uppercase text-balantro-primary mb-3">Clear thinking.
@@ -134,7 +134,7 @@
                 </div>
             </a>
 
-            <!-- <a href="guides.html" class="group relative flex flex-col p-8 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:bg-white/[0.06] hover:border-[#34d399]/30 transition-all duration-300 text-left overflow-hidden h-full min-h-[250px]">
+            <!-- <a href="{{ route('guides') }}" class="group relative flex flex-col p-8 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:bg-white/[0.06] hover:border-[#34d399]/30 transition-all duration-300 text-left overflow-hidden h-full min-h-[250px]">
             <div class="relative z-10 flex flex-col h-full">
               <div class="text-[10px] font-bold tracking-widest uppercase text-[#34d399] mb-3">Less theory. More clarity.</div>
               <h3 class="text-2xl font-display font-bold text-white mb-2">Practical Guides</h3>
@@ -145,7 +145,7 @@
             </div>
           </a> -->
 
-            <a href="faqs.html"
+            <a href="{{ route('faqs') }}"
                 class="group relative flex flex-col p-8 rounded-3xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:bg-white/[0.06] hover:border-[#fbbf24]/30 transition-all duration-300 text-left overflow-hidden h-full min-h-[250px]">
                 <div class="relative z-10 flex flex-col h-full">
                     <div class="text-[10px] font-bold tracking-widest uppercase text-[#fbbf24] mb-3">Straight answers.</div>
