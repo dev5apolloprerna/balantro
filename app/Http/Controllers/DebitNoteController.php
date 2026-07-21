@@ -18,6 +18,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use App\Models\DebitNoteCustomGst;
+use App\Services\TransactionItemAmountService;
 
 class DebitNoteController extends Controller
 {
@@ -771,6 +772,8 @@ class DebitNoteController extends Controller
 
                     'total' => $this->toNumber($row[$headerMap['TOTAL AMOUNT']] ?? 0),
                 ];
+                $noteGroups[$groupKey][array_key_last($noteGroups[$groupKey])] = TransactionItemAmountService::normalizeItem($noteGroups[$groupKey][array_key_last($noteGroups[$groupKey])]);
+                $noteGroups[$groupKey][array_key_last($noteGroups[$groupKey])]['total'] = $noteGroups[$groupKey][array_key_last($noteGroups[$groupKey])]['total_amount'];
             }
 
             $total = 0;
@@ -1480,6 +1483,11 @@ class DebitNoteController extends Controller
             'noitem_rows.*.gst' => 'nullable|numeric',
             'noitem_rows.*.amount' => 'nullable|numeric',
         ]);
+        if (!empty($data['items'])) {
+            $data['items'] = TransactionItemAmountService::normalizeItems($data['items'], (bool) ($data['is_igst'] ?? false));
+            $request->merge(['items' => $data['items']]);
+        }
+
         $invoiceDate = $request->date;
         
         if (!$this->isDateInSelectedFinancialYear($invoiceDate)) {
@@ -1942,6 +1950,31 @@ class DebitNoteController extends Controller
                     'igst_ledger_name' => $slotMapping['igst_name'],
                 ])->save();
             }
+        }
+
+        if ($transaction->items->isNotEmpty()) {
+            $sumAmount = $sumCgst = $sumSgst = $sumIgst = 0.0;
+            foreach ($transaction->items as $item) {
+                TransactionItemAmountService::normalizeModel($item, (float) $item->igst > 0 || (bool) $transaction->is_igst);
+                $item->save();
+                $sumAmount += (float) $item->amount;
+                $sumCgst += (float) $item->cgst;
+                $sumSgst += (float) $item->sgst;
+                $sumIgst += (float) $item->igst;
+            }
+            $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
+            $roundOffLedger = $roundOffSetting['ledger'];
+            $transaction->update([
+                'taxable_amount' => round($sumAmount, 2),
+                'cgst' => round($sumCgst, 2),
+                'sgst' => round($sumSgst, 2),
+                'igst' => round($sumIgst, 2),
+                'total_amount' => $this->calculateTotalAmountWithRoundOff($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
+                'roundoff_id' => $roundOffLedger?->iLedgerId,
+                'roundoff_ledger_name' => $roundOffLedger?->strCustomerName,
+                'roundoff' => $this->calculateRoundOffAmount($sumAmount, $sumSgst, $sumCgst, $sumIgst, $roundOffSetting['side']),
+                'is_igst' => $sumIgst > 0 ? 1 : 0,
+            ]);
         }
 
         return empty($this->getDebitNotePendingIssues($transaction, $mapping));
@@ -2787,6 +2820,7 @@ class DebitNoteController extends Controller
             if (!empty($request->items)) {
 
                 foreach ($request->items as $item) {
+                    $item = TransactionItemAmountService::normalizeItem($item, (bool) ($request->is_igst ?? false));
                     $itemName = isset($item['item']) ? trim((string) $item['item']) : null;
                     $unit = 'NOS';
                     if(isset($item['unit']) && $item['unit'] <> ""){

@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use App\Models\PurchaseCustomGst;
 use Illuminate\Support\Str;
+use App\Services\TransactionItemAmountService;
 
 class PurchaseUploadController extends Controller
 {
@@ -627,6 +628,7 @@ class PurchaseUploadController extends Controller
                     'igst'            => $this->toNumber($row[12]),
                     'total_amount'    => $this->toNumber($row[13]),
                 ];
+                $invoiceGroups[$groupKey][array_key_last($invoiceGroups[$groupKey])] = TransactionItemAmountService::normalizeItem($invoiceGroups[$groupKey][array_key_last($invoiceGroups[$groupKey])]);
             }
 
             $totalInvoices = 0;
@@ -1859,6 +1861,25 @@ class PurchaseUploadController extends Controller
     {
         $lineAmountsMatch = true;
         if ($transaction->items->isNotEmpty()) {
+            $amount = $sgst = $cgst = $igst = 0.0;
+            foreach ($transaction->items as $item) {
+                TransactionItemAmountService::normalizeModel($item, (float) $item->igst > 0 || (bool) $transaction->is_igst);
+                $item->save();
+                $amount += (float) $item->amount;
+                $sgst += (float) $item->sgst;
+                $cgst += (float) $item->cgst;
+                $igst += (float) $item->igst;
+            }
+            $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
+            $transaction->fill([
+                'amount' => $this->roundCurrency($amount),
+                'sgst' => $this->roundCurrency($sgst),
+                'cgst' => $this->roundCurrency($cgst),
+                'igst' => $this->roundCurrency($igst),
+                'total_amount' => $this->calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, $roundOffSetting['side']),
+                'roundoff' => $this->calculateRoundOffAmount($amount, $sgst, $cgst, $igst, $roundOffSetting['side']),
+                'is_igst' => $igst > 0 ? 1 : 0,
+            ])->save();
             $lineAmountsMatch = $this->purchaseAmountsMatch($transaction->items->map(fn ($item) => [
                 'quantity' => $item->quantity,
                 'rate' => $item->rate,
@@ -2148,6 +2169,11 @@ class PurchaseUploadController extends Controller
             'noitem_rows.*.gst' => 'nullable|numeric',
             'noitem_rows.*.amount' => 'nullable|numeric',
         ]);
+        if (!empty($data['items'])) {
+            $data['items'] = TransactionItemAmountService::normalizeItems($data['items'], (bool) ($data['is_igst'] ?? false));
+            $request->merge(['items' => $data['items']]);
+        }
+
         $invoiceDate = $request->date;
 
         if (!$this->isDateInSelectedFinancialYear($invoiceDate)) {
@@ -2667,6 +2693,7 @@ class PurchaseUploadController extends Controller
             if (!empty($request->items)) {
 
                 foreach ($request->items as $item) {
+                    $item = TransactionItemAmountService::normalizeItem($item, (bool) ($request->is_igst ?? false));
                     $unit = 'NOS';
                     if(isset($item['unit']) && $item['unit'] <> ""){
                         $unit = $item['unit'];

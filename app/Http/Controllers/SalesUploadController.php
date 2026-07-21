@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use App\Models\SalesCustomGst;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
+use App\Services\TransactionItemAmountService;
 
 class SalesUploadController extends Controller
 {
@@ -724,6 +725,7 @@ class SalesUploadController extends Controller
                     'igst'            => $this->toNumber($row[12]),
                     'total_amount'    => $this->toNumber($row[13]),
                 ];
+                $invoiceGroups[$groupKey][array_key_last($invoiceGroups[$groupKey])] = TransactionItemAmountService::normalizeItem($invoiceGroups[$groupKey][array_key_last($invoiceGroups[$groupKey])]);
             }
             $totalInvoices = 0;
             DB::transaction(function () use ($invoiceGroups, $iPartyId, $upload, &$totalInvoices) {
@@ -1355,7 +1357,7 @@ class SalesUploadController extends Controller
             $itemData['igst_ledger_id']
         );
 
-        return $itemData;
+        return TransactionItemAmountService::normalizeItem($itemData); // return $itemData;
     }
 
     private function salesGstLedgerSlotsForSave(Request $request, SalesTransaction $transaction, string $gstMode, float $sumCgst, float $sumSgst, float $sumIgst, array $fallbackMapping): array
@@ -1473,13 +1475,15 @@ class SalesUploadController extends Controller
 
         if ((int) $transaction->isWithItem === 1) {
             foreach ($transaction->items as $item) {
-                $itemAmount = $this->roundCurrency((float) $item->quantity * (float) $item->rate);
+                // $itemAmount = $this->roundCurrency((float) $item->quantity * (float) $item->rate);
+                TransactionItemAmountService::normalizeModel($item, (float) $item->igst > 0);
+                $itemAmount = $this->roundCurrency($item->amount);
                 $itemSgst = $this->roundCurrency($item->sgst);
                 $itemCgst = $this->roundCurrency($item->cgst);
                 $itemIgst = $this->roundCurrency($item->igst);
 
-                $item->amount = $itemAmount;
-                $item->total_amount = $this->roundCurrency($itemAmount + $itemSgst + $itemCgst + $itemIgst);
+                // $item->amount = $itemAmount;
+                // $item->total_amount = $this->roundCurrency($itemAmount + $itemSgst + $itemCgst + $itemIgst);
                 $item->save();
 
                 $amount += $itemAmount;
@@ -2181,6 +2185,12 @@ class SalesUploadController extends Controller
             'noitem_rows.*.amount' => 'nullable|numeric',
         ]);
 
+        if (!empty($data['items'])) {
+            $data['items'] = TransactionItemAmountService::normalizeItems($data['items'], (bool) ($data['is_igst'] ?? false));
+            $request->merge(['items' => $data['items']]);
+        }
+
+
         $invoiceDate = $request->date;
         
         if ($invoiceDate < session('year_from') || $invoiceDate > session('year_to')) {
@@ -2831,6 +2841,7 @@ class SalesUploadController extends Controller
             // =====================================================
             if (!empty($request->items)) {
                 foreach ($request->items as $item) {
+                    $item = TransactionItemAmountService::normalizeItem($item, (bool) ($request->is_igst ?? false));
                     $unit = 'NOS';
                     if(isset($item['unit']) && $item['unit'] <> ""){
                         $unit = $item['unit'];

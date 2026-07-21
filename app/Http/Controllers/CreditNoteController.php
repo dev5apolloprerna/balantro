@@ -17,6 +17,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use App\Models\CreditNoteCustomGst;
+use App\Services\TransactionItemAmountService;
 
 class CreditNoteController extends Controller
 {
@@ -1205,6 +1206,7 @@ class CreditNoteController extends Controller
                     'igst' => $this->toNumber($row[12]),
                     'total_amount' => $this->toNumber($row[13]),
                 ];
+                $noteGroups[$groupKey][array_key_last($noteGroups[$groupKey])] = TransactionItemAmountService::normalizeItem($noteGroups[$groupKey][array_key_last($noteGroups[$groupKey])]);
             }
             
             $totalInvoices = 0;
@@ -1837,6 +1839,11 @@ class CreditNoteController extends Controller
             'noitem_rows.*.gst' => 'nullable|numeric',
             'noitem_rows.*.amount' => 'nullable|numeric',
         ]);
+        if (!empty($data['items'])) {
+            $data['items'] = TransactionItemAmountService::normalizeItems($data['items'], (bool) ($data['is_igst'] ?? false));
+            $request->merge(['items' => $data['items']]);
+        }
+
         $invoiceDate = $request->note_date;
 
         if ($invoiceDate && !$this->isDateInSelectedFinancialYear($invoiceDate, $transaction->strYear ?? session('year'))) {
@@ -2274,22 +2281,25 @@ class CreditNoteController extends Controller
 
         if ($transaction->items->isNotEmpty()) {
             foreach ($transaction->items as $item) {
-                $amount = (float) $item->amount;
-                $gstRate = $this->nearestCreditNoteGstSlab($item->gst_rate);
-                $taxAmount = ($amount * $gstRate) / 100;
+                // $amount = (float) $item->amount;
+                // $gstRate = $this->nearestCreditNoteGstSlab($item->gst_rate);
+                // $taxAmount = ($amount * $gstRate) / 100;
 
-                $item->gst_rate = $gstRate;
-                if ((float) $item->igst > 0 || (bool) $transaction->is_igst) {
-                    $item->igst = $this->roundCurrency($taxAmount);
-                    $item->cgst = 0;
-                    $item->sgst = 0;
-                } else {
-                    $item->igst = 0;
-                    $item->cgst = $this->roundCurrency($taxAmount / 2);
-                    $item->sgst = $this->roundCurrency($taxAmount / 2);
-                }
-                $item->total_amount = $this->roundCurrency($amount + (float) $item->cgst + (float) $item->sgst + (float) $item->igst);
+                // $item->gst_rate = $gstRate;
+                // if ((float) $item->igst > 0 || (bool) $transaction->is_igst) {
+                //     $item->igst = $this->roundCurrency($taxAmount);
+                //     $item->cgst = 0;
+                //     $item->sgst = 0;
+                // } else {
+                //     $item->igst = 0;
+                //     $item->cgst = $this->roundCurrency($taxAmount / 2);
+                //     $item->sgst = $this->roundCurrency($taxAmount / 2);
+                // }
+                // $item->total_amount = $this->roundCurrency($amount + (float) $item->cgst + (float) $item->sgst + (float) $item->igst);
+                $item->gst_rate = $this->nearestCreditNoteGstSlab($item->gst_rate);
+                TransactionItemAmountService::normalizeModel($item, (float) $item->igst > 0 || (bool) $transaction->is_igst);
                 $item->save();
+                $amount = (float) $item->amount;
 
                 $sumAmount += $amount;
                 $sumCgst += (float) $item->cgst;
@@ -3040,6 +3050,7 @@ class CreditNoteController extends Controller
             if (!empty($request->items)) {
 
                 foreach ($request->items as $item) {
+                    $item = TransactionItemAmountService::normalizeItem($item, (bool) ($request->is_igst ?? false));
                     $itemName = isset($item['item']) ? trim((string) $item['item']) : null;
                     $unit = 'NOS';
                     if(isset($item['unit']) && $item['unit'] <> ""){
