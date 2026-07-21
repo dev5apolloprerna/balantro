@@ -2315,17 +2315,37 @@
     });
 
     function buildItemOptions(selected = '') {
-        let html = `<option value="">Select Item</option>`;
+        // let html = `<option value="">Select Item</option>`;
+        // ITEM_MASTER.forEach(item => {
+        //     let name = item.strItemName;
+        //     // ✅ ESCAPE QUOTES
+        //     let safeValue = name.replace(/"/g, '&quot;');
+        //     let isSelected =
+        //         name.trim().toLowerCase() === String(selected).trim().toLowerCase()
+        //             ? 'selected'
+        //             : '';
+        //     html += `<option value="${item.iStockIdtemId}" data-name="${safeValue}" ${isSelected}>${name}</option>`;
+        // });
+        const normalizedSelected = String(selected || '').trim().toLowerCase();
+        let html = `<option value="">Select Item / Ledger</option>`;
+
+        html += '<optgroup label="Items">';
         ITEM_MASTER.forEach(item => {
-            let name = item.strItemName;
-            // ✅ ESCAPE QUOTES
-            let safeValue = name.replace(/"/g, '&quot;');
-            let isSelected =
-                name.trim().toLowerCase() === String(selected).trim().toLowerCase()
-                    ? 'selected'
-                    : '';
-            html += `<option value="${item.iStockIdtemId}" data-name="${safeValue}" ${isSelected}>${name}</option>`;
+            let name = String(item.strItemName || item.name || '');
+            let safeName = escapeHtml(name);
+            let isSelected = name.trim().toLowerCase() === normalizedSelected ? 'selected' : '';
+            html += `<option value="${item.iStockIdtemId}" data-name="${safeName}" data-entry-type="item" ${isSelected}>${safeName}</option>`;
         });
+        html += '</optgroup>';
+
+        html += '<optgroup label="Ledgers">';
+        SALES_LEDGERS.forEach(ledger => {
+            let name = String(ledger.name || '');
+            let safeName = escapeHtml(name);
+            let isSelected = name.trim().toLowerCase() === normalizedSelected ? 'selected' : '';
+            html += `<option value="${safeName}" data-entry-type="ledger" ${isSelected}>${safeName}</option>`;
+        });
+        html += '</optgroup>';
 
         return html;
     }
