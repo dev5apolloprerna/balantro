@@ -2636,20 +2636,49 @@
         allowClear: true
     });
 
-    function buildItemOptions(selected = '') {
-        let html = '<option value="">Select Item</option>';
-        ITEM_MASTER.forEach(item => {
-            let name = item.strItemName;
-            // 🔥 ESCAPE quotes
-            let safeValue = name.replace(/"/g, '&quot;');
-            html += `
-                <option value="${safeValue}" ${selected === name ? 'selected' : ''}>
-                    ${name}
-                </option>
-            `;
-        });
-        return html;
+    function escapeHtml(text) {
+        return String(text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
+
+    function buildItemOptions(selected = '') {
+        const normalizedSelected = String(selected || '').trim().toLowerCase();
+        let opts = '<option value="">Select Item / Ledger</option>';
+        opts += '<optgroup label="Items">';
+        ITEM_MASTER.forEach(item => {
+            let name = String(item.strItemName || item.name || '');
+            let safeName = escapeHtml(name);
+            opts += `<option value="${safeName}" data-entry-type="item" ${name.trim().toLowerCase() === normalizedSelected ? 'selected' : ''}>${safeName}</option>`;
+        });
+        opts += '</optgroup>';
+        opts += '<optgroup label="Ledgers">';
+        SALES_LEDGERS.forEach(ledger => {
+            let name = String(ledger.name || '');
+            let safeName = escapeHtml(name);
+            opts += `<option value="${safeName}" data-entry-type="ledger" ${name.trim().toLowerCase() === normalizedSelected ? 'selected' : ''}>${safeName}</option>`;
+        });
+        opts += '</optgroup>';
+        return opts;
+    }
+
+    // function buildItemOptions(selected = '') {
+    //     let html = '<option value="">Select Item</option>';
+    //     ITEM_MASTER.forEach(item => {
+    //         let name = item.strItemName;
+    //         // 🔥 ESCAPE quotes
+    //         let safeValue = name.replace(/"/g, '&quot;');
+    //         html += `
+    //             <option value="${safeValue}" ${selected === name ? 'selected' : ''}>
+    //                 ${name}
+    //             </option>
+    //         `;
+    //     });
+    //     return html;
+    // }
 
     function initItemSelect2() {
         window.initLazySelect2('.itemSelect', {

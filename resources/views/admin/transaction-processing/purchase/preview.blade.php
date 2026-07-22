@@ -2257,17 +2257,48 @@
 
     // Helper: Build item options for dropdown
     function buildItemOptions(selected = '') {
-        let html = '<option value="">Select Item</option>';
-        if (typeof ITEM_MASTER !== 'undefined' && ITEM_MASTER.length) {
-            ITEM_MASTER.forEach(item => {
-                let name = item.strItemName;
-                let safeValue = name ? name.replace(/"/g, '&quot;') : '';
-                let selectedAttr = (selected === name) ? 'selected' : '';
-                html += `<option value="${safeValue}" ${selectedAttr}>${name}</option>`;
-            });
-        }
+        // let html = '<option value="">Select Item</option>';
+        // ITEM_MASTER.forEach(item => {
+        //     let name = item.strItemName;
+        //     // 🔥 ESCAPE quotes
+        //     let safeValue = name.replace(/"/g, '&quot;');
+        //     html += `
+        //         <option value="${safeValue}" ${selected === name ? 'selected' : ''}>
+        //             ${name}
+        //         </option>
+        //     `;
+        // });
+        const normalizedSelected = String(selected || '').trim().toLowerCase();
+        let html = '<option value="">Select Item / Ledger</option>';
+        html += '<optgroup label="Items">';
+        ITEM_MASTER.forEach(item => {
+            let name = String(item.strItemName || item.name || '');
+            let safeName = escapeHtml(name);
+            html += `<option value="${safeName}" data-entry-type="item" ${name.trim().toLowerCase() === normalizedSelected ? 'selected' : ''}>${safeName}</option>`;
+        });
+        html += '</optgroup>';
+        html += '<optgroup label="Ledgers">';
+        PURCHASE_LEDGERS.forEach(ledger => {
+            let name = String(ledger.name || '');
+            let safeName = escapeHtml(name);
+            html += `<option value="${safeName}" data-entry-type="ledger" ${name.trim().toLowerCase() === normalizedSelected ? 'selected' : ''}>${safeName}</option>`;
+        });
+        html += '</optgroup>';
         return html;
     }
+    
+    // function buildItemOptions(selected = '') {
+    //     let html = '<option value="">Select Item</option>';
+    //     if (typeof ITEM_MASTER !== 'undefined' && ITEM_MASTER.length) {
+    //         ITEM_MASTER.forEach(item => {
+    //             let name = item.strItemName;
+    //             let safeValue = name ? name.replace(/"/g, '&quot;') : '';
+    //             let selectedAttr = (selected === name) ? 'selected' : '';
+    //             html += `<option value="${safeValue}" ${selectedAttr}>${name}</option>`;
+    //         });
+    //     }
+    //     return html;
+    // }
 
     // Helper: Build item row for editing
     function buildItemRow(item) {

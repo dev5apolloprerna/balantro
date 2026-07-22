@@ -1934,6 +1934,8 @@ class PurchaseUploadController extends Controller
             'igst_ledger_name' => $mapping['igst_name'],
         ]);
 
+        $amountsMatch = $this->purchaseTransactionAmountsMatch($transaction);
+        $transaction->refresh()->loadMissing(['items', 'customGst']);
         $hasGstLedgers = $this->rematchPurchaseGstLedgers($transaction, $mapping);
         $invoiceDate = $transaction->date instanceof \DateTimeInterface
             ? $transaction->date->format('Y-m-d')
@@ -1944,7 +1946,7 @@ class PurchaseUploadController extends Controller
             && (!$invoiceDate || $this->isDateInSelectedFinancialYear($invoiceDate, $transaction->strYear ?? session('year')))
             && $this->allGstRatesAreApplicable($this->purchaseTransactionGstRates($transaction))
             && $hasGstLedgers
-            && $this->purchaseTransactionAmountsMatch($transaction)
+            && $amountsMatch
             && !$this->voucherCombinationExists('purchase_transactions', [
                 'iPartyId' => $partyId,
                 'voucher_column' => 'vchType',
