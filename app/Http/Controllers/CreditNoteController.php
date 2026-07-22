@@ -2306,32 +2306,21 @@ class CreditNoteController extends Controller
                 $sumSgst += (float) $item->sgst;
                 $sumIgst += (float) $item->igst;
             }
-        } elseif ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
-            foreach ($transaction->customGst as $slot) {
-                $amount = (float) ($slot->amount ?? $slot->taxable);
-                $gstRate = $this->nearestCreditNoteGstSlab($slot->gst_rate);
-                $taxAmount = ($amount * $gstRate) / 100;
+        }
 
-                $slot->gst_rate = $gstRate;
-                $slot->taxable = $amount;
-                $slot->amount = $amount;
-                if ((bool) $transaction->is_igst || (float) $slot->igst_amount > 0) {
-                    $slot->igst_amount = $this->roundCurrency($taxAmount);
-                    $slot->cgst_amount = 0;
-                    $slot->sgst_amount = 0;
-                } else {
-                    $slot->igst_amount = 0;
-                    $slot->cgst_amount = $this->roundCurrency($taxAmount / 2);
-                    $slot->sgst_amount = $this->roundCurrency($taxAmount / 2);
-                }
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            foreach ($transaction->customGst as $slot) {
+                 $slot->gst_rate = $this->nearestCreditNoteGstSlab($slot->gst_rate);
+                TransactionItemAmountService::normalizeCustomGstSlot($slot, (float) $slot->igst_amount > 0 || (bool) $transaction->is_igst);
                 $slot->save();
+                $amount = (float) ($slot->amount ?? $slot->taxable);
 
                 $sumAmount += $amount;
                 $sumCgst += (float) $slot->cgst_amount;
                 $sumSgst += (float) $slot->sgst_amount;
                 $sumIgst += (float) $slot->igst_amount;
             }
-        } else {
+        } elseif ($transaction->items->isEmpty()) {
             $sumAmount = (float) $transaction->taxable_amount;
             $gstRate = $this->nearestCreditNoteGstSlab($transaction->gst_rate);
             $taxAmount = ($sumAmount * $gstRate) / 100;

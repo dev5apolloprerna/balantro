@@ -1491,15 +1491,18 @@ class SalesUploadController extends Controller
                 $cgst += $itemCgst;
                 $igst += $itemIgst;
             }
-        } elseif ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+        }
+
+        if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
             foreach ($transaction->customGst as $slot) {
+                TransactionItemAmountService::normalizeCustomGstSlot($slot, (float) $slot->igst_amount > 0 || (bool) $transaction->is_igst);
                 $slotAmount = $this->roundCurrency($slot->taxable ?? $slot->amount ?? 0);
                 $slotSgst = $this->roundCurrency($slot->sgst_amount);
                 $slotCgst = $this->roundCurrency($slot->cgst_amount);
                 $slotIgst = $this->roundCurrency($slot->igst_amount);
 
-                $slot->taxable = $slotAmount;
-                $slot->amount = $slotAmount;
+                // $slot->taxable = $slotAmount;
+                // $slot->amount = $slotAmount;
                 $slot->save();
 
                 $amount += $slotAmount;
@@ -1507,7 +1510,7 @@ class SalesUploadController extends Controller
                 $cgst += $slotCgst;
                 $igst += $slotIgst;
             }
-        } else {
+        } elseif ((int) $transaction->isWithItem !== 1) {
             $amount = $this->roundCurrency($transaction->amount);
             $sgst = $this->roundCurrency($transaction->sgst);
             $cgst = $this->roundCurrency($transaction->cgst);
@@ -1568,6 +1571,9 @@ class SalesUploadController extends Controller
         $hasGstLedgers = (int) $transaction->isWithItem === 1
             ? $this->rematchSalesItems($transaction)
             : $this->rematchSalesAccountingGst($transaction, $mapping);
+        if ((int) $transaction->isWithItem === 1 && $transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+            $hasGstLedgers = $hasGstLedgers && $this->rematchSalesAccountingGst($transaction, $mapping);
+        }
         $invoiceDate = $transaction->date instanceof \DateTimeInterface
             ? $transaction->date->format('Y-m-d')
             : $transaction->date;

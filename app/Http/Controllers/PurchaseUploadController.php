@@ -1885,12 +1885,38 @@ class PurchaseUploadController extends Controller
                 'rate' => $item->rate,
                 'amount' => $item->amount,
             ])->all());
-        } elseif ($transaction->customGst->isNotEmpty()) {
-            $lineAmountsMatch = $this->purchaseAmountsMatch([], $transaction->customGst->map(fn ($slot) => [
-                'amount' => $slot->amount ?? $slot->taxable,
-            ])->all());
-        } else {
+        }
+        if ($transaction->customGst->isNotEmpty()) {
+            $customRows = [];
+            $amount = $amount ?? 0.0;
+            $sgst = $sgst ?? 0.0;
+            $cgst = $cgst ?? 0.0;
+            $igst = $igst ?? 0.0;
+            foreach ($transaction->customGst as $slot) {
+                TransactionItemAmountService::normalizeCustomGstSlot($slot, (float) $slot->igst_amount > 0 || (bool) $transaction->is_igst);
+                $slot->save();
+                $customRows[] = ['amount' => $slot->amount ?? $slot->taxable];
+                $amount += (float) ($slot->amount ?? $slot->taxable);
+                $sgst += (float) $slot->sgst_amount;
+                $cgst += (float) $slot->cgst_amount;
+                $igst += (float) $slot->igst_amount;
+            }
+            $lineAmountsMatch = $lineAmountsMatch && $this->purchaseAmountsMatch([], $customRows);
+        } elseif ($transaction->items->isEmpty()) {
             $lineAmountsMatch = (float) $transaction->amount > 0;
+        }
+
+        if (isset($amount)) {
+            $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
+            $transaction->fill([
+                'amount' => $this->roundCurrency($amount),
+                'sgst' => $this->roundCurrency($sgst),
+                'cgst' => $this->roundCurrency($cgst),
+                'igst' => $this->roundCurrency($igst),
+                'total_amount' => $this->calculateTotalAmountWithRoundOff($amount, $sgst, $cgst, $igst, $roundOffSetting['side']),
+                'roundoff' => $this->calculateRoundOffAmount($amount, $sgst, $cgst, $igst, $roundOffSetting['side']),
+                'is_igst' => $igst > 0 ? 1 : 0,
+            ])->save();
         }
 
         if (!$lineAmountsMatch) {
@@ -1980,7 +2006,9 @@ class PurchaseUploadController extends Controller
                     $hasAllMappings = false;
                 }
             }
-            return $hasAllMappings;
+            if ($transaction->gst_mode !== 'custom' || $transaction->customGst->isEmpty()) {
+                return $hasAllMappings;
+            }
         }
 
         if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {

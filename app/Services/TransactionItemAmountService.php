@@ -70,6 +70,33 @@ class TransactionItemAmountService
         return $item;
     }
 
+    public static function normalizeCustomGstSlot(object $slot, bool $useIgst = false): object
+    {
+        $amount = self::round(self::number($slot->taxable ?? $slot->amount ?? 0));
+        $gstRate = self::number($slot->gst_rate ?? $slot->rate ?? 0);
+
+        if ($gstRate <= 0 && $amount > 0) {
+            $tax = self::number($slot->sgst_amount ?? 0) + self::number($slot->cgst_amount ?? 0) + self::number($slot->igst_amount ?? 0);
+            $gstRate = self::round(($tax / $amount) * 100);
+        }
+
+        if ($useIgst || self::number($slot->igst_amount ?? 0) > 0) {
+            $slot->igst_amount = self::round($amount * $gstRate / 100);
+            $slot->cgst_amount = 0.0;
+            $slot->sgst_amount = 0.0;
+        } else {
+            $slot->igst_amount = 0.0;
+            $slot->cgst_amount = self::round($amount * ($gstRate / 2) / 100);
+            $slot->sgst_amount = self::round($amount * ($gstRate / 2) / 100);
+        }
+
+        $slot->taxable = $amount;
+        $slot->amount = $amount;
+        $slot->gst_rate = $gstRate;
+
+        return $slot;
+    }
+    
     private static function number($value): float
     {
         if (is_string($value)) {

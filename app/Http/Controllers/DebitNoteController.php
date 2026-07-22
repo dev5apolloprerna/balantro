@@ -1771,6 +1771,16 @@ class DebitNoteController extends Controller
             // ===============================
             // FINAL TOTAL
             // ===============================
+            if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+                foreach ($transaction->customGst as $slot) {
+                    TransactionItemAmountService::normalizeCustomGstSlot($slot, (float) $slot->igst_amount > 0 || (bool) $transaction->is_igst);
+                    $slot->save();
+                    $sumAmount += (float) ($slot->amount ?? $slot->taxable);
+                    $sumCgst += (float) $slot->cgst_amount;
+                    $sumSgst += (float) $slot->sgst_amount;
+                    $sumIgst += (float) $slot->igst_amount;
+                }
+            }
             $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
             
@@ -1961,6 +1971,16 @@ class DebitNoteController extends Controller
                 $sumCgst += (float) $item->cgst;
                 $sumSgst += (float) $item->sgst;
                 $sumIgst += (float) $item->igst;
+            }
+            if ($transaction->gst_mode === 'custom' && $transaction->customGst->isNotEmpty()) {
+                foreach ($transaction->customGst as $slot) {
+                    TransactionItemAmountService::normalizeCustomGstSlot($slot, (float) $slot->igst_amount > 0 || (bool) $transaction->is_igst);
+                    $slot->save();
+                    $sumAmount += (float) ($slot->amount ?? $slot->taxable);
+                    $sumCgst += (float) $slot->cgst_amount;
+                    $sumSgst += (float) $slot->sgst_amount;
+                    $sumIgst += (float) $slot->igst_amount;
+                }
             }
             $roundOffSetting = $this->getRoundOffSetting($transaction->iPartyId);
             $roundOffLedger = $roundOffSetting['ledger'];
