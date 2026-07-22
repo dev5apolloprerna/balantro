@@ -1783,7 +1783,7 @@ class PurchaseUploadController extends Controller
                 ->get()
                 ->contains(function ($stockItem) use ($normalizedItemName) {
                     return $this->normalizeLookupName($stockItem->strItemName ?? '') === $normalizedItemName;
-                });
+                }) || (bool) $this->getLedgerByNameNormalized($transaction->iPartyId, $itemName);
 
             if (!$exists) {
                 return true;
@@ -1829,7 +1829,10 @@ class PurchaseUploadController extends Controller
 
         if ($transaction->items->isNotEmpty()) {
             foreach ($transaction->items as $item) {
-                $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
+                $itemLedger = $this->getLedgerByNameNormalized($transaction->iPartyId, $item->item_name);
+                $itemMapping = $itemLedger
+                    ? $this->getGstMapping($transaction->iPartyId, $itemLedger->name ?? $itemLedger->strCustomerName)
+                    : $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
                 if (!$this->gstLedgersAreMappedForAmounts(
                     (float) $item->igst > 0,
                     (float) $item->igst,
@@ -2001,7 +2004,10 @@ class PurchaseUploadController extends Controller
         if ($transaction->items->isNotEmpty()) {
             $hasAllMappings = true;
             foreach ($transaction->items as $item) {
-                $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
+                $itemLedger = $this->getLedgerByNameNormalized($transaction->iPartyId, $item->item_name);
+                $itemMapping = $itemLedger
+                    ? $this->getGstMapping($transaction->iPartyId, $itemLedger->name ?? $itemLedger->strCustomerName)
+                    : $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
                 if (!$this->gstLedgersAreMappedForAmounts((float) $item->igst > 0, (float) $item->igst, (float) $item->cgst, (float) $item->sgst, $itemMapping['igst_id'] ?? null, $itemMapping['cgst_id'] ?? null, $itemMapping['sgst_id'] ?? null)) {
                     $hasAllMappings = false;
                 }

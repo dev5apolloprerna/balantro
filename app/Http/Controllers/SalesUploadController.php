@@ -1335,7 +1335,8 @@ class SalesUploadController extends Controller
                 return true;
             }
 
-            $exists = (bool) $this->getStockItemByName($transaction->iPartyId, $itemName);
+            $exists = (bool) $this->getStockItemByName($transaction->iPartyId, $itemName)
+                || (bool) $this->getCachedLedgerByName($transaction->iPartyId, $itemName);
 
             if (!$exists) {
                 return true;
@@ -1401,7 +1402,10 @@ class SalesUploadController extends Controller
     private function hasPendingItemGstLedgers(SalesTransaction $transaction): bool
     {
         foreach ($transaction->items as $item) {
-            $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item->item_name);
+            $itemLedger = $this->getCachedLedgerByName($transaction->iPartyId, $item->item_name);
+            $itemMapping = $itemLedger
+                ? $this->getGstMapping($transaction->iPartyId, $itemLedger->name ?? $itemLedger->strCustomerName)
+                : $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item->item_name);
             if (!$this->hasRequiredGstLedgers([[
                 'cgst_amount' => $item->cgst,
                 'sgst_amount' => $item->sgst,
@@ -1594,7 +1598,10 @@ class SalesUploadController extends Controller
         $hasAllMappings = true;
 
         foreach ($transaction->items as $item) {
-            $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item->item_name);
+            $itemLedger = $this->getCachedLedgerByName($transaction->iPartyId, $item->item_name);
+            $itemMapping = $itemLedger
+                ? $this->getGstMapping($transaction->iPartyId, $itemLedger->name ?? $itemLedger->strCustomerName)
+                : $this->getGstMapping($transaction->iPartyId, $transaction->sales_ledger, $item->item_name);
             // $item->cgst_id = $itemMapping['cgst_id'];
             // $item->sgst_id = $itemMapping['sgst_id'];
             // $item->igst_id = $itemMapping['igst_id'];

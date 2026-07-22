@@ -12,7 +12,13 @@ class TransactionItemAmountService
         }
 
         $rate = self::number($item['rate'] ?? 0);
-        $amount = self::round($quantity * $rate);
+        $uploadedAmount = self::number($item['amount'] ?? 0);
+        if ($rate <= 0 && $uploadedAmount > 0) {
+            $amount = self::round($uploadedAmount);
+            $rate = self::round($amount / $quantity);
+        } else {
+            $amount = self::round($quantity * $rate);
+        }
         $gstRate = self::number($item['gst_rate'] ?? $item['gst'] ?? 0);
 
         if ($gstRate <= 0 && $amount > 0) {
@@ -96,7 +102,7 @@ class TransactionItemAmountService
 
         return $slot;
     }
-    
+
     private static function number($value): float
     {
         if (is_string($value)) {

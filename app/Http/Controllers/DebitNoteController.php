@@ -2142,7 +2142,7 @@ class DebitNoteController extends Controller
                 ->get()
                 ->contains(function ($stockItem) use ($normalizedItemName) {
                     return $this->normalizeLookupName($stockItem->strItemName ?? '') === $normalizedItemName;
-                });
+                }) || (bool) $this->getLedgerByNameNormalized($transaction->iPartyId, $itemName);
 
             if (!$exists) {
                 return true;
@@ -2188,7 +2188,10 @@ class DebitNoteController extends Controller
 
         if ($transaction->items->isNotEmpty()) {
             foreach ($transaction->items as $item) {
-                $itemMapping = $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
+                $itemLedger = $this->getLedgerByNameNormalized($transaction->iPartyId, $item->item_name);
+                $itemMapping = $itemLedger
+                    ? $this->getGstMapping($transaction->iPartyId, $itemLedger->name ?? $itemLedger->strCustomerName)
+                    : $this->getGstMapping($transaction->iPartyId, $transaction->purchase_ledger, $item->item_name);
                 if (!$this->hasRequiredGstLedgers([[
                     'igst_amount' => (float) $item->igst,
                     'igst_ledger_id' => $itemMapping['igst_id'] ?? null,
