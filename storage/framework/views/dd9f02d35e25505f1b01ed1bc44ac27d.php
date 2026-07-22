@@ -192,15 +192,11 @@
                                     class="inputCell mb-1">
                                 <!-- Ledger -->
                                 <select name="party_ledger[<?php echo e($row->id); ?>]"
-                                    class="ledgerSelect inputCell">
-                                    <option value="">Select Ledger</option>
-                                    <?php $__currentLoopData = $ledgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($ledger->name); ?>"
-                                        <?php echo e(trim($row->party_name) == trim($ledger->name) ? 'selected' : ''); ?>>
-                                        <?php echo e($ledger->name); ?>
-
-                                    </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    class="ledgerSelect inputCell js-deferred-options"
+                                    data-options-source="previewLedgerOptions"
+                                    data-placeholder="Select Ledger"
+                                    data-selected="<?php echo e($row->party_name); ?>">
+                                    <option value="<?php echo e($row->party_name); ?>" selected><?php echo e($row->party_name ?: 'Select Ledger'); ?></option>
                                 </select>
                             </td>
                             <td class="">
@@ -209,15 +205,11 @@
                             </td>
                             <td class="">
                                 <select name="place_of_supply[<?php echo e($row->id); ?>]"
-                                    class="inputCell placeSelect">
-                                    <option value="">Select State</option>
-                                    <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($state); ?>"
-                                        <?php echo e(strtolower(trim($state)) == strtolower(trim($row->place_of_supply)) ? 'selected':''); ?>>
-                                        <?php echo e($state); ?>
-
-                                    </option>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    class="inputCell placeSelect js-deferred-options"
+                                    data-options-source="previewStateOptions"
+                                    data-placeholder="Select State"
+                                    data-selected="<?php echo e($row->place_of_supply); ?>">
+                                    <option value="<?php echo e($row->place_of_supply); ?>" selected><?php echo e($row->place_of_supply ?: 'Select State'); ?></option>
                                 </select>
                             </td>
                             <!-- <td class="">
@@ -983,6 +975,7 @@
 </style>
 <?php $__env->stopSection(); ?>
 <?php $__env->startSection('scripts'); ?>
+<?php echo $__env->make('admin.partials.deferred-select-options', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <?php echo $__env->make('admin.partials.lazy-select2', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <script>
 const ITEM_MASTER = <?php echo json_encode($stockItems, 15, 512) ?>;
@@ -1073,6 +1066,9 @@ window.addEventListener('load', function () {
     });
 
     $(document).ready(function() {
+        window.previewLedgerOptions = <?php echo json_encode(collect($ledgers)->pluck('name')->values(), 15, 512) ?>;
+        window.previewStateOptions = <?php echo json_encode(collect($states)->values(), 15, 512) ?>;
+        window.hydrateDeferredSelectOptions?.('#purchaseTable .js-deferred-options');
         let pendingPreviewAjaxRequests = 0;
         $(document)
             .ajaxSend(function() {
@@ -2984,17 +2980,33 @@ window.addEventListener('load', function () {
     });
     
     function buildItemOptions(selected = '') {
-        let html = '<option value="">Select Item</option>';
+        // let html = '<option value="">Select Item</option>';
+        // ITEM_MASTER.forEach(item => {
+        //     let name = item.strItemName;
+        //     // 🔥 ESCAPE quotes
+        //     let safeValue = name.replace(/"/g, '&quot;');
+        //     html += `
+        //         <option value="${safeValue}" ${selected === name ? 'selected' : ''}>
+        //             ${name}
+        //         </option>
+        //     `;
+        // });
+        const normalizedSelected = String(selected || '').trim().toLowerCase();
+        let html = '<option value="">Select Item / Ledger</option>';
+        html += '<optgroup label="Items">';
         ITEM_MASTER.forEach(item => {
-            let name = item.strItemName;
-            // 🔥 ESCAPE quotes
-            let safeValue = name.replace(/"/g, '&quot;');
-            html += `
-                <option value="${safeValue}" ${selected === name ? 'selected' : ''}>
-                    ${name}
-                </option>
-            `;
+            let name = String(item.strItemName || item.name || '');
+            let safeName = escapeHtml(name);
+            html += `<option value="${safeName}" data-entry-type="item" ${name.trim().toLowerCase() === normalizedSelected ? 'selected' : ''}>${safeName}</option>`;
         });
+        html += '</optgroup>';
+        html += '<optgroup label="Ledgers">';
+        PURCHASE_LEDGERS.forEach(ledger => {
+            let name = String(ledger.name || '');
+            let safeName = escapeHtml(name);
+            html += `<option value="${safeName}" data-entry-type="ledger" ${name.trim().toLowerCase() === normalizedSelected ? 'selected' : ''}>${safeName}</option>`;
+        });
+        html += '</optgroup>';
         return html;
     }
 

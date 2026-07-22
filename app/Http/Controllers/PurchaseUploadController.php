@@ -818,11 +818,10 @@ class PurchaseUploadController extends Controller
 
                     // One item row per line
                     foreach ($items as $item) {
-                        $itemMapping = $this->getGstMapping(
-                            $iPartyId,
-                            $first['purchase_ledger'],
-                            $item['item_name']
-                        );
+                        $itemLedger = $this->getLedgerByNameNormalized($iPartyId, $item['item_name'] ?? null);
+                        $itemMapping = $itemLedger
+                            ? $this->getGstMapping($iPartyId, $itemLedger->name ?? $itemLedger->strCustomerName)
+                            : $this->getGstMapping($iPartyId, $first['purchase_ledger'], $item['item_name']);
 
                         $itemRate = 0;
 
@@ -1277,10 +1276,7 @@ class PurchaseUploadController extends Controller
             return false;
         }
 
-        return DB::table('LedgerMaster')
-            ->where('iPartyId', $partyId)
-            ->where('strCustomerName', $purchaseLedger)
-            ->exists();
+        return (bool) $this->getLedgerByNameNormalized($partyId, $purchaseLedger);
     }
 
     private function gstLedgersAreMappedForAmounts(
@@ -1303,11 +1299,11 @@ class PurchaseUploadController extends Controller
     private function buildPurchaseItemGstLedgerSlots(int $partyId, array $items, ?string $purchaseLedgerName): array
     {
         return collect($items)->map(function ($item) use ($partyId, $purchaseLedgerName) {
-            $itemMapping = $this->getGstMapping(
-                $partyId,
-                $purchaseLedgerName,
-                $item['item_name'] ?? $item['item'] ?? null
-            );
+            $itemName = $item['item_name'] ?? $item['item'] ?? null;
+            $itemLedger = $this->getLedgerByNameNormalized($partyId, $itemName);
+            $itemMapping = $itemLedger
+                ? $this->getGstMapping($partyId, $itemLedger->name ?? $itemLedger->strCustomerName)
+                : $this->getGstMapping($partyId, $purchaseLedgerName, $itemName);
 
             return [
                 'cgst_amount' => $item['cgst'] ?? 0,
