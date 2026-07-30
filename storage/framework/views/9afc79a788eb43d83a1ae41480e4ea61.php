@@ -37,6 +37,8 @@
         };
     </script>
 
+    <link rel="stylesheet" href="<?php echo e(asset('css/scrollable-select.css')); ?>">
+    <script defer src="<?php echo e(asset('js/scrollable-select.js')); ?>"></script>
     <!-- jQuery and Select2 are loaded before page content so inline preview scripts can use $ safely. -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>

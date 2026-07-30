@@ -1,0 +1,87 @@
+.scrollable-select {
+    position: relative;
+    width: 100%;
+}
+
+.scrollable-select > select {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.scrollable-select__button {
+    width: 100%;
+    height: 2.5rem;
+    padding: 0 2.5rem 0 1rem;
+    overflow: hidden;
+    color: rgb(38 38 38);
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: white url("data:image/svg+xml,%3csvg aria-hidden='true' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 10 6'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 1 4 4 4-4'/%3e%3c/svg%3e") no-repeat right .75rem center/.7rem;
+    border: 1px solid rgb(212 212 212);
+    border-radius: .5rem;
+}
+
+.scrollable-select__button:focus {
+    outline: 2px solid rgb(59 130 246);
+    outline-offset: 1px;
+}
+
+.scrollable-select__list {
+    position: absolute;
+    z-index: 1000;
+    top: calc(100% + .25rem);
+    left: 0;
+    width: 100%;
+    max-height: 20rem;
+    overflow-x: hidden;
+    overflow-y: scroll !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    background: white;
+    border: 1px solid rgb(212 212 212);
+    border-radius: .5rem;
+    box-shadow: 0 12px 28px rgb(15 23 42 / .22);
+    scrollbar-color: rgb(163 163 163) transparent;
+    scrollbar-width: auto;
+}
+
+.scrollable-select__list::-webkit-scrollbar { width: .7rem; }
+.scrollable-select__list::-webkit-scrollbar-track { background: rgb(229 229 229); }
+.scrollable-select__list::-webkit-scrollbar-thumb {
+    background: rgb(115 115 115);
+    border: 2px solid rgb(229 229 229);
+    border-radius: 9999px;
+}
+
+.scrollable-select__option {
+    display: block;
+    width: 100%;
+    padding: .65rem 1rem;
+    color: rgb(38 38 38);
+    text-align: left;
+    background: transparent;
+}
+
+.scrollable-select__option:hover,
+.scrollable-select__option:focus,
+.scrollable-select__option[aria-selected="true"] {
+    background: rgb(245 245 245);
+    outline: none;
+}
+
+.dark .scrollable-select__button,
+.dark .scrollable-select__list {
+    color: rgb(245 245 245);
+    background-color: rgb(38 38 38);
+    border-color: rgb(82 82 82);
+}
+
+.dark .scrollable-select__option { color: rgb(245 245 245); }
+.dark .scrollable-select__option:hover,
+.dark .scrollable-select__option:focus,
+.dark .scrollable-select__option[aria-selected="true"] { background: rgb(64 64 64); }
+

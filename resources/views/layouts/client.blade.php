@@ -15,6 +15,8 @@
     <link rel="apple-touch-icon" href="/icon.png">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('css/scrollable-select.css') }}">
+    <script defer src="{{ asset('js/scrollable-select.js') }}"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
     @auth
