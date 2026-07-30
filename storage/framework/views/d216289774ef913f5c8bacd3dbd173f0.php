@@ -320,9 +320,9 @@
 
                 
 
-            <div class="flex flex-col items-end sm:flex-row gap-2 sm:col-span-2 lg:col-span-1 xl:col-span-1 justify-end">
+            <div class="flex flex-col items-stretch gap-2 sm:col-span-2 sm:flex-row sm:items-end sm:justify-end lg:col-span-1 xl:col-span-1">
                 <button type="submit"
-                    class="rounded-md border border-gray-700 text-black dark:text-white h-9.5 px-4 py-2 text-sm transition duration-1000 ease-in-out
+                    class="w-full rounded-md border border-gray-700 text-black dark:text-white h-9.5 px-4 py-2 text-sm transition duration-1000 ease-in-out sm:w-auto
                                     transition-property: all;
                                     hover:border-[#22d3ee]
                                     hover:shadow-[0_0_15px_#22d3ee]
@@ -332,7 +332,7 @@
                     Search
                 </button>
                 <a href="<?php echo e(route('documents.index')); ?>"
-                    class="rounded-md border border-gray-700 flex items-center text-black dark:text-white h-9.5 px-4 py-2 text-sm transition duration-1000 ease-in-out
+                    class="flex h-9.5 w-full items-center justify-center rounded-md border border-gray-700 text-black dark:text-white px-4 py-2 text-sm transition duration-1000 ease-in-out sm:w-auto
                                     transition-property: all;
                                     hover:border-[#a78bfa]
                                     hover:shadow-[0_0_15px_#a78bfa]
@@ -347,8 +347,9 @@
 
     
     <!-- <div class="mt-1 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"> -->
-    <div class="mt-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden group-block">
-        <table class="min-w-full text-sm text-left">
+    <div class="group-block mt-5 max-w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 [-webkit-overflow-scrolling:touch]"
+         role="region" aria-label="Documents table" tabindex="0">
+        <table class="w-full min-w-[56rem] text-left text-sm">
             <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] dark:bg-gray-900/40 sticky top-0 z-10">
                 <tr class="text-black-900 dark:text-gray-300">
                     <th class="px-4 py-2 font-bold">
@@ -362,7 +363,7 @@
                     <th class="px-4 py-2 font-bold">
                         Upload Date
                     </th>
-                    <th class="w-36 min-w-[9rem] px-4 py-2 text-center font-bold">
+                    <th class="w-44 min-w-[11rem] px-4 py-2 text-center font-bold">
                         Status
                     </th>
                     <th class="px-4 py-2 font-bold">
@@ -454,7 +455,7 @@
                         <?php echo e(optional($doc->created_at)->timezone(config('app.timezone'))->format('d M, Y, h:i A')); ?>
 
                     </td>
-                    <td class="w-36 min-w-[9rem] px-4 py-2 text-center group-hover:text-black">
+                    <td class="w-44 min-w-[11rem] px-4 py-2 text-center group-hover:text-black">
                         <?php
                         $displayStatus = $doc->status;
                         $statusLabel = $doc->status;
@@ -499,7 +500,7 @@
 
                         $statusClass = $statusColors[$displayStatus] ?? $statusColors['uploaded'];
                         ?>
-                        <span class="inline-flex min-h-7 w-28 items-center justify-center rounded-full px-3 py-1 text-center text-xs font-semibold leading-tight <?php echo e($statusClass); ?>">
+                        <span class="inline-flex min-h-7 min-w-40 items-center justify-center whitespace-nowrap rounded-full px-4 py-1 text-center text-xs font-semibold leading-tight <?php echo e($statusClass); ?>">
                             <?php echo e($statusLabel); ?>
 
                         </span>
@@ -539,7 +540,7 @@
                             <a href="<?php echo e(route('documents.financial-management', $doc->id)); ?>"
                                 class="rounded-full bg-cyan-100 p-1.5 sm:p-2 text-cyan-700 ring-1 ring-inset ring-cyan-200 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300 dark:ring-cyan-800"
                                 title="Open Financial Management">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[1em]"></i>
                             </a>
                             <?php endif; ?>
 

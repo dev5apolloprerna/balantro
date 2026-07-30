@@ -1,7 +1,48 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer components {
+
+    /* Shared responsive guardrails for legacy and Tailwind-driven screens. */
+    html,
+    body {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    img,
+    video,
+    canvas,
+    svg {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .main-content,
+    .dashboard-main-body,
+    main,
+    main>*,
+    .flex-1 {
+        min-width: 0;
+    }
+
+    .table-responsive,
+    .table-wrapper,
+    .table-scroll-safe,
+    .overflow-x-auto {
+        max-width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-content,
+    .balantro-modal-panel {
+        max-width: calc(100vw - 2rem);
+        max-height: calc(100dvh - 2rem);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
     .balantro-toast {
         position: fixed;
         right: 1.25rem;
@@ -25,7 +66,7 @@
         transform: translateY(0);
     }
 
-     /* Keep every legacy modal hidden until JS explicitly opens it.
+    /* Keep every legacy modal hidden until JS explicitly opens it.
        Financial/transaction pages that use drawers or `style=display:none` still opt in normally. */
     .modal {
         display: none;
@@ -46,16 +87,16 @@
 
     .modal-content,
     .balantro-modal-panel,
-    [data-permissions-modal-target="modal"] > div > div,
-    [data-groups-modal-target="modal"] > div > div {
+    [data-permissions-modal-target="modal"]>div>div,
+    [data-groups-modal-target="modal"]>div>div {
         border: 1px solid rgb(226 232 240 / 0.95);
         box-shadow: 0 24px 80px rgb(15 23 42 / 0.28);
     }
 
     .dark .modal-content,
     .dark .balantro-modal-panel,
-    .dark [data-permissions-modal-target="modal"] > div > div,
-    .dark [data-groups-modal-target="modal"] > div > div {
+    .dark [data-permissions-modal-target="modal"]>div>div,
+    .dark [data-groups-modal-target="modal"]>div>div {
         border-color: rgb(51 65 85 / 0.95);
         box-shadow: 0 24px 80px rgb(0 0 0 / 0.55);
     }
@@ -188,6 +229,60 @@
         .bulk-text-btn {
             padding-left: 0.55rem !important;
             padding-right: 0.55rem !important;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .dashboard-main-body {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+
+        .bulk-toolbar-row,
+        .bulk-toolbar-actions {
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+
+        .bulk-upload-tabs,
+        .bulk-meta-group,
+        .bulk-toolbar-actions {
+            width: 100%;
+            max-width: none;
+        }
+
+        .bulk-upload-tabs {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .bulk-upload-tabs>* {
+            min-width: max-content;
+        }
+
+        .bulk-toolbar-actions select,
+        .bulk-text-btn {
+            flex: 1 1 8rem;
+            max-width: none;
+        }
+
+        .modal,
+        [id$="-modal"],
+        [id$="Modal"] {
+            padding: 0.75rem !important;
+        }
+
+        .modal-content,
+        .balantro-modal-panel {
+            width: 100% !important;
+            max-width: 100%;
+            max-height: calc(100dvh - 1.5rem);
+        }
+
+        input:not([type="checkbox"]):not([type="radio"]),
+        select,
+        textarea {
+            max-width: 100%;
         }
     }
 

@@ -11,13 +11,13 @@
 </style>
 
 <header class="bg-white dark:bg-black shadow-sm border-b border-gray-200 dark:border-gray-800">
-    <div class="flex items-center justify-between px-3 py-2 bg-white dark:bg-black">
-        <div class="flex items-center">
-            <button class="mr-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 p-2 rounded-lg"
+    <div class="flex min-w-0 items-center justify-between gap-2 px-3 py-2 bg-white dark:bg-black">
+        <div class="flex min-w-0 items-center">
+            <button class="mr-1 shrink-0 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 p-2 rounded-lg sm:mr-4"
                 id="toggle-sidebar">
                 <i class="fas fa-bars text-xl"></i>
             </button>
-            <h1 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Welcome
+            <h1 class="hidden truncate text-lg font-semibold text-gray-700 dark:text-gray-300 sm:block">Welcome
             <?php if(auth()->user()->role == \App\Models\User::ROLES['client']): ?>
                 <?php echo e(auth()->user()->short_name ?? auth()->user()->name); ?>
 
@@ -30,7 +30,7 @@
 
     
 
-        <div class="flex items-center space-x-4">
+        <div class="flex shrink-0 items-center gap-2 sm:gap-4">
             <!-- Theme Toggle -->
             <button id="theme-toggle" type="button"
                 class="flex items-center justify-center p-2 rounded-lg text-gray-700 dark:text-gray-300  border border-gray-200 dark:border-gray-800
@@ -54,10 +54,10 @@
             <div class="relative"  x-data="{ open: false }"
     x-on:close-profile-dropdown.window="open = false">
                 <button id="user-menu-btn"
-                    class="flex items-center space-x-2 bg-white dark:bg-black px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900">
+                    class="relative flex h-10 w-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-2 dark:border-gray-800 dark:bg-black hover:bg-gray-100 dark:hover:bg-gray-900 md:w-52 md:px-8">
                     
-                    <span class="dark:text-white font-medium"><?php echo e(auth()->user()->name); ?></span>
-                    <i class="fas fa-chevron-down text-gray-500 dark:text-gray-400 ml-1"></i>
+                    <span class="hidden w-full truncate text-center font-medium dark:text-white md:block"><?php echo e(auth()->user()->name); ?></span>
+                    <i class="fas fa-chevron-down text-gray-500 dark:text-gray-400 md:absolute md:right-3"></i>
                 </button>
 
                 <div id="user-menu"
