@@ -20,8 +20,13 @@
 
             <div>
                 <label class="block text-sm font-medium">Email <span class="text-red-500">*</span></label>
-                <input type="email" name="email" required
+                <input type="email" name="email" required maxlength="255"
+                    pattern="[^\s@]+@[^\s@]+\.[A-Za-z]{2,}"
+                    title="Enter an email address with a valid domain (for example, name@company.com)."
                     class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" />
+                @error('email')
+                    <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="flex justify-end gap-3">

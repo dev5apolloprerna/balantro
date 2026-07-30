@@ -18,8 +18,15 @@ class SupervisorRequest extends FormRequest
         return [
             'supervisor.name' => 'sometimes|string|max:255',
             'user.name' => 'sometimes|string|max:255',
-            'name' => 'sometimes|string|max:255',
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'name' => 'required_without_all:supervisor.name,user.name|string|max:255',
+            'email' => ['required', 'email:rfc,dns', 'max:255', 'unique:users,email'],
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'email.email' => 'Please enter an email address with a valid domain.',
         ];
     }
 }

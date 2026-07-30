@@ -19,7 +19,9 @@
 
             <div>
                 <label class="block text-sm font-medium">Email <span class="text-red-500">*</span></label>
-                <input type="email" name="email" required
+                <input type="email" name="email" required maxlength="255"
+                    pattern="[^\s@]+@[^\s@]+\.[A-Za-z]{2,}"
+                    title="Enter an email address with a valid domain (for example, name@company.com)."
                     class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" />
                 <?php $__errorArgs = ['email'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');

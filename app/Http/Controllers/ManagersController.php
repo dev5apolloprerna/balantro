@@ -50,7 +50,7 @@ class ManagersController extends Controller
     {
         $validated = $request->validate([
             'name'  => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email:rfc,dns|max:255|unique:users,email',
         ]);
 
         $request->merge([
@@ -67,7 +67,7 @@ class ManagersController extends Controller
     {
         $validated = $request->validate([
             'name'  => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $manager->id],
+            'email' => ['required', 'email:rfc,dns', 'max:255', 'unique:users,email,' . $manager->id],
         ]);
         $data = $request->only(['name', 'email', 'device', 'origin']);
         if ($request->filled('fcm_token')) {
