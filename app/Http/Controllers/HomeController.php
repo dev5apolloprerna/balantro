@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\BuildsEmptyAccountSummary;
 use Illuminate\Http\Request;
 
 use App\Models\Document;
@@ -22,6 +23,7 @@ use App\Models\Group;
 
 class HomeController extends Controller
 {
+    use BuildsEmptyAccountSummary;
     /**
      * Create a new controller instance.
      *
@@ -289,21 +291,11 @@ class HomeController extends Controller
                 });
                 $allGroups = collect($allGroupsWithBalances);
                 
-                // If still no groups, create some default groups for demo
+                // Keep the standard cards visible for a new client, but never
+                // invent balances or database IDs when no accounting data exists.
                 if ($allGroups->isEmpty()) {
-                    \Log::warning('No groups with balances found, creating demo groups');
-
-                    // Create demo groups structure
-                    $allGroups = collect([
-                        (object)['iGroupId' => 1, 'strGroupName' => 'Sales Accounts', 'Closing' => 100000, 'Opening' => 80000],
-                        (object)['iGroupId' => 2, 'strGroupName' => 'Purchase Accounts', 'Closing' => 75000, 'Opening' => 60000],
-                        (object)['iGroupId' => 3, 'strGroupName' => 'Sundry Creditors', 'Closing' => 50000, 'Opening' => 45000],
-                        (object)['iGroupId' => 4, 'strGroupName' => 'Sundry Debtors', 'Closing' => 60000, 'Opening' => 55000],
-                        (object)['iGroupId' => 5, 'strGroupName' => 'Cash-in-Hand', 'Closing' => 25000, 'Opening' => 20000],
-                        (object)['iGroupId' => 6, 'strGroupName' => 'Bank Accounts', 'Closing' => 150000, 'Opening' => 120000],
-                        (object)['iGroupId' => 7, 'strGroupName' => 'Direct Incomes', 'Closing' => 30000, 'Opening' => 25000],
-                        (object)['iGroupId' => 8, 'strGroupName' => 'Direct Expenses', 'Closing' => 45000, 'Opening' => 40000],
-                    ]);
+                    \Log::info('No groups with balances found; showing zero-value account summary cards');
+                    $allGroups = $this->emptyAccountSummaryGroups($defaultGroupNames);
                 }
             } catch (\Exception $e) {
                 
@@ -315,17 +307,7 @@ class HomeController extends Controller
                     ->get();
 
                 if ($allGroups->isEmpty()) {
-                    // Ultimate fallback: create demo groups
-                    $allGroups = collect([
-                        (object)['iGroupId' => 1, 'strGroupName' => 'Sales Accounts', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 2, 'strGroupName' => 'Purchase Accounts', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 3, 'strGroupName' => 'Sundry Creditors', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 4, 'strGroupName' => 'Sundry Debtors', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 5, 'strGroupName' => 'Cash-in-Hand', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 6, 'strGroupName' => 'Bank Accounts', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 7, 'strGroupName' => 'Direct Incomes', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 8, 'strGroupName' => 'Direct Expenses', 'Closing' => 0, 'Opening' => 0],
-                    ]);
+                    $allGroups = $this->emptyAccountSummaryGroups($defaultGroupNames);
                 } else {
                     // Add zero balances to groups without balance data
                     $allGroups = $allGroups->map(function ($group) {

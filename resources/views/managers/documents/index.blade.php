@@ -12,7 +12,7 @@
               <form action="{{ route('managers.documents.index') }}" method="GET" class="w-full" id="documents-filter-form">
                 <div class="flex flex-col md:flex-row md:flex-wrap gap-3 w-full">
                   <div class="w-full md:w-[calc(50%-0.375rem)] lg:w-[250px]">
-                    <select name="client_id" class="custom-select-arrow bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 h-10 px-4 !rounded-lg focus:outline-none border border-neutral-300 dark:border-neutral-600 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-[16px] w-full cursor-pointer">
+                    <select name="client_id" data-scrollable-select class="custom-select-arrow bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 h-10 px-4 !rounded-lg focus:outline-none border border-neutral-300 dark:border-neutral-600 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-[16px] w-full cursor-pointer">
                       <option value="">{{ __('dropdowns.client') }}</option>
                       @foreach($clients as $client)
                         <option value="{{ $client->id }}" {{ request('client_id') == $client->id ? 'selected' : '' }}>{{ $client->name }}</option>

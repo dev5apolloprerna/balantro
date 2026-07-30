@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\BuildsEmptyAccountSummary;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Group;
@@ -31,6 +32,7 @@ use App\Models\GSTLedgerMapping;
 
 class ClientsController extends Controller
 {
+    use BuildsEmptyAccountSummary;
     protected $client;
     protected $clients;
 
@@ -1347,17 +1349,8 @@ class ClientsController extends Controller
                 $allGroups = collect($allGroupsWithBalances);
 
                 if ($allGroups->isEmpty()) {
-                    \Log::warning('No groups with balances found for client ' . $user->id . ', creating demo groups');
-                    $allGroups = collect([
-                        (object)['iGroupId' => 1, 'strGroupName' => 'Sales Accounts', 'Closing' => 100000, 'Opening' => 80000],
-                        (object)['iGroupId' => 2, 'strGroupName' => 'Purchase Accounts', 'Closing' => 75000, 'Opening' => 60000],
-                        (object)['iGroupId' => 3, 'strGroupName' => 'Sundry Creditors', 'Closing' => 50000, 'Opening' => 45000],
-                        (object)['iGroupId' => 4, 'strGroupName' => 'Sundry Debtors', 'Closing' => 60000, 'Opening' => 55000],
-                        (object)['iGroupId' => 5, 'strGroupName' => 'Cash-in-Hand', 'Closing' => 25000, 'Opening' => 20000],
-                        (object)['iGroupId' => 6, 'strGroupName' => 'Bank Accounts', 'Closing' => 150000, 'Opening' => 120000],
-                        (object)['iGroupId' => 7, 'strGroupName' => 'Direct Incomes', 'Closing' => 30000, 'Opening' => 25000],
-                        (object)['iGroupId' => 8, 'strGroupName' => 'Direct Expenses', 'Closing' => 45000, 'Opening' => 40000],
-                    ]);
+                    \Log::info('No groups with balances found for client ' . $user->id . '; showing zero-value account summary cards');
+                    $allGroups = $this->emptyAccountSummaryGroups($defaultGroupNames);
                 }
             } catch (\Exception $e) {
                 \Log::error('Error fetching groups with balances for client ' . $user->id . ': ' . $e->getMessage());
@@ -1370,16 +1363,7 @@ class ClientsController extends Controller
                     ->get();
 
                 if ($allGroups->isEmpty()) {
-                    $allGroups = collect([
-                        (object)['iGroupId' => 1, 'strGroupName' => 'Sales Accounts', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 2, 'strGroupName' => 'Purchase Accounts', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 3, 'strGroupName' => 'Sundry Creditors', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 4, 'strGroupName' => 'Sundry Debtors', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 5, 'strGroupName' => 'Cash-in-Hand', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 6, 'strGroupName' => 'Bank Accounts', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 7, 'strGroupName' => 'Direct Incomes', 'Closing' => 0, 'Opening' => 0],
-                        (object)['iGroupId' => 8, 'strGroupName' => 'Direct Expenses', 'Closing' => 0, 'Opening' => 0],
-                    ]);
+                    $allGroups = $this->emptyAccountSummaryGroups($defaultGroupNames);
                 } else {
                     $allGroups = $allGroups->map(function ($group) {
                         $group->Closing = 0;

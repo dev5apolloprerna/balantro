@@ -3,6 +3,7 @@ import Echo from "laravel-echo";
 import Pusher from "pusher-js";
 
 function initApp() {
+    initScrollableSelects();
         // 1. Dropdown menu functionality
         document
             .querySelectorAll(".sidebar-menu .dropdown")
@@ -165,6 +166,76 @@ function initApp() {
         }
     }
 
+    function initScrollableSelects() {
+        document.querySelectorAll("select[data-scrollable-select]").forEach((select) => {
+            if (select.dataset.scrollableSelectReady) return;
+            select.dataset.scrollableSelectReady = "true";
+
+            const wrapper = document.createElement("div");
+            wrapper.className = "scrollable-select";
+            select.parentNode.insertBefore(wrapper, select);
+            wrapper.appendChild(select);
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "scrollable-select__button";
+            button.setAttribute("aria-haspopup", "listbox");
+            button.setAttribute("aria-expanded", "false");
+
+            const list = document.createElement("div");
+            list.className = "scrollable-select__list";
+            list.setAttribute("role", "listbox");
+            list.hidden = true;
+
+            const close = () => {
+                list.hidden = true;
+                button.setAttribute("aria-expanded", "false");
+            };
+            const syncLabel = () => {
+                button.textContent = select.options[select.selectedIndex]?.text || "";
+            };
+
+            Array.from(select.options).forEach((option) => {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "scrollable-select__option";
+                item.textContent = option.text;
+                item.setAttribute("role", "option");
+                item.addEventListener("click", () => {
+                    select.value = option.value;
+                    select.dispatchEvent(new Event("change", { bubbles: true }));
+                    syncLabel();
+                    close();
+                    button.focus();
+                });
+                list.appendChild(item);
+            });
+
+            button.addEventListener("click", () => {
+                const opening = list.hidden;
+                document.querySelectorAll(".scrollable-select__list:not([hidden])").forEach((openList) => {
+                    openList.hidden = true;
+                    openList.previousElementSibling?.setAttribute("aria-expanded", "false");
+                });
+                list.hidden = !opening;
+                button.setAttribute("aria-expanded", String(opening));
+                if (opening) list.querySelector(".scrollable-select__option")?.focus();
+            });
+            wrapper.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    close();
+                    button.focus();
+                }
+            });
+            document.addEventListener("click", (event) => {
+                if (!wrapper.contains(event.target)) close();
+            });
+
+            wrapper.append(button, list);
+            syncLabel();
+        });
+    }
+    
     // Initialize on different events
     document.addEventListener("DOMContentLoaded", initApp);
 

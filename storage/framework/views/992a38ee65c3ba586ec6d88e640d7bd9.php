@@ -6,6 +6,7 @@
 </head>
 
 <body class="antialiased font-sans selection:bg-balantro-primary selection:text-white">
+    <?php echo $__env->make('shared.form_validation', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     <?php echo $__env->make('includes.header', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
     
