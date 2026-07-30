@@ -193,6 +193,23 @@ function initApp() {
             };
             const syncLabel = () => {
                 button.textContent = select.options[select.selectedIndex]?.text || "";
+                list.querySelectorAll(".scrollable-select__option").forEach((item, index) => {
+                    item.setAttribute("aria-selected", String(index === select.selectedIndex));
+                });
+            };
+            const positionList = () => {
+                const buttonRect = button.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                const menuGap = 4;
+                const viewportGap = 16;
+                const spaceBelow = viewportHeight - buttonRect.bottom - viewportGap - menuGap;
+                const spaceAbove = buttonRect.top - viewportGap - menuGap;
+                const openAbove = spaceBelow < 240 && spaceAbove > spaceBelow;
+                const availableSpace = Math.max(openAbove ? spaceAbove : spaceBelow, 120);
+
+                list.style.maxHeight = `${Math.min(320, availableSpace)}px`;
+                list.style.top = openAbove ? "auto" : "calc(100% + .25rem)";
+                list.style.bottom = openAbove ? "calc(100% + .25rem)" : "auto";
             };
 
             Array.from(select.options).forEach((option) => {
@@ -219,8 +236,14 @@ function initApp() {
                 });
                 list.hidden = !opening;
                 button.setAttribute("aria-expanded", String(opening));
-                if (opening) list.querySelector(".scrollable-select__option")?.focus();
+                if (opening) {
+                    positionList();
+                    const selectedItem = list.querySelector('[aria-selected="true"]');
+                    (selectedItem || list.querySelector(".scrollable-select__option"))?.focus({ preventScroll: true });
+                    selectedItem?.scrollIntoView({ block: "nearest" });
+                }
             });
+            list.addEventListener("wheel", (event) => event.stopPropagation(), { passive: true });
             wrapper.addEventListener("keydown", (event) => {
                 if (event.key === "Escape") {
                     close();
@@ -235,7 +258,7 @@ function initApp() {
             syncLabel();
         });
     }
-    
+
     // Initialize on different events
     document.addEventListener("DOMContentLoaded", initApp);
 

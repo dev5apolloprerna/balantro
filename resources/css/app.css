@@ -42,14 +42,29 @@
         top: calc(100% + .25rem);
         left: 0;
         width: 100%;
-        max-height: min(20rem, 60vh);
-        overflow-y: auto;
+       /* Keep long client lists inside the menu instead of growing the page. */
+        max-height: min(20rem, calc(100dvh - 2rem));
+        overflow-x: hidden;
+        overflow-y: scroll;
         overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
         background: white;
         border: 1px solid rgb(212 212 212);
         border-radius: .5rem;
         box-shadow: 0 12px 28px rgb(15 23 42 / .22);
         scrollbar-width: auto;
+        scrollbar-color: rgb(163 163 163) transparent;
+    }
+
+    .scrollable-select__list::-webkit-scrollbar {
+        width: .65rem;
+    }
+
+    .scrollable-select__list::-webkit-scrollbar-thumb {
+        background-color: rgb(163 163 163);
+        border: 2px solid transparent;
+        border-radius: 9999px;
+        background-clip: padding-box;
     }
 
     .scrollable-select__option {
@@ -82,7 +97,7 @@
     .dark .scrollable-select__option:focus {
         background: rgb(64 64 64);
     }
-    
+
     /* Shared responsive guardrails for legacy and Tailwind-driven screens. */
     html,
     body {

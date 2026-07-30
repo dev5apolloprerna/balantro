@@ -763,7 +763,12 @@
         // Maintain selected order (FIFO style)
         if (!empty($allGroupCards) && !empty($selectedGroups)) {
 
-            $selectedOrder = array_flip($selectedGroups);
+            // Ignore stale/invalid selections (for example null placeholder IDs)
+            // because array_flip only accepts integer and string values.
+            $selectedOrder = array_flip(array_values(array_filter(
+                $selectedGroups,
+                static fn ($groupId) => is_int($groupId) || is_string($groupId)
+            )));
 
             usort($allGroupCards, function ($a, $b) use ($selectedOrder) {
 

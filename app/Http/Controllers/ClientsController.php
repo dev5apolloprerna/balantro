@@ -1349,11 +1349,10 @@ class ClientsController extends Controller
                 $allGroups = collect($allGroupsWithBalances);
 
                 if ($allGroups->isEmpty()) {
-                    \Log::info('No groups with balances found for client ' . $user->id . '; showing zero-value account summary cards');
-                    $allGroups = $this->emptyAccountSummaryGroups($defaultGroupNames);
+                    \Log::info('No persisted account groups found for client ' . $user->id . '; account summary will be empty');
                 }
             } catch (\Exception $e) {
-                \Log::error('Error fetching groups with balances for client ' . $user->id . ': ' . $e->getMessage());
+                \Log::info('No persisted fallback account groups found for client ' . $user->id . '; account summary will be empty');
 
                 // Fallback
                 $allGroups = DB::table('GroupMaster')

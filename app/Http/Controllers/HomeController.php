@@ -294,8 +294,7 @@ class HomeController extends Controller
                 // Keep the standard cards visible for a new client, but never
                 // invent balances or database IDs when no accounting data exists.
                 if ($allGroups->isEmpty()) {
-                    \Log::info('No groups with balances found; showing zero-value account summary cards');
-                    $allGroups = $this->emptyAccountSummaryGroups($defaultGroupNames);
+                    \Log::info('No persisted account groups found; account summary will be empty');
                 }
             } catch (\Exception $e) {
                 
@@ -307,7 +306,7 @@ class HomeController extends Controller
                     ->get();
 
                 if ($allGroups->isEmpty()) {
-                    $allGroups = $this->emptyAccountSummaryGroups($defaultGroupNames);
+                    \Log::info('No persisted fallback account groups found; account summary will be empty');
                 } else {
                     // Add zero balances to groups without balance data
                     $allGroups = $allGroups->map(function ($group) {
