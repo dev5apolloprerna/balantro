@@ -31,7 +31,7 @@ class DebitNoteController extends Controller
             return back()->with('error', 'Please select company first');
         }
         $uploads = BulkDebitNoteUpload::where('iPartyId', $iPartyId)
-            ->whereIn('status', ['Pending','Processing'])
+            ->whereIn('status', ['pending', 'Pending', 'processing', 'Processing'])
             ->orderBy('id', 'desc')
             ->get();
 
@@ -705,7 +705,7 @@ class DebitNoteController extends Controller
             'note_type' => 'debit',
             'uploaded_by' => $request->user_id,
             'uploaded_at' => now(),
-            'status' => 'Processing'
+            'status' => 'processing'
         ]);
 
         // ===============================
@@ -831,9 +831,10 @@ class DebitNoteController extends Controller
                     $rates = array_unique($rates);
                     $partyLedgerDetails = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $first = $this->applyUploadPartyLedgerDetails($first, $partyLedgerDetails);
-                    $hasPartyLedgerMatch = !empty($partyLedgerDetails)
-                        && $this->normalizeGstNo($first['gst_no']) !== ''
-                        && $this->normalizeGstNo($first['gst_no']) === $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
+                    // $hasPartyLedgerMatch = !empty($partyLedgerDetails)
+                    //     && $this->normalizeGstNo($first['gst_no']) !== ''
+                    //     && $this->normalizeGstNo($first['gst_no']) === $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
+                    $hasPartyLedgerMatch = $this->hasAcceptedDebitPartyLedger($partyLedgerDetails, $first['gst_no']);
 
                     $hasValidGstSlab = $this->allGstRatesAreApplicable($rates);
                     $isDuplicateVoucher = $this->voucherCombinationExists('debit_note_transactions', [
@@ -857,7 +858,7 @@ class DebitNoteController extends Controller
                         'year_value' => session('year'),
                     ]);
                     if (!$hasPartyLedgerMatch || !$hasValidGstSlab || $isDuplicateVoucher) {
-                        $status = 'Pending';
+                        $status = 'pending';
                     }
 
                     $gstMode =
@@ -994,8 +995,8 @@ class DebitNoteController extends Controller
                 'saved'   => $savedCount,
                 'pending' => $pendingCount,
                 'status'  => $pendingCount > 0
-                    ? 'Pending'
-                    : 'Completed',
+                    ? 'pending'
+                    : 'completed',
             ]);
             // $upload->update([
             //     'total' => $total,
@@ -1109,10 +1110,11 @@ class DebitNoteController extends Controller
                     $mapping = $this->getGstMapping($iPartyId, $first['purchase_ledger']);
                     $partyLedgerDetails = $this->getUploadPartyLedgerDetails($iPartyId, $first['party_name'], $first['gst_no']);
                     $first = $this->applyUploadPartyLedgerDetails($first, $partyLedgerDetails);
-                    $hasPartyLedgerMatch = !empty($partyLedgerDetails)
-                        && $this->normalizeGstNo($first['gst_no']) !== ''
-                        && $this->normalizeGstNo($first['gst_no']) === $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
-                    
+                    // $hasPartyLedgerMatch = !empty($partyLedgerDetails)
+                    //     && $this->normalizeGstNo($first['gst_no']) !== ''
+                    //     && $this->normalizeGstNo($first['gst_no']) === $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
+                    $hasPartyLedgerMatch = $this->hasAcceptedDebitPartyLedger($partyLedgerDetails, $first['gst_no']);
+
                     // Status is saved only when party ledger, GST ledger, amounts, GST rates, GST No and duplicate checks pass.
                     $hasValidGstSlab = $this->allGstRatesAreApplicable(array_column($gstSlots, 'gst_rate'));
                     $hasGstLedgerMatch = $this->hasRequiredGstLedgers($gstSlots, $isIgst);
@@ -1245,7 +1247,7 @@ class DebitNoteController extends Controller
                 'total'   => $total,
                 'saved'   => $savedCount,
                 'pending' => $pendingCount,
-                'status'  => $pendingCount > 0 ? 'Pending' : 'Completed',
+                'status'  => $pendingCount > 0 ? 'pending' : 'completed',
             ]);
         }
 
@@ -1263,7 +1265,7 @@ class DebitNoteController extends Controller
 
         // ✅ Fetch pending Debit notes (same like sales)
         $rows = DebitNoteTransaction::where('upload_id', $id)
-            ->where('status', 'Pending') // or 'pending' if using string
+            ->whereIn('status', ['pending', 'Pending']) // or 'pending' if using string
             ->where('iPartyId', $iPartyId)
             ->orderBy('id')
             ->paginate(50);
@@ -1391,12 +1393,12 @@ class DebitNoteController extends Controller
 
         // ✅ Recalculate counts
         $saved = DebitNoteTransaction::where('upload_id', $upload_id)
-            ->where('status', 'Saved')
+            ->whereIn('status', ['saved', 'Saved'])
             ->where('is_delete', 0)
             ->count();
 
         $pending = DebitNoteTransaction::where('upload_id', $upload_id)
-            ->where('status', 'Pending')
+            ->whereIn('status', ['pending', 'Pending'])
             ->where('is_delete', 0)
             ->count();
 
@@ -1812,7 +1814,7 @@ class DebitNoteController extends Controller
                     $request->noitem_rows ?? [],
                     $request->custom_slots ?? [],
                     $request->gst_rate ?? null
-                )) ? 'saved' : 'Pending'
+                )) ? 'saved' : 'pending'
             ]);
 
             // ===============================
@@ -1824,7 +1826,7 @@ class DebitNoteController extends Controller
                 ->count();
 
             $pending = DebitNoteTransaction::where('upload_id', $transaction->upload_id)
-                ->where('status', 'Pending')
+                ->whereIn('status', ['pending', 'Pending'])
                 ->where('is_delete', 0)
                 ->count();
 
@@ -1832,7 +1834,7 @@ class DebitNoteController extends Controller
                 ->where('is_delete', 0)
                 ->count();
 
-            $status = ($pending == 0) ? 'Completed' : 'Pending';
+            $status = ($pending == 0) ? 'completed' : 'pending';
 
             BulkDebitNoteUpload::where('id', $transaction->upload_id)->update([
                 'total'   => $total,
@@ -1884,7 +1886,7 @@ class DebitNoteController extends Controller
                         $transaction->status = 'saved';
                         $matched++;
                     } else {
-                        $transaction->status = 'Pending';
+                        $transaction->status = 'pending';
                         $stillPending++;
                     }
 
@@ -2018,7 +2020,7 @@ class DebitNoteController extends Controller
             'total' => $total,
             'saved' => $saved,
             'pending' => $pending,
-            'status' => $pending > 0 ? 'Pending' : 'Completed',
+            'status' => $pending > 0 ? 'pending' : 'completed',
         ]);
     }
 
@@ -2392,9 +2394,16 @@ class DebitNoteController extends Controller
         }
 
         $submittedGstNo = $this->normalizeGstNo($gstNo);
-        $ledgerGstNo = $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
+        // $ledgerGstNo = $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
 
-        return $submittedGstNo !== '' && $ledgerGstNo !== '' && $submittedGstNo === $ledgerGstNo;
+        // return $submittedGstNo !== '' && $ledgerGstNo !== '' && $submittedGstNo === $ledgerGstNo;
+        if ($submittedGstNo !== '') {
+            $ledgerGstNo = $this->normalizeGstNo($partyLedgerDetails['gst_no'] ?? null);
+
+            return $ledgerGstNo !== '' && $submittedGstNo === $ledgerGstNo;
+        }
+
+        return strtolower(trim((string) ($partyLedgerDetails['party_name'] ?? ''))) === strtolower(trim((string) $partyName));
     }
 
     private function hasRequiredDebitNoteGstLedgers(DebitNoteTransaction $transaction, array $customSlots = []): bool
@@ -2563,11 +2572,12 @@ class DebitNoteController extends Controller
                 'purchase_ledger_name' => $ledger->name ?? $row->purchase_ledger_name,
 
                 'vch_type' => $voucherType ?: 'Debit Note',
-                'status' => 'Pending',
+                'status' => 'pending',
             ]);
             $row->loadMissing(['items', 'customGst']);
             // $row->status = empty($this->getDebitNotePendingIssues($row)) ? 'saved' : 'Pending';
-            $row->status = $this->rematchPendingDebitNoteTransaction($row) ? 'saved' : 'Pending';
+            // $row->status = empty($this->getDebitNotePendingIssues($row)) ? 'saved' : 'pending';
+            $row->status = $this->rematchPendingDebitNoteTransaction($row) ? 'saved' : 'pending';
             $row->save();
         }
 
@@ -2582,7 +2592,7 @@ class DebitNoteController extends Controller
                 ->count();
 
             $pending = DebitNoteTransaction::where('upload_id', $uploadId)
-                ->where('status', 'Pending')
+                ->whereIn('status', ['pending', 'Pending'])
                 ->where('is_delete', 0)
                 ->count();
 
@@ -2590,7 +2600,7 @@ class DebitNoteController extends Controller
                 ->where('is_delete', 0)
                 ->count();
 
-            $status = ($pending == 0) ? 'Completed' : 'Pending';
+            $status = ($pending == 0) ? 'completed' : 'pending';
 
             BulkDebitNoteUpload::where('id', $uploadId)->update([
                 'total'   => $total,
@@ -2779,7 +2789,7 @@ class DebitNoteController extends Controller
                 $upload->update([
                     'pending' => $upload->pending + 1,
                     'total'   => $upload->total + 1,
-                    'status'    => 'Pending',
+                    'status'    => 'pending',
                 ]);
             } else {
                 $upload = BulkDebitNoteUpload::create([
@@ -2789,7 +2799,7 @@ class DebitNoteController extends Controller
                     'file_path' => 'manual',
                     'note_type' => 'debit',
                     'type'      => 'Manual',
-                    'status'    => 'Pending',
+                    'status'    => 'pending',
                     'total'     => 1,
                     'pending'   => 1,
                     'saved'     => 0,

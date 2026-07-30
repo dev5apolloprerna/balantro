@@ -142,7 +142,7 @@
                                     <!-- <p class="mb-1 text-lg font-medium">
                                         <?php echo e(__('admin.clients.table.no_clients_title')); ?></p>
                                     <p class="text-sm"><?php echo e(__('admin.clients.table.no_clients_description')); ?></p> -->
-                                    <p class="text-base font-medium">No managers found</p>
+                                    <p class="text-base font-medium">No Client found</p>
                                     <p class="text-sm">Click “New Client” to create one.</p>
                                 </div>
                             </td>

@@ -97,7 +97,7 @@
             </div>
 
             
-            <div class="grou[ relative p-3 rounded-xl text-center
+            <div class="group relative p-3 rounded-xl text-center
                     border border-gray-700
                     transition duration-1000 ease-in-out
                                     transition-property: all;
@@ -362,7 +362,7 @@
                     <th class="px-4 py-2 font-bold">
                         Upload Date
                     </th>
-                    <th class="px-4 py-2 font-bold">
+                    <th class="w-36 min-w-[9rem] px-4 py-2 text-center font-bold">
                         Status
                     </th>
                     <th class="px-4 py-2 font-bold">
@@ -427,11 +427,6 @@
                                 }
                                 ?>
                                 <i class="fa-solid <?php echo e($icon); ?> <?php echo e($color); ?> text-sm"></i>
-                                <!-- <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5"
-                                            viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                            <path d="M14 2v6h6" />
-                                        </svg> -->
                             </div>
                             <div class="min-w-0 flex-1">
                                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -459,7 +454,7 @@
                         <?php echo e(optional($doc->created_at)->timezone(config('app.timezone'))->format('d M, Y, h:i A')); ?>
 
                     </td>
-                    <td class="px-4 py-2 group-hover:text-black">
+                    <td class="w-36 min-w-[9rem] px-4 py-2 text-center group-hover:text-black">
                         <?php
                         $displayStatus = $doc->status;
                         $statusLabel = $doc->status;
@@ -504,8 +499,7 @@
 
                         $statusClass = $statusColors[$displayStatus] ?? $statusColors['uploaded'];
                         ?>
-                        <span
-                            class="inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold <?php echo e($statusClass); ?>">
+                        <span class="inline-flex min-h-7 w-28 items-center justify-center rounded-full px-3 py-1 text-center text-xs font-semibold leading-tight <?php echo e($statusClass); ?>">
                             <?php echo e($statusLabel); ?>
 
                         </span>
@@ -555,7 +549,7 @@
                             <?php if(!in_array(trim($doc->status), ['approved', 'data_entry_completed'])): ?>
                             <button type="button"
                                 onclick="openVerifyModal(<?php echo e($doc->id); ?>,'<?php echo e($doc->status); ?>')"
-                                class="rounded-md bg-primary-600 px-2 py-1 text-xs sm:text-sm text-white hover:bg-primary-700 whitespace-nowrap">
+                                class="inline-flex min-w-14 items-center justify-center rounded-md bg-primary-600 px-2 py-1 text-center text-xs sm:text-sm text-white hover:bg-primary-700 whitespace-nowrap">
                                 Verify
                             </button>
                             <?php endif; ?>
@@ -589,7 +583,7 @@
                             $doc->status == 'data_entry_completed'): ?>
                             <button type="button"
                                 onclick="openSupVerifyModal(<?php echo e($doc->id); ?>)"
-                                class="rounded-md bg-primary-600 px-2 py-1 text-xs sm:text-sm text-white hover:bg-primary-700 whitespace-nowrap">
+                                class="inline-flex min-w-14 items-center justify-center rounded-md bg-primary-600 px-2 py-1 text-center text-xs sm:text-sm text-white hover:bg-primary-700 whitespace-nowrap">
                                 Verify
                             </button>
                             <?php endif; ?>
@@ -675,66 +669,7 @@
     </div>
 
     
-    <!-- <div id="uploadModal" class="fixed inset-0 z-50 hidden">
-                                    <div class="absolute inset-0 bg-black/50"></div>
-
-                                    <div
-                                        class="relative mx-auto mt-20 w-[680px] max-w-[92vw] rounded-2xl
-                        bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-700">
-                                        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Documents Upload</h3>
-                                            <button type="button" id="closeUploadModal"
-                                                class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300">
-                                                ✕
-                                            </button>
-                                        </div>
-
-                                        <form id="uploadForm" action="<?php echo e(route('documents.store')); ?>" method="POST" enctype="multipart/form-data">
-                                            <?php echo csrf_field(); ?>
-                                            <div class="px-6 py-5">
-                                                
-                                                <div id="dropArea"
-                                                    class="border-2 border-dashed rounded-xl px-6 py-10 text-center
-                                    border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                                                    <div
-                                                        class="mx-auto mb-4 flex h-12 w-12 items-center justify-center
-                                        rounded-full bg-gray-200 dark:bg-gray-700">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600 dark:text-gray-300"
-                                                            viewBox="0 0 24 24" fill="currentColor">
-                                                            <path d="M7 20h10a3 3 0 0 0 3-3 3 3 0 0 0-3-3h-.26A8 8 0 1 0 4 12" />
-                                                        </svg>
-                                                    </div>
-                                                    <p class="text-sm text-gray-600 dark:text-gray-300">
-                                                        <span class="font-medium">Drag &amp; drop files here</span> or click to browse
-                                                    </p>
-                                                    <input id="fileInput" type="file" name="files[]" multiple class="hidden" />
-                                                </div>
-
-                                                
-                                                <ul id="fileList" class="mt-4 space-y-2 max-h-48 overflow-y-auto"></ul>
-
-                                                
-                                                <div id="progressWrap" class="hidden mt-4">
-                                                    <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5">
-                                                        <div id="progressBar" class="h-2.5 rounded-full bg-blue-600" style="width:0%"></div>
-                                                    </div>
-                                                    <div id="progressText" class="mt-1 text-xs text-gray-500 dark:text-gray-400">0%</div>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                                                <button type="button" id="cancelUpload"
-                                                    class="rounded-md px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 dark:text-gray-100">
-                                                    Cancel
-                                                </button>
-                                                <button type="submit" id="uploadBtn"
-                                                    class="rounded-md px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60">
-                                                    Upload
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div> -->
+    
     <div id="uploadModal" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/50"></div>
 
@@ -889,9 +824,7 @@
                     <textarea name="description" id="description" placeholder="Please provide some details..."
                         class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
                         rows="3"></textarea>
-                </div>
-
-                
+                </div>               
 
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="closeSupVerifyModal()"

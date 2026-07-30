@@ -1905,11 +1905,13 @@
                 let type = $(this).val();
 
                 if (type == 'with-item') {
-                    window.location.href = "/samples/credit-notes-with-item-sample-file.xlsx";
+                    // window.location.href = window.downloadFile("/samples/credit-notes-with-item-sample-file.xlsx");
+                    window.downloadFile("/samples/credit-notes-with-item-sample-file.xlsx");
                 }
 
                 if (type == 'without-item') {
-                    window.location.href = "/samples/credit-notes-without-item-sample-file.xlsx";
+                    // window.location.href = window.downloadFile("/samples/credit-notes-without-item-sample-file.xlsx");
+                    window.downloadFile("/samples/credit-notes-without-item-sample-file.xlsx");
                 }
 
                 // reset dropdown

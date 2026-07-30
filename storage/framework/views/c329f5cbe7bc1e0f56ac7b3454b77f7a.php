@@ -1939,14 +1939,42 @@ function buildItemRow(item) {
     });
 }
 
-function buildItemOptions(selected) {
-    let opts = '<option value="">Select Item</option>';
+function escapeHtml(text) {
+    return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function buildItemOptions(selected = '') {
+    const normalizedSelected = String(selected || '').trim().toLowerCase();
+    let opts = '<option value="">Select Item / Ledger</option>';
+    opts += '<optgroup label="Items">';
     ITEM_MASTER.forEach(item => {
-        let name = item.strItemName || item.name || '';
-        opts += `<option value="${name}" ${name===selected?'selected':''}>${name}</option>`;
+        let name = String(item.strItemName || item.name || '');
+        let safeName = escapeHtml(name);
+        opts += `<option value="${safeName}" data-entry-type="item" ${name.trim().toLowerCase() === normalizedSelected ? 'selected' : ''}>${safeName}</option>`;
     });
+    opts += '</optgroup>';
+    opts += '<optgroup label="Ledgers">';
+    SALES_LEDGERS.forEach(ledger => {
+        let name = String(ledger.name || '');
+        let safeName = escapeHtml(name);
+        opts += `<option value="${safeName}" data-entry-type="ledger" ${name.trim().toLowerCase() === normalizedSelected ? 'selected' : ''}>${safeName}</option>`;
+    });
+    opts += '</optgroup>';
     return opts;
 }
+// function buildItemOptions(selected) {
+//     let opts = '<option value="">Select Item</option>';
+//     ITEM_MASTER.forEach(item => {
+//         let name = item.strItemName || item.name || '';
+//         opts += `<option value="${name}" ${name===selected?'selected':''}>${name}</option>`;
+//     });
+//     return opts;
+// }
 
 // ─── MODAL OPEN / CLOSE ───────────────────────────────────────────────────────
 function openEditModal()    { document.getElementById('editModal').classList.add('show'); }

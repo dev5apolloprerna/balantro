@@ -877,6 +877,9 @@ class PurchaseUploadController extends Controller
                         // ]);
                     }
 
+                    $transaction->refresh()->load(['items', 'customGst']);
+                    $transaction->status = $this->rematchPendingPurchaseTransaction($transaction) ? 'saved' : 'pending';
+                    $transaction->save();
                     $totalInvoices++;
                 }
             });
@@ -1140,6 +1143,9 @@ class PurchaseUploadController extends Controller
                         }
                     }
                     
+                    $transaction->refresh()->load(['items', 'customGst']);
+                    $transaction->status = $this->rematchPendingPurchaseTransaction($transaction) ? 'saved' : 'pending';
+                    $transaction->save();
                     $total++;
                 }
             });
