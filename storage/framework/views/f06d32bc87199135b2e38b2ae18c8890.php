@@ -1,17 +1,18 @@
-{{-- resources/views/data_entry_operators/messages/chat_content.blade.php --}}
-{{-- expects: $selected_client, $messages (Collection) --}}
+
+
 <div
     class="h-full bg-black border border-gray-800 rounded-2xl overflow-hidden flex flex-col">
 
-    {{-- Header --}}
+    
     <div
         class="flex items-center justify-between px-4 py-3 border-b border-gray-800 bg-gray-900">
         <div class="flex items-center gap-3">
-            @php $initials = strtoupper(substr($selected_client->name ?? 'U', 0, 2)); @endphp
+            <?php $initials = strtoupper(substr($selected_client->name ?? 'U', 0, 2)); ?>
             <div class="w-9 h-9 rounded-full bg-indigo-600 text-white grid place-items-center font-semibold">
-                {{ $initials }}
+                <?php echo e($initials); ?>
+
             </div>
-            <div class="text-white font-medium">{{ $selected_client->name ?? 'Unknown' }}</div>
+            <div class="text-white font-medium"><?php echo e($selected_client->name ?? 'Unknown'); ?></div>
         </div>
         <div class="flex items-center gap-1 text-gray-400">
             <button type="button" class="p-2 rounded-lg hover:bg-gray-800" title="Search in chat">
@@ -20,9 +21,9 @@
         </div>
     </div>
 
-    {{-- Messages area --}}
+    
     <div id="chatScroll" class="flex-1 min-h-0 flex flex-col p-3 overflow-y-auto bg-black">
-        @php
+        <?php
             $prevDay = null;
             $roleLetter = function ($msg) use ($selected_client) {
                 if (isset($msg->sender) && !empty($msg->sender->type)) {
@@ -59,59 +60,62 @@
                 }
                 return ($i ? number_format($bytes, 1) : (int) $bytes) . ' ' . $u[$i];
             };
-        @endphp
+        ?>
 
-        @foreach ($messages as $msg)
-            @php
+        <?php $__currentLoopData = $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $msg): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <?php
                 $ts =
                     $msg->created_at instanceof \Carbon\Carbon
                         ? $msg->created_at
                         : \Carbon\Carbon::parse($msg->created_at);
                 $isMe = $msg->sender_id == auth()->id();
                 $dayKey = $ts->toDateString();
-            @endphp
+            ?>
 
-            {{-- Day divider --}}
-            @if ($dayKey !== $prevDay)
+            
+            <?php if($dayKey !== $prevDay): ?>
                 <div class="my-2 flex justify-center">
                     <span
                         class="px-3 py-1 text-xs rounded-full bg-gray-900 text-gray-400 border border-gray-800">
-                        @if ($dayKey === now()->toDateString())
+                        <?php if($dayKey === now()->toDateString()): ?>
                             Today
-                        @elseif ($dayKey === now()->subDay()->toDateString())
+                        <?php elseif($dayKey === now()->subDay()->toDateString()): ?>
                             Yesterday
-                        @else
-                            {{ $ts->format('D, d M Y') }}
-                        @endif
+                        <?php else: ?>
+                            <?php echo e($ts->format('D, d M Y')); ?>
+
+                        <?php endif; ?>
                     </span>
                 </div>
-                @php $prevDay = $dayKey; @endphp
-            @endif
+                <?php $prevDay = $dayKey; ?>
+            <?php endif; ?>
 
-            {{-- Message row --}}
-            <div class="mt-1 flex {{ $isMe ? 'justify-end' : 'justify-start' }}">
+            
+            <div class="mt-1 flex <?php echo e($isMe ? 'justify-end' : 'justify-start'); ?>">
                 <div class="mr-2 mt-0.5 shrink-0">
                     <div
-                        class="w-7 h-7 rounded-full grid place-items-center text-[11px] font-semibold {{ $isMe ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300' }}">
-                        {{ $roleLetter($msg) }}
+                        class="w-7 h-7 rounded-full grid place-items-center text-[11px] font-semibold <?php echo e($isMe ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300'); ?>">
+                        <?php echo e($roleLetter($msg)); ?>
+
                     </div>
                 </div>
 
                 <div
-                    class="max-w-[78%] md:max-w-[66%] px-3 py-2 rounded-2xl leading-snug {{ $isMe ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-gray-900 text-gray-100 rounded-bl-none' }}">
-                    @php $text = trim((string)($msg->description ?? $msg->body ?? '')); @endphp
+                    class="max-w-[78%] md:max-w-[66%] px-3 py-2 rounded-2xl leading-snug <?php echo e($isMe ? 'bg-indigo-600 text-white rounded-br-none' : 'bg-gray-900 text-gray-100 rounded-bl-none'); ?>">
+                    <?php $text = trim((string)($msg->description ?? $msg->body ?? '')); ?>
 
-                    @if ($text !== '')
+                    <?php if($text !== ''): ?>
                         <div class="flex items-end justify-between gap-2">
-                            <p class="whitespace-pre-line break-words flex-1 leading-snug">{{ $text }}</p>
+                            <p class="whitespace-pre-line break-words flex-1 leading-snug"><?php echo e($text); ?></p>
                             <span class="text-[10px] opacity-80 shrink-0 ml-2 whitespace-nowrap self-end">
-                                {{ $ts->format('H:i') }}
+                                <?php echo e($ts->format('H:i')); ?>
+
                             </span>
                         </div>
-                    @endif
+                    <?php endif; ?>
 
-                    {{-- Attachments --}}
-                    @php
+                    
+                    <?php
                         $files = collect($msg->attachments ?? []);
                         if ($files->isEmpty() && isset($msg->documents)) {
                             $files = collect($msg->documents)->map(function ($d) {
@@ -127,12 +131,12 @@
                                 ];
                             });
                         }
-                    @endphp
+                    ?>
 
-                    @if ($files->count())
+                    <?php if($files->count()): ?>
                         <div class="mt-2 grid grid-cols-2 gap-2">
-                            @foreach ($files as $att)
-                                @php
+                            <?php $__currentLoopData = $files; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $att): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
                                     $url = $att->url ?? '#';
                                     $name = $att->name ?? 'file';
                                     $mime = strtolower($att->mime ?? '');
@@ -151,73 +155,74 @@
                                         ? str_starts_with($mime, 'video/')
                                         : in_array(pathinfo($name, PATHINFO_EXTENSION), ['mp4', 'webm', 'mov', 'm4v']);
                                     $sizeTxt = $fmtSize($att->size ?? 0);
-                                @endphp
+                                ?>
 
-                                @if ($url && $url !== '#')
-                                    @if ($isImg)
-                                        <a href="{{ $url }}" target="_blank" rel="noopener"
+                                <?php if($url && $url !== '#'): ?>
+                                    <?php if($isImg): ?>
+                                        <a href="<?php echo e($url); ?>" target="_blank" rel="noopener"
                                             class="block overflow-hidden rounded-xl border border-gray-800 hover:opacity-95">
-                                            <img src="{{ $url }}" alt="{{ $name }}" loading="lazy"
+                                            <img src="<?php echo e($url); ?>" alt="<?php echo e($name); ?>" loading="lazy"
                                                 class="w-full h-28 object-cover">
                                         </a>
-                                    @elseif ($isVideo)
+                                    <?php elseif($isVideo): ?>
                                         <div
                                             class="overflow-hidden rounded-xl border border-gray-800 bg-gray-900">
-                                            <video src="{{ $url }}" class="w-full h-28 object-cover"
+                                            <video src="<?php echo e($url); ?>" class="w-full h-28 object-cover"
                                                 controls></video>
                                         </div>
-                                    @else
-                                        <a href="{{ $url }}" target="_blank" rel="noopener"
+                                    <?php else: ?>
+                                        <a href="<?php echo e($url); ?>" target="_blank" rel="noopener"
                                             class="flex items-center gap-2 p-2 rounded-xl border border-gray-800 bg-gray-900 hover:bg-gray-800">
                                             <i
                                                 class="fa-regular fa-file-lines text-sm text-gray-400"></i>
                                             <span
-                                                class="text-xs truncate max-w-[140px] text-gray-300">{{ $name }}</span>
-                                            @if ($sizeTxt)
+                                                class="text-xs truncate max-w-[140px] text-gray-300"><?php echo e($name); ?></span>
+                                            <?php if($sizeTxt): ?>
                                                 <span
-                                                    class="text-[10px] opacity-70 text-gray-400">{{ $sizeTxt }}</span>
-                                            @endif
+                                                    class="text-[10px] opacity-70 text-gray-400"><?php echo e($sizeTxt); ?></span>
+                                            <?php endif; ?>
                                             <i
                                                 class="fa-solid fa-arrow-down-to-line text-xs opacity-80 ml-auto text-gray-400"></i>
                                         </a>
-                                    @endif
-                                @endif
-                            @endforeach
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
 
-                        @if ($text === '')
+                        <?php if($text === ''): ?>
                             <div class="text-[10px] mt-1 opacity-80 text-right text-gray-400">
-                                {{ $ts->format('H:i') }}
+                                <?php echo e($ts->format('H:i')); ?>
+
                             </div>
-                        @endif
-                    @endif
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </div>
-        @endforeach
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
 
-    {{-- Composer --}}
-    @php
+    
+    <?php
         $formId = 'deoChatForm';
         $attachId = 'deoAttach';
         $sendButtonId = 'deoSendButton';
-    @endphp
+    ?>
 
-    <form id="{{ $formId }}" action="{{ route('deo.messages.store') }}" method="POST"
+    <form id="<?php echo e($formId); ?>" action="<?php echo e(route('deo.messages.store')); ?>" method="POST"
         enctype="multipart/form-data" data-loader="false"
         class="flex-shrink-0 border-t border-gray-800 bg-gray-900">
-        @csrf
-        <input type="hidden" name="client_id" value="{{ $selected_client->id }}" />
+        <?php echo csrf_field(); ?>
+        <input type="hidden" name="client_id" value="<?php echo e($selected_client->id); ?>" />
 
         <div class="px-3 pt-2">
             <div data-preview class="hidden mb-2 flex flex-wrap gap-2"></div>
         </div>
 
         <div class="px-3 pb-3 pt-1 flex items-end gap-2">
-            <input id="{{ $attachId }}" type="file" name="files[]" class="sr-only chat-file-input" multiple
+            <input id="<?php echo e($attachId); ?>" type="file" name="files[]" class="sr-only chat-file-input" multiple
                 accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar,.csv,.ppt,.pptx">
 
-            <label for="{{ $attachId }}"
+            <label for="<?php echo e($attachId); ?>"
                 class="shrink-0 p-2 rounded-xl bg-gray-800 text-gray-400 cursor-pointer hover:bg-gray-700"
                 title="Attach files">
                 <i class="fa-solid fa-paperclip"></i>
@@ -226,7 +231,7 @@
             <textarea name="body" rows="1" placeholder="Type a message…"
                 class="min-h-[44px] max-h-40 flex-1 resize-y rounded-xl px-3 py-2 bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-indigo-500"></textarea>
 
-            <button type="submit" id="{{ $sendButtonId }}"
+            <button type="submit" id="<?php echo e($sendButtonId); ?>"
                 class="shrink-0 px-4 h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium cursor-pointer">
                 Send
             </button>
@@ -241,11 +246,11 @@
         if (scroll) scroll.scrollTop = scroll.scrollHeight;
 
         // Get form elements
-        const form = document.getElementById('{{ $formId }}');
-        const input = document.getElementById('{{ $attachId }}');
+        const form = document.getElementById('<?php echo e($formId); ?>');
+        const input = document.getElementById('<?php echo e($attachId); ?>');
         const preview = form ? form.querySelector('[data-preview]') : null;
         const textarea = form ? form.querySelector('textarea[name="body"]') : null;
-        const sendButton = document.getElementById('{{ $sendButtonId }}');
+        const sendButton = document.getElementById('<?php echo e($sendButtonId); ?>');
 
         if (!form || !input || !preview || !textarea || !sendButton) {
             console.error('Required form elements not found');
@@ -508,4 +513,4 @@
             scroll.scrollTop = scroll.scrollHeight;
         }
     }, 1000);
-</script>
+</script><?php /**PATH D:\xampp\htdocs\balantro\resources\views/data_entry_operators/messages/chat_content.blade.php ENDPATH**/ ?>

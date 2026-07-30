@@ -155,6 +155,9 @@ class DataEntryOperatorMessagesController extends Controller
         ]);
 
         if (empty($validated['body']) && empty($request->file('files'))) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Type a message or attach a file.'], 422);
+            }
             return back()->withErrors(['body' => 'Type a message or attach a file.'])->withInput();
         }
 
@@ -192,12 +195,33 @@ class DataEntryOperatorMessagesController extends Controller
             DB::commit();
 
             // Send notifications after successful message creation
-            $this->sendNotifications($deo, $client, $validated['body'] ?? '', !empty($files));
+            // $this->sendNotifications($deo, $client, $validated['body'] ?? '', !empty($files));
+            // Notification delivery must not turn an already-saved chat message into
+            // a failed send in the browser.
+            try {
+                $this->sendNotifications($deo, $client, $validated['body'] ?? '', !empty($files));
+            } catch (\Throwable $notificationError) {
+                report($notificationError);
+            }
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Message sent',
+                    'data' => [
+                        'id' => $msg->id,
+                        'body' => $msg->description,
+                        'created_at' => $msg->created_at?->toIso8601String(),
+                    ],
+                ], 201);
+            }
 
             return back()->with('status', 'Message sent');
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Failed to send message.'], 500);
+            }
             return back()->withErrors(['body' => 'Failed to send message.'])->withInput();
         }
     }

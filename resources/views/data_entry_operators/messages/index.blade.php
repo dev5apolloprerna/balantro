@@ -90,9 +90,9 @@
                         'messages' => $messages ?? collect(),
                     ])
                 @else
-                    <div class="flex-1 grid place-items-center text-gray-400">
+                    <div class="flex h-full w-full items-center justify-center text-gray-400">
                         <div class="text-center">
-                            <i class="fa-regular fa-comments text-4xl mb-3"></i>
+                            <i class="fa-regular fa-comments text-4xl mb-3" aria-hidden="true"></i>
                             <div>Select a client to start chatting</div>
                         </div>
                     </div>
