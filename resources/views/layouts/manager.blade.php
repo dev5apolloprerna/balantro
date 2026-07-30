@@ -20,6 +20,7 @@
   </head>
 
   <body class="dark:bg-neutral-800 bg-neutral-100 dark:text-white">
+    @include('shared.form_validation')
     @auth
       @include('sidebars.manager_sidebar')
 

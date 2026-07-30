@@ -32,6 +32,7 @@
 
 <body
     class="font-sans antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    @include('shared.form_validation')
     <div class="min-h-screen">
         <header
             class="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">

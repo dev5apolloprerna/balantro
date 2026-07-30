@@ -339,6 +339,8 @@
             document.getElementById('cf-guid-error').textContent = '';
             document.getElementById('cf-mobile-error').textContent = '';
             document.getElementById('cf-whatsapp-error').textContent = '';
+            document.getElementById('cf-pan-error').textContent = '';
+            document.getElementById('cf-gst-error').textContent = '';
         }
 
         function restoreClientSaveButton(originalText) {
@@ -496,8 +498,8 @@
                     fd.append('profile[business_type]', cfBizType.value);
                     fd.append('profile[mobile_no]', cfMobile.value);
                     fd.append('profile[whatsapp_no]', cfWhatsApp.value);
-                    fd.append('profile[pan_no]', cfPan.value);
-                    fd.append('profile[gst_no]', cfGst.value);
+                    fd.append('profile[pan_no]', cfPan.value.trim().toUpperCase());
+                    fd.append('profile[gst_no]', cfGst.value.trim().toUpperCase());
                     fd.append('profile[address]', cfAddress.value);
                     fd.append('isStockManagement', cfisStockManagement.value.trim());
                     // const opts = {
@@ -560,6 +562,10 @@
                                 .textContent = data.errors['profile.mobile_no'][0];
                             if (data.errors['profile.whatsapp_no']) document.getElementById('cf-whatsapp-error')
                                 .textContent = data.errors['profile.whatsapp_no'][0];
+                            if (data.errors['profile.pan_no']) document.getElementById('cf-pan-error')
+                                .textContent = data.errors['profile.pan_no'][0];
+                            if (data.errors['profile.gst_no']) document.getElementById('cf-gst-error')
+                                .textContent = data.errors['profile.gst_no'][0];
                         }
                         // Validation failures (such as a duplicate GUID) must allow correction and resubmission.
                         restoreClientSaveButton(originalText);

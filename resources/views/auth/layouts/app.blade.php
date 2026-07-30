@@ -5,6 +5,7 @@
 @include('auth.includes.head')
 
 <body class="font-sans antialiased bg-white dark:bg-black text-gray-900 dark:text-gray-100">
+    @include('shared.form_validation')
     <!-- Remove transition classes from body to prevent initial blink -->
     <div class="min-h-screen">
         <main>

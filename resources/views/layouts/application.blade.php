@@ -20,6 +20,7 @@
   </head>
 
   <body class="bg-gray-50">
+    @include('shared.form_validation')
     @auth
       <div class="min-h-screen flex">
         <!-- Main Content -->

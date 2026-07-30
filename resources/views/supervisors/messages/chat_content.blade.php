@@ -173,7 +173,7 @@
     @endphp
 
     <form id="{{ $formId }}" action="{{ route('supervisor.messages.store') }}" method="POST"
-        enctype="multipart/form-data" class="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        enctype="multipart/form-data" data-loader="false" class="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         @csrf
         <input type="hidden" name="receiver_id" value="{{ $clientUserId }}" />
 
@@ -306,23 +306,68 @@
         });
 
         // Reset form and disable button after sending
-        form.addEventListener('submit', function() {
-            // Clear form and disable button after a short delay
-            setTimeout(() => {
-                textarea.value = '';
-                textarea.style.height = 'auto';
-                preview.innerHTML = '';
-                preview.classList.add('hidden');
-                updateSendButton();
-
+        // form.addEventListener('submit', function() {
+        //     // Clear form and disable button after a short delay
+        //     setTimeout(() => {
+        //         textarea.value = '';
+        //         textarea.style.height = 'auto';
+        //         preview.innerHTML = '';
+        //         preview.classList.add('hidden');
+        //         updateSendButton();
+        function appendOutgoingMessage(text) {
+            const row = document.createElement('div');
+            row.className = 'mt-1 flex justify-end';
+            row.dataset.pendingMessage = 'true';
+            row.innerHTML = `<div class="mr-2 mt-0.5 shrink-0"><div class="w-7 h-7 rounded-full grid place-items-center text-[11px] font-semibold bg-indigo-600 text-white">S</div></div><div class="max-w-[78%] md:max-w-[66%] px-3 py-2 rounded-2xl leading-snug bg-indigo-600 text-white rounded-br-none"><div class="flex items-end justify-between gap-2"><p class="whitespace-pre-line break-words flex-1 leading-snug"></p><span class="text-[10px] opacity-80 shrink-0 ml-2 whitespace-nowrap self-end"></span></div></div>`;
+            row.querySelector('p').textContent = text;
+            row.querySelector('span').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            scroll?.appendChild(row);
+            if (scroll) scroll.scrollTop = scroll.scrollHeight;
+            return row;
+        }
                 // Clear file input
-                input.value = '';
-
+                // input.value = '';
+        function resetComposer() {
+            textarea.value = '';
+            textarea.style.height = 'auto';
+            input.value = '';
+            preview.innerHTML = '';
+            preview.classList.add('hidden');
+            objectUrls.splice(0).forEach(url => URL.revokeObjectURL(url));
+            updateSendButton();
+        }
                 // Scroll to bottom after sending
-                if (scroll) {
-                    scroll.scrollTop = scroll.scrollHeight;
-                }
-            }, 100);
+            //     if (scroll) {
+            //         scroll.scrollTop = scroll.scrollHeight;
+            //     }
+            // }, 100);
+            // Send asynchronously: no page reload and no global loading overlay.
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            if (!textarea.value.trim() && !(input.files && input.files.length)) return;
+
+            const formData = new FormData(form);
+            const pendingMessage = appendOutgoingMessage(textarea.value.trim() || 'Attachment');
+            resetComposer();
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(result.message || 'Message could not be sent.');
+                pendingMessage.removeAttribute('data-pending-message');
+            } catch (error) {
+                pendingMessage.remove();
+                textarea.value = formData.get('description') || '';
+                updateSendButton();
+                window.alert(error.message);
+            }
         });
 
         // cleanup

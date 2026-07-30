@@ -46,13 +46,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div>
                         <label for="cf-mobile" class="block text-sm font-semibold mb-1"><?php echo e(__('Mobile No')); ?></label>
-                        <input id="cf-mobile" type="text" class="w-full px-1 py-1 border rounded-lg">
+                        <input id="cf-mobile" type="text" inputmode="numeric" maxlength="10" pattern="[0-9]{10}"
+                            aria-describedby="cf-mobile-error" class="w-full px-1 py-1 border rounded-lg">
                         <div id="cf-mobile-error" class="text-sm text-rose-600 mt-1"></div>
                     </div>
                     <div>
                         <label for="cf-whatsapp"
                             class="block text-sm font-semibold mb-1"><?php echo e(__('WhatsApp No')); ?></label>
-                        <input id="cf-whatsapp" type="text" class="w-full px-1 py-1 border rounded-lg">
+                        <input id="cf-whatsapp" type="text" inputmode="numeric" maxlength="10" pattern="[0-9]{10}"
+                            aria-describedby="cf-whatsapp-error" class="w-full px-1 py-1 border rounded-lg">
                         <div id="cf-whatsapp-error" class="text-sm text-rose-600 mt-1"></div>
                     </div>
                 </div>
@@ -60,11 +62,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div>
                         <label for="cf-pan" class="block text-sm font-semibold mb-1"><?php echo e(__('PAN No')); ?></label>
-                        <input id="cf-pan" type="text" class="w-full px-1 py-1 border rounded-lg">
+                        <input id="cf-pan" type="text" maxlength="10" pattern="[A-Z]{5}[0-9]{4}[A-Z]"
+                            placeholder="AAAAA9999A" autocapitalize="characters" aria-describedby="cf-pan-error"
+                            class="w-full px-1 py-1 border rounded-lg uppercase">
+                        <div id="cf-pan-error" class="text-sm text-rose-600 mt-1"></div>
                     </div>
                     <div>
                         <label for="cf-gst" class="block text-sm font-semibold mb-1"><?php echo e(__('GST No')); ?></label>
-                        <input id="cf-gst" type="text" class="w-full px-1 py-1 border rounded-lg">
+                        <input id="cf-gst" type="text" maxlength="15"
+                            pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]"
+                            placeholder="22AAAAA0000A1Z5" autocapitalize="characters" aria-describedby="cf-gst-error"
+                            class="w-full px-1 py-1 border rounded-lg uppercase">
+                        <div id="cf-gst-error" class="text-sm text-rose-600 mt-1"></div>
                     </div>
                 </div>
 

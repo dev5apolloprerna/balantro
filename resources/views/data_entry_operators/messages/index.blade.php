@@ -12,6 +12,7 @@
             @include('data_entry_operators.messages.mobile_chat_content', [
                 'clients' => $clients ?? collect(),
                 'selected_client' => $selected_client ?? null,
+                'chat_instance' => 'mobile',
             ])
         </div>
     @else
@@ -88,6 +89,7 @@
                     @include('data_entry_operators.messages.chat_content', [
                         'selected_client' => $selected_client,
                         'messages' => $messages ?? collect(),
+                        'chat_instance' => 'desktop',
                     ])
                 @else
                     <div class="flex h-full w-full items-center justify-center text-gray-400">

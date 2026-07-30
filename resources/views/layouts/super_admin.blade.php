@@ -243,7 +243,7 @@
 </head>
 
 <body class="font-sans antialiased h-full bg-white dark:bg-black text-gray-900 dark:text-gray-100">
-
+    @include('shared.form_validation')
     <canvas id="starfield-canvas"></canvas>
 
     <div class="flex min-h-screen bg-white dark:bg-black" style="position:relative;z-index:1;">

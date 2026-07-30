@@ -6,6 +6,7 @@
 </head>
 
 <body class="antialiased font-sans selection:bg-balantro-primary selection:text-white">
+    @include('shared.form_validation')
     @include('includes.header')
 
     {{-- Page Content --}}

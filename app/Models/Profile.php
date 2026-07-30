@@ -107,13 +107,13 @@ class Profile extends Model
             }
             if ($profile->pan_no) {
                 if (strlen($profile->pan_no) !== 10) throw new \Exception('PAN number must be 10 characters');
-                if (!preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $profile->pan_no)) {
+                if (!preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]$/', $profile->pan_no)) {
                     throw new \Exception('Invalid PAN number format');
                 }
             }
             if ($profile->gst_no) {
                 if (strlen($profile->gst_no) !== 15) throw new \Exception('GST number must be 15 characters');
-                if (!preg_match('/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{3}$/', $profile->gst_no)) {
+                if (!preg_match('/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/', $profile->gst_no)) {
                     throw new \Exception('Invalid GST number format');
                 }
             }

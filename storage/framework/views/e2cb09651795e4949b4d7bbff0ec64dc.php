@@ -15,6 +15,7 @@
     <?php echo $__env->make('data_entry_operators.messages.chat_content', [
         'selected_client' => $selected_client,
         'messages' => $messages,
+        'chat_instance' => $chat_instance ?? 'mobile',
     ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 </div>
 <?php /**PATH D:\xampp\htdocs\balantro\resources\views/data_entry_operators/messages/mobile_chat_content.blade.php ENDPATH**/ ?>

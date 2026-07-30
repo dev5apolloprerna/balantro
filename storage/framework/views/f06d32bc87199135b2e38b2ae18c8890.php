@@ -22,7 +22,8 @@
     </div>
 
     
-    <div id="chatScroll" class="flex-1 min-h-0 flex flex-col p-3 overflow-y-auto bg-black">
+    <?php $chatInstance = $chat_instance ?? 'chat'; ?>
+    <div id="<?php echo e($chatInstance); ?>ChatScroll" class="flex-1 min-h-0 flex flex-col p-3 overflow-y-auto bg-black">
         <?php
             $prevDay = null;
             $roleLetter = function ($msg) use ($selected_client) {
@@ -203,9 +204,9 @@
 
     
     <?php
-        $formId = 'deoChatForm';
-        $attachId = 'deoAttach';
-        $sendButtonId = 'deoSendButton';
+        $formId = $chatInstance . 'DeoChatForm';
+        $attachId = $chatInstance . 'DeoAttach';
+        $sendButtonId = $chatInstance . 'DeoSendButton';
     ?>
 
     <form id="<?php echo e($formId); ?>" action="<?php echo e(route('deo.messages.store')); ?>" method="POST"
@@ -242,7 +243,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Auto-scroll to bottom
-        const scroll = document.getElementById('chatScroll');
+        const scroll = document.getElementById('<?php echo e($chatInstance); ?>ChatScroll');
         if (scroll) scroll.scrollTop = scroll.scrollHeight;
 
         // Get form elements
@@ -488,7 +489,7 @@
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             mutation.addedNodes.forEach(function(node) {
-                if (node.nodeType === 1 && node.id === 'chatScroll') {
+                if (node.nodeType === 1 && node.id === '<?php echo e($chatInstance); ?>ChatScroll') {
                     console.log('Chat container added to DOM, scrolling...');
                     setTimeout(() => {
                         node.scrollTop = node.scrollHeight;
@@ -507,7 +508,7 @@
 
     // Fallback - direct scroll after delay
     setTimeout(() => {
-        const scroll = document.getElementById('chatScroll');
+        const scroll = document.getElementById('<?php echo e($chatInstance); ?>ChatScroll');
         if (scroll) {
             console.log('Fallback scroll triggered');
             scroll.scrollTop = scroll.scrollHeight;

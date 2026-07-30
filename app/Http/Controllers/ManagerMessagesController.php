@@ -195,6 +195,9 @@ class ManagerMessagesController extends Controller
         // Must have text or at least one file
         $hasFiles = $request->hasFile('attachments') || $request->hasFile('files');
         if (empty($validated['description']) && !$hasFiles) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Type a message or attach a file.'], 422);
+            }
             return back()->withErrors(['description' => 'Type a message or attach a file.']);
         }
 
@@ -207,6 +210,9 @@ class ManagerMessagesController extends Controller
             ->exists();
 
         if (!$isLinkedClient) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'This client is not assigned to you.'], 403);
+            }
             return back()->withErrors(['receiver_id' => 'This client is not assigned to you.']);
         }
 
@@ -244,9 +250,19 @@ class ManagerMessagesController extends Controller
         } catch (\Throwable $e) {
             // DB::rollBack();
             report($e);
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Failed to send message.'], 500);
+            }
             return back()->withErrors(['error' => 'Failed to send message.']);
         }
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Message sent.',
+                'data' => ['id' => $messageId],
+            ], 201);
+        }
+        
         // Back to same thread
         return redirect()
             ->route('manager.messages.index', [

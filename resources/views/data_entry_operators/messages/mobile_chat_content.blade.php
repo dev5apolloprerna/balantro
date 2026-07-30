@@ -14,5 +14,6 @@
     @include('data_entry_operators.messages.chat_content', [
         'selected_client' => $selected_client,
         'messages' => $messages,
+        'chat_instance' => $chat_instance ?? 'mobile',
     ])
 </div>

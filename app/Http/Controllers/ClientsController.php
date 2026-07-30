@@ -302,10 +302,10 @@ class ClientsController extends Controller
             'isStockManagement' => ['nullable', 'integer', 'in:0,1'],
 
             'profile.business_type' => ['nullable', 'string', 'max:50'],
-            'profile.mobile_no'     => ['nullable', 'string', 'max:20'],
-            'profile.whatsapp_no'   => ['nullable', 'string', 'max:20'],
-            'profile.pan_no'        => ['nullable', 'string', 'max:20'],
-            'profile.gst_no'        => ['nullable', 'string', 'max:30'],
+            'profile.mobile_no'     => ['nullable', 'digits:10'],
+            'profile.whatsapp_no'   => ['nullable', 'digits:10'],
+            'profile.pan_no'        => ['nullable', 'string', 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/'],
+            'profile.gst_no'        => ['nullable', 'string', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/'],
             'profile.address'       => ['nullable', 'string', 'max:2000'],
             
             
@@ -318,6 +318,9 @@ class ClientsController extends Controller
             // 'data_entry_operator_ids.*'  => ['integer', 'exists:users,id'],
             // 'group_ids'                  => ['array'],
             // 'group_ids.*'                => ['integer', 'exists:groups,id'],
+        ],[
+            'profile.pan_no.regex' => 'PAN number must use the format AAAAA9999A.',
+            'profile.gst_no.regex' => 'GST number must be a valid 15-character GSTIN.',
         ]);
 
         // Create client
@@ -456,11 +459,16 @@ class ClientsController extends Controller
             'isStockManagement' => ['sometimes', 'integer', 'in:0,1'],
             // profile fields
             'profile.business_type' => ['nullable', 'string', 'max:255'],
-            'profile.mobile_no'     => ['nullable', 'string', 'max:20'],
-            'profile.whatsapp_no'   => ['nullable', 'string', 'max:20'],
-            'profile.pan_no'        => ['nullable', 'string', 'max:20'],
-            'profile.gst_no'        => ['nullable', 'string', 'max:20'],
+            // 'profile.mobile_no'     => ['nullable', 'string', 'max:20'],
+            // 'profile.whatsapp_no'   => ['nullable', 'string', 'max:20'],
+            'profile.mobile_no'     => ['nullable', 'digits:10'],
+            'profile.whatsapp_no'   => ['nullable', 'digits:10'],
+            'profile.pan_no'        => ['nullable', 'string', 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]$/'],
+            'profile.gst_no'        => ['nullable', 'string', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/'],
             'profile.address'       => ['nullable', 'string', 'max:500'],
+        ], [
+            'profile.pan_no.regex' => 'PAN number must use the format AAAAA9999A.',
+            'profile.gst_no.regex' => 'GST number must be a valid 15-character GSTIN.',
         ]);
         
         $client->update([

@@ -195,11 +195,17 @@ class SupervisorMessagesController extends Controller
 	
             // Authorization check - ensure supervisor can message this user
             if (!$this->canMessageUser($sender, User::find($validated['receiver_id']))) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Not authorized to message this user.'], 403);
+                }
                 return back()->with('error', 'Not authorized to message this user.');
             }
 		
             // Require either text or at least one file
             if (!$request->hasFile('files') && !trim((string) ($validated['description'] ?? ''))) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Type a message or attach a file.'], 422);
+                }
                 return back()->with('error', 'Type a message or attach a file.');
             }
 	
@@ -223,6 +229,13 @@ class SupervisorMessagesController extends Controller
             }
 
             //return redirect()->route('supervisor.messages.index', array_filter(['agent' => $agentId, 'client_user' => $clientUserId ?: (int) $validated['receiver_id'],]))->with('success', 'Message sent.');
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Message sent.',
+                    'data' => ['id' => $messageId],
+                ], 201);
+            }
+            
             return redirect()->back()->with('success', 'Message sent.');
         //} catch (\Exception $e) {
         //    DB::rollBack();
