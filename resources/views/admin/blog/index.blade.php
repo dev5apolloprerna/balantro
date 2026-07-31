@@ -3,25 +3,21 @@
 @section('title', 'Blogs')
 
 @section('content')
-<div class="container mx-auto px-2">
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h1 class="text-lg font-semibold text-gray-800 dark:text-white">Blogs</h1>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Create and manage the articles shown on the public website.</p>
-        </div>
+<div class="container mx-auto px-4">
+    <div class="mb-6 flex items-center justify-between gap-4">
+        <h1 class="text-lg font-semibold text-gray-800 dark:text-white">Blogs</h1>
 
         <a href="{{ route('super-admin.blog.create') }}"
-            class="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-black">
-            <i class="fas fa-plus" aria-hidden="true"></i>
+            class="inline-flex items-center justify-center rounded-lg border border-primary-600 bg-primary-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-black">
             New Blog
         </a>
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/70">
-        <div class="flex flex-col gap-3 border-b border-slate-200 p-4 dark:border-slate-700 sm:flex-row sm:items-center sm:justify-between">
+    <div class="space-y-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <form method="GET" action="{{ route('super-admin.blog.index') }}" class="w-full sm:max-w-md">
                 <label for="blog-search" class="sr-only">Search blogs</label>
-                <div class="flex rounded-lg border border-slate-300 bg-white transition focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-800">
+                <div class="flex h-11 rounded-lg border border-slate-300 bg-white transition focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-900">
                     <span class="flex items-center pl-3 text-slate-400"><i class="fas fa-search" aria-hidden="true"></i></span>
                     <input id="blog-search" type="search" name="search" value="{{ request('search') }}"
                         placeholder="Search by title…"
@@ -42,30 +38,31 @@
             </button>
         </div>
 
-        <form id="bulkDeleteForm" method="POST" action="{{ route('super-admin.blog.bulkDelete') }}">
+         <form id="bulkDeleteForm" method="POST" action="{{ route('super-admin.blog.bulkDelete') }}"
+            class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700">
             @csrf
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-800/80">
+                <table class="min-w-full divide-y divide-neutral-200 text-sm dark:divide-neutral-700">
+                    <thead class="bg-neutral-50/80 dark:bg-neutral-800/60">
                         <tr>
-                            <th class="w-12 px-4 py-3 text-left">
+                            <th class="w-12 px-2 py-2 text-left">
                                 <input type="checkbox" id="select_all" aria-label="Select all blogs"
                                     class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-800">
                             </th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">Blog</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">Category</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">Published</th>
-                            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-300">Actions</th>
+                            <th class="px-2 py-2 text-left font-semibold text-neutral-700 dark:text-neutral-200">Blog</th>
+                            <th class="px-2 py-2 text-left font-semibold text-neutral-700 dark:text-neutral-200">Category</th>
+                            <th class="px-2 py-2 text-left font-semibold text-neutral-700 dark:text-neutral-200">Published</th>
+                            <th class="px-2 py-2 text-right font-semibold text-neutral-700 dark:text-neutral-200">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    <tbody class="divide-y divide-neutral-200 dark:divide-neutral-700">
                         @forelse ($blogs as $blog)
                         <tr class="transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60">
-                            <td class="px-4 py-4 align-middle">
+                            <td class="px-2 py-2 align-middle">
                                 <input type="checkbox" name="ids[]" value="{{ $blog->blog_id }}" aria-label="Select {{ $blog->title }}"
                                     class="row_checkbox h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-800">
                             </td>
-                            <td class="px-4 py-4">
+                            <td class="px-2 py-2">
                                 <div class="flex min-w-[260px] items-center gap-3">
                                     @if (!empty($blog->image))
                                     <img src="{{ asset('uploads/Blog/' . $blog->image) }}" alt=""
@@ -81,16 +78,16 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4">
+                            <td class="whitespace-nowrap px-2 py-2">
                                 <span class="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
                                     {{ $blog->category->name ?? 'Uncategorised' }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-slate-600 dark:text-slate-300">
+                            <td class="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
                                 <div>{{ optional($blog->created_at)->format('d M Y') ?: '—' }}</div>
                                 <div class="mt-0.5 text-xs text-slate-400">{{ optional($blog->created_at)->format('h:i A') }}</div>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right">
+                            <td class="whitespace-nowrap px-2 py-2 text-right">
                                 <div class="inline-flex items-center gap-2">
                                     <a href="{{ route('super-admin.blog.edit', $blog->blog_id) }}" title="Edit blog"
                                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-sky-600 text-white transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
@@ -116,11 +113,10 @@
                     </tbody>
                 </table>
             </div>
+            @if ($blogs->hasPages())
+            <div class="border-t border-neutral-200 p-4 dark:border-neutral-700">{{ $blogs->withQueryString()->links('pagination::tailwind') }}</div>
+            @endif
         </form>
-
-        @if ($blogs->hasPages())
-        <div class="border-t border-slate-200 px-4 py-3 dark:border-slate-700">{{ $blogs->withQueryString()->links('pagination::tailwind') }}</div>
-        @endif
 
     </div>
 </div>
@@ -130,7 +126,7 @@
 
     <div class="relative mx-auto mt-32 w-full max-w-md px-4">
         <div class="rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800">
-            <form id="blogDeleteForm" method="POST">@csrf
+            <form id="singleBlogDeleteForm" method="POST">@csrf
                 <div class="flex items-start gap-4">
                     <div class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"><i class="fas fa-trash-alt" aria-hidden="true"></i></div>
                     <div>
@@ -157,7 +153,7 @@
         const bulkButton = document.getElementById('bulkDeleteBtn');
         const countBadge = document.getElementById('selectedCount');
         const modal = document.getElementById('blogDeleteModal');
-        const deleteForm = document.getElementById('blogDeleteForm');
+        const deleteForm = document.getElementById('singleBlogDeleteForm');
         const deleteMessage = document.getElementById('deleteModalMessage');
 
         const updateSelection = () => {
@@ -195,15 +191,5 @@
         updateSelection();
     });
 
-    // function openBlogDeleteModal(actionUrl) {
-    //     document.getElementById('blogDeleteForm').action = actionUrl;
-    //     document.getElementById('blogDeleteModal').classList.remove('hidden');
-    //     document.documentElement.classList.add('overflow-hidden');
-    // }
-
-    // function closeBlogDeleteModal() {
-    //     document.getElementById('blogDeleteModal').classList.add('hidden');
-    //     document.documentElement.classList.remove('overflow-hidden');
-    // }
 </script>
 @endsection

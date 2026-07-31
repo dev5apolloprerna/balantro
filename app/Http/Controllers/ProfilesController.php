@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 use Kreait\Firebase\Database\Query\Sorter\OrderByKey;
 use Throwable;
 
@@ -366,7 +367,7 @@ class ProfilesController extends Controller
 
         // Validate user input
         $validated = $request->validate([
-            'gender' => 'required|in:male,female',
+            'gender' => ['required', Rule::in(UserProfile::GENDERS)],
             'mobile_no' => 'required|digits:10',
             'whatsapp_no' => 'nullable|digits:10',
             'address' => 'required|string|max:500',

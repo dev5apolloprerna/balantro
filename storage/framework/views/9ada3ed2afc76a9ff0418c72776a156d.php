@@ -199,7 +199,7 @@
 
                         <!-- Dropdown -->
                         <ul x-show="open" @click.outside="open = false"
-                            class="absolute z-50 mt-2 w-full rounded-xl overflow-auto max-h-60
+                            class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                             bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
                             <!-- Default -->
@@ -294,7 +294,7 @@
 
                         <!-- Dropdown -->
                         <ul x-show="open" @click.outside="open = false"
-                            class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
+                            class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                             bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
                             <?php $__empty_1 = true; $__currentLoopData = $financialYearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>

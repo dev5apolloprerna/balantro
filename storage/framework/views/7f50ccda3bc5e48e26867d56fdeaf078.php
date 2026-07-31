@@ -394,7 +394,7 @@
                             <!-- Dropdown -->
                             <ul x-show="open" @click.outside="open = false"
                                 x-transition
-                                class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
+                                class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                                 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
                                 <?php $__empty_1 = true; $__currentLoopData = $financialYearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
@@ -503,10 +503,9 @@
                             <!-- Dropdown -->
                             <ul x-show="open" @click.outside="open = false"
                                 x-transition
-                                class="absolute right-0 z-[9999] mt-2 w-56 rounded-xl
+                                class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                                 bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
-                                border border-cyan-400/20 shadow-2xl
-                                max-h-70 overflow-y-auto">
+                                border border-cyan-400/20 shadow-2xl">
 
                                 <template x-for="(label, key) in options" :key="key">
                                     <li>
@@ -583,7 +582,7 @@
                             <!-- Dropdown -->
                             <ul x-show="open" @click.outside="open=false"
                                 x-transition
-                                class="absolute right-0 z-[9999] mt-2 w-48 rounded-xl
+                                class="absolute right-0 z-[9999] mt-2 w-48 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                                 bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
                                 border border-cyan-400/20 shadow-2xl">
 
@@ -633,7 +632,7 @@
 
                             <ul x-show="open" @click.outside="open=false"
                                 x-transition 
-                                class="absolute right-0 z-[9999] mt-2 w-56 rounded-xl
+                                class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                                 bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
                                 border border-cyan-400/20 shadow-2xl">
 
@@ -700,7 +699,7 @@
 
                             <ul x-show="open" @click.outside="open=false"
                                 x-transition
-                                class="absolute right-0 z-[9999] mt-2 w-56 rounded-xl
+                                class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                                 bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
                                 border border-cyan-400/20 shadow-2xl">
 

@@ -91,6 +91,10 @@
             show('editModal');
         }
 
+        function closeEditModal() {
+            hide('editModal');
+        }
+        
         function closeGroupsModal() {
             hide('assignGroupsModal');
         }

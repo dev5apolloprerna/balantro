@@ -312,7 +312,7 @@ $otherAssets = max(
                 <!-- Dropdown -->
                 <ul x-show="open" @click.outside="open = false"
                     x-transition
-                    class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
+                    class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
 
                     bg-white/10 dark:bg-white/5
                     backdrop-blur-2xl
@@ -838,7 +838,7 @@ $otherAssets = max(
                                     <!-- Dropdown -->
                                     <ul x-show="open" @click.outside="open = false"
                                         x-transition
-                                        class="absolute z-50 mt-2 w-full rounded-xl overflow-hidden
+                                        class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                                         bg-white/10 dark:bg-white/5
                                         backdrop-blur-2xl
                                         border border-white/20

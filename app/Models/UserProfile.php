@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class UserProfile extends Model
 {
     use HasFactory;
+
     protected $table = 'user_profiles';
 
-    const GENDER_MALE   = 'male';
+    const GENDER_MALE = 'male';
     const GENDER_FEMALE = 'female';
-    const LANGUAGE_EN   = 'en';
+    const GENDER_OTHER = 'other';
+    const LANGUAGE_EN = 'en';
 
     protected $fillable = [
         'user_id',
@@ -20,12 +22,13 @@ class UserProfile extends Model
         'whatsapp_no',
         'gender',
         'address',
-        'profile_image'
+        'profile_image',
     ];
 
     public const GENDERS = [
         self::GENDER_MALE,
         self::GENDER_FEMALE,
+        self::GENDER_OTHER,
     ];
 
     public function user()

@@ -53,7 +53,7 @@
                                         </button> -->
                                         {{-- Edit --}}
                                         <button type="button"
-                                            onclick="openEditModal({{ $group->id }}, '{{ e($group->name) }}')"
+                                            onclick="openEditModal({{ $group->id }}, {{ Illuminate\Support\Js::from($group->name) }})"
                                             class="rounded-full bg-emerald-100 p-2 text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800"
                                             title="Edit">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"

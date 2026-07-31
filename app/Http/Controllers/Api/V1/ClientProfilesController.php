@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Requests\Api\V1\UpdateClientProfileRequest;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -9,34 +10,34 @@ use Illuminate\Support\Facades\Validator;
 
 class ClientProfilesController extends BaseApiController
 {
-    public function update(Request $request)
+    public function update(UpdateClientProfileRequest $request)
 	{
 		try {
 			$user = auth()->user();
 			if (!$user) {
 				return response()->json(['User not authenticated'], 401);
 			}
-			$request->validate([
-				'name' => 'nullable|string|max:255',
-				'email' => 'nullable|email|max:255',
-				'short_name' => 'nullable|string|max:100',
-				'profile.business_type' =>
-					'required|in:individual,partnership,corporation,llc,sole_proprietorship',
-				'profile.pan_no' =>
-					'nullable|string|max:20',
-				'profile.gst_no' =>
-					'nullable|string|max:30',
-				'profile.mobile_no' =>
-					'required|digits:10',
-				'profile.whatsapp_no' =>
-					'nullable|digits:10',
-				'profile.address' =>
-					'required|string|max:500',
-				'profile.alternative_email' =>
-					'nullable|email|max:255',
-				'profile.profile_image' =>
-					'nullable|image|mimes:jpeg,png,jpg,heic,heif|max:2048',
-			]);
+			// $request->validate([
+			// 	'name' => 'nullable|string|max:255',
+			// 	'email' => 'nullable|email|max:255',
+			// 	'short_name' => 'nullable|string|max:100',
+			// 	'profile.business_type' =>
+			// 		'required|in:individual,partnership,corporation,llc,sole_proprietorship',
+			// 	'profile.pan_no' =>
+			// 		'nullable|string|max:20',
+			// 	'profile.gst_no' =>
+			// 		'nullable|string|max:30',
+			// 	'profile.mobile_no' =>
+			// 		'required|digits:10',
+			// 	'profile.whatsapp_no' =>
+			// 		'nullable|digits:10',
+			// 	'profile.address' =>
+			// 		'required|string|max:500',
+			// 	'profile.alternative_email' =>
+			// 		'nullable|email|max:255',
+			// 	'profile.profile_image' =>
+			// 		'nullable|image|mimes:jpeg,png,jpg,heic,heif|max:2048',
+			// ]);
 			// ✅ fetch from nested profile array
 			$profileData = $request->input('profile', []);
         	$profile = $user->profile()->first();
