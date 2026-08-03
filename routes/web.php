@@ -20,6 +20,9 @@ use App\Http\Controllers\{
 use App\Http\Controllers\GstSettingController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
@@ -347,16 +350,16 @@ Route::middleware(['auth:web', 'role:super_admin'])->group(function () {
 //     });
 
 // Password reset routes
-Route::post('/password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')
+Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])
     ->name('password.email');
-Route::post('/password/reset', 'Auth\ResetPasswordController@reset')
+Route::post('/password/reset', [ResetPasswordController::class, 'reset'])
     ->name('password.update');
 
-Route::get('/register', 'Auth\RegisterController@showRegistrationForm')->name('register');
-Route::post('/register', 'Auth\RegisterController@register');
-Route::get('/register/verify', 'Auth\RegisterController@showOtpForm')->name('registration.otp.show');
-Route::post('/register/verify', 'Auth\RegisterController@verifyOtp')->name('registration.otp.verify');
-Route::post('/register/otp/resend', 'Auth\RegisterController@resendOtp')->name('registration.otp.resend');
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register']);
+Route::get('/register/verify', [RegisterController::class, 'showOtpForm'])->name('registration.otp.show');
+Route::post('/register/verify', [RegisterController::class, 'verifyOtp'])->name('registration.otp.verify');
+Route::post('/register/otp/resend', [RegisterController::class, 'resendOtp'])->name('registration.otp.resend');
 
 Auth::routes();
 
