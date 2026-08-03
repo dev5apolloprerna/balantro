@@ -59,7 +59,7 @@ Route::get('/up', function () {
 Route::get('/document-files/{document}/{filename}', [\App\Http\Controllers\Api\V1\DocumentsController::class, 'file'])
     ->middleware('signed')
     ->name('document-files.show');
-    
+
 // Route::get('/test-firebase', function () {
 //     try {
 //         $firebase = app('firebase');
@@ -354,7 +354,9 @@ Route::post('/password/reset', 'Auth\ResetPasswordController@reset')
 
 Route::get('/register', 'Auth\RegisterController@showRegistrationForm')->name('register');
 Route::post('/register', 'Auth\RegisterController@register');
-
+Route::get('/register/verify', 'Auth\RegisterController@showOtpForm')->name('registration.otp.show');
+Route::post('/register/verify', 'Auth\RegisterController@verifyOtp')->name('registration.otp.verify');
+Route::post('/register/otp/resend', 'Auth\RegisterController@resendOtp')->name('registration.otp.resend');
 
 Auth::routes();
 
