@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Auth\RegisterController;
 use App\Mail\RegistrationOtpMail;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class RegistrationOtpMailTest extends TestCase
@@ -21,5 +23,18 @@ class RegistrationOtpMailTest extends TestCase
         $this->assertTrue(route('registration.otp.show') !== '');
         $this->assertTrue(route('registration.otp.verify') !== '');
         $this->assertTrue(route('registration.otp.resend') !== '');
+
+        $this->assertSame(
+            RegisterController::class.'@showOtpForm',
+            Route::getRoutes()->getByName('registration.otp.show')->getActionName()
+        );
+        $this->assertSame(
+            RegisterController::class.'@verifyOtp',
+            Route::getRoutes()->getByName('registration.otp.verify')->getActionName()
+        );
+        $this->assertSame(
+            RegisterController::class.'@resendOtp',
+            Route::getRoutes()->getByName('registration.otp.resend')->getActionName()
+        );
     }
 }
