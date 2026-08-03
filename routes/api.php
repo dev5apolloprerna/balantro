@@ -10,6 +10,8 @@ use App\Http\Controllers\Auth\ForgotPasswordOtpController;
 use App\Http\Controllers\Api\V1\MessagesController;
 use App\Http\Controllers\Api\V1\ClientBankSuspenseController;
 use App\Http\Controllers\Api\V1\ProfileDocumentController;
+use App\Http\Controllers\Api\V1\MediaController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -36,6 +38,26 @@ Route::get('/code-master', [CodeMasterController::class, 'search']);
 
 // API Routes
 Route::prefix('v1')->group(function () {
+    // Serve API media through Laravel instead of physical IIS directories. Some
+    // IIS deployments challenge direct /profiles, /chat, and /assets requests.
+    Route::get('/media/dashboard-icons/{filename}', [MediaController::class, 'dashboardIcon'])
+        ->where('filename', '[A-Za-z0-9()&._-]+')
+        ->name('api.media.dashboard-icon');
+    Route::get('/media/profile-images/{profile}/{filename}', [MediaController::class, 'profileImage'])
+        ->middleware('signed')
+        ->whereNumber('profile')
+        ->where('filename', '[^/]+')
+        ->name('api.media.profile-image');
+    Route::get('/media/message-attachments/{attachment}/{filename}', [MediaController::class, 'messageAttachment'])
+        ->middleware('signed')
+        ->whereNumber('attachment')
+        ->where('filename', '[A-Za-z0-9._-]+')
+        ->name('api.media.message-attachment');
+    Route::get('/media/documents/{document}/{filename}', [MediaController::class, 'document'])
+        ->middleware('signed')
+        ->whereNumber('document')
+        ->where('filename', '[A-Za-z0-9._-]+')
+        ->name('api.media.document');
     Route::get('/profile/documents/file/{user}/{type}', ProfileDocumentController::class)
         ->middleware('signed')
         ->whereNumber('user')

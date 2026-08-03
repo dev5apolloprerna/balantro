@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use App\Services\FirebaseNotificationService;
+use Illuminate\Support\Facades\URL;
 
 class MessagesController extends BaseApiController
 {
@@ -96,7 +97,7 @@ class MessagesController extends BaseApiController
                         'file_name'     => $a->file_name,
                         'mime'          => $a->mime,
                         'size'          => (int) $a->size,
-                        'url'           => $a->url,
+                        'url'           => $this->attachmentUrl($a), // 'url'           => $a->url,
                     ])->values()
                     : [],
                 'created_at' => optional($m->created_at)->toIso8601String(),
@@ -224,7 +225,7 @@ class MessagesController extends BaseApiController
             $finalPath = $dir . DIRECTORY_SEPARATOR . $fileName;
             $finalSize = is_file($finalPath) ? (int) filesize($finalPath) : $tmpSize;
 
-            $url = asset('chat/' . $messageId . '/' . $fileName);
+            // $url = asset('chat/' . $messageId . '/' . $fileName);
 
             MessageAttachment::create([
                 'message_id'    => $messageId,
@@ -232,11 +233,18 @@ class MessagesController extends BaseApiController
                 'file_name'     => $fileName,
                 'mime'          => $clientMime,
                 'size'          => $finalSize,
-                'url'           => $url,
+                'url'           => '', // 'url'           => $url,
             ]);
         }
     }
 
+    private function attachmentUrl(MessageAttachment $attachment): string
+    {
+        return URL::temporarySignedRoute('api.media.message-attachment', now()->addMinutes(30), [
+            'attachment' => $attachment->getKey(),
+            'filename' => $attachment->file_name,
+        ]);
+    }
 
     private function sendNotifications($client, int $deoId, string $messageText, bool $hasFiles, int $messageId): void
     {
@@ -445,7 +453,7 @@ class MessagesController extends BaseApiController
                     'file_name'     => $a->file_name,
                     'mime'          => $a->mime,
                     'size'          => (int) $a->size,
-                    'url'           => $a->url,
+                    'url'           => $this->attachmentUrl($a), // 'url'           => $a->url,
                 ])->values()
                 : [],
             'created_at' => optional($message->created_at)->toIso8601String(),
@@ -469,7 +477,7 @@ class MessagesController extends BaseApiController
                 return [
                     'name' => $attachment->original_name,
                     'file_icon' => $iconHtml,
-                    'url' => $attachment->url
+                    'url' => $this->attachmentUrl($attachment) // 'url' => $attachment->url
                 ];
             }),
             'status' => $message->sender_id == auth()->id() ? "sent" : "received",

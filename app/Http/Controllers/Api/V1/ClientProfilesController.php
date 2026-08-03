@@ -138,7 +138,12 @@ class ClientProfilesController extends BaseApiController
 			'alternative_email' => $profile->alternative_email,
             'pan_no' => $profile->pan_no,
             'gst_no' => $profile->gst_no,
-            'profile_image_url' => $profile->profile_image ? asset($profile->profile_image) : null,
+            'profile_image_url' => $profile->profile_image
+				? URL::temporarySignedRoute('api.media.profile-image', now()->addMinutes(30), [
+					'profile' => $profile->getKey(),
+					'filename' => basename($profile->profile_image),
+				])
+				: null, // 'profile_image_url' => $profile->profile_image ? asset($profile->profile_image) : null,
             'address' => $profile->address
         ];
     }

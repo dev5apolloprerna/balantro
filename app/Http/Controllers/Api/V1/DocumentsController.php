@@ -450,7 +450,7 @@ class DocumentsController extends BaseApiController
 
     private function fileUrl(Document $document, string $path): string
     {
-        return URL::signedRoute('document-files.show', [
+        return URL::temporarySignedRoute('api.media.document', now()->addMinutes(30), [
             'document' => $document->getKey(),
             'filename' => basename($path),
         ]);
