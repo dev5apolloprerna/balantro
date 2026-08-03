@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 
 class SystemFormValidationTest extends TestCase
 {
-    public function test_validation_partial_is_loaded_by_every_form_layout(): void
+    public function test_validation_partial_is_loaded_by_every_browser_form_layout(): void
     {
         $layouts = [
             'resources/views/layouts/app.blade.php',
@@ -14,7 +14,6 @@ class SystemFormValidationTest extends TestCase
             'resources/views/layouts/client.blade.php',
             'resources/views/layouts/data_entry_operator.blade.php',
             'resources/views/layouts/front.blade.php',
-            'resources/views/layouts/mailer.blade.php',
             'resources/views/layouts/manager.blade.php',
             'resources/views/layouts/super_admin.blade.php',
             'resources/views/layouts/supervisor.blade.php',
@@ -31,6 +30,13 @@ class SystemFormValidationTest extends TestCase
                 "The global validation partial is missing from {$layout}."
             );
         }
+    }
+
+    public function test_mailer_layout_does_not_load_browser_form_validation(): void
+    {
+        $contents = file_get_contents(dirname(__DIR__, 2).'/resources/views/layouts/mailer.blade.php');
+
+        $this->assertStringNotContainsString("@include('shared.form_validation')", $contents);
     }
 
     public function test_validation_script_guards_submission_and_displays_server_errors(): void

@@ -1488,7 +1488,7 @@
                 Join the new generation of accounting
             </h2>
             <a href="#" data-aos="fade-up" data-aos-delay="100"
-                class="px-10 py-5 rounded-full bg-gradient-to-r from-balantro-secondary to-balantro-primary text-balantro-navy font-bold text-lg transition-all hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] hover:brightness-110 hover:scale-105 inline-block">
+                class="px-10 py-5 rounded-full bg-gradient-to-r from-balantro-secondary to-balantro-primary text-balantro-navy font-bold text-lg transition-all hover:shadow-[0_0_30px_rgba(34,211,238,0.5)] hover:brightness-110 hover:scale-105 inline-block magic-initialized relative overflow-hidden aos-init aos-animate">
                 Get Started
             </a>
         </div>
