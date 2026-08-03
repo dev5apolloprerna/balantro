@@ -55,6 +55,20 @@ class UpdateClientProfileRequestTest extends TestCase
         $this->assertFalse($validator->fails(), (string) $validator->errors());
     }
 
+    public function test_profile_image_must_be_uploaded_as_a_file(): void
+    {
+        $payload = $this->validPayload(Profile::BUSINESS_TYPE_AOP);
+        $payload['profile']['profile_image'] = 'IMG_20210123_081828_415.jpg';
+
+        $validator = Validator::make(
+            $payload,
+            (new UpdateClientProfileRequest)->rules()
+        );
+
+        $this->assertTrue($validator->fails());
+        $this->assertArrayHasKey('profile.profile_image', $validator->errors()->toArray());
+    }
+
     private function validPayload(string $businessType): array
     {
         return [

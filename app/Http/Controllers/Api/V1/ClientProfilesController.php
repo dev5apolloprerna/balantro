@@ -54,7 +54,7 @@ class ClientProfilesController extends BaseApiController
 					mkdir($path, 0777, true);
 				}
 				// check if profile already has an image
-				if (!empty($profile->profile_image) && file_exists(public_path($profile->profile_image))) {
+				if ($profile && !empty($profile->profile_image) && file_exists(public_path($profile->profile_image))) {
 					unlink(public_path($profile->profile_image));
 				}
 				// move new file
