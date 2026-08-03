@@ -10,10 +10,9 @@
             {{ $isEditing ? 'Edit Blog' : 'Add Blog' }}
         </h1>
 
-        <a href="{{ route('super-admin.blog.index') }}"
-            class="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800">
-            <i class="fas fa-arrow-left" aria-hidden="true"></i>
-            Back
+        <a href="{{ route('super-admin.blog.index') }}" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                    hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
+            <i class="fa-solid fa-arrow-left"></i>
         </a>
     </div>
     <form action="{{ $isEditing ? route('super-admin.blog.update', $blog->blog_id) : route('super-admin.blog.store') }}"

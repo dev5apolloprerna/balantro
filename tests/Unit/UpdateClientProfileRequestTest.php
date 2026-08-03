@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Http\Requests\Api\V1\UpdateClientProfileRequest;
 use App\Models\Profile;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -69,6 +71,38 @@ class UpdateClientProfileRequestTest extends TestCase
         $this->assertArrayHasKey('profile.profile_image', $validator->errors()->toArray());
     }
 
+    public function test_validation_failure_returns_json_without_an_accept_header(): void
+    {
+        $validator = Validator::make([
+            'profile' => [
+                'business_type' => Profile::BUSINESS_TYPE_AOP,
+                'mobile_no' => '9876543210',
+                'profile_image' => 'IMG_20210123_081828_415.jpg',
+            ],
+        ], (new UpdateClientProfileRequest)->rules());
+
+        try {
+            (new TestableUpdateClientProfileRequest)->failWith($validator);
+            $this->fail('Expected an HTTP response exception.');
+        } catch (HttpResponseException $exception) {
+            $response = $exception->getResponse();
+
+            $this->assertSame(422, $response->getStatusCode());
+            $this->assertSame('application/json', $response->headers->get('Content-Type'));
+            $this->assertSame([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => [
+                    'profile.profile_image' => [
+                        'The profile.profile image field must be an image.',
+                        'The profile.profile image field must be a file of type: jpeg, png, jpg, heic, heif.',
+                    ],
+                ],
+                'code' => 422,
+            ], json_decode($response->getContent(), true));
+        }
+    }
+
     private function validPayload(string $businessType): array
     {
         return [
@@ -78,5 +112,13 @@ class UpdateClientProfileRequestTest extends TestCase
                 'address' => '123 Test Street',
             ],
         ];
+    }
+}
+
+class TestableUpdateClientProfileRequest extends UpdateClientProfileRequest
+{
+    public function failWith(ValidatorContract $validator): void
+    {
+        $this->failedValidation($validator);
     }
 }

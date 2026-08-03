@@ -1,8 +1,11 @@
 <?php
+
 namespace App\Http\Requests\Api\V1;
 
 use App\Models\Profile;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
 class UpdateClientProfileRequest extends FormRequest
@@ -37,5 +40,19 @@ class UpdateClientProfileRequest extends FormRequest
                 'max:2048',
             ],
         ];
+    }
+
+     /**
+     * Return validation failures as JSON even when an API client omits the
+     * Accept: application/json header.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(response()->json([
+            'status' => false,
+            'message' => 'Validation error',
+            'errors' => $validator->errors(),
+            'code' => 422,
+        ], 422));
     }
 }

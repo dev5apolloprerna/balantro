@@ -8,8 +8,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DocumentsController extends BaseApiController
 {
@@ -207,7 +209,8 @@ class DocumentsController extends BaseApiController
                     $latestFile = $doc->files->first();
                     $filePath = $latestFile?->path ?: $doc->file;
 
-                    $fileUrl = $filePath ? asset($filePath) : null;
+                    //$fileUrl = $filePath ? asset($filePath) : null;
+                    $fileUrl = $filePath ? $this->fileUrl($doc, $filePath) : null;
 
                     return [
                         'id' => $doc->id,
@@ -371,6 +374,31 @@ class DocumentsController extends BaseApiController
     }
 
     /**
+     * Serve a document through Laravel so IIS does not reject direct requests to
+     * the physical public/documents directory.
+     */
+    public function file(Document $document, string $filename): BinaryFileResponse
+    {
+        $latestFile = $document->files()->latest('created_at')->first();
+        $relativePath = $latestFile?->path ?: $document->file;
+
+        abort_unless($relativePath && hash_equals(basename($relativePath), $filename), 404);
+
+        $documentsRoot = realpath(public_path('documents'));
+        $absolutePath = realpath(public_path(ltrim($relativePath, '/\\')));
+
+        abort_unless(
+            $documentsRoot
+                && $absolutePath
+                && is_file($absolutePath)
+                && ($absolutePath === $documentsRoot || Str::startsWith($absolutePath, $documentsRoot . DIRECTORY_SEPARATOR)),
+            404
+        );
+
+        return response()->file($absolutePath);
+    }
+
+    /**
      * Return uploaded API document files using the same inputs as the web uploader.
      */
     private function uploadedDocumentFiles(Request $request): array
@@ -412,10 +440,19 @@ class DocumentsController extends BaseApiController
             'status' => $document->status,
             'rejection_reason' => $document->rejection_reason,
             'message_id' => $document->message_id,
-            'file_url' => $document->file ? asset($document->file) : null,
+            // 'file_url' => $document->file ? asset($document->file) : null,
+            'file_url' => $document->file ? $this->fileUrl($document, $document->file) : null,
             'file_path' => $document->file,
             'created_at' => $document->created_at->toDateTimeString(),
             'updated_at' => $document->updated_at->toDateTimeString()
         ];
+    }
+
+    private function fileUrl(Document $document, string $path): string
+    {
+        return URL::signedRoute('document-files.show', [
+            'document' => $document->getKey(),
+            'filename' => basename($path),
+        ]);
     }
 }

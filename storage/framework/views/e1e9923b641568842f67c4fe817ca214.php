@@ -1,8 +1,6 @@
-@extends('layouts.super_admin')
+<?php $__env->startSection('title', 'Document Activity Log'); ?>
 
-@section('title', 'Document Activity Log')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <div class="main-content">
         <div class="page-content">
             <div class="container-fluid">
@@ -27,19 +25,19 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-200 dark:divide-neutral-700">
-                            @forelse($rows as $r)
+                            <?php $__empty_1 = true; $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr>
                                     <td class="px-4 py-3">
-                                        {{ \Carbon\Carbon::parse($r['time'])->format('d M, Y \a\t h:i A') }}</td>
-                                    <td class="px-4 py-3">{{ $r['event'] }}</td>
-                                    <td class="px-4 py-3">{{ $r['who'] }}</td>
-                                    <td class="px-4 py-3">{!! e($r['changes']) !!}</td>
+                                        <?php echo e(\Carbon\Carbon::parse($r['time'])->format('d M, Y \a\t h:i A')); ?></td>
+                                    <td class="px-4 py-3"><?php echo e($r['event']); ?></td>
+                                    <td class="px-4 py-3"><?php echo e($r['who']); ?></td>
+                                    <td class="px-4 py-3"><?php echo e($r['changes']); ?></td>
                                 </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr>
                                     <td class="px-4 py-6 text-center" colspan="4">No activity yet.</td>
                                 </tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -48,4 +46,6 @@
             </div>
         </div>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/client/documents/activities.blade.php ENDPATH**/ ?>

@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\LedgerMasterController;
 use App\Http\Controllers\Auth\ForgotPasswordOtpController;
 use App\Http\Controllers\Api\V1\MessagesController;
 use App\Http\Controllers\Api\V1\ClientBankSuspenseController;
-
+use App\Http\Controllers\Api\V1\ProfileDocumentController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -36,6 +36,11 @@ Route::get('/code-master', [CodeMasterController::class, 'search']);
 
 // API Routes
 Route::prefix('v1')->group(function () {
+    Route::get('/profile/documents/file/{user}/{type}', ProfileDocumentController::class)
+        ->middleware('signed')
+        ->whereNumber('user')
+        ->whereIn('type', ['pan', 'gst'])
+        ->name('api.profile.documents.file');
     Route::post('sign_in', [\App\Http\Controllers\Api\V1\SessionsController::class, 'login']);
     Route::post('sign_up', [\App\Http\Controllers\Api\V1\RegistrationsController::class, 'register']);
     Route::post('logout', [\App\Http\Controllers\Api\V1\SessionsController::class, 'destroy']);

@@ -6,6 +6,7 @@ use App\Http\Requests\Api\V1\UpdateClientProfileRequest;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
 class ClientProfilesController extends BaseApiController
@@ -289,13 +290,15 @@ class ClientProfilesController extends BaseApiController
 					? implode(', ', $updated) . ' document(s) uploaded successfully!'
 					: 'No documents uploaded',
 				'data' => [
-					'pan_card_file_url' => $profile->pan_card_file
-						? asset($profile->pan_card_file)
-						: null,
+					// 'pan_card_file_url' => $profile->pan_card_file
+					// 	? asset($profile->pan_card_file)
+					// 	: null,
+					'pan_card_file_url' => $this->documentUrl($profile, 'pan'),
 
-					'gst_certificate_file_url' => $profile->gst_certificate_file
-						? asset($profile->gst_certificate_file)
-						: null,
+					// 'gst_certificate_file_url' => $profile->gst_certificate_file
+					// 	? asset($profile->gst_certificate_file)
+					// 	: null,
+					'gst_certificate_file_url' => $this->documentUrl($profile, 'gst'),
 				],
 				'code' => 200
 			], 200);
@@ -334,12 +337,14 @@ class ClientProfilesController extends BaseApiController
 				'status' => true,
 				'message' => 'Documents fetched successfully',
 				'data' => [
-					'pan_card_file' => $profile->pan_card_file
-						? asset($profile->pan_card_file)
-						: null,
-					'gst_certificate_file' => $profile->gst_certificate_file
-						? asset($profile->gst_certificate_file)
-						: null,
+					// 'pan_card_file' => $profile->pan_card_file
+					// 	? asset($profile->pan_card_file)
+					// 	: null,
+					// 'gst_certificate_file' => $profile->gst_certificate_file
+					// 	? asset($profile->gst_certificate_file)
+					// 	: null,
+					'pan_card_file' => $this->documentUrl($profile, 'pan'),
+					'gst_certificate_file' => $this->documentUrl($profile, 'gst'),
 				],
 				'code' => 200
 			], 200);
@@ -351,6 +356,21 @@ class ClientProfilesController extends BaseApiController
 				'code' => 500
 			], 500);
 		}
+	}
+
+	private function documentUrl(Profile $profile, string $type): ?string
+	{
+		$column = $type === 'pan' ? 'pan_card_file' : 'gst_certificate_file';
+
+		if (!$profile->{$column}) {
+			return null;
+		}
+
+		return URL::temporarySignedRoute(
+			'api.profile.documents.file',
+			now()->addMinutes(30),
+			['user' => $profile->user_id, 'type' => $type]
+		);
 	}
 
 	public function businessTypes()

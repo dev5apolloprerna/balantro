@@ -56,6 +56,10 @@ Route::get('/up', function () {
     return response()->json(['status' => 'ok']);
 });
 
+Route::get('/document-files/{document}/{filename}', [\App\Http\Controllers\Api\V1\DocumentsController::class, 'file'])
+    ->middleware('signed')
+    ->name('document-files.show');
+    
 // Route::get('/test-firebase', function () {
 //     try {
 //         $firebase = app('firebase');
