@@ -17,8 +17,10 @@
 
 <style>
     .system-validation-summary {
-        margin: 1rem;
+        width: 100%;
+        margin: 0 0 1rem;
         padding: .875rem 1rem;
+        box-sizing: border-box;
         color: #991b1b;
         background: #fef2f2;
         border: 1px solid #fca5a5;

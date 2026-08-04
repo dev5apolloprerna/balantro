@@ -47,5 +47,6 @@ class SystemFormValidationTest extends TestCase
         $this->assertStringContainsString('system-validation-errors', $script);
         $this->assertStringContainsString('document.addEventListener("invalid"', $script);
         $this->assertStringContainsString('document.addEventListener("submit"', $script);
+        $this->assertStringContainsString('errorForm.insertAdjacentElement("beforebegin", summary)', $script);
     }
 }

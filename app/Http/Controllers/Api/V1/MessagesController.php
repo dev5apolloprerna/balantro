@@ -124,7 +124,8 @@ class MessagesController extends BaseApiController
         $clientId = (int) $client->id;
 
         $validator = Validator::make($request->all(), [
-            'description' => ['nullable', 'string', 'required_without:attachments'],
+            //'description' => ['nullable', 'string', 'required_without:attachments'],
+            'description' => ['nullable', 'string'],
             'attachments' => ['sometimes', 'array'],
             'attachments.*' => ['file', 'max:20480']
         ]);
@@ -173,7 +174,7 @@ class MessagesController extends BaseApiController
             DB::commit();
 
             // Send notifications after successful message creation - PASS MESSAGE ID
-            $this->sendNotifications($client, $deoId, $request->input('description', ''), $hasFiles, $message->id);
+            // $this->sendNotifications($client, $deoId, $request->input('description', ''), $hasFiles, $message->id);
 
             // Load relationships for response
             $message->load([

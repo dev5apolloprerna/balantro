@@ -72,7 +72,16 @@
             firstField ||= field;
         });
 
-        const target = firstField || document.getElementById("system-validation-summary");
+        const summary = document.getElementById("system-validation-summary");
+        const errorForm = firstField?.closest("form");
+
+        // Layouts load the shared validation partial at the start of <body> so it
+        // is available everywhere. Move server feedback beside the form that
+        // owns the invalid field instead of leaving it above the application
+        // header/navigation.
+        if (summary && errorForm) errorForm.insertAdjacentElement("beforebegin", summary);
+
+        const target = summary || firstField;
         target?.focus({ preventScroll: true });
         target?.scrollIntoView({ behavior: "smooth", block: "center" });
     }

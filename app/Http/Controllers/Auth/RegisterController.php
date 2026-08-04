@@ -84,7 +84,7 @@ class RegisterController extends Controller
 
         $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        $request->session()->put('registration', [
+        $pending = [
             'name' => $request->string('name')->toString(),
             'email' => $request->string('email')->lower()->toString(),
             'password' => Crypt::encryptString($request->string('password')->toString()),
@@ -92,9 +92,19 @@ class RegisterController extends Controller
             'expires_at' => now()->addMinutes(10)->timestamp,
             'attempts' => 0,
             'last_sent_at' => now()->timestamp,
-        ]);
+        ];
+        try {
+            Mail::to($pending['email'])->send(new RegistrationOtpMail($pending['name'], $otp));
+        } catch (\Throwable $exception) {
+            report($exception);
+             return back()->withInput($request->except(['password', 'password_confirmation']))
+                ->withErrors([
+                    'email' => 'We could not send the verification code. Please check the mail configuration and try again.',
+                ]);
+        }
 
-        Mail::to($request->email)->send(new RegistrationOtpMail($request->name, $otp));
+        // Do not retain credentials unless the OTP was accepted by the mail transport.
+        $request->session()->put('registration', $pending);
 
         return redirect()->route('registration.otp.show')
             ->with('status', 'We sent a 6-digit verification code to your email address.');
@@ -177,9 +187,19 @@ class RegisterController extends Controller
         $pending['expires_at'] = now()->addMinutes(10)->timestamp;
         $pending['attempts'] = 0;
         $pending['last_sent_at'] = now()->timestamp;
-        $request->session()->put('registration', $pending);
+        // $request->session()->put('registration', $pending);
+         try {
+            Mail::to($pending['email'])->send(new RegistrationOtpMail($pending['name'], $otp));
+        } catch (\Throwable $exception) {
+            report($exception);
 
-        Mail::to($pending['email'])->send(new RegistrationOtpMail($pending['name'], $otp));
+        return back()->withErrors([
+                'otp' => 'We could not resend the verification code. Please check the mail configuration and try again.',
+            ]);
+        }
+
+        // Keep the previous code valid if delivery fails.
+        $request->session()->put('registration', $pending);
 
         return back()->with('status', 'A new verification code has been sent.');
     }
