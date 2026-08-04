@@ -12,6 +12,8 @@
 }
 
 .scrollable-select__button {
+    min-width: 0;
+    max-width: 100%;
     width: 100%;
     height: 2.5rem;
     padding: 0 2.5rem 0 1rem;
@@ -84,4 +86,3 @@
 .dark .scrollable-select__option:hover,
 .dark .scrollable-select__option:focus,
 .dark .scrollable-select__option[aria-selected="true"] { background: rgb(64 64 64); }
-

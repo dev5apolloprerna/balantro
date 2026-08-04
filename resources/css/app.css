@@ -4,6 +4,21 @@
 
 @layer components {
 
+    /* Keep long selected values from changing a form control's dimensions.
+       The full value remains available in the opened option list. */
+    select:not([multiple]):not([size]),
+    .scrollable-select__button {
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    select:not([multiple]):not([size]) option {
+        white-space: nowrap;
+    }
+    
     .scrollable-select {
         position: relative;
         width: 100%;

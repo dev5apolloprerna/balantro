@@ -390,7 +390,7 @@
                             </div>
 
                             <!-- Dropdown -->
-                            <ul x-show="open" @click.outside="open = false"
+                            <ul x-cloak x-show="open" @click.outside="open = false"
                                 x-transition
                                 class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                                 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
@@ -498,7 +498,7 @@
                             </div>
 
                             <!-- Dropdown -->
-                            <ul x-show="open" @click.outside="open = false"
+                            <ul x-cloak x-show="open" @click.outside="open = false"
                                 x-transition
                                 class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
                                 bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
