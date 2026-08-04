@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Support\DateRangeValidation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -102,6 +103,8 @@ class ReportsController extends Controller
 
     private function prepareFinancialYearFilter(Request $r, int $userId): array
     {
+        DateRangeValidation::validate($r, 'from', 'to');
+        DateRangeValidation::validate($r, 'from_custom', 'to_custom');
         
         $financialYears = $this->getFinancialYears($userId);
         $requestedRange = $r->input('range');

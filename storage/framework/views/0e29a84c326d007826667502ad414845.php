@@ -33,4 +33,5 @@
 
 <script type="application/json" id="system-validation-errors"><?php echo json_encode($errors->getMessages(), 15, 512) ?></script>
 <script src="<?php echo e(asset('js/form-validation.js')); ?>" defer></script>
+<?php echo $__env->make('shared._date_range_validation', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 <?php /**PATH D:\xampp\htdocs\balantro\resources\views/shared/form_validation.blade.php ENDPATH**/ ?>

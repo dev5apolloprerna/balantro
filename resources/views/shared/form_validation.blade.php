@@ -34,3 +34,4 @@
 
 <script type="application/json" id="system-validation-errors">@json($errors->getMessages())</script>
 <script src="{{ asset('js/form-validation.js') }}" defer></script>
+@include('shared._date_range_validation')

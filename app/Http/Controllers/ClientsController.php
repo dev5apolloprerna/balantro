@@ -23,6 +23,7 @@ use App\Services\ReportsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use App\Support\DateRangeValidation;
 use App\Support\ReportCache;
 use Throwable;
 use App\Models\UserDevice;
@@ -735,6 +736,7 @@ class ClientsController extends Controller
 
     public function pnl(Request $r, $guid = null, \App\Services\ReportsService $svc)
     {
+        $this->validateReportDateRange($r);
         //try {
             // 🔹 Check if GUID is provided
             if (!$guid) {
@@ -814,6 +816,7 @@ class ClientsController extends Controller
 
     public function balanceSheet(Request $r, $guid = null, ReportsService $svc)
     {
+        $this->validateReportDateRange($r);
         try {
             // 🔹 Check if GUID is provided
             if (!$guid) {
@@ -887,6 +890,7 @@ class ClientsController extends Controller
 
     public function ledger(Request $r, $guid = null, ReportsService $svc)
     {
+        $this->validateReportDateRange($r);
         try {
             // 🔹 Check if GUID is provided
             if (!$guid) {
@@ -955,6 +959,7 @@ class ClientsController extends Controller
 
     public function voucherHistory(Request $r,  ReportsService $svc)
     {
+        $this->validateReportDateRange($r);
         try {
             $guid = $r->input('guid');
             // $rangeSel = $r->input('range');
@@ -1079,6 +1084,12 @@ class ClientsController extends Controller
         ]);
 
         return [$financialYears, $rangeSel, $from, $to];
+    }
+
+    private function validateReportDateRange(Request $request): void
+    {
+        DateRangeValidation::validate($request, 'from', 'to');
+        DateRangeValidation::validate($request, 'from_custom', 'to_custom');
     }
 
     public function viewVoucher($guid,$strGUID, $vchType)
@@ -1809,6 +1820,7 @@ class ClientsController extends Controller
 
     public function suspense(Request $request)
     {
+        $this->validateBankTransactionDateRange($request);
         $auth = auth()->user();
         $query = BankTransaction::where('is_suspense', 1)->where('iPartyId',$auth->id);
         // Date filter
@@ -1852,6 +1864,7 @@ class ClientsController extends Controller
 
     public function resolvedSuspense(Request $request)
     {
+        $this->validateBankTransactionDateRange($request);
         $auth = auth()->user();
         $query = BankTransaction::where('is_suspense', 0)
             ->whereNotNull('resolution_remark')
@@ -1869,6 +1882,11 @@ class ClientsController extends Controller
             'admin.clients.bank.resolved_suspense',
             compact('transactions')
         );
+    }
+
+    private function validateBankTransactionDateRange(Request $request): void
+    {
+        DateRangeValidation::validate($request, 'from_date', 'to_date');
     }
 
     public function updateRemark(Request $request)

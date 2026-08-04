@@ -20,7 +20,7 @@ use App\Models\DocumentComment;
 use App\Models\Client;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-
+use App\Support\DateRangeValidation;
 
 class DocumentsController extends Controller
 {
@@ -35,6 +35,16 @@ class DocumentsController extends Controller
         if (!$user) {
             return redirect()->route('login');
         }
+        
+        DateRangeValidation::validate($request, 'start_date', 'end_date');
+
+        $request->validate([
+            'start_date' => ['nullable', 'date_format:Y-m-d'],
+            'end_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+        ], [
+            'end_date.after_or_equal' => 'The end date must be the same as or later than the start date.',
+        ]);
+
 
         switch ($user->role) {
             case \App\Models\User::ROLES['super_admin']:

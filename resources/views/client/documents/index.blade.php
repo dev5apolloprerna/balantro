@@ -118,6 +118,7 @@
 
         {{-- Filters --}}
         <form method="GET" action="{{ route('documents.index') }}"
+            x-data="{ startDate: @js(request('start_date', '')) }"
             class="mt-2 rounded-lg p-2 flex flex-col sm:flex-row gap-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
                 {{-- super_admin --}}
@@ -302,16 +303,22 @@
 
                 <div class="w-full">
                     <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">Start Date</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}" min="1900-01-01"
-       max="2099-12-31"
+                    <input type="date" name="start_date" value="{{ request('start_date') }}" x-model="startDate"
+                           min="1900-01-01" max="2099-12-31"
                         class="w-full appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
+                    @error('start_date')
+                        <p class="mt-1 text-xs text-red-500" role="alert">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="w-full">
                     <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">End Date</label>
-                    <input type="date" name="end_date" value="{{ request('end_date') }}" min="1900-01-01"
-       max="2099-12-31"
-                        class="w-full appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
+                    <input type="date" name="end_date" value="{{ request('end_date') }}"
+                           :min="startDate || '1900-01-01'" max="2099-12-31"
+                           class="w-full appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
+                    @error('end_date')
+                        <p class="mt-1 text-xs text-red-500" role="alert">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- <div class="w-full">
