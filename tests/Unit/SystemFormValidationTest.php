@@ -39,6 +39,18 @@ class SystemFormValidationTest extends TestCase
         $this->assertStringNotContainsString("@include('shared.form_validation')", $contents);
     }
 
+    public function test_registration_uses_only_field_level_validation_feedback(): void
+    {
+        $layout = file_get_contents(dirname(__DIR__, 2).'/resources/views/auth/layouts/app.blade.php');
+        $registration = file_get_contents(dirname(__DIR__, 2).'/resources/views/auth/register.blade.php');
+
+        $this->assertStringContainsString("View::hasSection('field_validation_only')", $layout);
+        $this->assertStringContainsString("@section('field_validation_only', true)", $registration);
+        $this->assertStringNotContainsString('$errors->all()', $registration);
+        $this->assertStringContainsString("@error('email')", $registration);
+        $this->assertStringContainsString("@error('password')", $registration);
+    }
+    
     public function test_validation_script_guards_submission_and_displays_server_errors(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/public/js/form-validation.js');

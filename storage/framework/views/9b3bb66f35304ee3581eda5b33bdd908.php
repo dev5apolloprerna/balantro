@@ -94,7 +94,7 @@ unset($__errorArgs, $__bag); ?>
                     </div>
 
                     <!-- Address - Fixed spacing issue -->
-                    <div class="md:col-span-2 mt-4">
+                    <!-- <div class="md:col-span-2 mt-4">
                         <label for="address"
                             class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Address</label>
                         <textarea name="address" id="address" rows="4" placeholder="Enter your complete address"
@@ -109,7 +109,7 @@ $message = $__bag->first($__errorArgs[0]); ?>
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Buttons -->

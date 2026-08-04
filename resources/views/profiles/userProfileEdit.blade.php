@@ -89,7 +89,7 @@
                     </div>
 
                     <!-- Address - Fixed spacing issue -->
-                    <div class="md:col-span-2 mt-4">
+                    <!-- <div class="md:col-span-2 mt-4">
                         <label for="address"
                             class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Address</label>
                         <textarea name="address" id="address" rows="4" placeholder="Enter your complete address"
@@ -97,7 +97,7 @@
                         @error('address')
                             <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
-                    </div>
+                    </div> -->
                 </div>
 
                 <!-- Buttons -->

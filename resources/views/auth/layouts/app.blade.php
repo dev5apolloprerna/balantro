@@ -5,7 +5,9 @@
 @include('auth.includes.head')
 
 <body class="font-sans antialiased bg-white dark:bg-black text-gray-900 dark:text-gray-100">
-    @include('shared.form_validation')
+    @unless (View::hasSection('field_validation_only'))
+        @include('shared.form_validation')
+    @endunless
     <!-- Remove transition classes from body to prevent initial blink -->
     <div class="min-h-screen">
         <main>

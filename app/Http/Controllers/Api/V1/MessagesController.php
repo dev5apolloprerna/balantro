@@ -46,10 +46,13 @@ class MessagesController extends BaseApiController
         $page = (int) max(1, $request->integer('page', 1));
         $order = strtolower($request->get('order', 'desc')) === 'asc' ? 'asc' : 'desc';
 
-        // Get assigned DEO
-        $deoId = (int) DB::table('clients_data_entry_operators')
-            ->where('client_id', $clientId)
-            ->value('data_entry_operator_id');
+        // Fetch the assigned DEO and its response fields in one query.
+        $deo = DB::table('clients_data_entry_operators as assignments')
+            ->join('users', 'users.id', '=', 'assignments.data_entry_operator_id')
+            ->where('assignments.client_id', $clientId)
+            ->select('users.id', 'users.name', 'users.type')
+            ->first();
+        $deoId = (int) ($deo->id ?? 0);
 
         if (!$deoId) {
             return response()->json([
@@ -58,62 +61,41 @@ class MessagesController extends BaseApiController
             ], 422);
         }
 
-        $allowed = [$clientId, $deoId];
+        $actors = [
+            $clientId => $this->actorResponse($client),
+            $deoId => $this->actorResponse($deo),
+        ];
 
-        // Build query with proper relationship loading
+        // Avoid an expensive full-history count by default. Pass include_total=true
+        // only on screens which need numbered-page metadata.
+        $includeTotal = $request->boolean('include_total');
         $query = Message::query()
-            ->with([
-                'sender:id,name,type',
-                'receiver:id,name,type',
-                'attachments:id,message_id,original_name,file_name,mime,size,url'
-            ])
-            ->where(function ($q) use ($allowed) {
-                $q->whereIn('sender_id', $allowed)
-                    ->whereIn('receiver_id', $allowed);
-            })
+            ->select(['id', 'sender_id', 'receiver_id', 'description', 'created_at'])
+            ->with('attachments:id,message_id,original_name,file_name,mime,size,url')
+            ->whereIn('sender_id', [$clientId, $deoId])
+            ->whereIn('receiver_id', [$clientId, $deoId])
             ->orderBy('created_at', $order)
             ->orderBy('id', $order);
 
-        // Paginate results
-        $paginator = $query->paginate($limit, ['*'], 'page', $page);
+        $paginator = $includeTotal
+            ? $query->paginate($limit, ['*'], 'page', $page)
+            : $query->simplePaginate($limit, ['*'], 'page', $page);
 
-        $messages = $paginator->getCollection()->map(function (Message $m) use ($clientId) {
-            return [
-                'id' => (int) $m->id,
-                'from' => [
-                    'id'   => (int) $m->sender->id,
-                    'name' => $m->sender->name,
-                    'type' => $m->sender->type,
-                ],
-                'to' => [
-                    'id'   => (int) $m->receiver->id,
-                    'name' => $m->receiver->name,
-                    'type' => $m->receiver->type,
-                ],
-                'description' => $m->description,
-                'attachments' => $m->relationLoaded('attachments')
-                    ? $m->attachments->map(fn($a) => [
-                        'original_name' => $a->original_name,
-                        'file_name'     => $a->file_name,
-                        'mime'          => $a->mime,
-                        'size'          => (int) $a->size,
-                        'url'           => $this->attachmentUrl($a), // 'url'           => $a->url,
-                    ])->values()
-                    : [],
-                'created_at' => optional($m->created_at)->toIso8601String(),
-                'from_me'    => $m->sender_id === $clientId,
-            ];
-        });
+        $messages = $paginator->getCollection()->map(
+            fn (Message $message) => $this->formatMessageResponse($message, $clientId, $actors)
+        );
+
 
         return response()->json([
             'ok' => true,
             'messages' => $messages,
             'pagination' => [
                 'current_page' => $paginator->currentPage(),
-                'last_page' => $paginator->lastPage(),
+                'last_page' => $includeTotal ? $paginator->lastPage() : null,
                 'per_page' => $paginator->perPage(),
-                'total' => $paginator->total(),
+                'total' => $includeTotal ? $paginator->total() : null,
                 'has_more' => $paginator->hasMorePages(),
+                'totals_included' => $includeTotal,
             ]
         ]);
     }
@@ -137,10 +119,13 @@ class MessagesController extends BaseApiController
             ], 422);
         }
 
-        // Find assigned DEO
-        $deoId = DB::table('clients_data_entry_operators')
-            ->where('client_id', $clientId)
-            ->value('data_entry_operator_id');
+        // Fetch the recipient once so formatting the response needs no user queries.
+        $deo = DB::table('clients_data_entry_operators as assignments')
+            ->join('users', 'users.id', '=', 'assignments.data_entry_operator_id')
+            ->where('assignments.client_id', $clientId)
+            ->select('users.id', 'users.name', 'users.type')
+            ->first();
+        $deoId = (int) ($deo->id ?? 0);
 
         if (!$deoId) {
             return response()->json([
@@ -176,16 +161,16 @@ class MessagesController extends BaseApiController
             // Send notifications after successful message creation - PASS MESSAGE ID
             // $this->sendNotifications($client, $deoId, $request->input('description', ''), $hasFiles, $message->id);
 
-            // Load relationships for response
-            $message->load([
-                'sender:id,name,type',
-                'receiver:id,name,type',
-                'attachments:id,message_id,original_name,file_name,mime,size,url',
-            ]);
+            // The actors are already in memory; only attachments require a query.
+            $message->load('attachments:id,message_id,original_name,file_name,mime,size,url');
+            $actors = [
+                $clientId => $this->actorResponse($client),
+                $deoId => $this->actorResponse($deo),
+            ];
 
             return response()->json([
                 'ok'      => true,
-                'message' => $this->formatMessageResponse($message, $clientId),
+                'message' => $this->formatMessageResponse($message, $clientId, $actors),
             ], 201);
         // } catch (\Throwable $e) {
         //     DB::rollBack();
@@ -433,20 +418,12 @@ class MessagesController extends BaseApiController
     /**
      * Format message for API response
      */
-    private function formatMessageResponse(Message $message, int $clientId): array
+    private function formatMessageResponse(Message $message, int $clientId, array $actors): array
     {
         return [
             'id' => (int) $message->id,
-            'from' => [
-                'id'   => (int) $message->sender->id,
-                'name' => $message->sender->name,
-                'type' => $message->sender->type,
-            ],
-            'to' => [
-                'id'   => (int) $message->receiver->id,
-                'name' => $message->receiver->name,
-                'type' => $message->receiver->type,
-            ],
+            'from' => $actors[(int) $message->sender_id],
+            'to' => $actors[(int) $message->receiver_id],
             'description' => $message->description,
             'attachments' => $message->relationLoaded('attachments')
                 ? $message->attachments->map(fn($a) => [
@@ -458,7 +435,16 @@ class MessagesController extends BaseApiController
                 ])->values()
                 : [],
             'created_at' => optional($message->created_at)->toIso8601String(),
-            'from_me'    => $message->sender_id === $clientId,
+            'from_me'    => (int) $message->sender_id === $clientId,
+        ];
+    }
+
+    private function actorResponse(object $user): array
+    {
+        return [
+            'id' => (int) $user->id,
+            'name' => $user->name,
+            'type' => $user->type,
         ];
     }
 

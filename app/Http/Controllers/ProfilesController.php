@@ -370,7 +370,7 @@ class ProfilesController extends Controller
             'gender' => ['required', Rule::in(UserProfile::GENDERS)],
             'mobile_no' => 'required|digits:10',
             'whatsapp_no' => 'nullable|digits:10',
-            'address' => 'required|string|max:500',
+            // 'address' => 'required|string|max:500',
             'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,heic,heif|max:2048',
         ]);
 
