@@ -182,6 +182,10 @@ function initApp() {
             button.setAttribute("aria-haspopup", "listbox");
             button.setAttribute("aria-expanded", "false");
 
+            const buttonLabel = document.createElement("span");
+            buttonLabel.className = "scrollable-select__value";
+            button.appendChild(buttonLabel);
+
             const list = document.createElement("div");
             list.className = "scrollable-select__list";
             list.setAttribute("role", "listbox");
@@ -192,7 +196,9 @@ function initApp() {
                 button.setAttribute("aria-expanded", "false");
             };
             const syncLabel = () => {
-                button.textContent = select.options[select.selectedIndex]?.text || "";
+                const selectedText = select.options[select.selectedIndex]?.text || "";
+                buttonLabel.textContent = selectedText;
+                button.title = selectedText;
                 list.querySelectorAll(".scrollable-select__option").forEach((item, index) => {
                     item.setAttribute("aria-selected", String(index === select.selectedIndex));
                 });

@@ -15,7 +15,7 @@
             <div class="flex flex-col sm:flex-row gap-3 w-full">
               <form action="{{ route('supervisors.documents.index') }}" method="GET" class="w-full">
                 @csrf
-                <div class="flex flex-col md:flex-row md:flex-wrap gap-3 w-full">
+                <div class="flex flex-col md:flex-row md:flex-wrap gap-3 w-full  items-start">
                   <div class="w-full md:w-[calc(50%-0.375rem)] lg:w-[250px]">
                     <select name="client_id" data-scrollable-select
                             class="custom-select-arrow bg-white dark:bg-neutral-800 text-neutral-800 dark:text-neutral-100 h-10 px-4 !rounded-lg focus:outline-none border border-neutral-300 dark:border-neutral-600 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 text-[16px] w-full cursor-pointer">
@@ -60,13 +60,13 @@
                     </div>
                   </div>
 
-                  <button type="submit" class="w-full sm:w-auto items-center btn bg-primary-600 hover:bg-primary-700 text-white h-10 px-4 rounded-lg text-[16px] whitespace-nowrap justify-center cursor-pointer">
+                  <button type="submit" class="w-full sm:w-auto self-start flex-none items-center btn bg-primary-600 hover:bg-primary-700 text-white h-10 px-4 rounded-lg text-[16px] whitespace-nowrap justify-center cursor-pointer">
                     {{ __('search.search') }}
                   </button>
 
                   @if(request()->has('client_id') || request()->has('status') || request()->has('start_date') || request()->has('end_date'))
                     <a href="{{ route('supervisors.documents.index') }}"
-                       class="w-full sm:w-auto items-center btn border border-danger-600 bg-hover-danger-200 !text-danger-500 h-10 px-4 rounded-lg text-[16px] whitespace-nowrap justify-center cursor-pointer">
+                       class="w-full sm:w-auto self-start flex-none items-center btn border border-danger-600 bg-hover-danger-200 !text-danger-500 h-10 px-4 rounded-lg text-[16px] whitespace-nowrap justify-center cursor-pointer">
                       {{ __('search.reset') }}
                     </a>
                   @endif

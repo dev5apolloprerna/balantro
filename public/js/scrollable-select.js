@@ -15,6 +15,10 @@
             button.setAttribute("aria-haspopup", "listbox");
             button.setAttribute("aria-expanded", "false");
 
+            var buttonLabel = document.createElement("span");
+            buttonLabel.className = "scrollable-select__value";
+            button.appendChild(buttonLabel);
+
             var list = document.createElement("div");
             list.className = "scrollable-select__list";
             list.setAttribute("role", "listbox");
@@ -26,7 +30,9 @@
             }
 
             function sync() {
-                button.textContent = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
+                var selectedText = select.options[select.selectedIndex] ? select.options[select.selectedIndex].text : "";
+                buttonLabel.textContent = selectedText;
+                button.title = selectedText;
                 list.querySelectorAll(".scrollable-select__option").forEach(function (item, index) {
                     item.setAttribute("aria-selected", String(index === select.selectedIndex));
                 });

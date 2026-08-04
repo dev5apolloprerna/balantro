@@ -85,6 +85,8 @@
     }
 
     .scrollable-select__button {
+        display: flex;
+        align-items: center;
         min-width: 0;
         max-width: 100%;
         width: 100%;
@@ -102,6 +104,16 @@
         border: 1px solid rgb(212 212 212);
         border-radius: .5rem;
     }
+
+    .scrollable-select__value {
+        display: block;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
 
     .scrollable-select__button:focus {
         outline: 2px solid rgb(59 130 246);
