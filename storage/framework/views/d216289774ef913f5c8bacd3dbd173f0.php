@@ -140,7 +140,7 @@
                         <i class="fa-solid fa-chevron-down text-xs"></i>
                     </div>
                 </div> -->
-                <div class="relative"
+                <div class="relative min-w-0"
                         x-data="{
                             open: false,
                             selected: '<?php echo e(request('client_id', '')); ?>',
@@ -159,7 +159,7 @@
 
                         <!-- Button -->
                         <button type="button" @click="open = !open"
-                            class="w-full text-left
+                            class="balantro-select-trigger w-full text-left
                             bg-gradient-to-br from-white/60 to-white/30
                             dark:from-white/10 dark:to-transparent
                             backdrop-blur-xl

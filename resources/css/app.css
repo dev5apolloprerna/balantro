@@ -39,6 +39,12 @@
     }
 
     /* Custom dropdowns keep their trigger size even when the selected label is long. */
+    .balantro-select-trigger {
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    
     .balantro-select-value {
         display: block;
         min-width: 0;
