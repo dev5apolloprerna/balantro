@@ -3,11 +3,10 @@
 @tailwind utilities;
 
 @layer components {
-
-    /* Keep long selected values from changing a form control's dimensions.
-       The full value remains available in the opened option list. */
-    select:not([multiple]):not([size]),
-    .scrollable-select__button {
+    
+    /* Custom dropdowns keep their trigger size even when the selected label is long. */
+    .balantro-select-value {
+        display: block;
         min-width: 0;
         max-width: 100%;
         overflow: hidden;
@@ -15,10 +14,29 @@
         white-space: nowrap;
     }
 
-    select:not([multiple]):not([size]) option {
-        white-space: nowrap;
+    /* Keep the scrollbar inside rounded dropdown menus and match their shape. */
+    .balantro-select-menu {
+        scrollbar-color: rgb(115 115 115) transparent;
+        scrollbar-width: thin;
     }
-    
+
+    .balantro-select-menu::-webkit-scrollbar {
+        width: .55rem;
+    }
+
+    .balantro-select-menu::-webkit-scrollbar-track {
+        margin-block: .5rem;
+        background: transparent;
+    }
+
+    .balantro-select-menu::-webkit-scrollbar-thumb {
+        min-height: 2rem;
+        background: rgb(115 115 115);
+        border: 2px solid transparent;
+        border-radius: 9999px;
+        background-clip: padding-box;
+    }
+
     .scrollable-select {
         position: relative;
         width: 100%;
@@ -60,7 +78,7 @@
        /* Keep long client lists inside the menu instead of growing the page. */
         max-height: min(20rem, calc(100dvh - 2rem));
         overflow-x: hidden;
-        overflow-y: scroll;
+        overflow-y: auto;
         overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
         background: white;

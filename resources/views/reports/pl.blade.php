@@ -98,7 +98,7 @@
                     focus:ring-2 focus:ring-[#22d3ee]
                     transition-all duration-300">
 
-                    <span x-text="options[selected] ?? 'Select Range'"></span>
+                    <span class="balantro-select-value" x-text="options[selected] ?? 'Select Range'"></span>
                 </button>
 
                 <!-- Arrow -->
@@ -109,7 +109,7 @@
                 <!-- Dropdown -->
                 <ul x-cloak x-show="open" @click.outside="open = false"
                     x-transition
-                    class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
+                    class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl balantro-select-menu
 
                     bg-white/10 dark:bg-white/5
                     backdrop-blur-2xl
@@ -614,7 +614,7 @@
                                 focus:ring-2 focus:ring-[#22d3ee]
                                 transition-all duration-300">
 
-                                <span x-text="options[selected] ?? 'Select Range'"></span>
+                                <span class="balantro-select-value" x-text="options[selected] ?? 'Select Range'"></span>
                             </button>
 
                             <!-- Arrow -->
@@ -625,7 +625,7 @@
                             <!-- Dropdown -->
                             <ul x-cloak x-show="open" @click.outside="open = false"
                                 x-transition
-                                class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
+                                class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl balantro-select-menu
                                 bg-white/10 dark:bg-white/5
                                 backdrop-blur-2xl
                                 border border-white/20

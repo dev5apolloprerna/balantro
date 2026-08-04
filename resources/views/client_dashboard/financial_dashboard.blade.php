@@ -325,7 +325,7 @@
                                 focus:outline-none
                                 focus:ring-2 focus:ring-[#22d3ee]">
 
-                                <span x-text="options[selected]"></span>
+                                <span class="balantro-select-value" x-text="options[selected]"></span>
                             </button>
 
                             <!-- Arrow -->
@@ -336,7 +336,7 @@
                             <!-- Dropdown -->
                             <ul x-cloak x-show="open" @click.outside="open = false"
                                 x-transition
-                                class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
+                                class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl balantro-select-menu
                                 bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
                                 @forelse ($financialYearOptions as $financialYear)
@@ -435,7 +435,7 @@
                         focus:outline-none
                         focus:ring-2 focus:ring-[#22d3ee]">
 
-                        <span x-text="options[selected]"></span>
+                        <span class="balantro-select-value" x-text="options[selected]"></span>
                     </button>
 
                     <!-- Arrow -->
@@ -446,7 +446,7 @@
                     <!-- Dropdown -->
                     <ul x-cloak x-show="open" @click.outside="open = false"
                         x-transition
-                        class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
+                        class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl balantro-select-menu
                         bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
                         border border-cyan-400/20 shadow-2xl">
 
@@ -529,7 +529,7 @@
                         focus:outline-none
                         focus:ring-2 focus:ring-[#22d3ee]">
 
-                        <span x-text="options[selected]"></span>
+                        <span class="balantro-select-value" x-text="options[selected]"></span>
                     </button>
 
                     <!-- Arrow -->
@@ -540,7 +540,7 @@
                     <!-- Dropdown -->
                     <ul x-show="open" @click.outside="open=false"
                         x-transition
-                        class="absolute right-0 z-[9999] mt-2 w-48 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
+                        class="absolute right-0 z-[9999] mt-2 w-48 max-h-80 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl balantro-select-menu
                         bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
                         border border-cyan-400/20 shadow-2xl">
 
@@ -581,7 +581,7 @@
                         focus:outline-none
                         focus:ring-2 focus:ring-[#22d3ee]">
 
-                        <span x-text="options[selected] || 'Select'"></span>
+                        <span class="balantro-select-value" x-text="options[selected] || 'Select'"></span>
                     </button>
 
                     <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
@@ -590,7 +590,7 @@
 
                     <ul x-show="open" @click.outside="open=false"
                         x-transition 
-                        class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
+                        class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl balantro-select-menu
                         bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
                         border border-cyan-400/20 shadow-2xl">
 
@@ -648,7 +648,7 @@
                         focus:outline-none
                         focus:ring-2 focus:ring-[#22d3ee]">
 
-                        <span x-text="options[selected]"></span>
+                        <span class="balantro-select-value" x-text="options[selected]"></span>
                     </button>
 
                     <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
@@ -657,7 +657,7 @@
 
                     <ul x-show="open" @click.outside="open=false"
                         x-transition
-                        class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-scroll overscroll-contain rounded-xl
+                        class="absolute right-0 z-[9999] mt-2 w-56 max-h-80 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl balantro-select-menu
                         bg-[#0b0f19]/95 backdrop-blur-xl bg-white/10 dark:bg-white/5
                         border border-cyan-400/20 shadow-2xl">
 

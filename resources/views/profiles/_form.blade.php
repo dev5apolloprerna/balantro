@@ -114,7 +114,7 @@
                                         focus:outline-none
                                         focus:ring-2 focus:ring-cyan-400">
 
-                                <span x-text="options[selected]"></span>
+                                <span class="balantro-select-value" x-text="options[selected]"></span>
                             </button>
 
                             <!-- Arrow -->
