@@ -170,7 +170,11 @@
                             focus:ring-2 focus:ring-[#22d3ee]
                             transition-all duration-300">
 
-                            <span class="balantro-select-value" x-text="options[selected] ?? 'All Clients'"></span>
+                            <span class="balantro-select-value"
+                                :title="options[selected] ?? 'All Clients'"
+                                x-text="(options[selected] ?? 'All Clients').length > 15
+                                    ? (options[selected] ?? 'All Clients').slice(0, 15) + '...'
+                                    : (options[selected] ?? 'All Clients')"></span>
                         </button>
 
                         <!-- Arrow -->
