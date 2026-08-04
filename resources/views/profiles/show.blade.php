@@ -50,7 +50,7 @@
 
         <!-- Profile Image -->
         <div class="flex flex-col items-center mb-8">
-            <img src="{{ $profile->profile_image ? asset($profile->profile_image) : asset($defaultImage) }}"
+            <img src="{{ $profile->profile_image ? \App\Support\ProfileImageUrl::for($profile->profile_image) : asset($defaultImage) }}"
                 class="w-36 h-36 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg">
 
             <h3 class="mt-4 text-xl font-bold dark:text-gray-100">

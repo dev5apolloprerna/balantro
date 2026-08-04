@@ -52,7 +52,7 @@
                     @php
                     $defaultImage = $profile->gender == 'female' ? 'images/female.png' : 'images/male.png';
                     @endphp
-                    <img src="{{ $profile->profile_image ? asset($profile->profile_image) : asset($defaultImage) }}"
+                    <img src="{{ $profile->profile_image ? \App\Support\ProfileImageUrl::for($profile->profile_image) : asset($defaultImage) }}"
                         id="imagePreview"
                         class="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow">
 

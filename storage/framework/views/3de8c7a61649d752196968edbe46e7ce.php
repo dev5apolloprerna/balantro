@@ -5,7 +5,9 @@
 <?php echo $__env->make('auth.includes.head', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 <body class="font-sans antialiased bg-white dark:bg-black text-gray-900 dark:text-gray-100">
-    <?php echo $__env->make('shared.form_validation', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+    <?php if (! (View::hasSection('field_validation_only'))): ?>
+        <?php echo $__env->make('shared.form_validation', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+    <?php endif; ?>
     <!-- Remove transition classes from body to prevent initial blink -->
     <div class="min-h-screen">
         <main>

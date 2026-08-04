@@ -1,5 +1,5 @@
 @extends('layouts.super_admin')
-
+@section('field_validation_only', true)
 @section('content')
     <div class="lg:col-span-3">
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
@@ -19,7 +19,7 @@
                                     ? 'images/female.png'
                                     : 'images/male.png';
                         @endphp
-                        <img src="{{ isset($profile->profile_image) && $profile->profile_image != '' ? asset($profile->profile_image) : asset($defaultImage) }}"
+                        <img src="{{ isset($profile->profile_image) && $profile->profile_image != '' ? \App\Support\ProfileImageUrl::for($profile->profile_image) : asset($defaultImage) }}"
                             id="imagePreview"
                             class="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow">
 
@@ -32,6 +32,9 @@
                             </label>
                         </div>
                     </div>
+                     @error('profile_image')
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Form Fields -->
@@ -43,6 +46,9 @@
                         <input type="tel" name="name" id="name"
                             value="{{ old('name', auth()->user()->name ?? '') }}" placeholder="Enter Name"
                             class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        @error('name')
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Gender -->
@@ -75,6 +81,9 @@
                             value="{{ old('mobile_no', $profile->mobile_no ?? '') }}" placeholder="9876543210"
                             class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                        @error('mobile_no')
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Whatsapp No -->
@@ -86,6 +95,9 @@
                             value="{{ old('whatsapp_no', $profile->whatsapp_no ?? '') }}" placeholder="9876543210"
                             class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
+                        @error('whatsapp_no')
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Address - Fixed spacing issue -->

@@ -40,6 +40,13 @@ use Illuminate\Support\Facades\Session;
 
 Auth::routes(['register' => true]);
 
+// Uploaded profile images are streamed through Laravel because some IIS hosts
+// deny requests to the physical /profiles directory before Laravel can run.
+Route::get('/media/profile-image', \App\Http\Controllers\ProfileImageController::class)
+    ->middleware('signed')
+    ->name('media.profile-image');
+
+    
 Route::get('/clear-cache', function () {
     Artisan::call('cache:clear');
     Artisan::call('view:clear');

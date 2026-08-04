@@ -245,7 +245,9 @@
 </head>
 
 <body class="font-sans antialiased h-full bg-white dark:bg-black text-gray-900 dark:text-gray-100">
-    @include('shared.form_validation')
+    @unless (View::hasSection('field_validation_only'))
+        @include('shared.form_validation')
+    @endunless
     <canvas id="starfield-canvas"></canvas>
 
     <div class="flex min-h-screen bg-white dark:bg-black" style="position:relative;z-index:1;">
