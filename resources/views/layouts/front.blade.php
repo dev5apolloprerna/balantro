@@ -14,7 +14,7 @@
 
     @include('includes.footer')
     @yield('scripts')
-
+    <script src="{{ asset('js/magic-button.js') }}"></script>
     @include('includes.footer-scripts')
 
 </body>

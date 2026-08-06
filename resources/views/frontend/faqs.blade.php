@@ -494,4 +494,5 @@
         }
     });
 </script>
+
 @endsection

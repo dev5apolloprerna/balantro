@@ -928,4 +928,5 @@
         }
     });
 </script>
+
 @endsection

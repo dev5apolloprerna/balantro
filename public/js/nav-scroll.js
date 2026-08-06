@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // const nav = document.querySelector('nav');
-    const nav = document.getElementById('main-nav');
+    const nav = document.querySelector('nav');
     if (!nav) return;
 
     let lastScrollTop = 0;

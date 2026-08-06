@@ -2,6 +2,7 @@
     :root {
         --sidebar-width: 200px;
         --sidebar-collapsed-width: 72px;
+        --layout-divider-color: rgb(229 231 235);
     }
 
     /* Prevent transitions during initial load */
@@ -19,7 +20,7 @@
         min-width: var(--sidebar-width);
         max-width: var(--sidebar-width);
         width: var(--sidebar-width);
-        border-inline-end: 1px solid rgb(229 231 235);
+        border-inline-end: 0;
         transition: all 0.3s ease;
     }
 
@@ -30,13 +31,15 @@
         width: var(--sidebar-collapsed-width);
     }
 
-    .dark .sidebar {
-        border-inline-end-color: rgb(31 41 55);
+    .dark {
+        --layout-divider-color: rgb(31 41 55);
     }
 
     .main-content {
+        box-sizing: border-box;
         flex-basis: 0;
         min-width: 0;
+        border-inline-start: 1px solid var(--layout-divider-color);
         transition: all 0.3s ease;
     }
 
@@ -54,6 +57,7 @@
             position: fixed;
             z-index: 40;
             height: 100vh;
+            border-inline-end: 1px solid var(--layout-divider-color);
         }
 
         .sidebar.active {
@@ -62,6 +66,7 @@
 
         .main-content {
             margin-left: 0;
+            border-inline-start: 0;
         }
 
         .overlay {
@@ -238,12 +243,6 @@
         text-align: center;
         color: #777 !important;
         font-style: italic;
-    }
-
-    /* Sidebar separation (clean vertical border) */
-    .sidebar {
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
-        /* thin line */
     }
 
     /* Dark mode sidebar background */
