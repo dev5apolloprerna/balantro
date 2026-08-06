@@ -10,8 +10,8 @@
 }
 </style>
 
-<header class="bg-white dark:bg-black shadow-sm border-b border-gray-200 dark:border-gray-800">
-    <div class="flex min-w-0 items-center justify-between gap-2 px-3 py-2 bg-white dark:bg-black">
+<header class="h-[57px] border-b border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-black">
+    <div class="flex h-full min-w-0 items-center justify-between gap-2 bg-white px-3 dark:bg-black">
         <div class="flex min-w-0 items-center">
             <button class="mr-1 shrink-0 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 p-2 rounded-lg sm:mr-4"
                 id="toggle-sidebar">

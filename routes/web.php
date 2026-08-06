@@ -323,7 +323,6 @@ Route::prefix('settings')->middleware(['auth'])->group(function () {
 });
 
 // Profiles routes
-Route::resource('profile', ProfilesController::class)->except(['index']);
 Route::post('profile/pincode-details', [ProfilesController::class, 'fetchPincodeDetails'])->name('profile.pincode-details');
 Route::get('user/profile', [ProfilesController::class, 'userProfileEdit'])->name('profile.userProfileEdit');
 
@@ -337,6 +336,7 @@ Route::get('/profile/documents/download/{type}', [ProfilesController::class, 'do
 Route::get('/change-password', [ProfilesController::class, 'changePassword'])->name('profile.change_password');
 Route::post('/change-password', [ProfilesController::class, 'updatePassword'])->name('profile.update_password');
 
+Route::resource('profile', ProfilesController::class)->except(['index']);
 
 // User devices
 Route::resource('user_devices', UserDevicesController::class)->only(['create']);

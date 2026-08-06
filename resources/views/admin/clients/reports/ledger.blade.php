@@ -2,6 +2,37 @@
 @section('title', 'All Ledger')
 
 @section('content')
+    <style>
+        .ledger-group-summary,
+        .ledger-group-amounts {
+            display: grid;
+            gap: 0.5rem 1rem;
+        }
+
+        .ledger-group-amounts {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: 100%;
+        }
+
+        .ledger-group-amount {
+            white-space: nowrap;
+        }
+
+        @media (min-width: 1024px) {
+            .ledger-group-summary {
+                grid-template-columns: minmax(15rem, 1fr) minmax(36rem, 44rem);
+                align-items: center;
+            }
+
+            .ledger-group-amounts {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .ledger-group-amount {
+                text-align: right;
+            }
+        }
+    </style>
     @php
         $rows = collect($rows ?? ($data['rows'] ?? ($resp['data']['rows'] ?? [])));
         $meta = $resp['meta'] ?? [];
@@ -411,7 +442,7 @@
                             $gCl = $filteredList->sum(fn($r) => $toFloat($r->decClBl ?? 0));
                         @endphp
                         <button type="button"
-                            class="ledger-group-toggle w-full px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex flex-col gap-2 text-left transition hover:bg-cyan-50/70 dark:hover:bg-cyan-950/30 md:flex-row md:items-center md:justify-between"
+                            class="ledger-group-toggle ledger-group-summary w-full px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-left transition hover:bg-cyan-50/70 dark:hover:bg-cyan-950/30"
                             aria-expanded="false">
                             <span class="flex items-center gap-3 text-sm font-semibold text-black-700 dark:text-gray-200">
                                 <i class="fa-solid fa-chevron-right ledger-group-icon text-xs text-cyan-600 transition-transform duration-200 dark:text-cyan-300"></i>
@@ -420,11 +451,11 @@
                                     {{ $filteredList->count() }} ledgers
                                 </span>
                             </span>
-                            <span class="flex flex-wrap gap-x-4 gap-y-1 text-xs md:text-sm text-black-600 dark:text-gray-300">
-                                <span>Opening: <strong>{{ abs($gOp) > 0 ? $inr(abs($gOp)) . ' ' . ($gOp < 0 ? 'Dr' : 'Cr') : '0.00' }}</strong></span>
-                                <span>Debit: <strong>{{ $inr($gDr) }}</strong></span>
-                                <span>Credit: <strong>{{ $inr($gCr) }}</strong></span>
-                                <span>Closing: <strong>{{ abs($gCl) > 0 ? $inr(abs($gCl)) . ' ' . ($gCl < 0 ? 'Dr' : 'Cr') : '0.00' }}</strong></span>
+                            <span class="ledger-group-amounts text-xs md:text-sm text-black-600 dark:text-gray-300">
+                                <span class="ledger-group-amount">Opening: <strong>{{ abs($gOp) > 0 ? $inr(abs($gOp)) . ' ' . ($gOp < 0 ? 'Dr' : 'Cr') : '0.00' }}</strong></span>
+                                <span class="ledger-group-amount">Debit: <strong>{{ $inr($gDr) }}</strong></span>
+                                <span class="ledger-group-amount">Credit: <strong>{{ $inr($gCr) }}</strong></span>
+                                <span class="ledger-group-amount">Closing: <strong>{{ abs($gCl) > 0 ? $inr(abs($gCl)) . ' ' . ($gCl < 0 ? 'Dr' : 'Cr') : '0.00' }}</strong></span>
                             </span>
                         </button>
 

@@ -170,7 +170,14 @@ class TransactionProcessingController extends Controller
     public function processing_sales()
     {
         $iPartyId = session('iPartyId');
-        $uploads = BulkSalesUpload::where('iPartyId', $iPartyId)->where('saved', '>', 0)->latest()->get();
+        $uploads = BulkSalesUpload::where('iPartyId', $iPartyId)
+            ->whereIn('id', function ($query) use ($iPartyId) {
+                $query->select('upload_id')
+                    ->from('sales_transactions')
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', '<>', 'Synced');
+            })
+            ->latest()->get();
         $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $years = DB::table('YearMaster')
@@ -255,7 +262,12 @@ class TransactionProcessingController extends Controller
     {
         $iPartyId = session('iPartyId');
         $uploads = BulkPurchaseUpload::where('iPartyId', $iPartyId)
-            ->where('saved','>',0)
+            ->whereIn('id', function ($query) use ($iPartyId) {
+                $query->select('upload_id')
+                    ->from('purchase_transactions')
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', '<>', 'Synced');
+            })
             ->latest()
             ->get();
         
@@ -360,7 +372,13 @@ class TransactionProcessingController extends Controller
     {
         $iPartyId = session('iPartyId');
         $uploads = BulkBankUpload::where('iPartyId', $iPartyId)
-            ->where('saved', '>', 0)
+            // ->where('saved', '>', 0)
+            ->whereIn('id', function ($query) use ($iPartyId) {
+                $query->select('upload_id')
+                    ->from('bank_transactions')
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', '<>', 'Synced');
+            })
             ->latest()
             ->get();
         $banks = DB::table('LedgerMaster')
@@ -635,7 +653,14 @@ class TransactionProcessingController extends Controller
     public function processing_credit_note()
     {
         $iPartyId = session('iPartyId');
-        $uploads = BulkCreditNoteUpload::where('iPartyId', $iPartyId)->where('saved', '>', 0)->latest()->get();
+        $uploads = BulkCreditNoteUpload::where('iPartyId', $iPartyId)
+            ->whereIn('id', function ($query) use ($iPartyId) {
+                $query->select('upload_id')
+                    ->from('credit_note_transactions')
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', '<>', 'Synced');
+            })
+            ->latest()->get();
         $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
@@ -765,7 +790,13 @@ class TransactionProcessingController extends Controller
     {
         $iPartyId = session('iPartyId');
         $uploads = BulkDebitNoteUpload::where('iPartyId', $iPartyId)
-            ->where('saved','>',0)
+            // ->where('saved','>',0)
+            ->whereIn('id', function ($query) use ($iPartyId) {
+                $query->select('upload_id')
+                    ->from('debit_note_transactions')
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', '<>', 'Synced');
+            })
             ->latest()
             ->get();
         
@@ -923,7 +954,13 @@ class TransactionProcessingController extends Controller
     {
         $iPartyId = session('iPartyId');
         $uploads = BulkJournalUpload::where('iPartyId', $iPartyId)
-            ->where('saved','>',0)
+            // ->where('saved','>',0)
+            ->whereIn('id', function ($query) use ($iPartyId) {
+                $query->select('upload_id')
+                    ->from('journal_transactions')
+                    ->where('iPartyId', $iPartyId)
+                    ->where('status', '<>', 'Synced');
+            })
             ->latest()
             ->get();
         

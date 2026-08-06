@@ -68,7 +68,7 @@
     <div class="h-full flex flex-col bg-transparent dark:bg-black relative z-10">
         <!-- Logo -->
         <div
-            class="flex items-center justify-between px-3 py-[13px] border-b border-gray-200 dark:border-gray-800 bg-transparent">
+            class="flex h-[57px] items-center justify-between border-b border-gray-200 bg-transparent px-3 dark:border-gray-800">
             <a href="<?php echo e(route('home')); ?>" class="flex items-center">
                 <!-- Full logo (shown in expanded mode) -->
                 <img src="<?php echo e(asset('assets/images/light-logo.svg')); ?>" alt="Balantro"
