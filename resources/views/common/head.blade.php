@@ -1,4 +1,9 @@
 <style>
+    :root {
+        --sidebar-width: 200px;
+        --sidebar-collapsed-width: 72px;
+    }
+
     /* Prevent transitions during initial load */
     .no-transition * {
         transition: none !important;
@@ -9,15 +14,19 @@
     }
 
     .sidebar {
-        width: 260px;
+        box-sizing: border-box;
+        flex: 0 0 var(--sidebar-width);
+        width: var(--sidebar-width);
         transition: all 0.3s ease;
     }
 
     .sidebar.collapsed {
-        width: 80px;
+        flex-basis: var(--sidebar-collapsed-width);
+        width: var(--sidebar-collapsed-width);
     }
 
     .main-content {
+        min-width: 0;
         transition: all 0.3s ease;
     }
 

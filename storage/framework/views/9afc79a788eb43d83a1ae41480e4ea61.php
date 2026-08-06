@@ -224,6 +224,7 @@
         }
 
         html.sidebar-precollapsed #sidebar {
+            flex-basis: 72px !important;
             width: 72px !important;
             min-width: 72px !important;
         }

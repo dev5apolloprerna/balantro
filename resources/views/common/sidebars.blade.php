@@ -15,21 +15,7 @@
         position: relative;
         z-index: 1;
     }
-    /* .sidebar{
-        width: 200px;
-        background: #000 !important;
-    } */
-    .sidebar{
-        flex-shrink: 0;
-        width: 200px;
-        transition: width .25s ease;
-        overflow: visible !important;
-    }
-
-    .sidebar.collapsed{
-        width: 72px !important;
-    }
-
+    
     /* Light theme */
     html:not(.dark) .sidebar {
         background: #ffffff !important;
@@ -73,7 +59,7 @@
 <aside class="sidebar theme-transition 
     bg-white/80 dark:bg-black
     backdrop-blur-xl 
-    border-r border-white/10
+    border-r border-gray-200 dark:border-gray-800
     fixed lg:relative z-50
     relative "
     id="sidebar">
