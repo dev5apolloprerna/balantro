@@ -92,17 +92,27 @@
     <div
         class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y text-sm">
+            <table class="w-full table-fixed divide-y text-xs xl:text-sm">
+                <colgroup>
+                    <col class="w-[11%]">
+                    <col class="w-[14%]">
+                    <col class="w-[11%]">
+                    <col class="w-[11%]">
+                    <col class="w-[14%]">
+                    <col class="w-[10%]">
+                    <col class="w-[7%]">
+                    <col class="w-[22%]">
+                </colgroup>
                 <thead class="bg-neutral-50/80 dark:bg-neutral-800/60">
                     <tr class="text-left font-semibold text-neutral-700 dark:text-neutral-200">
-                        <th class="min-w-[160px] px-2 py-1">{{ __('Name') }}</th>
-                        <th class="min-w-[180px] px-2 py-1">{{ __('Email') }}</th>
-                        <th class="min-w-[180px] px-2 py-1">{{ __('Managers') }}</th>
-                        <th class="min-w-[180px] px-2 py-1">{{ __('Supervisors') }}</th>
-                        <th class="min-w-[200px] px-2 py-1">{{ __('Data Entry Operators') }}</th>
-                        <th class="min-w-[160px] px-2 py-1">{{ __('Groups') }}</th>
-                        <th class="min-w-[100px] px-2 py-1">{{ __('Status') }}</th>
-                        <th class="min-w-[120px] px-2 py-1 text-center">{{ __('Actions') }}</th>
+                        <th class="px-2 py-1">{{ __('Name') }}</th>
+                        <th class="px-2 py-1">{{ __('Email') }}</th>
+                        <th class="px-2 py-1">{{ __('Managers') }}</th>
+                        <th class="px-2 py-1">{{ __('Supervisors') }}</th>
+                        <th class="px-2 py-1 leading-tight">{{ __('Data Entry Operators') }}</th>
+                        <th class="px-2 py-1">{{ __('Groups') }}</th>
+                        <th class="px-2 py-1">{{ __('Status') }}</th>
+                        <th class="px-2 py-1 text-center">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">

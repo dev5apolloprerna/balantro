@@ -4,15 +4,16 @@
     data-client-pan="{{ $client->profile?->pan_no }}" data-client-gst="{{ $client->profile?->gst_no }}"
     data-client-address="{{ $client->profile?->address }}"
     data-client-business-type="{{ $client->profile?->business_type }}">
-    <td class="px-2 py-1 font-medium">
+    <td class="truncate px-2 py-1 font-medium" title="{{ $client->name }}">
         {{ $client->name }}
     </td>
 
-    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
+    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300" title="{{ $client->email }}">
         {{ $client->email }}
     </td>
 
-    <td class="px-2 py-1  text-neutral-700 dark:text-neutral-300">
+    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
+        title="{{ $client->managers->pluck('name')->join(', ') }}">
         @if ($managers->count())
             {{ $client->managers->pluck('name')->join(', ') ?: '-' }}
         @else
@@ -23,7 +24,8 @@
         @endif
     </td>
 
-    <td class="px-2 py-1  text-neutral-700 dark:text-neutral-300">
+    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
+        title="{{ $client->supervisors->pluck('name')->join(', ') }}">
         @if ($supervisors->count())
             {{ $client->supervisors->pluck('name')->join(', ') ?: '-' }}
         @else
@@ -34,7 +36,8 @@
         @endif
     </td>
 
-    <td class="px-2 py-1  text-neutral-700 dark:text-neutral-300">
+    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
+        title="{{ $client->dataEntryOperators->pluck('name')->join(', ') }}">
         @if ($dataEntryOperators->count())
             {{ $client->dataEntryOperators->pluck('name')->join(', ') ?: '-' }}
         @else
@@ -119,7 +122,7 @@
         @endif
     </td>
     <td class="px-2 py-1 align-middle">
-        <div class="flex items-center justify-center gap-2">
+        <div class="flex flex-wrap items-center justify-center gap-1">
             @if ($user->role === \App\Models\User::ROLES['super_admin'])
                 @can('clients.assign-groups')
                     <button type="button"
