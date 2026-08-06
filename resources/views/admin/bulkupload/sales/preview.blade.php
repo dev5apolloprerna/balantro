@@ -1461,9 +1461,112 @@
     //     // 🔥 Then update totals
     //     recalcTotals();
     // });
+    
+    function validateSalesInvoiceEdit() {
+        const requiredFields = [
+            ['#edit_party', 'Please select Party Name'],
+            ['#edit_gst', 'Please enter GSTIN / UIN'],
+            ['#edit_address', 'Please enter Address'],
+            ['#edit_pincode', 'Please enter Pincode'],
+            ['#edit_city', 'Please enter City'],
+            ['#edit_invoice', 'Please enter Invoice Number'],
+            ['#edit_date', 'Please select Invoice Date'],
+            ['#edit_place', 'Please select Place Of Supply']
+        ];
+
+        if (!$('#no_item_section').is(':visible')) {
+            requiredFields.splice(5, 0, ['#noitem_sales_ledger', 'Please select Sales Ledger']);
+        }
+
+        for (const [selector, message] of requiredFields) {
+            const field = $(selector);
+            if (!String(field.val() || '').trim()) {
+                showToast(message, 'error');
+                field.trigger('focus');
+                return false;
+            }
+        }
+
+        if (!$('#no_item_section').is(':visible')) {
+            const rows = $('#editItemsBody tr');
+            if (!rows.length) {
+                showToast('Please add at least one item row', 'error');
+                return false;
+            }
+
+            let itemError = null;
+            rows.each(function(index) {
+                const row = $(this);
+                const checks = [
+                    ['.item-name', `Please select Item / Particulars in row ${index + 1}`],
+                    ['.item-hsn', `Please enter HSN Code in row ${index + 1}`],
+                    ['.item-gst_rate', `Please select GST % in row ${index + 1}`],
+                    ['.item-qty', `Please enter Quantity in row ${index + 1}`],
+                    ['.item-unit', `Please enter Unit in row ${index + 1}`],
+                    ['.item-rate', `Please enter Rate in row ${index + 1}`]
+                ];
+                for (const [selector, message] of checks) {
+                    const field = row.find(selector);
+                    if (!String(field.val() || '').trim()) {
+                        itemError = { field, message };
+                        return false;
+                    }
+                }
+
+                const hsnField = row.find('.item-hsn');
+                const hsn = String(hsnField.val() || '').trim();
+                if (hsn && !/^\d{4}(?:\d{2})?(?:\d{2})?$/.test(hsn)) {
+                    itemError = {
+                        field: hsnField,
+                        message: `HSN Code in row ${index + 1} must contain exactly 4, 6, or 8 digits`
+                    };
+                    return false;
+                }
+            });
+
+            if (itemError) {
+                showToast(itemError.message, 'error');
+                itemError.field.trigger('focus');
+                return false;
+            }
+        } else {
+            const rows = $('#noItemBody tr');
+            if (!rows.length) {
+                showToast('Please add at least one sales ledger row', 'error');
+                return false;
+            }
+
+            let rowError = null;
+            rows.each(function(index) {
+                const row = $(this);
+                const checks = [
+                    ['.noitem-ledger', `Please select Sales Ledger in row ${index + 1}`],
+                    ['.noitem-gst', `Please select GST % in row ${index + 1}`],
+                    ['.noitem-amount', `Please enter Amount in row ${index + 1}`]
+                ];
+                for (const [selector, message] of checks) {
+                    const field = row.find(selector);
+                    if (!String(field.val() || '').trim()) {
+                        rowError = { field, message };
+                        return false;
+                    }
+                }
+            });
+
+            if (rowError) {
+                showToast(rowError.message, 'error');
+                rowError.field.trigger('focus');
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     // ── Save (Update) ────────────────────────────────────────────────────
     $('#updateRow').click(function() {
+        if (!validateSalesInvoiceEdit()) return;
+
         let items = [];
         if ($('#gst_calc_mode').val() === 'standard') {
 
@@ -1617,7 +1720,10 @@
                 }
             },
             error: (xhr) => {
-                const message = xhr.responseJSON?.message || 'Update failed';
+                const errors = xhr.responseJSON?.errors;
+                const message = errors
+                    ? Object.values(errors).flat()[0]
+                    : (xhr.responseJSON?.message || 'Unable to update the invoice. Please try again.');
                 showToast(message, 'error');
             }
         });
@@ -1721,7 +1827,7 @@
                     </select>
                 </td>
 
-                <td><input type="text" class="item-hsn" value="${item.hsn||''}"></td>
+                <td><input type="text" class="item-hsn" value="${item.hsn||''}" inputmode="numeric" maxlength="8" pattern="\\d{4}|\\d{6}|\\d{8}" title="HSN Code must contain exactly 4, 6, or 8 digits"></td>
                 <td><select class="item-gst_rate receipt-input">${buildGstRateOptions(item.gst_rate || 0)}</select></td>
                 <td><input type="number" class="item-qty" value="${item.quantity||''}"></td>
                 <td><input type="text" class="item-unit" value="${item.unit||'NOS'}"></td>
