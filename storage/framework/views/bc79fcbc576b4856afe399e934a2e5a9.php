@@ -16,16 +16,26 @@
     .sidebar {
         box-sizing: border-box;
         flex: 0 0 var(--sidebar-width);
+        min-width: var(--sidebar-width);
+        max-width: var(--sidebar-width);
         width: var(--sidebar-width);
+        border-inline-end: 1px solid rgb(229 231 235);
         transition: all 0.3s ease;
     }
 
     .sidebar.collapsed {
         flex-basis: var(--sidebar-collapsed-width);
+        min-width: var(--sidebar-collapsed-width);
+        max-width: var(--sidebar-collapsed-width);
         width: var(--sidebar-collapsed-width);
     }
 
+    .dark .sidebar {
+        border-inline-end-color: rgb(31 41 55);
+    }
+
     .main-content {
+        flex-basis: 0;
         min-width: 0;
         transition: all 0.3s ease;
     }

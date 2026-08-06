@@ -59,7 +59,6 @@
 <aside class="sidebar theme-transition 
     bg-white/80 dark:bg-black
     backdrop-blur-xl 
-    border-r border-gray-200 dark:border-gray-800
     fixed lg:relative z-50
     relative "
     id="sidebar">
