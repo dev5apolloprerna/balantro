@@ -2605,7 +2605,7 @@
         }
 
         function normalizeName(value) {
-            return String(name || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
+            return String(value || '').replace(/["']/g, '').replace(/\s+/g, '').trim().toLowerCase();
         }
 
         function findPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
@@ -2627,9 +2627,7 @@
         function applyPartyLedgerDetails(ledgerValue = '', ledgerText = '') {
             const details = findPartyLedgerDetails(ledgerValue, ledgerText);
             if (!details) {
-                if (!ledgerValue && !ledgerText) {
-                    clearPartyLedgerDetails();
-                }
+                clearPartyLedgerDetails();
                 return;
             }
 

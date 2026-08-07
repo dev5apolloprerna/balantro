@@ -740,6 +740,48 @@ function removeAutoRow(btn) {
 // UPDATE JOURNAL
 // =====================
 function updateJournal() {
+    if (!String($('#edit_journal_no').val() || '').trim()) {
+        showToast('Please enter Journal Number', 'error');
+        $('#edit_journal_no').trigger('focus');
+        return;
+    }
+    if (!$('#edit_date').val()) {
+        showToast('Please select Journal Date', 'error');
+        $('#edit_date').trigger('focus');
+        return;
+    }
+
+    let rowError = null;
+    if (!$('#itemsBody tr').length) {
+        showToast('Please add journal ledger rows', 'error');
+        return;
+    }
+    $('#itemsBody tr').each(function(index) {
+        const row = $(this);
+        if (!row.find('.ledger').val()) {
+            rowError = { field: row.find('.ledger'), message: `Please select Ledger in row ${index + 1}` };
+            return false;
+        }
+        const debit = parseFloat(row.find('.debit').val()) || 0;
+        const credit = parseFloat(row.find('.credit').val()) || 0;
+        if (debit <= 0 && credit <= 0) {
+            rowError = { field: row.find('.debit'), message: `Debit or Credit in row ${index + 1} must be greater than 0` };
+            return false;
+        }
+    });
+    if (rowError) {
+        showToast(rowError.message, 'error');
+        rowError.field.trigger('focus');
+        return;
+    }
+
+    const totalDr = parseFloat($('#totalDr').text()) || 0;
+    const totalCr = parseFloat($('#totalCr').text()) || 0;
+    if (totalDr <= 0 || totalCr <= 0 || Math.abs(totalDr - totalCr) > 0.009) {
+        showToast('Debit & Credit must be equal and greater than 0', 'error');
+        return;
+    }
+
     let items = [];
     $('#itemsBody tr').each(function() {
         items.push({
@@ -777,6 +819,10 @@ function closeModal() {
 
 function saveSelected() {
     let selected = getSelectedJournalRowIds();
+    if (!selected.length) {
+        showToast('Please select at least one journal entry', 'error');
+        return;
+    }
     $.post("{{ route('journal.save') }}", {
         _token: '{{ csrf_token() }}',
         selected: selected
@@ -788,6 +834,10 @@ function saveSelected() {
 
 function submitSelected() {
     let selected = getSelectedJournalRowIds();
+    if (!selected.length) {
+        showToast('Please select at least one journal entry', 'error');
+        return;
+    }
     if (!selected.length) {
         showToast('Please select at least one journal row before submitting.','success');
         return;

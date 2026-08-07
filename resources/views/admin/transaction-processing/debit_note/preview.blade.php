@@ -2198,7 +2198,10 @@
     });
 
     // ── Save (Update) ────────────────────────────────────────────────────
+    @include('admin.bulkupload.shared.invoiceFrontendValidation')
+
     $('#updateRow').click(function () {
+        if (!validateBulkInvoiceFrontend({ headerLedger: '#noitem_purchase_ledger', ledgerName: 'Purchase Ledger', documentName: 'Debit Note', itemSelector: '.item-name', gstSelector: '.item-gst_rate', qtySelector: '.item-qty', unitSelector: '.item-unit', rateSelector: '.item-rate', amountSelector: '.item-amount', hsnSelector: '.item-hsn' })) return;
         let items = [];
 
         if ($('#no_item_section').is(':visible')) {
@@ -2431,7 +2434,7 @@
                     ${buildItemOptions(item.item_name || '')}
                 </select>
             </td>
-            <td style="width:80px;"><input type="text" class="item-hsn" value="${item.hsn_code || item.hsn || ''}" placeholder="HSN" style="text-align:center;"></td>
+            <td style="width:80px;"><input type="text" class="item-hsn" inputmode="numeric" maxlength="8" pattern="\\d{4}|\\d{6}|\\d{8}" title="HSN Code must contain exactly 4, 6, or 8 digits" value="${item.hsn_code || item.hsn || ''}" placeholder="HSN" style="text-align:center;"></td>
             <td style="width:65px;"><select class="item-gst_rate" style="text-align:right;">${buildGstRateOptions(item.gst_rate || 0)}</select></td>
             <td style="width:65px;"><input type="number" class="item-qty" value="${item.quantity||''}" placeholder="0" step="any" style="text-align:right;"></td>
             <td style="width:55px;"><input type="text" class="item-unit" value="${item.unit||'NOS'}" style="text-align:center;"></td>
