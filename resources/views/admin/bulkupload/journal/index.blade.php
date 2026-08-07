@@ -1047,10 +1047,45 @@
 
     function saveJournal() {
 
+        if (!String($('#journal_no').val() || '').trim()) {
+            showToast('Please enter Journal Number', 'error');
+            $('#journal_no').trigger('focus');
+            return;
+        }
+        if (!$('#journal_date').val()) {
+            showToast('Please select Journal Date', 'error');
+            $('#journal_date').trigger('focus');
+            return;
+        }
+
+        let rowError = null;
+        if (!$('#itemsBody tr').length) {
+            showToast('Please add journal ledger rows', 'error');
+            return;
+        }
+        $('#itemsBody tr').each(function(index) {
+            const row = $(this);
+            if (!row.find('.ledger').val()) {
+                rowError = { field: row.find('.ledger'), message: `Please select Ledger in row ${index + 1}` };
+                return false;
+            }
+            const debit = parseFloat(row.find('.debit').val()) || 0;
+            const credit = parseFloat(row.find('.credit').val()) || 0;
+            if (debit <= 0 && credit <= 0) {
+                rowError = { field: row.find('.debit'), message: `Debit or Credit in row ${index + 1} must be greater than 0` };
+                return false;
+            }
+        });
+        if (rowError) {
+            showToast(rowError.message, 'error');
+            rowError.field.trigger('focus');
+            return;
+        }
+
         let totalDr = parseFloat($('#totalDr').text());
         let totalCr = parseFloat($('#totalCr').text());
 
-        if (totalDr !== totalCr) {
+        if (totalDr <= 0 || totalCr <= 0 || Math.abs(totalDr - totalCr) > 0.009) { // if (totalDr !== totalCr) {
             showToast('Debit & Credit must be equal','error');
             return;
         }

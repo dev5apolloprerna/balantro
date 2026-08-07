@@ -2002,7 +2002,7 @@
             let row = `
             <tr>
                 <td><input class="item border p-1"></td>
-                <td><input class="gst border p-1"></td>
+                <td><select class="gst border p-1">${buildGstRateOptions(0)}</select></td>
                 <td><input class="qty border p-1"></td>
                 <td><input class="rate border p-1"></td>
                 <td><input class="amount border p-1" readonly></td>
@@ -2011,7 +2011,7 @@
             $('#purchaseItems').append(row);
         }
 
-        $(document).on('input', '.qty, .rate, .gst', function() {
+        $(document).on('input change', '.qty, .rate, .gst', function() {
 
             let total = 0;
             let cgst = 0;
@@ -2040,7 +2040,10 @@
             $('#purchaseTotal').text((total + cgst + sgst).toFixed(2));
         });
 
+        @include('admin.bulkupload.shared.invoiceFrontendValidation')
+
         function savePurchase() {
+            if (!validateBulkInvoiceFrontend({ headerLedger: '#noitem_purcashe_ledger', ledgerName: 'Purchase Ledger', documentName: 'Debit Note' })) return;
             let btn = $('#saveRow'); // ✅ correct button select
 
             // 🚫 Prevent multiple click
@@ -2267,8 +2270,8 @@
                         ${buildItemOptions(data.item_name || '')}
                     </select>
                     </td>
-                    <td><input type="text" class="hsn" value="${data.hsn || ''}"></td>
-                    <td><input type="number" class="gst" value="${data.gst || 0}"></td>
+                    <td><input type="text" class="hsn" value="${data.hsn || ''}" inputmode="numeric" maxlength="8" pattern="\\d{4}|\\d{6}|\\d{8}" title="HSN Code must contain exactly 4, 6, or 8 digits"></td>
+                    <td><select class="gst receipt-input">${buildGstRateOptions(data.gst || 0)}</select></td>
                     <td><input type="number" class="qty" value="${data.qty || 1}"></td>
                     <td><input type="text" class="unit" value="${data.unit || 'NOS'}"></td>
                     <td><input type="number" class="rate" value="${data.rate || 0}"></td>
@@ -2303,7 +2306,7 @@
 
         });
 
-        $(document).on('input', '.qty, .rate, .gst', function() {
+        $(document).on('input change', '.qty, .rate, .gst', function() {
 
             let row = $(this).closest('tr');
 

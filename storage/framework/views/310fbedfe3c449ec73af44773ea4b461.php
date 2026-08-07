@@ -2452,7 +2452,6 @@
                     const row = $(this);
                     const checks = [
                         ['.item_name', `Please select Item / Particulars in row ${index + 1}`],
-                        ['.hsn', `Please enter HSN Code in row ${index + 1}`],
                         ['.gst', `Please select GST % in row ${index + 1}`],
                         ['.qty', `Please enter Quantity in row ${index + 1}`],
                         ['.unit', `Please enter Unit in row ${index + 1}`],
@@ -2466,17 +2465,23 @@
                         }
                     }
 
+                    const amountField = row.find('.amount');
+                    if ((parseFloat(amountField.val()) || 0) <= 0) {
+                        itemError = {
+                            field: row.find('.rate'),
+                            message: `Amount in row ${index + 1} must be greater than 0`
+                        };
+                        return false;
+                    }
+
                     const hsnField = row.find('.hsn');
                     const hsn = String(hsnField.val() || '').trim();
-                    if(hsn != '') {
-                        alert(hsn);
-                        if (hsn && !/^\d{4}(?:\d{2})?(?:\d{2})?$/.test(hsn)) {
-                            itemError = {
-                                field: hsnField,
-                                message: `HSN Code in row ${index + 1} must contain exactly 4, 6, or 8 digits`
-                            };
-                            return false;
-                        }
+                    if (hsn && !/^\d{4}(?:\d{2})?(?:\d{2})?$/.test(hsn)) {
+                        itemError = {
+                            field: hsnField,
+                            message: `HSN Code in row ${index + 1} must contain exactly 4, 6, or 8 digits`
+                        };
+                        return false;
                     }
                 });
 
@@ -2506,6 +2511,15 @@
                             rowError = { field, message };
                             return false;
                         }
+                    }
+
+                    const amountField = row.find('.noitem-amount');
+                    if ((parseFloat(amountField.val()) || 0) <= 0) {
+                        rowError = {
+                            field: amountField,
+                            message: `Amount in row ${index + 1} must be greater than 0`
+                        };
+                        return false;
                     }
                 });
 

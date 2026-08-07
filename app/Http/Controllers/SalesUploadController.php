@@ -1382,9 +1382,9 @@ class SalesUploadController extends Controller
                     'cgst_amount' => $item['cgst'] ?? 0,
                     'sgst_amount' => $item['sgst'] ?? 0,
                     'igst_amount' => $item['igst'] ?? 0,
-                    'cgst_ledger_id' => $itemMapping['cgst_id'] ?? $fallbackMapping['cgst_id'] ?? null,
-                    'sgst_ledger_id' => $itemMapping['sgst_id'] ?? $fallbackMapping['sgst_id'] ?? null,
-                    'igst_ledger_id' => $itemMapping['igst_id'] ?? $fallbackMapping['igst_id'] ?? null,
+                    'cgst_ledger_id' => $itemMapping['cgst_id'] ?? $fallbackMapping['cgst_id'] ?? $transaction->cgst_id,
+                    'sgst_ledger_id' => $itemMapping['sgst_id'] ?? $fallbackMapping['sgst_id'] ?? $transaction->sgst_id,
+                    'igst_ledger_id' => $itemMapping['igst_id'] ?? $fallbackMapping['igst_id'] ?? $transaction->igst_id,
                 ];
             })->all();
         }
@@ -1410,9 +1410,9 @@ class SalesUploadController extends Controller
                 'cgst_amount' => $item->cgst,
                 'sgst_amount' => $item->sgst,
                 'igst_amount' => $item->igst,
-                'cgst_ledger_id' => $itemMapping['cgst_id'],
-                'sgst_ledger_id' => $itemMapping['sgst_id'],
-                'igst_ledger_id' => $itemMapping['igst_id'],
+                'cgst_ledger_id' => $itemMapping['cgst_id'] ?? $transaction->cgst_id,
+                'sgst_ledger_id' => $itemMapping['sgst_id'] ?? $transaction->sgst_id,
+                'igst_ledger_id' => $itemMapping['igst_id'] ?? $transaction->igst_id,
             ]], (float) $item->igst > 0)) {
                 return false;
             }

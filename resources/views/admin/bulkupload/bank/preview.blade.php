@@ -1465,8 +1465,13 @@
 
     $('#saveBtn').click(function() {
         let missingLedgerRows = [];
-
-        $('#bankForm input[name="selected[]"]:checked').each(function() {
+        const selectedRows = $('#bankForm input[name="selected[]"]:checked');
+        
+        if (!selectedRows.length) {
+            showToast('Please select at least one bank transaction', 'error');
+            return;
+        }
+        selectedRows.each(function() {
             let row = $(this).closest('tr');
             let ledgerSelect = row.find('select[name^="ledger"]');
 
@@ -1734,6 +1739,27 @@
     });
 
     $('#updateBtn').click(function() {
+        const requiredFields = [
+            ['#edit_txn_date', 'Please select Transaction Date'],
+            ['#edit_value_date', 'Please select Value Date'],
+            ['#edit_type', 'Please select Transaction Type'],
+            ['#edit_ledger', 'Please select Ledger'],
+            ['#edit_amount', 'Please enter Amount']
+        ];
+        for (const [selector, message] of requiredFields) {
+            const field = $(selector);
+            if (!String(field.val() || '').trim()) {
+                showToast(message, 'error');
+                field.trigger('focus');
+                return;
+            }
+        }
+        if ((parseFloat($('#edit_amount').val()) || 0) <= 0) {
+            showToast('Amount must be greater than 0', 'error');
+            $('#edit_amount').trigger('focus');
+            return;
+        }
+        
         $.ajax({
             url: "{{ route('bank.update') }}",
             type: "POST",
