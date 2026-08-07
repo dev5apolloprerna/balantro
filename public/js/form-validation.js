@@ -48,6 +48,22 @@
         return field;
     }
 
+    function syncConfirmationValidity(form) {
+        form.querySelectorAll('[name$="_confirmation"]').forEach((confirmation) => {
+            if (!isValidatableField(confirmation)) return;
+
+            const sourceName = confirmation.name.slice(0, -"_confirmation".length);
+            const source = Array.from(form.elements).find((field) => field.name === sourceName);
+            if (!source) return;
+
+            confirmation.setCustomValidity(
+                confirmation.value && confirmation.value !== source.value
+                    ? "This value must match."
+                    : ""
+            );
+        });
+    }
+
     function showFieldError(field, message) {
         field = validationAnchor(field);
         clearField(field);
@@ -108,6 +124,7 @@
         const form = event.target;
         if (!(form instanceof HTMLFormElement) || form.noValidate || event.submitter?.formNoValidate) return;
 
+        syncConfirmationValidity(form);
         form.querySelectorAll(`.${invalidClass}`).forEach(clearField);
         form.querySelectorAll(`.${errorClass}`).forEach((error) => error.remove());
 
@@ -141,7 +158,10 @@
 
     function clearOnInput(event) {
         const field = event.target;
-        if (!isValidatableField(field) || !field.validity.valid) return;
+        if (!isValidatableField(field)) return;
+
+        if (field.form) syncConfirmationValidity(field.form);
+        if (!field.validity.valid) return;
 
         const anchor = validationAnchor(field);
         if (anchor.classList.contains(invalidClass)) clearField(anchor);

@@ -72,5 +72,19 @@ class SystemFormValidationTest extends TestCase
         $this->assertStringContainsString('field.type === "radio"', $script);
         $this->assertStringContainsString('form.querySelectorAll(`.${errorClass}`).forEach', $script);
         $this->assertStringContainsString('scrollIntoView({ behavior: "smooth", block: "center" })', $script);
+        $this->assertStringContainsString('syncConfirmationValidity(form)', $script);
+        $this->assertStringContainsString('confirmation.setCustomValidity(', $script);
+    }
+
+    public function test_password_recovery_forms_use_system_frontend_validation(): void
+    {
+        $reset = file_get_contents(dirname(__DIR__, 2).'/resources/views/auth/passwords/reset.blade.php');
+        $forgot = file_get_contents(dirname(__DIR__, 2).'/resources/views/auth/passwords/email.blade.php');
+
+        $this->assertStringContainsString("@extends('auth.layouts.app')", $reset);
+        $this->assertStringNotContainsString('novalidate', $reset);
+        $this->assertStringNotContainsString('novalidate', $forgot);
+        $this->assertStringContainsString('name="password" required minlength="8"', $reset);
+        $this->assertStringContainsString('name="password_confirmation" required minlength="8"', $reset);
     }
 }

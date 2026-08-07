@@ -94,7 +94,7 @@ section {
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('password.email') }}" novalidate>
+                <form method="POST" action="{{ route('password.email') }}">
                     
                     @csrf
 

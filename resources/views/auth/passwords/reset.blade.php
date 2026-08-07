@@ -1,4 +1,4 @@
-@extends('layouts.mailer')
+@extends('auth.layouts.app')
 
 @section('content')
     <section class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-10 sm:py-14">
@@ -30,7 +30,7 @@
             <div
                 class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-xl backdrop-blur supports-backdrop-blur:backdrop-blur">
                 <div class="p-5 sm:p-6">
-                    <form method="POST" action="{{ route('password.update') }}" x-data="{ sh1: false, sh2: false }" novalidate>
+                    <form method="POST" action="{{ route('password.update') }}" x-data="{ sh1: false, sh2: false }">
                         @csrf
                         <input type="hidden" name="token" value="{{ $token }}">
 
@@ -67,7 +67,7 @@
                                     class="pointer-events-none absolute inset-y-0 start-3 flex items-center text-neutral-500 dark:text-neutral-300">
                                     <iconify-icon icon="heroicons:key-20-solid" class="h-5 w-5"></iconify-icon>
                                 </span>
-                                <input :type="sh1 ? 'text' : 'password'" id="password" name="password" required
+                                <input :type="sh1 ? 'text' : 'password'" id="password" name="password" required minlength="8"
                                     autocomplete="new-password" placeholder="New password" @class([
                                         'block w-full rounded-lg ps-10 pe-12 py-3.5',
                                         'bg-white dark:bg-gray-800',
@@ -103,7 +103,7 @@
                                     <iconify-icon icon="heroicons:check-badge-20-solid" class="h-5 w-5"></iconify-icon>
                                 </span>
                                 <input :type="sh2 ? 'text' : 'password'" id="password_confirmation"
-                                    name="password_confirmation" required autocomplete="new-password"
+                                    name="password_confirmation" required autocomplete="new-password" minlength="8"
                                     placeholder="Confirm new password"
                                     class="block w-full rounded-lg ps-10 pe-12 py-3.5 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-700 text-sm sm:text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
                                 <button type="button"
