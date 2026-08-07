@@ -61,4 +61,16 @@ class SystemFormValidationTest extends TestCase
         $this->assertStringContainsString('document.addEventListener("submit"', $script);
         $this->assertStringContainsString('errorForm.insertAdjacentElement("beforebegin", summary)', $script);
     }
+
+    public function test_validation_script_handles_all_native_form_submission_paths_safely(): void
+    {
+        $script = file_get_contents(dirname(__DIR__, 2).'/public/js/form-validation.js');
+
+        $this->assertStringContainsString('event.submitter?.formNoValidate', $script);
+        $this->assertStringContainsString('!field.validity.valid', $script);
+        $this->assertStringNotContainsString('!field.checkValidity()', $script);
+        $this->assertStringContainsString('field.type === "radio"', $script);
+        $this->assertStringContainsString('form.querySelectorAll(`.${errorClass}`).forEach', $script);
+        $this->assertStringContainsString('scrollIntoView({ behavior: "smooth", block: "center" })', $script);
+    }
 }

@@ -4,6 +4,13 @@
     const errorClass = "system-field-error";
     const invalidClass = "system-invalid-field";
 
+    function isValidatableField(field) {
+        return field instanceof HTMLElement
+            && typeof field.checkValidity === "function"
+            && !field.disabled
+            && !["button", "hidden", "reset", "submit"].includes(field.type);
+    }
+
     function escapeSelector(value) {
         if (window.CSS && typeof window.CSS.escape === "function") {
             return window.CSS.escape(value);
@@ -31,7 +38,18 @@
         field.removeAttribute("aria-errormessage");
     }
 
+    function validationAnchor(field) {
+        if (field.type === "radio" && field.name && field.form) {
+            return Array.from(field.form.elements).find((candidate) =>
+                candidate.type === "radio" && candidate.name === field.name
+            ) || field;
+        }
+
+        return field;
+    }
+
     function showFieldError(field, message) {
+        field = validationAnchor(field);
         clearField(field);
         const error = document.createElement("span");
         error.id = `validation-error-${Math.random().toString(36).slice(2)}`;
@@ -88,24 +106,45 @@
 
     function validateForm(event) {
         const form = event.target;
-        if (!(form instanceof HTMLFormElement) || form.noValidate) return;
+        if (!(form instanceof HTMLFormElement) || form.noValidate || event.submitter?.formNoValidate) return;
+
+        form.querySelectorAll(`.${invalidClass}`).forEach(clearField);
+        form.querySelectorAll(`.${errorClass}`).forEach((error) => error.remove());
+
+        // Reading ValidityState avoids dispatching an `invalid` event for every
+        // field while scanning. That event is handled separately for callers of
+        // reportValidity(), and used to cause duplicate messages and erratic
+        // focus changes during a normal submit.
 
         form.querySelectorAll(`.${invalidClass}`).forEach(clearField);
         const invalidFields = Array.from(form.elements).filter((field) =>
-            typeof field.checkValidity === "function" && !field.checkValidity()
+            isValidatableField(field) && !field.validity.valid
         );
         if (!invalidFields.length) return;
 
         event.preventDefault();
         event.stopImmediatePropagation();
-        invalidFields.forEach((field) => showFieldError(field, field.validationMessage));
-        revealContainer(invalidFields[0]);
-        invalidFields[0].focus();
+        
+        const renderedGroups = new Set();
+        invalidFields.forEach((field) => {
+            const group = field.type === "radio" ? `radio:${field.name}` : field;
+            if (renderedGroups.has(group)) return;
+            renderedGroups.add(group);
+            showFieldError(field, field.validationMessage);
+        });
+
+        const firstField = validationAnchor(invalidFields[0]);
+        revealContainer(firstField);
+        firstField.focus({ preventScroll: true });
+        firstField.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 
     function clearOnInput(event) {
         const field = event.target;
-        if (field.classList?.contains(invalidClass) && field.checkValidity()) clearField(field);
+        if (!isValidatableField(field) || !field.validity.valid) return;
+
+        const anchor = validationAnchor(field);
+        if (anchor.classList.contains(invalidClass)) clearField(anchor);
     }
 
     function handleInvalid(event) {
