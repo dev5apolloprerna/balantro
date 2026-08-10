@@ -61,11 +61,12 @@ section {
                 
                 <?php if(session('status')): ?>
                     <div
-                        class="mb-4 flex gap-3 rounded-lg px-4 py-3 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20">
-                        <span class="pt-0.5">
-                            <iconify-icon icon="heroicons:check-circle" class="h-5 w-5"></iconify-icon>
+                        class="mb-4 flex w-[350px] items-center gap-3 rounded-lg px-4 py-3 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20"
+                        role="status">
+                        <span class="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
+                            <iconify-icon icon="heroicons:check-circle" class="block text-xl leading-none"></iconify-icon>
                         </span>
-                        <div class="leading-relaxed">
+                        <div class="min-w-0 flex-1 leading-relaxed">
                             <?php echo e(session('status')); ?>
 
                         </div>
@@ -75,11 +76,12 @@ section {
                 
                 <?php if($errors->any()): ?>
                     <div
-                        class="mb-4 flex gap-3 rounded-lg px-4 py-3 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20">
-                        <span class="pt-0.5">
-                            <iconify-icon icon="heroicons:exclamation-circle" class="h-5 w-5"></iconify-icon>
+                        class="mb-4 flex w-[350px] items-center gap-3 rounded-lg px-4 py-3 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20"
+                        role="alert">
+                        <span class="flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
+                            <iconify-icon icon="heroicons:exclamation-circle" class="block text-xl leading-none"></iconify-icon>
                         </span>
-                        <div class="leading-relaxed space-y-1">
+                        <div class="min-w-0 flex-1 leading-relaxed space-y-1">
                             <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <p><?php echo e($error); ?></p>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
