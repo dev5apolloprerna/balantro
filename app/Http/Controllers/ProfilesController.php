@@ -3,16 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileRequest;
-use Illuminate\Http\Request;
 use App\Models\Profile;
 use App\Models\UserProfile;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
-use Kreait\Firebase\Database\Query\Sorter\OrderByKey;
-use Throwable;
+// use Kreait\Firebase\Database\Query\Sorter\OrderByKey;
+// use Throwable;
 
 class ProfilesController extends Controller
 {
@@ -24,13 +25,14 @@ class ProfilesController extends Controller
     public function create()
     {
         return view('profiles.create', [
-            'profile' => auth()->user()->profile ?? null
+            'profile' => auth()->user()->profile ?? null,
         ]);
     }
 
     public function store(ProfileRequest $request)
     {
         auth()->user()->profile()->create($request->validated());
+
         return redirect()->route('client.dashboard')
             ->with('notice', __('Profile created successfully!'));
     }
@@ -38,7 +40,7 @@ class ProfilesController extends Controller
     public function show()
     {
         $profile = Profile::firstOrCreate([
-            'user_id' => auth()->id()
+            'user_id' => auth()->id(),
         ]);
         // $states = DB::table('state')
         //     ->get();
@@ -67,13 +69,13 @@ class ProfilesController extends Controller
          if (!empty($profile->state)) {
             $district_name = $districts->firstWhere('district_id', (int) $profile->district)->district_name ?? null;
         }
-        return view('profiles.show', compact('profile', 'states', 'cityName', 'stateName','district_name'));
+        return view('profiles.show', compact('profile', 'states', 'cityName', 'stateName', 'district_name'));
     }
 
     public function edit()
     {
         $profile = Profile::firstOrCreate([
-            'user_id' => auth()->id()
+            'user_id' => auth()->id(),
         ]);
         $states = DB::table('state')
             ->orderBy('stateName')
@@ -90,7 +92,7 @@ class ProfilesController extends Controller
             })
             ->orderBy('district_name')
             ->get();
-        return view('profiles.edit', compact('profile','states', 'cities', 'districts'));
+        return view('profiles.edit', compact('profile', 'states', 'cities', 'districts'));
     }
 
     // public function profileEdit($id)
@@ -112,34 +114,36 @@ class ProfilesController extends Controller
         ]);
 
         try {
+            $pincode = $request->string('pincode')->toString();
+            $data = Cache::remember("pincode-details:{$pincode}", now()->addDays(30), function () use ($pincode) {
+                $response = Http::withoutVerifying()
+                    ->connectTimeout(3)
+                    ->timeout(8)
+                    ->retry(3, 300)
+                    ->acceptJson()
+                    ->withUserAgent('Mozilla/5.0 (compatible; Balantro/1.0; +https://balantro.com)')
+                    ->get("https://api.postalpincode.in/pincode/{$pincode}");
 
-            $response = Http::withoutVerifying()
-                ->timeout(20)
-                ->retry(3, 1000)
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    'User-Agent' => 'Mozilla/5.0'
-                ])
-                ->get("https://api.postalpincode.in/pincode/" . $request->pincode);
-
-            if (!$response->ok()) {
+                if (! $response->ok()) {
+                    throw new \RuntimeException('The pincode provider returned an unsuccessful response.');
+                }
+                $payload = $response->json();
+                if (
+                    empty($payload) ||
+                    ! isset($payload[0]['Status']) ||
+                    $payload[0]['Status'] !== 'Success' ||
+                    empty($payload[0]['PostOffice'][0])
+                ) {
+                    return null;
+                }
+                return $payload;
+            });
+            if ($data === null) {
                 return response()->json([
-                    'message' => 'Unable to fetch pincode details.'
-                ], 422);
-            }
-
-            $data = $response->json();
-
-            if (
-                empty($data) ||
-                !isset($data[0]['Status']) ||
-                $data[0]['Status'] !== 'Success' ||
-                empty($data[0]['PostOffice'][0])
-            ) {
-                return response()->json([
-                    'message' => 'No records found for this pincode.'
+                    'message' => 'No records found for this pincode.',
                 ], 404);
-            }
+            }            
+
             // $postOffice = $data[0]['PostOffice'][0];
             $postOffices = collect($data[0]['PostOffice']);
             // $stateName = $postOffice['State'] ?? null;
@@ -169,7 +173,7 @@ class ProfilesController extends Controller
                         }
 
                         similar_text($normalizedValue, $normalizedExisting, $similarity);
-                         $distance = levenshtein($normalizedValue, $normalizedExisting);
+                        $distance = levenshtein($normalizedValue, $normalizedExisting);
 
                         if ($similarity >= 80 || $distance <= 2) {
                             $isDuplicate = true;
@@ -198,7 +202,7 @@ class ProfilesController extends Controller
             $stateName = $postOffices
                 ->pluck('State')
                 ->filter()
-                ->first();              
+                ->first();
 
             $stateId = null;
 
@@ -209,21 +213,19 @@ class ProfilesController extends Controller
                     ->value('stateId');
             }
 
-            $data = response()->json([
+            return response()->json([
                 'cities' => $cities,
                 'districts' => $districts,
                 'state_name' => $stateName,
-                'state_id'   => $stateId
+                'state_id' => $stateId,
             ]);
 
-            return $data;
-
         } catch (\Throwable $e) {
+            report($e);
 
             return response()->json([
-                'message' => 'Pincode service temporarily unavailable.',
-                'error'   => $e->getMessage()
-            ], 500);
+                'message' => 'Pincode service is temporarily unavailable. Please try again.',
+            ], 503);
         }
     }
 
@@ -258,7 +260,7 @@ class ProfilesController extends Controller
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
 
-            $filename = time() . '_' . $image->getClientOriginalName();
+            $filename = time().'_'.$image->getClientOriginalName();
             $path = public_path('profiles');
 
             // ensure directory exists
@@ -379,7 +381,7 @@ class ProfilesController extends Controller
         // Handle profile image
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
-            $filename = time() . '_' . $image->getClientOriginalName();
+            $filename = time().'_'.$image->getClientOriginalName();
             $path = public_path('profiles/'.auth()->id());
 
             if (!file_exists($path)) {
@@ -393,7 +395,7 @@ class ProfilesController extends Controller
 
             // Save new image
             $image->move($path, $filename);
-            $profileData['profile_image'] = 'profiles/' .auth()->id(). '/' . $filename;
+            $profileData['profile_image'] = 'profiles/'.auth()->id().'/'.$filename;
         }
 
         // Assign user_id when creating new
@@ -462,8 +464,12 @@ class ProfilesController extends Controller
             mkdir($path, 0777, true);
         }
         $updated = [];
-        if ($request->hasFile('pan_card_file')) $updated[] = 'PAN';
-        if ($request->hasFile('gst_certificate_file')) $updated[] = 'GST';
+        if ($request->hasFile('pan_card_file')) {
+            $updated[] = 'PAN';
+        }
+        if ($request->hasFile('gst_certificate_file')) {
+            $updated[] = 'GST';
+        }
         // PAN
         if ($request->hasFile('pan_card_file')) {
             if ($profile->pan_card_file && file_exists(public_path($profile->pan_card_file))) {

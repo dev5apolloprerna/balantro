@@ -6,7 +6,7 @@
                 <p class="text-gray-600 dark:text-gray-400">Update your profile information</p>
             </div>
             <div>
-                <a href="{{ url()->previous() }}" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                <a href="<?php echo e(url()->previous()); ?>" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                     transition duration-1000 ease-in-out
                                     transition-property: all;
                                     hover:border-[#f472b6]
@@ -38,21 +38,21 @@
                 @apply text-xl font-semibold text-cyan-400 border-b border-cyan-400/20 pb-3 mb-6;
             }
         </style>
-        <form method="POST" action="{{ route('profile.update', $profile) }}" class="space-y-3"
+        <form method="POST" action="<?php echo e(route('profile.update', $profile)); ?>" class="space-y-3"
             enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
-            @php
+            <?php echo csrf_field(); ?>
+            <?php echo method_field('PUT'); ?>
+            <?php
             $profile = auth()->user()->profile;
-            @endphp
+            ?>
 
             <!-- Profile Image Upload -->
             <div class="flex flex-col items-center mb-6">
                 <div class="relative w-32 h-32">
-                    @php
+                    <?php
                     $defaultImage = $profile->gender == 'female' ? 'images/female.png' : 'images/male.png';
-                    @endphp
-                    <img src="{{ $profile->profile_image ? \App\Support\ProfileImageUrl::for($profile->profile_image) : asset($defaultImage) }}"
+                    ?>
+                    <img src="<?php echo e($profile->profile_image ? \App\Support\ProfileImageUrl::for($profile->profile_image) : asset($defaultImage)); ?>"
                         id="imagePreview"
                         class="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow">
 
@@ -78,7 +78,7 @@
                     <div class="relative grid grid-cols-12 items-center gap-4 mb-5"
                             x-data="{
                             open: false,
-                            selected: '{{ old('business_type', $profile->business_type) ?? '' }}',
+                            selected: '<?php echo e(old('business_type', $profile->business_type) ?? ''); ?>',
                             options: {
                                 '': 'Select Business Type',
                                 'individual': 'Individual/Proprietor',
@@ -159,7 +159,7 @@
                     <div class="grid grid-cols-12 items-center gap-4 mb-5">
                         <label for="name" class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Legal Name</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="text" name="name" id="name" value="{{ old('name', auth()->user()->name ?? '') }}"
+                            <input type="text" name="name" id="name" value="<?php echo e(old('name', auth()->user()->name ?? '')); ?>"
                                 placeholder="Enter Name"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
@@ -168,7 +168,7 @@
                     <div class="grid grid-cols-12 items-center gap-4 mb-5">
                         <label for="trade_name" class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Trade Name</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="text" name="trade_name" id="trade_name" value="{{ old('trade_name', auth()->user()->trade_name ?? '') }}"
+                            <input type="text" name="trade_name" id="trade_name" value="<?php echo e(old('trade_name', auth()->user()->trade_name ?? '')); ?>"
                                 placeholder="Enter Trade Name"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
@@ -177,7 +177,7 @@
                     <div class="grid grid-cols-12 items-center gap-4 mb-5">
                         <label for="short_name" class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Short Name</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="text" name="short_name" id="short_name" value="{{ old('short_name', auth()->user()->short_name ?? '') }}"
+                            <input type="text" name="short_name" id="short_name" value="<?php echo e(old('short_name', auth()->user()->short_name ?? '')); ?>"
                                 placeholder="Enter Short Name"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
@@ -193,7 +193,7 @@
                         <label for="email"
                             class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Email</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="email" readonly name="email" id="email" value="{{ old('email', auth()->user()->email ?? '') }}"
+                            <input type="email" readonly name="email" id="email" value="<?php echo e(old('email', auth()->user()->email ?? '')); ?>"
                                 placeholder="Enter Email"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
 
@@ -204,7 +204,7 @@
                         <label for="email"
                             class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Alternative Email</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="email" name="alternative_email" id="alternative_email" value="{{ old('alternative_email', $profile->alternative_email ?? '') }}"
+                            <input type="email" name="alternative_email" id="alternative_email" value="<?php echo e(old('alternative_email', $profile->alternative_email ?? '')); ?>"
                                 placeholder="Enter Alternative Email"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
@@ -217,7 +217,7 @@
                             No</label>
                         <div class="col-span-12 md:col-span-8">
                             <input type="tel" name="mobile_no" id="mobile_no" maxlength="10"
-                                value="{{ old('mobile_no', $profile->mobile_no) }}" placeholder="9876543210"
+                                value="<?php echo e(old('mobile_no', $profile->mobile_no)); ?>" placeholder="9876543210"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                         </div>
@@ -230,7 +230,7 @@
                             No</label>
                         <div class="col-span-12 md:col-span-8">
                             <input type="tel" name="whatsapp_no" id="whatsapp_no" maxlength="10"
-                                value="{{ old('whatsapp_no', $profile->whatsapp_no) }}" placeholder="9876543210"
+                                value="<?php echo e(old('whatsapp_no', $profile->whatsapp_no)); ?>" placeholder="9876543210"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,10)">
                         </div>
@@ -241,7 +241,7 @@
                         <label for="address"
                             class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Address Line 1</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input name="address" id="address" placeholder="Enter your complete address" value="{{ old('address', $profile->address) }}"
+                            <input name="address" id="address" placeholder="Enter your complete address" value="<?php echo e(old('address', $profile->address)); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
                     </div>
@@ -249,7 +249,7 @@
                         <label for="address"
                             class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Address Line 2</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input name="address_2" id="address_2" placeholder="Enter your complete address" value="{{ old('address', $profile->address_2) }}"
+                            <input name="address_2" id="address_2" placeholder="Enter your complete address" value="<?php echo e(old('address', $profile->address_2)); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
                     </div>
@@ -257,7 +257,7 @@
                         <label for="pincode"
                             class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Pin code </label>
                         <div class="col-span-12 md:col-span-8">
-                            <input name="pincode" id="pincode" placeholder="Enter your Pin code" value="{{ old('pincode', $profile->pincode) }}"
+                            <input name="pincode" id="pincode" placeholder="Enter your Pin code" value="<?php echo e(old('pincode', $profile->pincode)); ?>"
                                 inputmode="numeric" maxlength="6" autocomplete="postal-code" aria-describedby="pincode_status"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                             <p id="pincode_status" class="mt-1 text-sm text-gray-500 dark:text-gray-400" aria-live="polite"></p>
@@ -273,24 +273,24 @@
                                 id="city_name"
                                 list="cityList"
                                 placeholder="Type City Name"
-                                 value="{{ optional($cities->where('id',$profile->city)->first())->city_name }}"
+                                 value="<?php echo e(optional($cities->where('id',$profile->city)->first())->city_name); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
 
-                            <input type="hidden" name="city" id="city" value="{{ $profile->city }}">
+                            <input type="hidden" name="city" id="city" value="<?php echo e($profile->city); ?>">
 
                             <datalist id="cityList">
-                                @foreach($cities as $city)
+                                <?php $__currentLoopData = $cities; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $city): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option
-                                        data-id="{{ $city->id }}"
-                                        value="{{ $city->city_name }}">
+                                        data-id="<?php echo e($city->id); ?>"
+                                        value="<?php echo e($city->city_name); ?>">
                                     </option>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </datalist>
                             <!-- <select name="city" id="city" class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                 <option value="">Select City</option>
-                                @foreach($cities as $city)
-                                    <option value="<?= $city->id ?>" data-city-name="<?= strtolower(trim($city->city_name)) ?>" data-state-id="<?= $city->state_id ?>" {{ old('city', $profile->city) == $city->id ? 'selected' : '' }}><?=  $city->city_name ?></option>
-                                @endforeach
+                                <?php $__currentLoopData = $cities; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $city): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?= $city->id ?>" data-city-name="<?= strtolower(trim($city->city_name)) ?>" data-state-id="<?= $city->state_id ?>" <?php echo e(old('city', $profile->city) == $city->id ? 'selected' : ''); ?>><?=  $city->city_name ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select> -->
                         </div>
                     </div>
@@ -304,27 +304,27 @@
                                 id="district_name"
                                 list="districtList"
                                 placeholder="Type District Name"
-                                value="{{ optional($districts->where('district_id',$profile->district)->first())->district_name }}"
+                                value="<?php echo e(optional($districts->where('district_id',$profile->district)->first())->district_name); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
 
-                            <input type="hidden" name="district" id="district" value="{{ $profile->district }}">
+                            <input type="hidden" name="district" id="district" value="<?php echo e($profile->district); ?>">
 
                             <datalist id="districtList">
-                                @foreach($districts as $district)
+                                <?php $__currentLoopData = $districts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $district): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option
-                                        data-id="{{ $district->district_id }}"
-                                        value="{{ $district->district_name }}">
+                                        data-id="<?php echo e($district->district_id); ?>"
+                                        value="<?php echo e($district->district_name); ?>">
                                     </option>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </datalist>
-                            <!-- <input name="district" id="district" placeholder="Enter your District" value="{{ old('district', $profile->district) }}"
+                            <!-- <input name="district" id="district" placeholder="Enter your District" value="<?php echo e(old('district', $profile->district)); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"> -->
                             <!-- <select name="district" id="district"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                 <option value="">Select District</option>
-                                @if(old('district', $profile->district))
-                                    <option value="{{ old('district', $profile->district) }}" selected>{{ old('district', $profile->district) }}</option>
-                                @endif
+                                <?php if(old('district', $profile->district)): ?>
+                                    <option value="<?php echo e(old('district', $profile->district)); ?>" selected><?php echo e(old('district', $profile->district)); ?></option>
+                                <?php endif; ?>
                             </select> -->
                         </div>
                     </div>
@@ -338,26 +338,26 @@
                                 id="state_name"
                                 list="stateList"
                                 placeholder="Type State Name"
-                                value="{{ optional($states->where('stateId',$profile->state)->first())->stateName }}"
+                                value="<?php echo e(optional($states->where('stateId',$profile->state)->first())->stateName); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
 
-                            <input type="hidden" name="state" id="state" value="{{ $profile->state }}">
+                            <input type="hidden" name="state" id="state" value="<?php echo e($profile->state); ?>">
 
                             <datalist id="stateList">
-                                @foreach($states as $state)
+                                <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <option
-                                        data-id="{{ $state->stateId }}"
-                                        value="{{ $state->stateName }}">
+                                        data-id="<?php echo e($state->stateId); ?>"
+                                        value="<?php echo e($state->stateName); ?>">
                                     </option>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </datalist>
                             <!-- <select name="state" id="state" class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                                 <option value="">Select State</option>
-                                @foreach($states as $state)
-                                    <option value="<?= $state->stateId ?>" data-state-name="<?= strtolower(trim($state->stateName)) ?>" {{ old('state', $profile->state) == $state->stateId ? 'selected' : '' }}><?=  $state->stateName ?></option>
-                                @endforeach
+                                <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?= $state->stateId ?>" data-state-name="<?= strtolower(trim($state->stateName)) ?>" <?php echo e(old('state', $profile->state) == $state->stateId ? 'selected' : ''); ?>><?=  $state->stateName ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select> -->
-                            <!-- <input name="state" id="state" placeholder="Enter your State" value="{{ old('state', $profile->state) }}"
+                            <!-- <input name="state" id="state" placeholder="Enter your State" value="<?php echo e(old('state', $profile->state)); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"> -->
                         </div>
                     </div>
@@ -373,7 +373,7 @@
                     <div class="grid grid-cols-12 items-center gap-4 mb-5">
                         <label for="TAN_no" class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">TAN No</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="text" name="TAN_no" id="TAN_no" value="{{ old('TAN_no', $profile->TAN_no ?? '') }}"
+                            <input type="text" name="TAN_no" id="TAN_no" value="<?php echo e(old('TAN_no', $profile->TAN_no ?? '')); ?>"
                                 placeholder="Enter TAN No"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
@@ -385,7 +385,7 @@
                         <label for="pan_no" class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">PAN
                             No</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="text" name="pan_no" id="pan_no" value="{{ old('pan_no', $profile->pan_no) }}"
+                            <input type="text" name="pan_no" id="pan_no" value="<?php echo e(old('pan_no', $profile->pan_no)); ?>"
                                 placeholder="ABCDE1234F"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
@@ -396,7 +396,7 @@
                         <label for="gst_no" class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">GST
                             No</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="text" name="gst_no" id="gst_no" value="{{ old('gst_no', $profile->gst_no) }}"
+                            <input type="text" name="gst_no" id="gst_no" value="<?php echo e(old('gst_no', $profile->gst_no)); ?>"
                                 placeholder="27ABCDE1234F1Z4"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
@@ -416,7 +416,7 @@
                                 hover:-translate-y-1"
                     style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">Save
                 </button>
-                <a href="{{ route('profile.show', $profile) }}"
+                <a href="<?php echo e(route('profile.show', $profile)); ?>"
                     class="rounded-md border border-gray-700 text-black dark:text-white px-4 py-2 text-sm transition duration-1000 ease-in-out
                                 transition-property: all;
                                 hover:border-[#a78bfa]
@@ -430,7 +430,7 @@
     </div>
 </div>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
     document.getElementById('imageUpload').addEventListener('change', function(event) {
         const file = event.target.files[0];
@@ -570,11 +570,11 @@
             pincodeStatus.className = 'mt-1 text-sm text-gray-500 dark:text-gray-400';
 
             try {
-                const response = await fetch(`{{ route('profile.pincode-details') }}`, {
+                const response = await fetch(`<?php echo e(route('profile.pincode-details')); ?>`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({
@@ -664,4 +664,4 @@
         hidden.value = option ? option.dataset.id : '';
     }
 </script>
-@endpush
+<?php $__env->stopPush(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/profiles/_form.blade.php ENDPATH**/ ?>

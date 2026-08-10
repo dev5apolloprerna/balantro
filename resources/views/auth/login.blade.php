@@ -1,6 +1,7 @@
 @extends('auth.layouts.app')
 
 @section('title', 'Login')
+@section('field_validation_only', true)
 
 @section('content')
     <style>
@@ -112,20 +113,7 @@ section {
                             </div>
                         </div>
                     @endif
-
-                    @if ($errors->any())
-                        <div
-                            class="mb-4 flex items-start gap-3 w-full rounded-lg px-4 py-3 text-base sm:text-lg text-red-600 dark:text-red-400 bg-red-50 dark:bg-gray-900">
-                            <div class="pt-0.5">
-                                <iconify-icon icon="heroicons:exclamation-circle" class="w-5 h-5"></iconify-icon>
-                            </div>
-                            <div class="flex-1 leading-relaxed">
-                                @foreach ($errors->all() as $error)
-                                    <p>{{ $error }}</p>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
+                    
                 </div>
 
                 <!-- Rest of your form content remains exactly the same -->

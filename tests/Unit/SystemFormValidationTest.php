@@ -50,6 +50,16 @@ class SystemFormValidationTest extends TestCase
         $this->assertStringContainsString("@error('email')", $registration);
         $this->assertStringContainsString("@error('password')", $registration);
     }
+
+    public function test_login_displays_each_server_error_only_at_its_field(): void
+    {
+        $login = file_get_contents(dirname(__DIR__, 2).'/resources/views/auth/login.blade.php');
+
+        $this->assertStringContainsString("@section('field_validation_only', true)", $login);
+        $this->assertStringNotContainsString('$errors->all()', $login);
+        $this->assertStringContainsString("@error('email')", $login);
+        $this->assertStringContainsString("@error('password')", $login);
+    }
     
     public function test_validation_script_guards_submission_and_displays_server_errors(): void
     {
