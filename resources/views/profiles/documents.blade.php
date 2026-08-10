@@ -1,4 +1,5 @@
 @extends('layouts.super_admin')
+@section('field_validation_only', true)
 
 @section('content')
 

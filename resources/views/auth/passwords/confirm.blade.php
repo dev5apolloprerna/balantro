@@ -1,4 +1,5 @@
 @extends('layouts.app')
+@section('field_validation_only', true)
 
 @section('content')
 <div class="container">

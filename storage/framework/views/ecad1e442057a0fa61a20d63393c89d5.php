@@ -1,9 +1,7 @@
-@extends('auth.layouts.app')
+<?php $__env->startSection('title', 'Forgot Password'); ?>
+<?php $__env->startSection('field_validation_only', true); ?>
 
-@section('title', 'Forgot Password')
-@section('field_validation_only', true)
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 
 <style>
 #starfield-canvas {
@@ -34,12 +32,12 @@ section {
             <div class="flex items-center justify-center h-full bg-white dark:bg-black">
 
                 <!-- Light Logo (shown in light mode) -->
-                <img src="{{ asset('assets/images/light-logo.svg') }}"
+                <img src="<?php echo e(asset('assets/images/light-logo.svg')); ?>"
                     alt="Balantro"
                     class="w-96 h-auto block dark:hidden">
 
                 <!-- Dark Logo (shown in dark mode) -->
-                <img src="{{ asset('assets/images/dark-logo.svg') }}"
+                <img src="<?php echo e(asset('assets/images/dark-logo.svg')); ?>"
                     alt="Balantro"
                     class="w-96 h-auto hidden dark:block">
 
@@ -50,14 +48,7 @@ section {
         <div class="lg:w-2/5 flex items-center lg:justify-start justify-center py-10 sm:py-12 px-4 sm:px-6">
             <div class="w-full max-w-md flex flex-col items-center lg:items-start">
                 <div class="text-center lg:text-left  w-[350px]">
-                    {{-- <a href="/" class="mb-6 block w-[200px] sm:w-[290px] mx-auto lg:mx-0">
-                        <!-- Light logo -->
-                        <img src="{{ asset('assets/images/light-logo.svg') }}" alt="Balantro"
-                            class="w-full block dark:hidden">
-                        <!-- Dark logo -->
-                        <img src="{{ asset('assets/images/dark-logo.svg') }}" alt="Balantro"
-                            class="w-full hidden dark:block">
-                    </a> --}}
+                    
 
                     <h1 class="mb-2 text-2xl font-semibold text-gray-900 dark:text-white">
                         Forgot your password?
@@ -67,37 +58,38 @@ section {
                     </p>
                 </div>
 
-                {{-- Session status --}}
-                @if (session('status'))
+                
+                <?php if(session('status')): ?>
                     <div
                         class="mb-4 flex gap-3 rounded-lg px-4 py-3 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20">
                         <span class="pt-0.5">
                             <iconify-icon icon="heroicons:check-circle" class="h-5 w-5"></iconify-icon>
                         </span>
                         <div class="leading-relaxed">
-                            {{ session('status') }}
+                            <?php echo e(session('status')); ?>
+
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
 
-                {{-- Validation errors (top summary) --}}
-                @if ($errors->any())
+                
+                <?php if($errors->any()): ?>
                     <div
                         class="mb-4 flex gap-3 rounded-lg px-4 py-3 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20">
                         <span class="pt-0.5">
                             <iconify-icon icon="heroicons:exclamation-circle" class="h-5 w-5"></iconify-icon>
                         </span>
                         <div class="leading-relaxed space-y-1">
-                            @foreach ($errors->all() as $error)
-                                <p>{{ $error }}</p>
-                            @endforeach
+                            <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <p><?php echo e($error); ?></p>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                     </div>
-                @endif
+                <?php endif; ?>
 
-                <form method="POST" action="{{ route('password.email') }}">
+                <form method="POST" action="<?php echo e(route('password.email')); ?>">
                     
-                    @csrf
+                    <?php echo csrf_field(); ?>
 
                     <label for="email" class="sr-only">Email</label>
                     <div class="relative">
@@ -105,8 +97,8 @@ section {
                                 class="absolute start-4 top-1/2 -translate-y-1/2 flex text-xl text-neutral-500 dark:text-white h-[26px] items-center pointer-events-none">
                                 <iconify-icon icon="mage:email" class="flex items-center"></iconify-icon>
                             </span>
-                        <input id="email" type="email" name="email" value="{{ old('email') }}" required
-                            autocomplete="email" placeholder="Email" @class([
+                        <input id="email" type="email" name="email" value="<?php echo e(old('email')); ?>" required
+                            autocomplete="email" placeholder="Email" class="<?php echo \Illuminate\Support\Arr::toCssClasses([
                                 'block w-[350px] rounded-lg',
                                 'bg-gray-50 dark:bg-black',
                                 'border border-neutral-300 dark:border-gray-700',
@@ -115,17 +107,28 @@ section {
                                 'placeholder:text-gray-400 dark:placeholder:text-gray-500',
                                 'focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50',
                                 'transition',
-                            ])
-                            aria-invalid="@error('email') true @else false @enderror"
-                            aria-describedby="email-help @error('email') email-error @enderror" />
+                            ]); ?>"
+                            aria-invalid="<?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> true <?php else: ?> false <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                            aria-describedby="email-help <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> email-error <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" />
                     </div>
                     <div id="email-help" class="mt-1 text-xs text-gray-500 dark:text-white">
                         We’ll never share your email.
                     </div>
-                    {{-- @error('email')
-                        <p id="email-error" class="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400">{{ $message }}
-                        </p>
-                    @enderror --}}
+                    
 
                     <button type="submit"
                         class="mt-6 w-[350px] h-[50px] 
@@ -138,7 +141,7 @@ section {
 
                         border border-[#22d3ee]/50
 
-                        {{-- shadow-[0_0_15px_rgba(34,211,238,0.45),inset_0_0_10px_rgba(34,211,238,0.2)] --}}
+                        
 
                         transition-all duration-300">
 
@@ -148,17 +151,10 @@ section {
                             <span class="absolute inset-0 bg-cyan-400/10 blur-xl opacity-50"></span>
                         </button>
 
-                    {{-- <button type="submit"
-                        class="mt-5 sm:mt-6 inline-flex w-[350px] items-center justify-center rounded-lg px-5 py-3
-                           text-sm font-medium text-white
-                           bg-primary-600 hover:bg-primary-700
-                           focus:outline-none focus:ring-2 focus:ring-primary-500
-                           disabled:opacity-60 disabled:cursor-not-allowed transition">
-                        Send reset password instructions
-                    </button> --}}
+                    
 
                     <div class="mt-5 sm:mt-6 text-center">
-                        <a href="{{ route('login') }}"
+                        <a href="<?php echo e(route('login')); ?>"
                             class="text-[#22d3ee] dark:text-[#22d3ee] hover:underline text-sm sm:text-base">
                             Back to Sign In
                         </a>
@@ -301,4 +297,6 @@ section {
     setTimeout(spawnFaller, rand(1500, 3000));
 })();
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('auth.layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/auth/passwords/email.blade.php ENDPATH**/ ?>

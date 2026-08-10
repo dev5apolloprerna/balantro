@@ -60,6 +60,35 @@ class SystemFormValidationTest extends TestCase
         $this->assertStringContainsString("@error('email')", $login);
         $this->assertStringContainsString("@error('password')", $login);
     }
+
+    public function test_authentication_pages_choose_only_one_server_error_location(): void
+    {
+        $pagesWithTheirOwnErrorFeedback = [
+            'resources/views/auth/login.blade.php',
+            'resources/views/auth/register.blade.php',
+            'resources/views/auth/passwords/email.blade.php',
+            'resources/views/auth/passwords/reset.blade.php',
+            'resources/views/auth/verify-registration-otp.blade.php',
+        ];
+
+        foreach ($pagesWithTheirOwnErrorFeedback as $page) {
+            $contents = file_get_contents(dirname(__DIR__, 2).'/'.$page);
+
+            $this->assertStringContainsString(
+                "@section('field_validation_only', true)",
+                $contents,
+                "{$page} must opt out of the additional global server-error output."
+            );
+        }
+
+        $forgot = file_get_contents(dirname(__DIR__, 2).'/resources/views/auth/passwords/email.blade.php');
+        $reset = file_get_contents(dirname(__DIR__, 2).'/resources/views/auth/passwords/reset.blade.php');
+
+        $this->assertSame(1, substr_count($forgot, '$errors->all()'));
+        $this->assertStringNotContainsString('$errors->all()', $reset);
+        $this->assertStringContainsString("@error('email')", $reset);
+        $this->assertStringContainsString("@error('password')", $reset);
+    }
     
     public function test_validation_script_guards_submission_and_displays_server_errors(): void
     {
@@ -95,6 +124,6 @@ class SystemFormValidationTest extends TestCase
         $this->assertStringNotContainsString('novalidate', $reset);
         $this->assertStringNotContainsString('novalidate', $forgot);
         $this->assertStringContainsString('name="password" required minlength="8"', $reset);
-        $this->assertStringContainsString('name="password_confirmation" required minlength="8"', $reset);
+        $this->assertMatchesRegularExpression('/name="password_confirmation"[\s\S]*?required[\s\S]*?minlength="8"/', $reset);
     }
 }

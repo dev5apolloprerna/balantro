@@ -1,6 +1,7 @@
 @extends('auth.layouts.app')
 
 @section('title', 'Verify Email')
+@section('field_validation_only', true)
 
 @section('content')
 <style>

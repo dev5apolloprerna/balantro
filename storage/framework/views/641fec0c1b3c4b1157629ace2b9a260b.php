@@ -1,4 +1,5 @@
 <?php $__env->startSection('title', 'Login'); ?>
+<?php $__env->startSection('field_validation_only', true); ?>
 
 <?php $__env->startSection('content'); ?>
     <style>
@@ -105,20 +106,7 @@ section {
                             </div>
                         </div>
                     <?php endif; ?>
-
-                    <?php if($errors->any()): ?>
-                        <div
-                            class="mb-4 flex items-start gap-3 w-full rounded-lg px-4 py-3 text-base sm:text-lg text-red-600 dark:text-red-400 bg-red-50 dark:bg-gray-900">
-                            <div class="pt-0.5">
-                                <iconify-icon icon="heroicons:exclamation-circle" class="w-5 h-5"></iconify-icon>
-                            </div>
-                            <div class="flex-1 leading-relaxed">
-                                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <p><?php echo e($error); ?></p>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
+                    
                 </div>
 
                 <!-- Rest of your form content remains exactly the same -->

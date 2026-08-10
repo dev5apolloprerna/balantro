@@ -2,6 +2,7 @@
 
 @php($isEditing = isset($blog) && $blog)
 @section('title', $isEditing ? 'Edit Blog' : 'Add Blog')
+@section('field_validation_only', true)
 
 @section('content')
 <div class="container mx-auto px-4">

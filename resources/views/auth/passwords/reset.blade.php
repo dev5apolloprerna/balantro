@@ -1,4 +1,5 @@
 @extends('auth.layouts.app')
+@section('field_validation_only', true)
 
 @section('content')
     <section class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-10 sm:py-14">
@@ -11,21 +12,6 @@
                     Set a new password for your Balantro account.
                 </p>
             </div>
-
-            {{-- Top-level errors summary (optional but helpful) --}}
-            @if ($errors->any())
-                <div
-                    class="mb-4 flex gap-3 rounded-xl px-4 py-3 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20">
-                    <span class="pt-0.5">
-                        <iconify-icon icon="heroicons:exclamation-circle" class="h-5 w-5"></iconify-icon>
-                    </span>
-                    <div class="leading-relaxed space-y-1">
-                        @foreach ($errors->all() as $error)
-                            <p>{{ $error }}</p>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
 
             <div
                 class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 shadow-xl backdrop-blur supports-backdrop-blur:backdrop-blur">
