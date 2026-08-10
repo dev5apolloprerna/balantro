@@ -40,6 +40,11 @@
     .dark section {
         background-color: transparent !important;
     }
+
+    .password-toggle-icon {
+        display: block;
+        overflow: visible;
+    }
 </style>
 
 <section class="bg-white dark:bg-black flex flex-wrap min-h-[calc(100vh-64px)]">
@@ -105,12 +110,12 @@
                             <input id="password" type="password" name="password" required autocomplete="new-password"
                                 placeholder="Password"
                                 class="form-control h-[48px] sm:h-[50px] ps-11 pe-11 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-gray-900 dark:text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
-                            <span class="toggle-password absolute end-4 top-1/2 -translate-y-1/2 text-secondary-light dark:text-white mt-[-2px] cursor-pointer" data-toggle="password">
-                                <svg class="eye-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <button type="button" class="toggle-password absolute end-3 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center text-secondary-light dark:text-white" data-toggle="password" aria-label="Show password" aria-pressed="false">
+                                <svg class="eye-icon password-toggle-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                 </svg>
-                            </span>
+                            </button>
                         </div>
                         @error('password')
                             <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
@@ -118,11 +123,11 @@
                     </div>
                     <div class="mb-4 sm:mb-6 relative">
                         <div class="icon-field relative mt-2">
-                            <span class="absolute start-4 top-1/2 -translate-y-1/2 pointer-events-none text-xl text-neutral-500 dark:text-white">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <button type="button" class="toggle-password absolute end-3 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center text-secondary-light dark:text-white" data-toggle="password_confirmation" aria-label="Show confirm password" aria-pressed="false">
+                                <svg class="eye-icon password-toggle-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                 </svg>
-                            </span>
+                            </button>
                             <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password"
                                 placeholder="Confirm Password"
                                 class="form-control h-[48px] sm:h-[50px] ps-11 pe-11 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-gray-900 dark:text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
@@ -164,7 +169,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
             `;
             const eyeClosed = `
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m9.018 9.018l3.211 3.211M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.98 8.223A10.477 10.477 0 002.458 12C3.732 16.057 7.523 19 12 19c1.624 0 3.162-.387 4.522-1.074M6.228 6.228A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.513 10.513 0 01-1.274 2.592M6.228 6.228L3 3m3.228 3.228 3.65 3.65m6.244 6.244L21 21m-4.878-4.878-2.001-2.001m0 0A3 3 0 009.88 9.88m4.242 4.242L9.88 9.88"/>
             `;
 
             document.querySelectorAll('.toggle-password').forEach(toggle => {
