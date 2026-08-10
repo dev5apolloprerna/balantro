@@ -125,5 +125,8 @@ class SystemFormValidationTest extends TestCase
         $this->assertStringNotContainsString('novalidate', $forgot);
         $this->assertStringContainsString('name="password" required minlength="8"', $reset);
         $this->assertMatchesRegularExpression('/name="password_confirmation"[\s\S]*?required[\s\S]*?minlength="8"/', $reset);
+        $this->assertStringContainsString('pattern="(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,}"', $reset);
+        $this->assertStringContainsString('class="password-visibility-toggle', $reset);
+        $this->assertStringContainsString("input.type = showPassword ? 'text' : 'password'", $reset);
     }
 }
