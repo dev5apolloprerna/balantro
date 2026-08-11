@@ -74,11 +74,7 @@
                     <h3 class="text-xl font-semibold text-cyan-400 border-b border-cyan-400/20 pb-3 mb-6">
                         Basic Details
                     </h3>
-
-                    <div class="relative grid grid-cols-12 items-center gap-4 mb-5"
-                            x-data="{
-                            open: false,
-                            selected: '<?php echo e(old('business_type', $profile->business_type) ?? ''); ?>',
+                    <!-- selected: '<?php echo e(old('business_type', $profile->business_type) ?? ''); ?>',
                             options: {
                                 '': 'Select Business Type',
                                 'individual': 'Individual/Proprietor',
@@ -92,7 +88,12 @@
                                 'trust': 'Trust',
                                 'society': 'Society',
                                 'other': 'Other'
-                            }
+                            } -->
+                    <div class="relative grid grid-cols-12 items-center gap-4 mb-5"
+                            x-data="{
+                            open: false,
+                            selected: <?php echo \Illuminate\Support\Js::from(old('business_type', $profile->business_type) ?? '')->toHtml() ?>,
+                            options: <?php echo \Illuminate\Support\Js::from(['' => 'Select Business Type'] + \App\Models\Profile::BUSINESS_TYPES)->toHtml() ?>
                         }">
 
                         <!-- Label -->
@@ -101,7 +102,7 @@
                         </label>
 
                         <!-- Hidden input (IMPORTANT for form submit) -->
-                        <input type="hidden" name="business_type" :value="selected">
+                        <!-- <input type="hidden" name="business_type" :value="selected"> -->
                         <div class="col-span-12 md:col-span-8 relative">
                             <!-- Button -->
                             <button type="button" @click="open = !open"
@@ -152,6 +153,8 @@
                                 </template>
 
                             </ul>
+                            <!-- Keep the submitted value beside its control so validation feedback is full width. -->
+                            <input type="hidden" name="business_type" :value="selected">
                         </div>
                     </div>
 
@@ -168,7 +171,7 @@
                     <div class="grid grid-cols-12 items-center gap-4 mb-5">
                         <label for="trade_name" class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Trade Name</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input type="text" name="trade_name" id="trade_name" value="<?php echo e(old('trade_name', auth()->user()->trade_name ?? '')); ?>"
+                            <input type="text" name="trade_name" id="trade_name" value="<?php echo e(old('trade_name', $profile->trade_name ?? '')); ?>"
                                 placeholder="Enter Trade Name"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
@@ -249,7 +252,7 @@
                         <label for="address"
                             class="col-span-12 md:col-span-4 erp-label block text-sm font-semibold text-gray-700 dark:text-gray-200 ">Address Line 2</label>
                         <div class="col-span-12 md:col-span-8">
-                            <input name="address_2" id="address_2" placeholder="Enter your complete address" value="<?php echo e(old('address', $profile->address_2)); ?>"
+                            <input name="address_2" id="address_2" placeholder="Enter your complete address" value="<?php echo e(old('address_2', $profile->address_2)); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
                         </div>
                     </div>
@@ -273,10 +276,10 @@
                                 id="city_name"
                                 list="cityList"
                                 placeholder="Type City Name"
-                                 value="<?php echo e(optional($cities->where('id',$profile->city)->first())->city_name); ?>"
+                                value="<?php echo e(old('city_name', optional($cities->where('id', old('city', $profile->city))->first())->city_name)); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
 
-                            <input type="hidden" name="city" id="city" value="<?php echo e($profile->city); ?>">
+                            <input type="hidden" name="city" id="city" value="<?php echo e(old('city', $profile->city)); ?>">
 
                             <datalist id="cityList">
                                 <?php $__currentLoopData = $cities; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $city): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -304,10 +307,10 @@
                                 id="district_name"
                                 list="districtList"
                                 placeholder="Type District Name"
-                                value="<?php echo e(optional($districts->where('district_id',$profile->district)->first())->district_name); ?>"
+                                value="<?php echo e(old('district_name', optional($districts->where('district_id', old('district', $profile->district))->first())->district_name)); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
 
-                            <input type="hidden" name="district" id="district" value="<?php echo e($profile->district); ?>">
+                            <input type="hidden" name="district" id="district" value="<?php echo e(old('district', $profile->district)); ?>">
 
                             <datalist id="districtList">
                                 <?php $__currentLoopData = $districts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $district): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -338,10 +341,10 @@
                                 id="state_name"
                                 list="stateList"
                                 placeholder="Type State Name"
-                                value="<?php echo e(optional($states->where('stateId',$profile->state)->first())->stateName); ?>"
+                                value="<?php echo e(old('state_name', optional($states->where('stateId', old('state', $profile->state))->first())->stateName)); ?>"
                                 class="outline-none border-cyan-400 ring-1 ring-cyan-400/20 w-full px-2 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
 
-                            <input type="hidden" name="state" id="state" value="<?php echo e($profile->state); ?>">
+                            <input type="hidden" name="state" id="state" value="<?php echo e(old('state', $profile->state)); ?>">
 
                             <datalist id="stateList">
                                 <?php $__currentLoopData = $states; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $state): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -447,12 +450,18 @@
         const input = document.getElementById(inputId);
         const hidden = document.getElementById(hiddenId);
 
-        input.addEventListener('change', function () {
+        const syncHiddenValue = function () {
             const option = [...document.querySelectorAll(`#${listId} option`)]
-                .find(o => o.value === this.value);
+                .find(o => o.value.trim().toLowerCase() === input.value.trim().toLowerCase());
 
             hidden.value = option ? option.dataset.id : '';
-        });
+        if (inputId === 'state_name') {
+                input.setCustomValidity(option || input.value === '' ? '' : 'Please select a state from the list.');
+            }
+        };
+
+        input.addEventListener('input', syncHiddenValue);
+        input.addEventListener('change', syncHiddenValue);
     }
 
     bindHiddenId('state_name', 'stateList', 'state');

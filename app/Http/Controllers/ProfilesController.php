@@ -238,7 +238,8 @@ class ProfilesController extends Controller
         }
          
         $validated = $request->validate([
-            'business_type' => 'required|in:individual,partnership,corporation,llc,sole_proprietorship',
+            // 'business_type' => 'required|in:individual,partnership,corporation,llc,sole_proprietorship',
+            'business_type' => ['required', Rule::in(array_keys(Profile::BUSINESS_TYPES))],
             'pan_no' => 'nullable|string|max:20',
             'gst_no' => 'nullable|string|max:30',
             'mobile_no' => 'required|digits:10',
@@ -249,7 +250,7 @@ class ProfilesController extends Controller
             'TAN_no' => 'nullable|string|max:30',
             'trade_name' => 'nullable|string|max:255',
             'city_name' => 'nullable|string|max:150',
-            'state_name' => 'nullable|string|max:150',
+            'state_name' => 'required|string|max:150', // 'state_name' => 'nullable|string|max:150',
             'district_name' => 'nullable|string|max:150',
             'pincode' => 'nullable|digits:6',
             'address_2' => 'nullable|string|max:500',
@@ -283,27 +284,19 @@ class ProfilesController extends Controller
         // =========================================
         // STATE
         // =========================================
-         
-        if (empty($request->state) && !empty($request->state_name)) {
-            $state = DB::table('state')->whereRaw('LOWER(stateName) = ?', [strtolower(trim($request->state_name))])->first();
-            if (!$state) {
-                $newStateId = (DB::table('state')->max('stateId') ?? 0) + 1;
-                DB::table('state')->insert([
-                    'stateId'   => $newStateId,
-                    'stateName' => trim($request->state_name),
-                ]);
-                $profileData['state'] = $newStateId;
-            } else {
-                $profileData['state'] = $state->stateId;
-            }
-        }
-        $stateId = $profileData['state'] ?? $request->state;
-
-        if (!$stateId) {
+        $state = DB::table('state')
+            ->whereRaw('LOWER(TRIM(stateName)) = ?', [strtolower(trim($validated['state_name']))])
+            ->first();
+        if (!$state) {
             return back()->withErrors([
-                'state_name' => 'Please select state first.'
-            ]);
+                'state_name' => 'Please select a state from the list.',
+            ])->withInput();
         }
+        // Always derive the stored ID from the typed label. This prevents a stale
+        // hidden value from saving a different state than the user can see.
+        $stateId = $state->stateId;
+        $profileData['state'] = $stateId;        
+
         // =========================================
         // DISTRICT
         // =========================================
