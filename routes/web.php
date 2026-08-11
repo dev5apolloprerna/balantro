@@ -87,7 +87,7 @@ Route::get('/document-files/{document}/{filename}', [\App\Http\Controllers\Api\V
 
 // Auth::routes();
 //, 'role:super_admin'
-Route::middleware(['auth:web', 'nocache'])->group(function () {
+Route::middleware(['auth:web'])->group(function () {
 
     // Admin namespace
     Route::prefix('admin')->group(function () {

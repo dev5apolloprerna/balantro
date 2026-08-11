@@ -106,7 +106,7 @@ section {
                             </div>
                         </div>
                     <?php endif; ?>
-                    
+
                 </div>
 
                 <!-- Rest of your form content remains exactly the same -->
@@ -145,13 +145,17 @@ unset($__errorArgs, $__bag); ?>
 							<input id="password" type="password" name="password" required autocomplete="current-password"
 								placeholder="Password"
 								class="form-control h-[48px] sm:h-[50px] ps-11 pe-11 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-gray-900 dark:text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
-							<span class="toggle-password absolute end-4 top-1/2 -translate-y-1/2 text-secondary-light mt-[-2px] cursor-pointer">
-								<!-- Eye Icon - will be toggled via JavaScript -->
-								<svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<button type="button"
+                                class="password-visibility-toggle absolute end-2 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center text-secondary-light dark:text-gray-300"
+                                aria-label="Show password" aria-pressed="false">
+								<svg class="password-visible-icon h-5 w-5 shrink-0 overflow-visible" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
 								</svg>
-							</span>
+							    <svg class="password-hidden-icon hidden h-5 w-5 shrink-0 overflow-visible" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18M10.585 10.587a2 2 0 002.828 2.828M9.363 5.365A9.466 9.466 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.486 9.486 0 01-2.264 3.592M6.61 6.611A9.53 9.53 0 002.458 12C3.732 16.057 7.522 19 12 19a9.45 9.45 0 004.057-.908"/>
+                                </svg>
+							</button>
 						</div>
 						<?php $__errorArgs = ['password'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
@@ -218,9 +222,10 @@ unset($__errorArgs, $__bag); ?>
     <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Password toggle functionality
-    const togglePassword = document.querySelector('.toggle-password');
+    const togglePassword = document.querySelector('.password-visibility-toggle');
     const passwordInput = document.getElementById('password');
-    const eyeIcon = document.getElementById('eye-icon');
+    const visibleIcon = togglePassword?.querySelector('.password-visible-icon');
+    const hiddenIcon = togglePassword?.querySelector('.password-hidden-icon');
 
     if (togglePassword && passwordInput) {
         togglePassword.addEventListener('click', function() {
@@ -228,21 +233,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const isPassword = passwordInput.type === 'password';
             passwordInput.type = isPassword ? 'text' : 'password';
             
-            // Toggle eye icon using inline SVG paths
-            if (eyeIcon) {
-                if (isPassword) {
-                    // Show eye-off icon
-                    eyeIcon.innerHTML = `
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m9.018 9.018l3.211 3.211M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    `;
-                } else {
-                    // Show eye icon
-                    eyeIcon.innerHTML = `
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    `;
-                }
-            }
+            visibleIcon?.classList.toggle('hidden', isPassword);
+            hiddenIcon?.classList.toggle('hidden', !isPassword);
+            togglePassword.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+            togglePassword.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
         });
     }
 

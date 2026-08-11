@@ -1,10 +1,6 @@
-@extends('layouts.super_admin')
+<?php $__env->startSection('field_validation_only', true); ?>
 
-{{-- This form displays validation feedback beside each field, so the layout-level
-     validation summary would repeat the same message. --}}
-@section('field_validation_only', true)
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="lg:col-span-3">
     <div class="shadow p-3">
         <div class="mb-3">
@@ -13,16 +9,17 @@
         </div>
 
         <!-- Flash messages -->
-        @if (session('success'))
+        <?php if(session('success')): ?>
         <div
             class="mb-4 p-4 text-green-800 bg-green-100 rounded-lg border border-green-300 dark:bg-green-900 dark:text-green-200">
-            {{ session('success') }}
+            <?php echo e(session('success')); ?>
+
         </div>
-        @endif
+        <?php endif; ?>
 
 
-        <form method="POST" action="{{ route('profile.update_password') }}" class="space-y-2">
-            @csrf
+        <form method="POST" action="<?php echo e(route('profile.update_password')); ?>" class="space-y-2">
+            <?php echo csrf_field(); ?>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Current Password -->
                 <div>
@@ -31,8 +28,22 @@
                     <div class="relative">
                         <input type="password" name="current_password" id="current_password"
                             placeholder="Enter your current password" autocomplete="current-password"
-                            class="w-full px-2 py-1 pe-12 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('current_password') border-red-500 @else border-gray-300 dark:border-gray-600 @enderror"
-                            aria-describedby="current_password_error" @error('current_password') aria-invalid="true" @enderror
+                            class="w-full px-2 py-1 pe-12 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors <?php $__errorArgs = ['current_password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php else: ?> border-gray-300 dark:border-gray-600 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                            aria-describedby="current_password_error" <?php $__errorArgs = ['current_password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> aria-invalid="true" <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             required>
                         <button type="button" class="password-visibility-toggle absolute inset-y-0 end-1 flex w-10 items-center justify-center text-gray-500 dark:text-gray-300" data-target="current_password" data-name="current password" aria-label="Show current password" aria-pressed="false">
                             <svg class="eye-open h-5 w-5 overflow-visible" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -44,9 +55,16 @@
                             </svg>
                         </button>
                     </div>
-                    @error('current_password')
-                    <p id="current_password_error" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['current_password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p id="current_password_error" class="mt-1 text-sm text-red-600 dark:text-red-400"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
                 <!-- New Password -->
@@ -58,8 +76,22 @@
                             required minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}"
                             title="Use at least 8 characters, including a letter, a number, and a symbol."
                             autocomplete="new-password"
-                            class="w-full px-2 py-1 pe-12 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('password') border-red-500 @else border-gray-300 dark:border-gray-600 @enderror"
-                            aria-describedby="password_error password_guidance" @error('password') aria-invalid="true" @enderror>
+                            class="w-full px-2 py-1 pe-12 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php else: ?> border-gray-300 dark:border-gray-600 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                            aria-describedby="password_error password_guidance" <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> aria-invalid="true" <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>>
                         <button type="button" class="password-visibility-toggle absolute inset-y-0 end-1 flex w-10 items-center justify-center text-gray-500 dark:text-gray-300" data-target="password" data-name="new password" aria-label="Show new password" aria-pressed="false">
                             <svg class="eye-open h-5 w-5 overflow-visible" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -70,9 +102,16 @@
                             </svg>
                         </button>
                     </div>
-                    @error('password')
-                    <p id="password_error" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p id="password_error" class="mt-1 text-sm text-red-600 dark:text-red-400"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     <p id="password_guidance" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Use at least 8 characters. Mix letters, numbers, and symbols.</p>
                 </div>
 
@@ -84,8 +123,22 @@
                     <div class="relative">
                         <input type="password" name="password_confirmation" id="password_confirmation"
                             placeholder="Re-enter new password" autocomplete="new-password" minlength="8"
-                            class="w-full px-2 py-1 pe-12 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors @error('password_confirmation') border-red-500 @else border-gray-300 dark:border-gray-600 @enderror"
-                            aria-describedby="password_confirmation_error" @error('password_confirmation') aria-invalid="true" @enderror required>
+                            class="w-full px-2 py-1 pe-12 rounded-lg border bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors <?php $__errorArgs = ['password_confirmation'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php else: ?> border-gray-300 dark:border-gray-600 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                            aria-describedby="password_confirmation_error" <?php $__errorArgs = ['password_confirmation'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> aria-invalid="true" <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?> required>
                         <button type="button" class="password-visibility-toggle absolute inset-y-0 end-1 flex w-10 items-center justify-center text-gray-500 dark:text-gray-300" data-target="password_confirmation" data-name="password confirmation" aria-label="Show password confirmation" aria-pressed="false">
                             <svg class="eye-open h-5 w-5 overflow-visible" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -96,12 +149,19 @@
                             </svg>
                         </button>
                     </div>
-                    @error('password_confirmation')
-                    <p id="password_confirmation_error" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['password_confirmation'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p id="password_confirmation_error" class="mt-1 text-sm text-red-600 dark:text-red-400"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
             </div>
-            <!-- Buttons {{ url()->previous() }} -->
+            <!-- Buttons <?php echo e(url()->previous()); ?> -->
             <div class="flex justify-end gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
 
                 <button type="submit"
@@ -113,7 +173,7 @@
                                 hover:-translate-y-1"
                     style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">Change
                     Password</button>
-                <a href="{{ route('home') }}"
+                <a href="<?php echo e(route('home')); ?>"
                     class="rounded-md border border-gray-700 text-black dark:text-white px-4 py-2 text-sm transition duration-1000 ease-in-out
                                 transition-property: all;
                                 hover:border-[#a78bfa]
@@ -143,4 +203,5 @@
         });
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/profiles/change-password.blade.php ENDPATH**/ ?>

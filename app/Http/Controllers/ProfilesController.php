@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 // use Kreait\Firebase\Database\Query\Sorter\OrderByKey;
 // use Throwable;
 
@@ -422,7 +423,11 @@ class ProfilesController extends Controller
     {
         $request->validate([
             'current_password' => 'required',
-            'password' => 'required|min:8|confirmed',
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(8)->letters()->numbers()->symbols(),
+            ],
         ]);
 
 

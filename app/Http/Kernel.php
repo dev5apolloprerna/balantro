@@ -39,6 +39,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\ApplyThemePreferences::class,
             \App\Http\Middleware\LogActivity::class, // put near end
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\NoCache::class,
         ],
 
         // 'api' => [
@@ -75,12 +76,9 @@ class Kernel extends HttpKernel
         // ✅ Add this back here
         'role' => \App\Http\Middleware\RoleMiddleware::class,
 
-        'jwt.auth'    => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class,
+        'jwt.auth' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class,
         'jwt.refresh' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\RefreshToken::class,
         'jwt.from.cookie' => \App\Http\Middleware\JwtFromCookie::class,
-    ];
-
-    protected $routeMiddleware = [
         'nocache' => \App\Http\Middleware\NoCache::class,
     ];
 }
