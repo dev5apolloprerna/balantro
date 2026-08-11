@@ -9,7 +9,7 @@
                 <div class="px-6 py-6">
                     <div class="flex items-center justify-between">
                         <h2 class="text-2xl font-semibold mb-6">Document Activity Log</h2>
-                        <a href="javascript:history.back()"
+                        <a href="{{ route('documents.index') }}"
                             title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                     hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
             <i class="fa-solid fa-arrow-left"></i>

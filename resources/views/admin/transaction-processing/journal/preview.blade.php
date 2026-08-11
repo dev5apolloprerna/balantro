@@ -8,10 +8,10 @@
         <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
 
             <div class="flex items-center gap-3">
-                <button onclick="window.history.back()"
+                <a href="{{ route('transaction_processing.processing_journal') }}"
                     class="text-gray-700 dark:text-gray-300 hover:text-blue-600 text-lg">
-                    ←
-                </button>
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
 
                 <h2 class="text-gray-900 dark:text-white text-lg font-semibold">
                     Journal Transactions

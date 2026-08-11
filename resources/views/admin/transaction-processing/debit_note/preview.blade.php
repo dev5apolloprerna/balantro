@@ -6,11 +6,10 @@
         <!-- HEADER -->
         <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
             <div class="flex items-center gap-3">
-                <button type="button"
-                    onclick="window.history.back()"
+                <a href="{{ route('transaction_processing.processing_debit_note') }}"
                     class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-lg">
                     <i class="fa-solid fa-arrow-left"></i>
-                </button>
+                </a>
 
                 <h2 class="text-gray-900 dark:text-white text-lg font-semibold">
                     Debit Notes Transactions

@@ -1,0 +1,1029 @@
+
+
+<?php $__env->startSection('content'); ?>
+<style>
+.select2-container--default .select2-selection--single{
+    height:42px !important;
+    border-radius:8px !important;
+    border:1px solid #cbd5e1 !important;
+}
+
+.dark .select2-container--default .select2-selection--single{
+    background:#000 !important;
+    color:#fff !important;
+    border:1px solid #374151 !important;
+}
+
+.dark .select2-dropdown{
+    background:#000 !important;
+    color:#fff !important;
+}
+
+.dark .select2-results__option{
+    color:#fff !important;
+}
+/* Multi Select Container */
+.dark .select2-container--default .select2-selection--multiple{
+    background:#000 !important;
+    border:1px solid #374151 !important;
+    min-height:42px !important;
+}
+
+/* Selected Tag */
+.dark .select2-container--default .select2-selection--multiple .select2-selection__choice{
+    background:#111827 !important;
+    border:1px solid #374151 !important;
+    color:#fff !important;
+    padding:2px 8px !important;
+}
+
+/* Selected Tag Text */
+.dark .select2-container--default .select2-selection__choice__display{
+    color:#fff !important;
+}
+
+/* Remove Icon */
+.dark .select2-container--default .select2-selection__choice__remove{
+    color:#cbd5e1 !important;
+    border-right:none !important;
+}
+
+.dark .select2-container--default .select2-selection__choice__remove:hover{
+    color:#ef4444 !important;
+    background:transparent !important;
+}
+
+/* Search Input */
+.dark .select2-search__field{
+    color:#fff !important;
+}
+
+/* Dropdown */
+.dark .select2-dropdown{
+    background:#000 !important;
+    border:1px solid #374151 !important;
+}
+
+/* Options */
+.dark .select2-results__option{
+    color:#fff !important;
+}
+
+/* Hover */
+.dark .select2-results__option--highlighted{
+    background:#0284c7 !important;
+    color:#fff !important;
+}
+
+/* Placeholder */
+.dark .select2-selection__placeholder{
+    color:#94a3b8 !important;
+}
+
+#mappingModal .gst-modal-panel,
+#itemMappingModal .gst-modal-panel {
+    max-height: min(88vh, 620px);
+}
+
+#mappingModal .gst-modal-body,
+#itemMappingModal .gst-modal-body {
+    max-height: calc(88vh - 140px);
+    overflow-y: auto;
+}
+
+.gst-modal-panel {
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    box-shadow: 0 24px 80px rgba(2, 8, 23, 0.34);
+}
+
+.gst-modal-hero {
+    background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.34), transparent 32%),
+        linear-gradient(135deg, #0f172a 0%, #155e75 58%, #0f172a 100%);
+}
+
+.dark .gst-modal-hero {
+    background:
+        radial-gradient(circle at top left, rgba(34, 211, 238, 0.16), transparent 34%),
+        linear-gradient(135deg, #020617 0%, #082f49 56%, #020617 100%);
+}
+
+.gst-modal-subtitle {
+    color: rgba(224, 242, 254, 0.92);
+}
+
+.gst-modal-step {
+    display: inline-flex;
+    height: 2rem;
+    width: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(8, 145, 178, 0.12);
+    color: #0e7490;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.dark .gst-modal-step {
+    background: rgba(34, 211, 238, 0.16);
+    color: #67e8f9;
+}
+
+.gst-field-card {
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    background: rgba(248, 250, 252, 0.88);
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.dark .gst-field-card {
+    border-color: rgba(55, 65, 81, 0.9);
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.gst-modal-close {
+    height: 2.75rem;
+    width: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 1.75rem;
+    line-height: 1;
+    color: #fff;
+    transition: all 0.18s ease;
+}
+
+.gst-modal-close:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: rotate(90deg);
+}
+
+#mappingModal .select2-container--default .select2-selection--multiple,
+#itemMappingModal .select2-container--default .select2-selection--multiple {
+    min-height: 42px !important;
+    max-height: 96px;
+    overflow-y: auto;
+    border-radius: 0.5rem !important;
+    border-color: #cbd5e1 !important;
+    padding: 0.15rem 0.4rem !important;
+}
+#mappingModal .select2-container--default.select2-container--focus .select2-selection--multiple,
+#itemMappingModal .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: #06b6d4 !important;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.16);
+}
+
+#mappingModal .select2-container--default .select2-selection--multiple .select2-selection__choice,
+#itemMappingModal .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    border: 1px solid rgba(14, 116, 144, 0.22) !important;
+    border-radius: 9999px !important;
+    background: #ecfeff !important;
+    color: #155e75 !important;
+    margin-top: 4px !important;
+    padding: 2px 8px 2px 22px !important;
+}
+.gst-mapping-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.gst-tax-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .gst-tax-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.gst-selection-card {
+    border: 1px solid rgba(6, 182, 212, 0.24);
+    background: linear-gradient(180deg, rgba(236, 254, 255, 0.92), rgba(255, 255, 255, 0.98));
+    border-radius: 1rem;
+    min-height: auto;
+    padding: 0.75rem;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+}
+
+.dark .gst-selection-card {
+    border-color: rgba(34, 211, 238, 0.28);
+    background: linear-gradient(180deg, rgba(8, 47, 73, 0.64), rgba(2, 6, 23, 0.9));
+}
+
+.gst-ledger-heading {
+    margin-bottom: 0.35rem;
+}
+
+.gst-ledger-copy {
+    line-height: 1.25;
+}
+
+.gst-tax-card {
+    border: 1px solid rgba(148, 163, 184, 0.55);
+    background: rgba(255, 255, 255, 0.96);
+    border-radius: 0.85rem;
+    padding: 0.75rem;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
+}
+
+.dark .gst-tax-card {
+    border-color: rgba(71, 85, 105, 0.95);
+    background: rgba(15, 23, 42, 0.84);
+}
+
+.gst-modal-footer {
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.96), rgba(241, 245, 249, 0.96));
+}
+
+.dark .gst-modal-footer {
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.96), rgba(0, 0, 0, 0.96));
+}
+
+.gst-helper-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    background: rgba(14, 116, 144, 0.1);
+    color: #155e75;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.dark .gst-helper-chip {
+    background: rgba(34, 211, 238, 0.13);
+    color: #a5f3fc;
+}
+
+.gst-select-label {
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.dark .gst-select-label {
+    color: #f8fafc;
+}
+</style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<div class="container mx-auto">
+
+    <!-- <form action="<?php echo e(route('clients.GstSettingupdate')); ?>" method="POST">
+        <?php echo csrf_field(); ?> -->
+        <input type="hidden" name="guid" value="<?php echo e($user->guid); ?>">
+        <div class="rounded-2xl p-2 shadow-sm border border-cyan-400/10 bg-white/5 backdrop-blur-xl">
+             <div class="flex justify-between items-center mb-3">
+                <div>
+                    <h2 class="text-2xl font-bold mb-3 text-neutral-900 dark:text-white">
+                        GST Settings
+                    </h2>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-green-600 whitespace-nowrap" style="font-size: 1.0rem;font-variant-caps: small-caps;">
+                        <?php echo e($user->name ?? ''); ?>
+
+                    </span>
+                </div>
+                <div class="flex flex-wrap items-center justify-end gap-2">
+                    <div class="flex items-center gap-2 rounded-lg border border-slate-300 bg-white/80 px-2 py-1 dark:border-slate-700 dark:bg-slate-900/80">
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Roundoff</span>
+                        <select id="roundoff_side"
+                            class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                            <option value="normal" <?php echo e(($user->profile?->roundoff_side ?? 'normal') === 'normal' ? 'selected' : ''); ?>>Normal</option>
+                            <option value="upper_side" <?php echo e(($user->profile?->roundoff_side ?? '') === 'upper_side' ? 'selected' : ''); ?>>Upper Side</option>
+                            <option value="lower_side" <?php echo e(($user->profile?->roundoff_side ?? '') === 'lower_side' ? 'selected' : ''); ?>>Lower Side</option>
+                        </select>
+                        <select id="roundoff_ledger_id"
+                            class="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                            <option value="">Select Roundoff</option>
+                            <?php $__currentLoopData = $roundOffLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($ledger->iLedgerId); ?>" <?php echo e((string)($user->profile?->roundoff_ledger_id ?? '') === (string)$ledger->iLedgerId ? 'selected' : ''); ?>>
+                                    <?php echo e($ledger->strCustomerName); ?>
+
+                                </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                        <button type="button" id="saveRoundoffSetting"
+                            class="rounded bg-slate-700 px-2 py-1 text-xs font-semibold text-white hover:bg-slate-800">
+                            Save
+                        </button>
+                    </div>
+
+                    <button type="button" id="btnAddMapping" class="bg-cyan-600 text-white px-2 py-1 rounded">
+                        + Add Mapping
+                    </button>
+
+                    <button type="button"
+                        id="btnAddItemMapping"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded">
+                        + Item GST Mapping
+                    </button>
+
+                    <!-- <a href="<?php echo e(url()->previous()); ?>" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                        hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
+                        <i class="fa-solid fa-arrow-left"></i>                    
+                    </a> -->
+                    <a href="javascript:void(0);" onclick="history.back();" title="Go Back"
+                        class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700 hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
+                            <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-slate-700 text-white">
+                        <tr>
+                            <th class="p-1 text-left">Ledger Name</th>
+                            <th class="p-1">CGST Ledger</th>
+                            <th class="p-1">SGST Ledger</th>
+                            <th class="p-1">IGST Ledger</th>
+                            <th class="p-1">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $__empty_1 = true; $__currentLoopData = $mappedLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <tr class="border-b border-slate-700">
+                            <td class="p-1">
+                                <?php echo e($ledger->strCustomerName); ?>
+
+                            </td>
+                            <td class="p-1">
+                                <?php echo e($ledger->CGSTLedgerName); ?>
+
+                            </td>
+                            <td class="p-1">
+                                <?php echo e($ledger->SGSTLedgerName); ?>
+
+                            </td>
+                            <td class="p-1">
+                                <?php echo e($ledger->IGSTLedgerName); ?>
+
+                            </td>
+                            <td class="p-1">
+                                <button data-ledger="<?php echo e($ledger->iLedgerId); ?>" data-cgst="<?php echo e($ledger->CGSTLedgerId); ?>" data-sgst="<?php echo e($ledger->SGSTLedgerId); ?>" data-igst="<?php echo e($ledger->IGSTLedgerId); ?>"
+                                    class="editMapping rounded-full bg-blue-100 p-1.5 sm:p-2 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-800"
+                                    data-id="<?php echo e($ledger->iLedgerId); ?>" title="Edit Mapping">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
+                                    viewBox="0 0 24 24">
+                                    <g fill="none" stroke="currentColor" stroke-linecap="round"
+                                        stroke-linejoin="round" stroke-width="2">
+                                        <path
+                                            d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                        <path
+                                            d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+                                    </g>
+                                </svg>
+                                </button>
+                                <button
+                                    class="deleteMapping rounded-full bg-rose-100 p-1.5 sm:p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
+                                    data-id="<?php echo e($ledger->iLedgerId); ?>" title="Delete Mapping">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="1em"
+                                        height="1em" viewBox="0 0 24 24">
+                                        <path fill="currentColor"
+                                            d="M10 5h4a2 2 0 1 0-4 0M8.5 5a3.5 3.5 0 1 1 7 0h5.75a.75.75 0 0 1 0 1.5h-1.32l-1.17 12.111A3.75 3.75 0 0 1 15.026 22H8.974a3.75 3.75 0 0 1-3.733-3.389L4.07 6.5H2.75a.75.75 0 0 1 0-1.5zm2 4.75a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0zM14.25 9a.75.75 0 0 1 .75.75v7.5a.75.75 0 0 1-1.5 0v-7.5a.75.75 0 0 1 .75-.75m-7.516 9.467a2.25 2.25 0 0 0 2.24 2.033h6.052a2.25 2.25 0 0 0 2.24-2.033L18.424 6.5H5.576z" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+                        <tr>
+                            <td colspan="5"
+                                class="text-center p-8 text-gray-400">
+                                No GST Mapping Found
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            
+
+            
+        </div>
+    <!-- </form> -->
+</div>
+<div class="rounded-2xl p-2 mt-6 shadow-sm border border-emerald-400/10 bg-white/5 backdrop-blur-xl">
+    <h3 class="text-xl font-semibold mb-3 text-neutral-900 dark:text-white">
+        Item GST Mapping
+    </h3>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-slate-700 text-white">
+                <tr>
+                    <th class="p-1 text-left">Item Name</th>
+                    <th class="p-1">CGST Ledger</th>
+                    <th class="p-1">SGST Ledger</th>
+                    <th class="p-1">IGST Ledger</th>
+                    <th class="p-1">Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <?php $__empty_1 = true; $__currentLoopData = $mappedItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+
+                <tr class="border-b border-slate-700">
+                    <td class="p-1"><?php echo e($item->strItemName); ?></td>
+                    <td class="p-1"><?php echo e($item->CGSTLedgerName); ?></td>
+                    <td class="p-1"><?php echo e($item->SGSTLedgerName); ?></td>
+                    <td class="p-1"><?php echo e($item->IGSTLedgerName); ?></td>
+
+                    <td class="p-1">
+
+                        <button
+                            class="editItemMapping rounded-full bg-blue-100 p-1.5 sm:p-2 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-800" title="Edit"
+                            data-item="<?php echo e($item->iStockIdtemId); ?>"
+                            data-itemname="<?php echo e($item->strItemName); ?>"
+                            data-cgst="<?php echo e($item->CGSTLedgerId); ?>"
+                            data-sgst="<?php echo e($item->SGSTLedgerId); ?>"
+                            data-igst="<?php echo e($item->IGSTLedgerId); ?>">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
+                                viewBox="0 0 24 24">
+                                <g fill="none" stroke="currentColor" stroke-linecap="round"
+                                    stroke-linejoin="round" stroke-width="2">
+                                    <path
+                                        d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path
+                                        d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />
+                                </g>
+                            </svg>
+                        </button>
+
+                        <button
+                            class="deleteItemMapping rounded-full bg-rose-100 p-1.5 sm:p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800" title="Delete"
+                            data-id="<?php echo e($item->iStockIdtemId); ?>">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em"
+                                        height="1em" viewBox="0 0 24 24">
+                                        <path fill="currentColor"
+                                            d="M10 5h4a2 2 0 1 0-4 0M8.5 5a3.5 3.5 0 1 1 7 0h5.75a.75.75 0 0 1 0 1.5h-1.32l-1.17 12.111A3.75 3.75 0 0 1 15.026 22H8.974a3.75 3.75 0 0 1-3.733-3.389L4.07 6.5H2.75a.75.75 0 0 1 0-1.5zm2 4.75a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0zM14.25 9a.75.75 0 0 1 .75.75v7.5a.75.75 0 0 1-1.5 0v-7.5a.75.75 0 0 1 .75-.75m-7.516 9.467a2.25 2.25 0 0 0 2.24 2.033h6.052a2.25 2.25 0 0 0 2.24-2.033L18.424 6.5H5.576z" />
+                                    </svg>
+                        </button>
+
+                    </td>
+
+                </tr>
+
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+
+                <tr>
+                    <td colspan="5" class="text-center p-4">
+                        No Item Mapping Found
+                    </td>
+                </tr>
+
+                <?php endif; ?>
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+<div id="mappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
+    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-black shadow-2xl">
+        <!-- Header -->
+        <div class="gst-modal-hero flex items-start justify-between px-5 py-3 text-white">
+            <div>
+                <h3 class="text-xl font-bold">Ledger GST Mapping</h3>
+                <p class="gst-modal-subtitle mt-1 text-sm">Pick client ledgers on the left and assign CGST, SGST, and IGST on the right.</p>
+            </div>
+
+            <button type="button"
+                class="closeModal gst-modal-close">
+                ×
+            </button>
+        </div>
+        <form id="mappingForm">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="guid" value="<?php echo e($user->guid); ?>">
+            <!-- Body -->
+            <div class="gst-modal-body space-y-3 bg-slate-50/90 p-3 dark:bg-slate-950">
+                <div class="gst-mapping-layout">
+                    <!-- Ledger -->
+                    <div class="gst-selection-card">
+                        <div class="gst-ledger-heading flex items-center gap-3">
+                            <span class="gst-modal-step">01</span>
+                            <div>
+                                <label class="block text-base font-bold text-slate-800 dark:text-slate-100">Choose Client Ledger</label>
+                                <p class="gst-ledger-copy text-xs text-slate-500 dark:text-slate-400">Type to search, then select one or more ledgers.</p>
+                            </div>
+                        </div>
+                        <span class="gst-helper-chip mb-3">Tip: select multiple ledgers for same GST setup</span>
+                        <select id="ledger_id" name="ledger_id[]"  multiple="multiple"
+                            class="select2-ledger w-full rounded-lg border border-slate-300 dark:border-slate-700
+                                bg-white dark:bg-slate-800
+                                text-slate-800 dark:text-white px-2 py-1">
+                            <!-- <option value="">Select Ledger</option> -->
+
+                            <?php $__currentLoopData = $availableLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>" data-available="true">
+                                <?php echo e($ledger->strCustomerName); ?>
+
+                            </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                    </div>
+                    <div class="gst-tax-grid">
+                    <!-- CGST -->
+                    <div class="gst-tax-card">
+                        <label class="gst-select-label">
+                            <span><span class="gst-modal-step mr-2">02</span> CGST Ledger</span>
+                            <span class="text-xs font-semibold text-slate-400">Central Tax</span>
+                        </label>
+
+                        <select id="cgst_id" name="cgst_id"
+                            class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                                bg-white dark:bg-slate-800
+                                text-slate-800 dark:text-white px-2 py-1">
+                            <option value="">Select CGST</option>
+
+                            <?php $__currentLoopData = $cgstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
+                            </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                    </div>
+                    <!-- SGST -->
+                    <div class="gst-tax-card">
+                        <label class="gst-select-label">
+                            <span><span class="gst-modal-step mr-2">03</span> SGST Ledger</span>
+                            <span class="text-xs font-semibold text-slate-400">State Tax</span>
+                        </label>
+
+                        <select id="sgst_id" name="sgst_id"
+                            class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                                bg-white dark:bg-slate-800
+                                text-slate-800 dark:text-white px-2 py-1">
+                            <option value="">Select SGST</option>
+
+                            <?php $__currentLoopData = $sgstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
+                            </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                    </div>
+                    <!-- IGST -->
+                    <div class="gst-tax-card">
+                        <label class="gst-select-label">
+                            <span><span class="gst-modal-step mr-2">04</span> IGST Ledger</span>
+                            <span class="text-xs font-semibold text-slate-400">Interstate Tax</span>
+                        </label>
+
+                        <select id="igst_id" name="igst_id"
+                            class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                                bg-white dark:bg-slate-800
+                                text-slate-800 dark:text-white px-2 py-1">
+                            <option value="">Select IGST</option>
+
+                            <?php $__currentLoopData = $igstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
+                            </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        </select>
+                    </div>
+                </div>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="gst-modal-footer flex shrink-0 justify-end gap-3 px-5 py-3 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
+
+                <button type="button"
+                    class="closeModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                    Cancel
+                </button>
+
+                <button type="button"
+                    id="saveMapping"
+                    class="rounded-xl bg-cyan-600 px-6 py-2 font-semibold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-700">
+                    Save Mapping
+                </button>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="itemMappingModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
+    <div class="gst-modal-panel flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-black shadow-2xl">
+        <!-- Header -->
+        <div class="gst-modal-hero flex items-start justify-between px-5 py-3 text-white">
+            <div>
+                <h3 class="text-xl font-bold">Item GST Mapping</h3>
+                <p class="gst-modal-subtitle mt-1 text-sm">Pick client items on the left and assign CGST, SGST, and IGST on the right.</p>
+            </div>
+
+            <button type="button"
+                class="closeItemModal gst-modal-close">
+                ×
+            </button>
+        </div>
+        <!-- Body -->
+        <div class="gst-modal-body space-y-3 bg-slate-50/90 p-3 dark:bg-slate-950">
+            <input type="hidden" id="item_mapping_id">
+            <div class="gst-mapping-layout">
+                <!-- Item -->
+                <div class="gst-selection-card">
+                    <div class="gst-ledger-heading flex items-center gap-3">
+                        <span class="gst-modal-step">01</span>
+                        <div>
+                            <label class="block text-base font-bold text-slate-800 dark:text-slate-100">Choose Client Item</label>
+                            <p class="gst-ledger-copy text-xs text-slate-500 dark:text-slate-400">Type to search, then select one or more items.</p>
+                        </div>
+                    </div>
+                    <span class="gst-helper-chip mb-3">Tip: select multiple items for same GST setup</span>
+                    <select id="item_id" name="item_id[]" multiple="multiple" class="select2-item w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-3 py-2 ">
+                        <!-- <option value="">Select Item</option> -->
+                        <?php $__currentLoopData = $availableItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($item->iStockIdtemId); ?>" data-available="true">
+                                <?php echo e($item->strItemName); ?>
+
+                            </option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                </div>
+                <div class="gst-tax-grid">
+                <!-- CGST -->
+                <div class="gst-tax-card">
+                    <label class="gst-select-label">
+                        <span><span class="gst-modal-step mr-2">02</span> CGST Ledger</span>
+                        <span class="text-xs font-semibold text-slate-400">Central Tax</span>
+                    </label>
+                    <select id="item_cgst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                                bg-white dark:bg-slate-800
+                                text-slate-800 dark:text-white px-3 py-2">
+                        <option value="">Select CGST</option>
+                        <?php $__currentLoopData = $cgstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
+                            </option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                </div>
+                <!-- SGST -->
+                <div class="gst-tax-card">
+                    <label class="gst-select-label">
+                        <span><span class="gst-modal-step mr-2">03</span> SGST Ledger</span>
+                        <span class="text-xs font-semibold text-slate-400">State Tax</span>
+                    </label>
+                    <select id="item_sgst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                                bg-white dark:bg-slate-800
+                                text-slate-800 dark:text-white px-3 py-2">
+                        <option value="">Select SGST</option>
+                        <?php $__currentLoopData = $sgstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
+                            </option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                </div>
+                <!-- IGST -->
+                <div class="gst-tax-card">
+                    <label class="gst-select-label">
+                        <span><span class="gst-modal-step mr-2">04</span> IGST Ledger</span>
+                        <span class="text-xs font-semibold text-slate-400">Interstate Tax</span>
+                    </label>
+                    <select id="item_igst_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700
+                                bg-white dark:bg-slate-800
+                                text-slate-800 dark:text-white px-3 py-2">
+                        <option value="">Select IGST</option>
+                        <?php $__currentLoopData = $igstLedgers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ledger): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($ledger->iLedgerId); ?>">
+                                <?php echo e($ledger->strCustomerName); ?>
+
+                            </option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                </div>
+                </div>
+                
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="gst-modal-footer flex shrink-0 justify-end gap-3 px-5 py-3 border-t border-slate-200 dark:border-slate-700 rounded-b-2xl">
+            <button type="button"
+                class="closeItemModal rounded-xl border border-slate-300 bg-white px-5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                Cancel
+            </button>
+            <button type="button" id="saveItemMapping"
+                class="rounded-xl bg-cyan-600 px-6 py-2 font-semibold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-700">
+                Save Mapping
+            </button>
+        </div>
+    </div>
+</div>
+
+<?php $__env->stopSection(); ?>
+<?php $__env->startPush('scripts'); ?>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$('#is_item_wise').change(function(){
+    if($(this).is(':checked'))
+    {
+        $('#itemSection').slideDown();
+    }
+    else
+    {
+        $('#itemSection').slideUp();
+    }
+});
+
+$(document).on('click','.accordion-btn',function(){
+    $(this)
+        .closest('.accordion-card')
+        .find('.accordion-body')
+        .slideToggle();
+
+});
+
+// $('#ledger_id').select2({
+//     dropdownParent: $('#mappingModal'),
+//     placeholder: 'Search and select ledgers...',
+//     allowClear: true,
+//     closeOnSelect: false,
+//     width:'100%'
+// });
+
+// $('#item_id').select2({
+//     dropdownParent: $('#itemMappingModal'),
+//     placeholder: 'Search and select items...',
+//     allowClear: true,
+//     closeOnSelect: false,
+//     width: '100%'
+// });
+function initLedgerSelect() {
+    const $ledgerSelect = $('#ledger_id');
+    if ($ledgerSelect.hasClass('select2-hidden-accessible')) {
+        return;
+    }
+     $ledgerSelect.select2({
+        dropdownParent: $('#mappingModal'),
+        placeholder: 'Search and select ledgers...',
+        allowClear: true,
+        closeOnSelect: true,
+        width:'100%'
+    });
+}
+
+function initItemSelect() {
+    const $itemSelect = $('#item_id');
+    if ($itemSelect.hasClass('select2-hidden-accessible')) {
+        return;
+    }
+
+    $itemSelect.select2({
+        dropdownParent: $('#itemMappingModal'),
+        placeholder: 'Search and select items...',
+        allowClear: true,
+        closeOnSelect: true,
+        width: '100%'
+    });
+}
+
+$('#saveRoundoffSetting').click(function () {
+    $.ajax({
+        url: "<?php echo e(route('clients.updateRoundoffSetting')); ?>",
+        type: "POST",
+        data: {
+            _token: "<?php echo e(csrf_token()); ?>",
+            guid: "<?php echo e($user->guid); ?>",
+            roundoff_side: $('#roundoff_side').val(),
+            roundoff_ledger_id: $('#roundoff_ledger_id').val()
+        },
+        success: function(res) {
+            if (res.success) {
+                showToast(res.message || 'Roundoff setting saved successfully.','success');
+            }
+        },
+        error: function(xhr) {
+            showToast(xhr.responseJSON?.message || 'Unable to save roundoff setting.','error');
+        }
+    });
+});
+
+// $(document).ready(function () {
+//     $('#btnAddMapping').click(function () {
+//         $('#mappingModal').removeClass('hidden');
+//         setTimeout(function () {
+//             $('#ledger_id').select2({
+//                 dropdownParent: $('#mappingModal'),
+//                 // width: '100%',
+//                 placeholder: 'Search Ledger...',
+//                 allowClear: true
+//             });
+//         }, 100);
+//     });
+// });
+
+// $(document).on('click','.editMapping',function(){
+//     let ledgerId = $(this).data('ledger');
+//     $('#ledger_id').val([ledgerId]).trigger('change');
+//     $('#cgst_id').val($(this).data('cgst'));
+//     $('#sgst_id').val($(this).data('sgst'));
+//     $('#igst_id').val($(this).data('igst'));
+//     $('#mappingModal').removeClass('hidden');
+// });
+
+$(document).on('click','.editMapping',function(){
+    initLedgerSelect();
+    let ledgerId   = $(this).data('ledger');
+    let ledgerName = $(this).closest('tr').find('td:eq(0)').text().trim();
+    if ($("#ledger_id option[value='"+ledgerId+"']").length == 0)
+    {
+        // $('#ledger_id').append(
+        //     new Option(ledgerName, ledgerId, true, true)
+        // );
+        const editOption = new Option(ledgerName, ledgerId, true, true);
+        $(editOption).attr('data-edit-only', 'true');
+        $('#ledger_id').append(editOption);
+    }
+
+    $('#ledger_id').val([ledgerId]).trigger('change');
+    $('#cgst_id').val($(this).data('cgst'));
+    $('#sgst_id').val($(this).data('sgst'));
+    $('#igst_id').val($(this).data('igst'));
+    $('#mappingModal').removeClass('hidden');
+});
+
+$(document).ready(function () {
+    $('#btnAddMapping').click(function () {
+        initLedgerSelect();
+        $('#ledger_id option[data-edit-only="true"]').remove();
+        $('#ledger_id').val('').trigger('change');
+        $('#cgst_id').val('');
+        $('#sgst_id').val('');
+        $('#igst_id').val('');
+        $('#mappingModal').removeClass('hidden');
+    });
+    $(document).on('click', '.closeModal', function () {
+        $('#mappingModal').addClass('hidden');
+    });
+    $('#mappingModal').click(function(e){
+        if(e.target === this){
+            $(this).addClass('hidden');
+        }
+    });
+});
+
+$('#saveMapping').click(function () {
+
+    $.ajax({
+        url: "<?php echo e(route('clients.saveGstMapping')); ?>",
+        type: "POST",
+        data: {
+            _token: "<?php echo e(csrf_token()); ?>",
+            guid: "<?php echo e($user->guid); ?>",
+            ledger_ids: $('#ledger_id').val(),
+            cgst_id: $('#cgst_id').val(),
+            sgst_id: $('#sgst_id').val(),
+            igst_id: $('#igst_id').val()
+        },
+        success: function(res){
+
+            if(res.success){
+                location.reload();
+            }
+        }
+    });
+
+});
+
+$(document).on('click','.deleteMapping',function(){
+    if(!confirm('Delete GST Mapping?')){
+        return;
+    }
+    let ledgerId = $(this).data('id');
+    $.ajax({
+        url: "<?php echo e(route('clients.deleteGstMapping', ':id')); ?>".replace(':id', ledgerId),
+        type: 'POST',
+        data: {
+            _token: '<?php echo e(csrf_token()); ?>'
+        },
+        success: function(res){
+            if(res.success){
+                location.reload();
+            }
+        },
+        error: function(xhr){
+            showToast('Something went wrong.','error');
+        }
+    });
+});
+
+$(document).ready(function () {
+
+    $('#btnAddItemMapping').click(function () {
+        initItemSelect();
+        $('#item_id option[data-edit-only="true"]').remove();
+        $('#item_id').val('').trigger('change');
+        $('#item_cgst_id').val('');
+        $('#item_sgst_id').val('');
+        $('#item_igst_id').val('');
+
+        $('#itemMappingModal').removeClass('hidden');
+    });
+
+    $(document).on('click', '.closeItemModal', function () {
+        $('#itemMappingModal').addClass('hidden');
+    });
+
+    $('#itemMappingModal').click(function(e){
+        if(e.target === this){
+            $(this).addClass('hidden');
+        }
+    });
+
+});
+
+$('#saveItemMapping').click(function(){
+
+    $.ajax({
+        url: "<?php echo e(route('clients.saveItemGstMapping')); ?>",
+        type: "POST",
+        data: {
+            _token: "<?php echo e(csrf_token()); ?>",
+            guid: "<?php echo e($user->guid); ?>",
+            item_ids: $('#item_id').val(),
+            cgst_id: $('#item_cgst_id').val(),
+            sgst_id: $('#item_sgst_id').val(),
+            igst_id: $('#item_igst_id').val()
+        },
+        success: function(res){
+            if(res.success){
+                location.reload();
+            }
+        }
+    });
+
+});
+
+$(document).on('click','.editItemMapping',function(){
+    initItemSelect();
+    let itemId   = $(this).data('item');
+    let itemName = $(this).data('itemname');
+    if ($("#item_id option[value='"+itemId+"']").length == 0)
+    {
+        const editItemOption = new Option(itemName, itemId, true, true);
+        $(editItemOption).attr('data-edit-only', 'true');
+        $('#item_id').append(editItemOption);
+    }
+    $('#item_id').val([itemId]).trigger('change');
+    $('#item_cgst_id').val($(this).data('cgst'));
+    $('#item_sgst_id').val($(this).data('sgst'));
+    $('#item_igst_id').val($(this).data('igst'));
+    $('#itemMappingModal').removeClass('hidden');
+});
+$(document).on('click','.deleteItemMapping',function(){
+    if(!confirm('Delete Item GST Mapping?')){
+        return;
+    }
+    let itemId = $(this).data('id');
+    $.ajax({
+        url: "<?php echo e(route('clients.deleteItemGstMapping', ':id')); ?>"
+                .replace(':id', itemId),
+        type: 'POST',
+        data: {
+            _token: '<?php echo e(csrf_token()); ?>'
+        },
+        success: function(res){
+            if(res.success){
+                location.reload();
+            }
+        },
+        error: function(xhr){
+            console.log(xhr.responseText);
+            showToast('Delete failed.','error');
+        }
+    });
+});
+$(document).on('select2:open', function() {
+    setTimeout(function() {
+        document.querySelector('.select2-container--open .select2-search__field')?.focus();
+    }, 0);
+});
+</script>
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/clients/settings/gst/index.blade.php ENDPATH**/ ?>

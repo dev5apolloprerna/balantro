@@ -6,10 +6,10 @@
         <!-- HEADER -->
         <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
             <div class="flex items-center gap-3">
-                <button type="button" onclick="window.history.back()"
+                <a href="{{ route('cn.index') }}"
                     class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-lg">
                     <i class="fa-solid fa-arrow-left"></i>
-                </button>
+                </a>
                 <h2 class="text-gray-900 dark:text-white text-lg font-semibold">Credit Notes Transactions</h2>
                 <span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">{{ $rows->count() }}</span>
             </div>

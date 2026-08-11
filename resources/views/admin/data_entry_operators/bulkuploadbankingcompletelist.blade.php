@@ -28,7 +28,7 @@
 
                             <div class="flex items-center gap-3">
 
-                                <a href="javascript:void(0)" id="backBtn" class="text-gray-600 dark:text-gray-300 text-lg">
+                                <a href="{{ route('data_entry_operators.bulkuploadbankstatement') }}" class="text-gray-600 dark:text-gray-300 text-lg">
                                     <i class="fa-solid fa-arrow-left"></i>
                                 </a>
 
@@ -397,11 +397,11 @@
         </div>
     </div>
 
-
+<!-- 
     <script>
         $('#backBtn').click(function() {
             window.history.back()
         })
-    </script>
+    </script> -->
 
     @endsection

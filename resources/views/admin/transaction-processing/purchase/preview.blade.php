@@ -28,11 +28,10 @@
                 </span>
             </div> -->
             <div class="flex items-center gap-3">
-                <button type="button"
-                    onclick="window.history.back()"
+                <a href="{{ route('transaction_processing.processing_purchase') }}"
                     class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-lg">
                     <i class="fa-solid fa-arrow-left"></i>
-                </button>
+                </a>
 
                 <h2 class="text-gray-900 dark:text-white text-lg font-semibold">
                     Purchase Transactions
