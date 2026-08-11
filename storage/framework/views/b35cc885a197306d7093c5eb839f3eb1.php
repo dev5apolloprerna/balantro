@@ -72,7 +72,22 @@
             'decRunningBalance' => $previousBalance,
             'side' => $openingSide,
         ];
-
+        $financialYearOptions = collect($financialYears ?? [])
+            ->map(function ($year) {
+                $label = trim((string) ($year->strYear ?? ''));
+                if (! preg_match('/^(\d{4})-(\d{4})$/', $label, $matches)) {
+                    return null;
+                }
+                return [
+                    'value' => $label,
+                    'label' => $label,
+                    'from' => $matches[1] . '-04-01',
+                    'to' => $matches[2] . '-03-31',
+                ];
+            })
+            ->filter()
+            ->values();
+        $rangeOptions = $financialYearOptions->pluck('label', 'value')->all();
         // Process actual voucher rows - use the running balance from database directly
         
         foreach ($rows as $r) {
@@ -186,15 +201,45 @@
             color: var(--card) !important;
         }
     </style>
+    <div class="mt-1 border-b border-gray-200 dark:border-gray-700 pb-1">
+        <div class="flex flex-wrap lg:flex-nowrap items-center justify-between gap-4">
+            <!-- Left : Client Name -->
+            <div class="flex items-center gap-3 shrink-0">
+                <div
+                    class="h-10 w-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white flex items-center justify-center font-bold">
+                    <?php echo e(strtoupper(substr($user->name ?? '',0,1))); ?>
+
+                </div>
+                <h1 class="text-xl font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                    <?php echo e(strtoupper($user->name ?? '')); ?>
+
+                </h1>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-2 flex-1">
+                <?php echo $__env->make('admin.clients.reports.tabmanu', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+            </div>
+            <!-- Right : FY + Back -->
+            <div class="flex items-center gap-3 shrink-0">
+                <!-- <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    <?php echo e($labelFY ?? ''); ?>
+
+                </span> -->
+                <a href="javascript:void(0);" onclick="history.back();" title="Go Back"
+                    class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                    hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+<div class="dashboard-main-body">
     <div class="container py-3">
         <div class="flex items-center justify-between gap-3">
             <div>
-                <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    <?php echo e($ledgerName ?? 'Ledger'); ?> 
-                </h1>
-                <p class="text-xs text-black-500 dark:text-gray-400 mt-0.5">
-                    <!-- Ledger #<?php echo e($ledgerName ?: '—'); ?>  -->
-                     • <?php echo e($periodText()); ?>
+                <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100"><?php echo e(strtoupper($ledgerName ?? '')); ?></h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    • <?php echo e($periodText()); ?>
 
                 </p>
             </div>
@@ -204,28 +249,24 @@
                     'from' => request('from', $from ?? ''),
                     'to' => request('to', $to ?? ''),
                     'range' => request('range', $rangeSel ?? ''),
+                    'guid' => $guid,
                 ]);
             ?>
+           
             <div>
-                <!-- <a href="<?php echo e(route('reports.voucher-history.export-pdf', $queryParams)); ?>"
-                    class="btn btn-danger bg-red-600 text-white px-4 py-2 text-sm hover:bg-red-700">
-                    <i class="fas fa-file-pdf mr-1"></i>
-                </a> -->
-                <a href="<?php echo e(route('reports.voucher-history.export-pdf', $queryParams)); ?>" title="Export into PDF" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                <a href="<?php echo e(route('reports.voucher-history.export-pdf', $queryParams)); ?>"
+                    class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                 transition duration-1000 ease-in-out
                                 transition-property: all;
                                 hover:border-[#a78bfa]
                                 hover:shadow-[0_0_15px_#a78bfa]
                                 hover:scale-105
-                                hover:-translate-y-1" style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">
-                    <i class="fas fa-file-pdf"></i>
+                                hover:-translate-y-1">
+                    <i class="fas fa-file-pdf mr-1"></i>
                 </a>
                 &nbsp;
-                <!-- <a href="<?php echo e(route('reports.voucher-history.export-excel', $queryParams)); ?>"
-                    class="btn btn-success bg-green-600 text-white  px-4 py-2 text-sm hover:bg-green-700 transition">
-                    <i class="fas fa-file-excel mr-1"></i>
-                </a> -->
-                <a href="<?php echo e(route('reports.voucher-history.export-excel', $queryParams)); ?>" title="Export into Excel" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                <a href="<?php echo e(route('reports.voucher-history.export-excel', $queryParams)); ?>"
+                    class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                 transition duration-1000 ease-in-out
                                 transition-property: all;
                                 hover:border-[#34d399]
@@ -234,27 +275,11 @@
                                 hover:-translate-y-1">
                     <i class="fas fa-file-excel mr-1"></i>
                 </a>
-                &nbsp;
-                <!-- <a href="<?php echo e(url()->previous()); ?>"
-                    class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium
-                  bg-gray-200 text-gray-700 hover:bg-gray-300
-                  dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 transition">
-                    <i class="fa-solid fa-arrow-left mr-1"></i> Go Back
-                </a> -->
-                <a href="<?php echo e(url()->previous()); ?>" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
-                                transition duration-1000 ease-in-out
-                                transition-property: all;
-                                hover:border-[#f472b6]
-                                hover:shadow-[0_0_15px_#f472b6]
-                                hover:scale-105
-                                hover:-translate-y-1" style="transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);">
-                    <i class="fa-solid fa-arrow-left mr-1"></i>
-                </a>
             </div>
         </div>
 
         
-        <form id="filterForm" method="GET" action="<?php echo e(route('reports.voucher_history')); ?>"
+        <form method="GET" action="<?php echo e(route('reports.voucher_history')); ?>" id="filterForm"
             class="mt-2 rounded-lg p-2 flex flex-wrap items-end gap-3">
             <div style="display: none">
                 <label class="block text-xs text-black-900 dark:text-gray-300 mb-1">Party GUID</label>
@@ -272,8 +297,8 @@
                 <div class="relative"
                     x-data="{
                         open: false,
-                        selected: '<?php echo e($rangeSel); ?>',
-                        options: <?php echo \Illuminate\Support\Js::from(collect($financialYears ?? [])->mapWithKeys(fn ($year) => [(string) $year->iYearId => $year->strYear])->put('custom', 'Custom Date')->all())->toHtml() ?>,
+                        selected: <?php echo \Illuminate\Support\Js::from($rangeSel)->toHtml() ?>,
+                        options: <?php echo \Illuminate\Support\Js::from($rangeOptions)->toHtml() ?>,
 
                         init() {
                             this.$watch('selected', value => {
@@ -299,7 +324,7 @@
                         focus:outline-none
                         focus:ring-2 focus:ring-[#22d3ee]">
 
-                        <span class="balantro-select-value" x-text="options[selected] ?? 'Select Range'"></span>
+                        <span class="balantro-select-value" x-text="options[selected] || 'Select Year'"></span>
                     </button>
 
                     <!-- Arrow -->
@@ -313,21 +338,18 @@
                         class="absolute z-50 mt-2 w-full max-h-80 overflow-x-hidden overflow-y-auto overscroll-contain rounded-xl balantro-select-menu
                         bg-white/10 dark:bg-white/5 backdrop-blur-2xl border border-white/20">
 
-                        <?php $__empty_1 = true; $__currentLoopData = $financialYears ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php $__empty_1 = true; $__currentLoopData = $financialYearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $financialYear): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                             <li>
                                 <button type="button"
-                                    @click="selected='<?php echo e($financialYear->iYearId); ?>'; open=false"
+                                    @click="selected=<?php echo \Illuminate\Support\Js::from($financialYear['value'])->toHtml() ?>; open=false"
                                     class="w-full px-4 py-2 text-left hover:text-[#22d3ee]">
-                                    <?php echo e($financialYear->strYear); ?>
+                                    <?php echo e($financialYear['label']); ?>
 
                                 </button>
                             </li>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                            <li>
-                                <span class="block px-4 py-2 text-sm text-gray-500 dark:text-gray-300">No financial years found</span>
-                            </li>
+                            <li class="px-4 py-2 text-left text-gray-500 dark:text-gray-400">No financial years found</li>
                         <?php endif; ?>
-
                         <li>
                             <button type="button"
                                 @click="selected='custom'; open=false"
@@ -383,7 +405,7 @@
             </div>
         </form>
 
-        
+         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             <div class="group card-hover color-0">
@@ -530,8 +552,9 @@
                                 !empty($r->vchType)
                             ) {
                                 $voucherUrl = route(
-                                    'reports.voucher-history.viewVoucher',
+                                    'clients.reports.voucher-history.viewVoucher',
                                     [
+                                        'guid' => $guid,
                                         'strGUID' => urlencode($r->strGUID),
                                         'vchType' => urlencode($r->vchType)
                                     ]
@@ -626,15 +649,7 @@
                             </td>
 
                             
-                            <!-- <td class="px-4 py-2 text-center">
-                                <?php if($side === 'Dr'): ?>
-                                    <span
-                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">Dr</span>
-                                <?php else: ?>
-                                    <span
-                                        class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Cr</span>
-                                <?php endif; ?>
-                            </td> -->
+                            
                         </tr>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
@@ -643,50 +658,19 @@
                         </tr>
                     <?php endif; ?>
                 </tbody>
-                <!-- <tfoot class="bg-gray-50 dark:bg-gray-900/40">
-                    <tr>
-                        <td colspan="8" class="px-4 py-3">
-                            <div class="flex flex-wrap items-center justify-end gap-6 text-sm">
-                                <span class="text-gray-700 dark:text-gray-300">Total Dr:
-                                    <strong
-                                        class="text-gray-900 dark:text-gray-100 dark:text-emerald-300"><?php echo e($inr($totalDr)); ?></strong></span>
-                                <span class="text-gray-700 dark:text-gray-300">Total Cr:
-                                    <strong class="text-gray-900 dark:text-gray-100 dark:text-red-400"><?php echo e($inr($totalCr)); ?></strong></span>
-                                <span class="text-gray-700 dark:text-gray-300">Diff:
-                                    <strong
-                                        class="text-gray-900 dark:text-gray-100">
-                                        <?php echo e($inr(abs($diff))); ?> <?php echo e($diff >= 0 ? 'Dr' : 'Cr'); ?>
-
-                                    </strong></span>
-                            </div>
-                        </td>
-                    </tr>
-                </tfoot> -->
+                
             </table>
         </div>
     </div>
-
+</div>
     
     <script>
-        window.financialYearOptions = <?php echo json_encode(collect($financialYears ?? [])->mapWithKeys(fn ($year) => [(string) $year->iYearId => $year->strYear])->all(), 15, 512) ?>;
-
-        document.addEventListener('DOMContentLoaded', function () {
-        const range = document.querySelector('input[name="range"]').value;
-            // 🔥 force UI sync after reload
-            handleRangeChange(range, true);
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
             const q = document.getElementById('vhSearch');
             if (!q) return;
             q.addEventListener('input', function() {
                 const needle = (q.value || '').toLowerCase();
                 document.querySelectorAll('#vhBody tr').forEach(tr => {
-                    // Skip opening/closing rows from search (check for special styling)
-                    if (tr.classList.contains('bg-blue-50') || tr.classList.contains(
-                            'dark:bg-blue-900/20')) {
-                        return;
-                    }
                     const txt = (
                         (tr.querySelector('.voucher-no')?.textContent || '') + ' ' +
                         (tr.querySelector('.voucher-type')?.textContent || '') + ' ' +
@@ -698,270 +682,32 @@
         });
     </script>
 
+    
     <script>
-        function getRangeValue() {
-            return document.querySelector('input[name="range"]').value;
-        }
-        (function() {
-            // const sel = document.getElementById('rangeSel');
-            const hidFrom = document.getElementById('from');
-            const hidTo = document.getElementById('to');
-            //const form = sel.form;
-            const form = document.querySelector('form');
-
-            const cfWrap = document.getElementById('customFromWrap');
-            const ctLbl = document.getElementById('customToLabel');
-            const ctWrap = document.getElementById('customToWrap');
-            const fromC = document.getElementById('from_custom');
-            const toC = document.getElementById('to_custom');
-
-            const pad = n => String(n).padStart(2, '0');
-            const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-
-            function firstDayOfMonth(y, m) {
-                return new Date(y, m, 1);
-            }
-
-            function lastDayOfMonth(y, m) {
-                return new Date(y, m + 1, 0);
-            }
-
-            function fyStartYearFor(date) {
-                return date.getMonth() >= 3 ? date.getFullYear() : date.getFullYear() - 1;
-            }
-
-            function fyRange(startYr) {
-                const from = new Date(startYr, 3, 1);
-                const to = new Date(startYr + 1, 2, 31);
-                return {
-                    from,
-                    to
-                };
-            }
-
-            function fyQuarterIndex(date) {
-                const shifted = (date.getMonth() + 12 - 3) % 12;
-                return Math.floor(shifted / 3) + 1;
-            }
-
-            function fyQuarterRange(fyStartYr, q) {
-                let from, to;
-                if (q === 4) {
-                    from = new Date(fyStartYr + 1, 0, 1);
-                    to = lastDayOfMonth(fyStartYr + 1, 2);
-                } else {
-                    const startM = 3 + (q - 1) * 3;
-                    from = new Date(fyStartYr, startM, 1);
-                    to = lastDayOfMonth(fyStartYr, startM + 2);
-                }
-                return {
-                    from,
-                    to
-                };
-            }
-
-            // function computeRange(kind) {
-            //     const now = new Date();
-
-            //     const fyStartYear = (now.getMonth() >= 3) ? now.getFullYear() : now.getFullYear() - 1;
-
-            //     if (kind === 'current_year') {
-            //         return {
-            //             from: new Date(fyStartYear, 3, 1),
-            //             to: new Date(fyStartYear + 1, 2, 31)
-            //         };
-            //     }
-
-            //     if (kind === 'last_year') {
-            //         return {
-            //             from: new Date(fyStartYear - 1, 3, 1),
-            //             to: new Date(fyStartYear, 2, 31)
-            //         };
-            //     }
-
-            //     return null;
-            // }
-
-            // ✅ MOVE HERE (VERY IMPORTANT)
-            const searchBtn = document.getElementById('searchBtn');
-            const resetBtn = document.getElementById('resetBtn');
-
-            function toggleButtons(isCustom) {
-                searchBtn.style.display = isCustom ? 'inline-block' : 'none';
-                resetBtn.style.display = isCustom ? 'inline-block' : 'none';
-            }
-
-            function toggleCustom(show) {
-                [cfWrap, ctLbl, ctWrap].forEach(el => el.classList.toggle('hidden', !show));
-            }
-
-            // function applyPreset(kind) {
-            //     const r = computeRange(kind);
-            //     if (r) {
-            //         hidFrom.value = fmt(r.from);
-            //         hidTo.value = fmt(r.to);
-            //         if (!fromC.value) fromC.value = hidFrom.value;
-            //         if (!toC.value) toC.value = hidTo.value;
-            //     }
-            // }
-
-            function submitForm() {
-                if (form.requestSubmit) {
-                    form.requestSubmit();
-                } else {
-                    form.submit();
-                }
-            }
-
-            // sel.addEventListener('change', () => {
-            //     const kind = getRangeValue();
-            //     const isCustom = kind === 'custom';
-            //     toggleCustom(isCustom);
-            //     toggleButtons(isCustom); // ✅ ADD THIS
-
-            //     if (!isCustom) {
-            //         applyPreset(kind);
-            //         // Auto-submit for non-custom options
-            //         setTimeout(submitForm, 100);
-            //     } else {
-            //         hidFrom.value = fromC.value || '';
-            //         hidTo.value = toC.value || '';
-            //         // Don't auto-submit for custom - let user choose dates
-            //     }
-            // });
-
-            // For custom dates, only submit when search button is clicked
-            // form.addEventListener('submit', (e) => {
-            //     if (getRangeValue() === 'custom') {
-            //         hidFrom.value = fromC.value || '';
-            //         hidTo.value = toC.value || '';
-            //     } else {
-            //         applyPreset(getRangeValue());
-            //     }
-            // });
-
-            // Initialize on page load
-            if (getRangeValue() !== 'custom') {
-                //applyPreset(getRangeValue());
-                toggleCustom(false);
-                toggleButtons(false); // ✅ ADD THIS
-            } else {
-                toggleCustom(true);
-                toggleButtons(true); // ✅ ADD THIS
-            }
-        })();
-
-        // function handleRangeChange(kind) {
-        //     const isCustom = kind === 'custom';
-        //     toggleCustom(isCustom);
-        //     toggleButtons(isCustom);
-        //     if (!isCustom) {
-        //         applyPreset(kind);
-        //         setTimeout(() => {
-        //             document.querySelector('form').submit();
-        //         }, 100);
-        //     }
-        // }
-
-        function financialYearRange(kind) {
-            const match = /^(\d{4})-(\d{4})$/.exec(window.financialYearOptions?.[kind] || '');
-
-            if (!match) return null;
-
-            return {
-                from: new Date(Number(match[1]), 3, 1),
-                to: new Date(Number(match[2]), 2, 31)
-            };
-        }
-
-        function computeRange(kind) {
-            const selectedFinancialYear = financialYearRange(kind);
-            if (selectedFinancialYear) return selectedFinancialYear;
-            
-            const now = new Date();
-            const fyStartYear = (now.getMonth() >= 3) ? now.getFullYear() : now.getFullYear() - 1;
-
-            if (kind === 'current_year') {
-                return {
-                    from: new Date(fyStartYear, 3, 1),
-                    to: new Date(fyStartYear + 1, 2, 31)
-                };
-            }
-
-            if (kind === 'last_year') {
-                return {
-                    from: new Date(fyStartYear - 1, 3, 1),
-                    to: new Date(fyStartYear, 2, 31)
-                };
-            }
-
-            return null;
-        }
-
-        function handleRangeChange(value, isInit = false) {
-
-            document.querySelector('input[name="range"]').value = value;
-
+        function handleRangeChange(value) {
+            const financialYearRanges = <?php echo json_encode($financialYearOptions->keyBy('value'), 15, 512) ?>;
+            const selectedRange = financialYearRanges[value];
             const isCustom = value === 'custom';
 
-            const cfWrap = document.getElementById('customFromWrap');
-            const ctWrap = document.getElementById('customToWrap');
-            const ctLbl  = document.getElementById('customToLabel');
+            document.getElementById('customFromWrap')?.classList.toggle('hidden', !isCustom);
+            document.getElementById('customToLabel')?.classList.toggle('hidden', !isCustom);
+            document.getElementById('customToWrap')?.classList.toggle('hidden', !isCustom);
 
-            const searchBtn = document.getElementById('searchBtn');
-            const resetBtn  = document.getElementById('resetBtn');
-
-            cfWrap.classList.toggle('hidden', !isCustom);
-            ctWrap.classList.toggle('hidden', !isCustom);
-            ctLbl.classList.toggle('hidden', !isCustom);
-
-            searchBtn.style.display = isCustom ? 'inline-block' : 'none';
-            resetBtn.style.display  = isCustom ? 'inline-block' : 'none';
-
-            // ❌ prevent auto submit on page load
-            if (!isCustom && !isInit) {
-                const r = computeRange(value); // ✅ r defined here
-                if (r) {
-                    document.getElementById('from').value = formatDate(r.from);
-                    document.getElementById('to').value   = formatDate(r.to);
-                }
-
-                document.getElementById('filterForm').submit();
+            if (isCustom) {
+                document.getElementById('from').value = '';
+                document.getElementById('to').value = '';
+                return;
             }
-        }
 
-        function formatDate(d) {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-        
-        document.getElementById('filterForm').addEventListener('submit', function (e) {
-
-            const range = document.querySelector('input[name="range"]').value;
-
-            const fromC = document.getElementById('from_custom').value;
-            const toC   = document.getElementById('to_custom').value;
-
-            const hidFrom = document.getElementById('from');
-            const hidTo   = document.getElementById('to');
-
-            if (range === 'custom') {
-
-                if (!fromC || !toC) {
-                    e.preventDefault();
-                    showToast('Please select both dates','error');
-                    return;
-                }
-
-                // IMPORTANT
-                hidFrom.value = fromC;
-                hidTo.value   = toC;
+            if (! selectedRange) {
+                return;
             }
-        });
 
+            document.getElementById('from').value = selectedRange.from;
+            document.getElementById('to').value = selectedRange.to;
+            document.getElementById('filterForm').submit();
+        }
     </script>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/reports/voucher_history.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/clients/reports/voucher_history.blade.php ENDPATH**/ ?>

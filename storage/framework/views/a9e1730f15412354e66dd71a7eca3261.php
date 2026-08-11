@@ -6,7 +6,7 @@
                 <p class="text-gray-600 dark:text-gray-400">Update your profile information</p>
             </div>
             <div>
-                <a href="<?php echo e(url()->previous()); ?>" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+                <a href="javascript:void(0);" onclick="history.back();" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                                     transition duration-1000 ease-in-out
                                     transition-property: all;
                                     hover:border-[#f472b6]

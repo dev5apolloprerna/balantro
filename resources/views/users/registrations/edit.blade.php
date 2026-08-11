@@ -69,7 +69,7 @@
     </div>
 
     <div class="mt-4">
-        <a href="{{ url()->previous() }}" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
+        <a href="javascript:void(0);" onclick="history.back();" title="Go Back" class="group btn inline-block relative text-black dark:text-white px-4 py-2 text-sm rounded-md border border-gray-700
                     hover:border-[#f472b6] hover:shadow-[0_0_15px_#f472b6] hover:scale-105 hover:-translate-y-1">
             <i class="fa-solid fa-arrow-left"></i></a>
     </div>

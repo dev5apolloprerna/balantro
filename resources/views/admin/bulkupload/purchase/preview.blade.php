@@ -14,7 +14,7 @@
                 </span>
             </div> -->
             <div class="flex items-center gap-3">
-                <a href="{{ route('data_entry_operators.bulkuploadpurchase') }}"
+                <a href="javascript:void(0);" onclick="history.back();" title="Go Back"
                     class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-lg">
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>

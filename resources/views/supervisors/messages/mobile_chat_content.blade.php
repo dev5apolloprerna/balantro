@@ -3,7 +3,7 @@
     {{-- Chat Header with Back Button --}}
     <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         <div class="flex items-center gap-3">
-            <a href="{{ route('supervisor.messages.index') }}" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2">
+            <a href="javascript:void(0);" onclick="history.back();" title="Go Back" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2">
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
             <div class="flex items-center gap-3">

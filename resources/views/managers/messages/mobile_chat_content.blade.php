@@ -3,9 +3,9 @@
     {{-- Chat Header with Back Button --}}
     <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
         <div class="flex items-center gap-3">
-            <button type="button" onclick="goBackToClientList()" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2 transition-colors">
+            <a href="javascript:void(0);" onclick="history.back();" title="Go Back" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-2 transition-colors">
                 <i class="fa-solid fa-arrow-left"></i>
-            </button>
+            </a>
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-full bg-indigo-600 text-white grid place-items-center font-semibold text-sm">
                     {{ strtoupper(substr($selected_client->name ?? 'C', 0, 1)) }}

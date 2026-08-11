@@ -7,7 +7,7 @@
         <!-- HEADER -->
         <div class="flex justify-between items-center px-5 py-3 border-b border-neutral-700">
             <div class="flex items-center gap-3">
-                <a href="{{ route('dn.index') }}"
+                <a href="javascript:void(0);" onclick="history.back();" title="Go Back"
                     class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-lg">
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
