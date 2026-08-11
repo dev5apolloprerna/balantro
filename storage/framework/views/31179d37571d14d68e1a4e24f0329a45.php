@@ -1,9 +1,7 @@
 <div class="grid grid-cols-1 lg:grid-cols-12">
     <div class="col-span-12">
 
-        {{-- <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold text-neutral-100">Groups</h2>
-        </div> --}}
+        
 
         <div
             class="mt-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden group-block">
@@ -19,24 +17,26 @@
                     </thead>
 
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800 tabular-nums">
-                        @foreach ($groups as $group)
+                        <?php $__currentLoopData = $groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr class="hover:bg-neutral-900/40 transition">
                                 <td class="px-2 py-1 text-neutral-100 font-medium">
-                                    <!-- {{ $group->name }} -->
-                                    @include('shared._expandable_table_text', ['text' => $group->name])
+                                    <?php echo e($group->name); ?>
+
                                 </td>
 
                                 <td class="px-2 py-1 text-center">
                                     <span
                                         class="inline-flex items-center rounded-full bg-neutral-800/80 px-2.5 py-1 text-xs font-medium text-neutral-200">
-                                        {{ $group->users_count }}
+                                        <?php echo e($group->users_count); ?>
+
                                     </span>
                                 </td>
 
                                 <!-- <td class="px-2 py-1 text-center">
                                     <span
                                         class="inline-flex items-center rounded-full bg-violet-900/40 px-2.5 py-1 text-xs font-medium text-violet-300">
-                                        {{ $group->permissions_count }}
+                                        <?php echo e($group->permissions_count); ?>
+
                                     </span>
                                 </td> -->
 
@@ -44,7 +44,7 @@
                                     <div class="flex items-center justify-center gap-2.5">
                                         <!-- <button type="button"
                                             class="rounded-full bg-purple-100 p-2 text-purple-700 ring-1 ring-inset ring-purple-200 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:ring-purple-800"
-                                            title="Permissions" onclick="openPermissionsModal({{ $group->id }})">
+                                            title="Permissions" onclick="openPermissionsModal(<?php echo e($group->id); ?>)">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
                                                 viewBox="0 0 24 24">
                                                 <path fill="currentColor"
@@ -52,9 +52,9 @@
                                                 </path>
                                             </svg>
                                         </button> -->
-                                        {{-- Edit --}}
+                                        
                                         <button type="button"
-                                            onclick="openEditModal({{ $group->id }}, {{ Illuminate\Support\Js::from($group->name) }})"
+                                            onclick="openEditModal(<?php echo e($group->id); ?>, <?php echo e(Illuminate\Support\Js::from($group->name)); ?>)"
                                             class="rounded-full bg-emerald-100 p-2 text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800"
                                             title="Edit">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
@@ -71,28 +71,15 @@
                                             </svg>
                                         </button>
 
-                                        {{-- Delete --}}
-                                        {{-- <form action="{{ route('groups.destroy', $group->id) }}" method="POST"
-                                            onsubmit="return confirm('Delete this group?')" class="inline">
-                                            @csrf @method('DELETE')
-                                            <button type="submit"
-                                                class="rounded-full bg-rose-100 p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
-                                                title="Delete">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
-                                                    viewBox="0 0 24 24">
-                                                    <path fill="currentColor"
-                                                        d="M10 5h4a2 2 0 1 0-4 0M8.5 5a3.5 3.5 0 1 1 7 0h5.75a.75.75 0 0 1 0 1.5h-1.32l-1.17 12.111A3.75 3.75 0 0 1 15.026 22H8.974a3.75 3.75 0 0 1-3.733-3.389L4.07 6.5H2.75a.75.75 0 0 1 0-1.5zm2 4.75a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0zM14.25 9a.75.75 0 0 1 .75.75v7.5a.75.75 0 0 1-1.5 0v-7.5a.75.75 0 0 1 .75-.75m-7.516 9.467a2.25 2.25 0 0 0 2.24 2.033h6.052a2.25 2.25 0 0 0 2.24-2.033L18.424 6.5H5.576z">
-                                                    </path>
-                                                </svg>
-                                            </button>
-                                        </form> --}}
+                                        
+                                        
 
-                                        {{-- Permissions --}}
+                                        
 
 
                                         <button type="button" title="Delete"
                                             class="rounded-full bg-rose-100 p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
-                                            data-open-delete data-id="{{ $group->id }}">
+                                            data-open-delete data-id="<?php echo e($group->id); ?>">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"
                                                 viewBox="0 0 24 24">
                                                 <g fill="none">
@@ -108,18 +95,20 @@
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
 
                 <div class="">
-                    {{ $groups->links() }}
+                    <?php echo e($groups->links()); ?>
+
                 </div>
             </div>
 
-            @include('shared.confirm_delete_modal', [
+            <?php echo $__env->make('shared.confirm_delete_modal', [
                 'resource_name' => __('group.resource_name'),
-            ])
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </div>
     </div>
 </div>
+<?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/groups/group_table.blade.php ENDPATH**/ ?>

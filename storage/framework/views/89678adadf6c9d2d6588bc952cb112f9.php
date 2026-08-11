@@ -5,7 +5,7 @@
             <h2 class="text-xl font-semibold">Edit</h2> <button type="button" onclick="closeEditModal()"
                 class="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white">✕</button>
         </div>
-        <form id="editForm" method="POST" class="px-6 py-5 space-y-5"> @csrf @method('PUT')
+        <form id="editForm" method="POST" class="px-6 py-5 space-y-5"> <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
 
             <input type="hidden" name="fcm_token" id="e_fcm_token">
             <input type="hidden" name="device_type" id="e_device_type">
@@ -28,7 +28,7 @@
     </div>
 </div>1 -->
 
-@include('admin.shared.user_form_modal', [
+<?php echo $__env->make('admin.shared.user_form_modal', [
     'modalId' => 'editModal',
     'formId' => 'editForm',
     'title' => 'Edit Manager',
@@ -37,7 +37,7 @@
     'emailId' => 'edit_email',
     'mode' => 'edit',
     'method' => 'PUT',
-])
+], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 <script>
     // async function fillEditDeviceInfo() {
@@ -104,3 +104,4 @@
         this.submit();
     });
 </script>
+<?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/managers/edit_modal.blade.php ENDPATH**/ ?>

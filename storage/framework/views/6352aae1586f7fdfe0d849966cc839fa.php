@@ -1,36 +1,37 @@
-@php
+<?php
     // Ensure you eager-load groups to avoid N+1: supervisor::with('groups')...
     $groupNames = $supervisor->groups->pluck('name')->all();
-@endphp
-@php
+?>
+<?php
     /** @var \App\Models\Supervisor $supervisor */
     $assignedIds = $supervisor->managers->pluck('id')->values();
-@endphp
-<tr id="supervisor_{{ $supervisor->id }}" class="hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+?>
+<tr id="supervisor_<?php echo e($supervisor->id); ?>" class="hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
     <!-- Name -->
     <td class="whitespace-nowrap px-2 py-1 text-sm font-medium text-neutral-900 dark:text-neutral-100">
-        @include('shared._expandable_table_text', ['text' => $supervisor->name])
+        <?php echo $__env->make('shared._expandable_table_text', ['text' => $supervisor->name], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     </td>
 
     <!-- Email -->
     <td class="px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300">
-        @include('shared._expandable_table_text', ['text' => $supervisor->email])
+        <?php echo $__env->make('shared._expandable_table_text', ['text' => $supervisor->email], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     </td>
 
     <!-- Groups as compact badges -->
     <td class="px-2 py-1">
-        @include('shared._expandable_table_text', ['text' => $supervisor->managers->pluck('name')->join(', ')])
+        <?php echo $__env->make('shared._expandable_table_text', ['text' => $supervisor->managers->pluck('name')->join(', ')], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     </td>
     <td class="px-2 py-1">
         <div class="flex flex-wrap gap-2">
-            @forelse($groupNames as $g)
+            <?php $__empty_1 = true; $__currentLoopData = $groupNames; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $g): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                 <span
                     class="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700 ring-1 ring-inset ring-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:ring-neutral-700">
-                    {{ $g }}
+                    <?php echo e($g); ?>
+
                 </span>
-            @empty
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <span class="text-sm text-neutral-400">—</span>
-            @endforelse
+            <?php endif; ?>
         </div>
     </td>
 
@@ -38,9 +39,9 @@
     <td class="px-2 py-1">
         <div class="flex items-center justify-center gap-3">
             <!-- Assign Groups -->
-            @if ($user->role === \App\Models\User::ROLES['super_admin'])
-                @can('supervisors.assign-groups')
-                    <button type="button" onclick="openGroupsModal({{ $supervisor->id }})"
+            <?php if($user->role === \App\Models\User::ROLES['super_admin']): ?>
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('supervisors.assign-groups')): ?>
+                    <button type="button" onclick="openGroupsModal(<?php echo e($supervisor->id); ?>)"
                         class="rounded-full bg-amber-100 p-2 text-amber-700 ring-1 ring-inset ring-amber-200 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-800"
                         title="Assign Groups">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
@@ -49,10 +50,10 @@
                             </path>
                         </svg>
                     </button>
-                @endcan
-                @can('supervisors.assign-permissions')
+                <?php endif; ?>
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('supervisors.assign-permissions')): ?>
                     <!-- Permissions -->
-                    <button type="button" onclick="openPermissionsModal({{ $supervisor->id }})"
+                    <button type="button" onclick="openPermissionsModal(<?php echo e($supervisor->id); ?>)"
                         class="rounded-full bg-purple-100 p-2 text-purple-700 ring-1 ring-inset ring-purple-200 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:ring-purple-800"
                         title="Permissions">
                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -61,14 +62,14 @@
                             </path>
                         </svg>
                     </button>
-                @endcan
-            @endif
-            @can('supervisors.assign-managers')
+                <?php endif; ?>
+            <?php endif; ?>
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('supervisors.assign-managers')): ?>
                 <button type="button"
                     class="bg-indigo-100 dark:bg-indigo-600/25 hover:bg-indigo-200 !text-indigo-600 dark:!text-indigo-400 font-medium w-8 h-8 flex justify-center items-center rounded-full cursor-pointer"
-                    title="Assign Manager" data-assign-managers data-supervisor-id="{{ $supervisor->id }}"
-                    data-assigned='@json($assignedIds)' onclick="openAssignManagerModal(this)">
-                    {{-- any icon --}}
+                    title="Assign Manager" data-assign-managers data-supervisor-id="<?php echo e($supervisor->id); ?>"
+                    data-assigned='<?php echo json_encode($assignedIds, 15, 512) ?>' onclick="openAssignManagerModal(this)">
+                    
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                         <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                             stroke-width="2"
@@ -76,12 +77,12 @@
                         </path>
                     </svg>
                 </button>
-            @endcan
+            <?php endif; ?>
             <!-- Edit -->
-            @if ($user->role === \App\Models\User::ROLES['super_admin'])
-                @can('supervisors.update')
+            <?php if($user->role === \App\Models\User::ROLES['super_admin']): ?>
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('supervisors.update')): ?>
                     <button type="button"
-                        onclick="openEditModal({{ $supervisor->id }}, '{{ e($supervisor->name) }}', '{{ e($supervisor->email) }}')"
+                        onclick="openEditModal(<?php echo e($supervisor->id); ?>, '<?php echo e(e($supervisor->name)); ?>', '<?php echo e(e($supervisor->email)); ?>')"
                         class="rounded-full bg-emerald-100 p-2 text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800"
                         title="Edit">
                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -94,27 +95,14 @@
                             </g>
                         </svg>
                     </button>
-                @endcan
+                <?php endif; ?>
 
                 <!-- Delete -->
-                {{-- <form action="{{ route('supervisors.destroy', $supervisor) }}" method="POST"
-                    onsubmit="return confirm('Delete this supervisor?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit"
-                        class="rounded-full bg-rose-100 p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
-                        title="Delete">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                            <path fill="currentColor"
-                                d="M10 5h4a2 2 0 1 0-4 0M8.5 5a3.5 3.5 0 1 1 7 0h5.75a.75.75 0 0 1 0 1.5h-1.32l-1.17 12.111A3.75 3.75 0 0 1 15.026 22H8.974a3.75 3.75 0 0 1-3.733-3.389L4.07 6.5H2.75a.75.75 0 0 1 0-1.5zm2 4.75a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0zM14.25 9a.75.75 0 0 1 .75.75v7.5a.75.75 0 0 1-1.5 0v-7.5a.75.75 0 0 1 .75-.75m-7.516 9.467a2.25 2.25 0 0 0 2.24 2.033h6.052a2.25 2.25 0 0 0 2.24-2.033L18.424 6.5H5.576z">
-                            </path>
-                        </svg>
-                    </button>
-                </form> --}}
-                @can('supervisors.delete')
+                
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('supervisors.delete')): ?>
                     <button type="button" title="Delete"
                         class="rounded-full bg-rose-100 p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
-                        data-open-delete data-id="{{ $supervisor->id }}">
+                        data-open-delete data-id="<?php echo e($supervisor->id); ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                             <g fill="none">
                                 <path
@@ -126,19 +114,10 @@
                             </g>
                         </svg>
                     </button>
-                @endcan
-            @endif
+                <?php endif; ?>
+            <?php endif; ?>
         </div>
     </td>
-    {{-- @include('admin.supervisors.assign_groups_modal', [
-        'supervisor' => $supervisor,
-        'groups' => $groups,
-    ])
-    @include('admin.supervisors.edit_modal', [
-        'supervisor' => $supervisor,
-    ])
-    @include('admin.supervisors.permissions_modal', [
-        'supervisor' => $supervisor,
-        'permissions' => $permissions,
-    ]) --}}
+    
 </tr>
+<?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/supervisors/supervisor_row.blade.php ENDPATH**/ ?>

@@ -4,21 +4,20 @@
     data-client-pan="<?php echo e($client->profile?->pan_no); ?>" data-client-gst="<?php echo e($client->profile?->gst_no); ?>"
     data-client-address="<?php echo e($client->profile?->address); ?>"
     data-client-business-type="<?php echo e($client->profile?->business_type); ?>">
-    <td class="truncate px-2 py-1 font-medium" title="<?php echo e($client->name); ?>">
-        <?php echo e($client->name); ?>
-
+    <td class="px-2 py-1 font-medium">
+        <?php echo $__env->make('shared._expandable_table_text', ['text' => $client->name], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        <!-- <?php echo e($client->name); ?> -->
     </td>
 
-    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300" title="<?php echo e($client->email); ?>">
-        <?php echo e($client->email); ?>
-
+    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
+        <?php echo $__env->make('shared._expandable_table_text', ['text' => $client->email], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+        <!-- <?php echo e($client->email); ?> -->
     </td>
 
-    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
-        title="<?php echo e($client->managers->pluck('name')->join(', ')); ?>">
+    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
         <?php if($managers->count()): ?>
-            <?php echo e($client->managers->pluck('name')->join(', ') ?: '-'); ?>
-
+            <!-- <?php echo e($client->managers->pluck('name')->join(', ') ?: '-'); ?> -->
+            <?php echo $__env->make('shared._expandable_table_text', ['text' => $client->managers->pluck('name')->join(', ')], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         <?php else: ?>
             <span
                 class="inline-flex rounded-full bg-info-100 px-3 py-1 text-xs font-semibold text-info-800 dark:bg-info-900/40 dark:text-info-300">
@@ -28,11 +27,10 @@
         <?php endif; ?>
     </td>
 
-    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
-        title="<?php echo e($client->supervisors->pluck('name')->join(', ')); ?>">
+    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
         <?php if($supervisors->count()): ?>
-            <?php echo e($client->supervisors->pluck('name')->join(', ') ?: '-'); ?>
-
+            <!-- <?php echo e($client->supervisors->pluck('name')->join(', ') ?: '-'); ?> -->
+            <?php echo $__env->make('shared._expandable_table_text', ['text' => $client->supervisors->pluck('name')->join(', ')], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         <?php else: ?>
             <span
                 class="inline-flex rounded-full bg-info-100 px-3 py-1 text-xs font-semibold text-info-800 dark:bg-info-900/40 dark:text-info-300">
@@ -42,11 +40,12 @@
         <?php endif; ?>
     </td>
 
-    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
-        title="<?php echo e($client->dataEntryOperators->pluck('name')->join(', ')); ?>">
+    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
         <?php if($dataEntryOperators->count()): ?>
-            <?php echo e($client->dataEntryOperators->pluck('name')->join(', ') ?: '-'); ?>
-
+            <!-- <?php echo e($client->dataEntryOperators->pluck('name')->join(', ') ?: '-'); ?> -->
+            <?php echo $__env->make('shared._expandable_table_text', [
+                'text' => $client->dataEntryOperators->pluck('name')->join(', '),
+            ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         <?php else: ?>
             <span
                 class="inline-flex rounded-full bg-info-100 px-3 py-1 text-xs font-semibold text-info-800 dark:bg-info-900/40 dark:text-info-300">

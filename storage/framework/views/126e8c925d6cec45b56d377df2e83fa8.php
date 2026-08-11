@@ -1,13 +1,11 @@
-@extends('layouts.super_admin')
+<?php $__env->startSection('title', 'Blogs'); ?>
 
-@section('title', 'Blogs')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container mx-auto px-4">
     <div class="mb-6 flex items-center justify-between gap-4">
         <h1 class="text-lg font-semibold text-gray-800 dark:text-white">Blogs</h1>
 
-        <a href="{{ route('super-admin.blog.create') }}"
+        <a href="<?php echo e(route('super-admin.blog.create')); ?>"
             class="inline-flex items-center justify-center rounded-lg border border-primary-600 bg-primary-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-black">
             New Blog
         </a>
@@ -15,19 +13,19 @@
 
     <div class="space-y-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <form method="GET" action="{{ route('super-admin.blog.index') }}" class="w-full sm:max-w-md">
+            <form method="GET" action="<?php echo e(route('super-admin.blog.index')); ?>" class="w-full sm:max-w-md">
                 <label for="blog-search" class="sr-only">Search blogs</label>
                 <div class="flex h-11 rounded-lg border border-slate-300 bg-white transition focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-900">
                     <span class="flex items-center pl-3 text-slate-400"><i class="fas fa-search" aria-hidden="true"></i></span>
-                    <input id="blog-search" type="search" name="search" value="{{ request('search') }}"
+                    <input id="blog-search" type="search" name="search" value="<?php echo e(request('search')); ?>"
                         placeholder="Search by title…"
                         class="min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-sm text-slate-800 outline-none focus:ring-0 dark:text-white">
-                    @if (request('search'))
-                    <a href="{{ route('super-admin.blog.index') }}" title="Clear search"
+                    <?php if(request('search')): ?>
+                    <a href="<?php echo e(route('super-admin.blog.index')); ?>" title="Clear search"
                         class="flex items-center px-3 text-slate-400 transition hover:text-slate-700 dark:hover:text-white">
                         <i class="fas fa-times" aria-hidden="true"></i><span class="sr-only">Clear search</span>
                     </a>
-                    @endif
+                    <?php endif; ?>
                     <button type="submit" class="rounded-r-lg bg-primary-600 px-4 text-sm font-medium text-white transition hover:bg-primary-700">Search</button>
                 </div>
             </form>
@@ -38,9 +36,9 @@
             </button>
         </div>
 
-         <form id="bulkDeleteForm" method="POST" action="{{ route('super-admin.blog.bulkDelete') }}"
+         <form id="bulkDeleteForm" method="POST" action="<?php echo e(route('super-admin.blog.bulkDelete')); ?>"
             class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-700">
-            @csrf
+            <?php echo csrf_field(); ?>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm dark:divide-neutral-700">
                     <thead class="bg-neutral-50/80 dark:bg-neutral-800/60">
@@ -56,75 +54,76 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-200 dark:divide-neutral-700">
-                        @forelse ($blogs as $blog)
+                        <?php $__empty_1 = true; $__currentLoopData = $blogs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $blog): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr class="transition hover:bg-slate-50/80 dark:hover:bg-slate-800/60">
                             <td class="px-2 py-2 align-middle">
-                                <input type="checkbox" name="ids[]" value="{{ $blog->blog_id }}" aria-label="Select {{ $blog->title }}"
+                                <input type="checkbox" name="ids[]" value="<?php echo e($blog->blog_id); ?>" aria-label="Select <?php echo e($blog->title); ?>"
                                     class="row_checkbox h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-800">
                             </td>
                             <td class="px-2 py-2">
                                 <div class="flex min-w-[260px] items-center gap-3">
-                                    @if (!empty($blog->image))
-                                    <img src="{{ asset('uploads/Blog/' . $blog->image) }}" alt=""
+                                    <?php if(!empty($blog->image)): ?>
+                                    <img src="<?php echo e(asset('uploads/Blog/' . $blog->image)); ?>" alt=""
                                         class="h-14 w-20 flex-none rounded-lg border border-slate-200 object-cover dark:border-slate-700">
-                                    @else
+                                    <?php else: ?>
                                     <div class="flex h-14 w-20 flex-none items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-slate-800">
                                         <i class="far fa-image text-xl" aria-hidden="true"></i>
                                     </div>
-                                    @endif
+                                    <?php endif; ?>
                                     <div class="min-w-0">
-                                        <!-- <p class="max-w-sm truncate font-semibold text-slate-900 dark:text-white" title="{{ $blog->title }}">{{ $blog->title }}</p>
-                                        <p class="mt-1 max-w-sm truncate text-sm text-slate-500 dark:text-slate-400">{{ \Illuminate\Support\Str::limit(strip_tags($blog->description), 75) ?: 'No description provided' }}</p> -->
-                                        @include('shared._expandable_table_text', [
+                                        <!-- <p class="max-w-sm truncate font-semibold text-slate-900 dark:text-white" title="<?php echo e($blog->title); ?>"><?php echo e($blog->title); ?></p>
+                                        <p class="mt-1 max-w-sm truncate text-sm text-slate-500 dark:text-slate-400"><?php echo e(\Illuminate\Support\Str::limit(strip_tags($blog->description), 75) ?: 'No description provided'); ?></p> -->
+                                        <?php echo $__env->make('shared._expandable_table_text', [
                                             'text' => $blog->title,
                                             'class' => 'max-w-sm font-semibold text-slate-900 dark:text-white',
-                                        ])
-                                        @include('shared._expandable_table_text', [
+                                        ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+                                        <?php echo $__env->make('shared._expandable_table_text', [
                                             'text' => strip_tags($blog->description),
                                             'fallback' => 'No description provided',
                                             'class' => 'mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400',
-                                        ])
+                                        ], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
                                     </div>
                                 </div>
                             </td>
                             <td class="whitespace-nowrap px-2 py-2">
                                 <span class="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
-                                    {{ $blog->category->name ?? 'Uncategorised' }}
+                                    <?php echo e($blog->category->name ?? 'Uncategorised'); ?>
+
                                 </span>
                             </td>
                             <td class="whitespace-nowrap px-2 py-2 text-sm text-slate-600 dark:text-slate-300">
-                                <div>{{ optional($blog->created_at)->format('d M Y') ?: '—' }}</div>
-                                <div class="mt-0.5 text-xs text-slate-400">{{ optional($blog->created_at)->format('h:i A') }}</div>
+                                <div><?php echo e(optional($blog->created_at)->format('d M Y') ?: '—'); ?></div>
+                                <div class="mt-0.5 text-xs text-slate-400"><?php echo e(optional($blog->created_at)->format('h:i A')); ?></div>
                             </td>
                             <td class="whitespace-nowrap px-2 py-2 text-right">
                                 <div class="inline-flex items-center gap-2">
-                                    <a href="{{ route('super-admin.blog.edit', $blog->blog_id) }}" title="Edit blog"
+                                    <a href="<?php echo e(route('super-admin.blog.edit', $blog->blog_id)); ?>" title="Edit blog"
                                         class="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-sky-600 text-white transition hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
                                         <i class="fas fa-edit action-icon" aria-hidden="true"></i><span class="sr-only">Edit</span>
                                     </a>
                                     <button type="button" title="Delete blog"
-                                        data-delete-url="{{ route('super-admin.blog.delete', $blog->blog_id) }}" data-delete-title="{{ $blog->title }}"
+                                        data-delete-url="<?php echo e(route('super-admin.blog.delete', $blog->blog_id)); ?>" data-delete-title="<?php echo e($blog->title); ?>"
                                         class="delete-blog inline-flex h-9 w-9 items-center justify-center rounded-lg bg-rose-600 text-white transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500">
                                         <i class="fas fa-trash action-icon" aria-hidden="true"></i><span class="sr-only">Delete</span>
                                     </button>
                                 </div>
                             </td>
                         </tr>
-                        @empty
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="5" class="px-6 py-16 text-center">
                                 <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800"><i class="fas fa-newspaper text-xl" aria-hidden="true"></i></div>
                                 <p class="mt-3 font-medium text-slate-700 dark:text-slate-200">No blogs found</p>
-                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ request('search') ? 'Try a different search term.' : 'Create your first blog to get started.' }}</p>
+                                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400"><?php echo e(request('search') ? 'Try a different search term.' : 'Create your first blog to get started.'); ?></p>
                             </td>
                         </tr>
-                        @endforelse
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
-            @if ($blogs->hasPages())
-            <div class="border-t border-neutral-200 p-4 dark:border-neutral-700">{{ $blogs->withQueryString()->links('pagination::tailwind') }}</div>
-            @endif
+            <?php if($blogs->hasPages()): ?>
+            <div class="border-t border-neutral-200 p-4 dark:border-neutral-700"><?php echo e($blogs->withQueryString()->links('pagination::tailwind')); ?></div>
+            <?php endif; ?>
         </form>
 
     </div>
@@ -135,7 +134,7 @@
 
     <div class="relative mx-auto mt-32 w-full max-w-md px-4">
         <div class="rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-800">
-            <form id="singleBlogDeleteForm" method="POST">@csrf
+            <form id="singleBlogDeleteForm" method="POST"><?php echo csrf_field(); ?>
                 <div class="flex items-start gap-4">
                     <div class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950 dark:text-rose-400"><i class="fas fa-trash-alt" aria-hidden="true"></i></div>
                     <div>
@@ -152,9 +151,9 @@
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const selectAll = document.getElementById('select_all');
@@ -201,4 +200,5 @@
     });
 
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.super_admin', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/blog/index.blade.php ENDPATH**/ ?>

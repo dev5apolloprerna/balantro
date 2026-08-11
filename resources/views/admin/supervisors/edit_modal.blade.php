@@ -1,4 +1,4 @@
-<div id="editModal" class="hidden fixed inset-0 z-50">
+<!-- <div id="editModal" class="hidden fixed inset-0 z-50">
     <div class="absolute inset-0 bg-black/60"></div>
     <div class="relative mx-auto mt-24 w-[720px] max-w-[95%] rounded-2xl bg-neutral-900 text-white shadow-xl">
         <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-700">
@@ -29,7 +29,17 @@
             </div>
         </form>
     </div>
-</div>
+</div> -->
+@include('admin.shared.user_form_modal', [
+    'modalId' => 'editModal',
+    'formId' => 'editForm',
+    'title' => 'Edit Supervisor',
+    'closeAction' => 'closeEditModal()',
+    'nameId' => 'edit_name',
+    'emailId' => 'edit_email',
+    'mode' => 'edit',
+    'method' => 'PUT',
+])
 <script>
     // async function fillEditDeviceInfo() {
     //     // Device type

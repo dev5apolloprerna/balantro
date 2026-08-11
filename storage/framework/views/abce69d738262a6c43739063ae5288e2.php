@@ -5,8 +5,8 @@
             <button onclick="closeManagerModal()" class="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white">&times;</button>
         </div>
 
-        <form method="POST" action="{{ route('managers.store') }}" id="addManagerForm" class="mt-4 space-y-4">
-            @csrf
+        <form method="POST" action="<?php echo e(route('managers.store')); ?>" id="addManagerForm" class="mt-4 space-y-4">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="fcm_token" id="c_fcm_token">
             <input type="hidden" name="device_type" id="c_device_type">
             <input type="hidden" name="browser_name" id="c_browser_name">
@@ -24,9 +24,16 @@
                     pattern="[^\s@]+@[^\s@]+\.[A-Za-z]{2,}"
                     title="Enter an email address with a valid domain (for example, name@company.com)."
                     class="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" />
-                @error('email')
-                    <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
-                @enderror
+                <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="mt-1 text-sm text-rose-600"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             </div>
 
             <div class="flex justify-end gap-3">
@@ -42,7 +49,7 @@
         </form>
     </div>
 </div> -->
-@include('admin.shared.user_form_modal', [
+<?php echo $__env->make('admin.shared.user_form_modal', [
     'modalId' => 'addManagerModal',
     'formId' => 'addManagerForm',
     'title' => 'Add Manager',
@@ -50,7 +57,7 @@
     'closeAction' => 'closeManagerModal()',
     'nameId' => 'manager_create_name',
     'emailId' => 'manager_create_email',
-])
+], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 <script>
     document.getElementById("addManagerForm").addEventListener("submit", async function(e) {
@@ -70,4 +77,4 @@
 
         this.submit();
     });
-</script>
+</script><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/managers/create_modal.blade.php ENDPATH**/ ?>

@@ -1,30 +1,31 @@
-@php
+<?php
     // Ensure you eager-load groups to avoid N+1: Manager::with('groups')...
     $groupNames = $manager->groups->pluck('name')->all();
-@endphp
+?>
 
-<tr id="manager_{{ $manager->id }}" class="hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+<tr id="manager_<?php echo e($manager->id); ?>" class="hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
     <!-- Name -->
     <td class="whitespace-nowrap px-2 py-1 text-sm font-medium text-neutral-900 dark:text-neutral-100">
-        @include('shared._expandable_table_text', ['text' => $manager->name])
+        <?php echo $__env->make('shared._expandable_table_text', ['text' => $manager->name], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     </td>
 
     <!-- Email -->
     <td class="px-2 py-1 text-sm text-neutral-700 dark:text-neutral-300">
-        @include('shared._expandable_table_text', ['text' => $manager->email])
+        <?php echo $__env->make('shared._expandable_table_text', ['text' => $manager->email], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     </td>
 
     <!-- Groups as compact badges -->
     <td class="px-2 py-1">
         <div class="flex flex-wrap gap-2">
-            @forelse($groupNames as $g)
+            <?php $__empty_1 = true; $__currentLoopData = $groupNames; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $g): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                 <span
                     class="inline-flex items-center rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700 ring-1 ring-inset ring-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:ring-neutral-700">
-                    {{ $g }}
+                    <?php echo e($g); ?>
+
                 </span>
-            @empty
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <span class="text-sm text-neutral-400">—</span>
-            @endforelse
+            <?php endif; ?>
         </div>
     </td>
 
@@ -32,8 +33,8 @@
     <td class="px-2 py-1">
         <div class="flex items-center justify-center gap-3">
             <!-- Assign Groups -->
-            @can('managers.assign-permissions')
-                <button type="button" onclick="openGroupsModal({{ $manager->id }})"
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('managers.assign-permissions')): ?>
+                <button type="button" onclick="openGroupsModal(<?php echo e($manager->id); ?>)"
                     class="rounded-full bg-amber-100 p-2 text-amber-700 ring-1 ring-inset ring-amber-200 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-800"
                     title="Assign Groups">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
@@ -42,10 +43,10 @@
                         </path>
                     </svg>
                 </button>
-            @endcan
-            @can('managers.assign-groups')
+            <?php endif; ?>
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('managers.assign-groups')): ?>
                 <!-- Permissions -->
-                <button type="button" onclick="openPermissionsModal({{ $manager->id }})"
+                <button type="button" onclick="openPermissionsModal(<?php echo e($manager->id); ?>)"
                     class="rounded-full bg-purple-100 p-2 text-purple-700 ring-1 ring-inset ring-purple-200 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:ring-purple-800"
                     title="Permissions">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -54,11 +55,11 @@
                         </path>
                     </svg>
                 </button>
-            @endcan
-            @can('managers.update')
+            <?php endif; ?>
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('managers.update')): ?>
                 <!-- Edit -->
                 <button type="button"
-                    onclick="openEditModal({{ $manager->id }}, '{{ e($manager->name) }}', '{{ e($manager->email) }}')"
+                    onclick="openEditModal(<?php echo e($manager->id); ?>, '<?php echo e(e($manager->name)); ?>', '<?php echo e(e($manager->email)); ?>')"
                     class="rounded-full bg-emerald-100 p-2 text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800"
                     title="Edit">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -71,28 +72,15 @@
                         </g>
                     </svg>
                 </button>
-            @endcan
-            @can('managers.delete')
+            <?php endif; ?>
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('managers.delete')): ?>
                 <!-- Delete -->
-                {{-- <form action="{{ route('managers.destroy', $manager) }}" method="POST"
-                onsubmit="return confirm('Delete this manager?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit"
-                    class="rounded-full bg-rose-100 p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
-                    title="Delete">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                        <path fill="currentColor"
-                            d="M10 5h4a2 2 0 1 0-4 0M8.5 5a3.5 3.5 0 1 1 7 0h5.75a.75.75 0 0 1 0 1.5h-1.32l-1.17 12.111A3.75 3.75 0 0 1 15.026 22H8.974a3.75 3.75 0 0 1-3.733-3.389L4.07 6.5H2.75a.75.75 0 0 1 0-1.5zm2 4.75a.75.75 0 0 0-1.5 0v7.5a.75.75 0 0 0 1.5 0zM14.25 9a.75.75 0 0 1 .75.75v7.5a.75.75 0 0 1-1.5 0v-7.5a.75.75 0 0 1 .75-.75m-7.516 9.467a2.25 2.25 0 0 0 2.24 2.033h6.052a2.25 2.25 0 0 0 2.24-2.033L18.424 6.5H5.576z">
-                        </path>
-                    </svg>
-                </button>
-            </form> --}}
-            @endcan
-            @can('managers.assign-permissions')
+                
+            <?php endif; ?>
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('managers.assign-permissions')): ?>
                 <button type="button" title="Delete"
                     class="rounded-full bg-rose-100 p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
-                    data-open-delete data-id="{{ $manager->id }}">
+                    data-open-delete data-id="<?php echo e($manager->id); ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                         <g fill="none">
                             <path
@@ -104,19 +92,10 @@
                         </g>
                     </svg>
                 </button>
-            @endcan
+            <?php endif; ?>
 
         </div>
     </td>
-    {{-- @include('admin.managers.assign_groups_modal', [
-        'manager' => $manager,
-        'groups' => $groups,
-    ])
-    @include('admin.managers.edit_modal', [
-        'manager' => $manager,
-    ])
-    @include('admin.managers.permissions_modal', [
-        'manager' => $manager,
-        'permissions' => $permissions,
-    ]) --}}
+    
 </tr>
+<?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/managers/manager_row.blade.php ENDPATH**/ ?>

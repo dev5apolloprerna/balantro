@@ -1,40 +1,40 @@
-@forelse ($data_entry_operators as $deo)
-    @php
+<?php $__empty_1 = true; $__currentLoopData = $data_entry_operators; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $deo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+    <?php
         $managerId = $deo->managers->pluck('id')->first();
         $supervisorId = $deo->supervisors->pluck('id')->first();
         $groupIds = $deo->groups->pluck('id')->values();
-    @endphp
+    ?>
     <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-700/30">
         <td class="px-2 py-1 font-medium text-slate-900 dark:text-slate-100">
-            @include('shared._expandable_table_text', ['text' => $deo->name])
+            <?php echo $__env->make('shared._expandable_table_text', ['text' => $deo->name], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </td>
         <td class="px-2 py-1 text-slate-700 dark:text-slate-200">
-            @include('shared._expandable_table_text', ['text' => $deo->email])
+            <?php echo $__env->make('shared._expandable_table_text', ['text' => $deo->email], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </td>
         <td class="px-2 py-1 text-slate-700 dark:text-slate-200">
-            @include('shared._expandable_table_text', ['text' => $deo->managers->pluck('name')->join(', ')])
+            <?php echo $__env->make('shared._expandable_table_text', ['text' => $deo->managers->pluck('name')->join(', ')], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </td>
         <td class="px-2 py-1 text-slate-700 dark:text-slate-200">
-            @include('shared._expandable_table_text', ['text' => $deo->supervisors->pluck('name')->join(', ')])
+            <?php echo $__env->make('shared._expandable_table_text', ['text' => $deo->supervisors->pluck('name')->join(', ')], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
         </td>
         <td class="px-2 py-1">
-            @forelse($deo->groups as $g)
+            <?php $__empty_2 = true; $__currentLoopData = $deo->groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $g): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_2 = false; ?>
                 <span
-                    class="mr-1 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-700/60 dark:text-slate-200">{{ $g->name }}</span>
-            @empty
+                    class="mr-1 inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-700/60 dark:text-slate-200"><?php echo e($g->name); ?></span>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_2): ?>
                 <span class="text-slate-400">—</span>
-            @endforelse
+            <?php endif; ?>
         </td>
-        @if ($user->role === \App\Models\User::ROLES['super_admin'] || $user->role === \App\Models\User::ROLES['manager'])
+        <?php if($user->role === \App\Models\User::ROLES['super_admin'] || $user->role === \App\Models\User::ROLES['manager']): ?>
             <td class="px-2 py-1 text-right">
 
                 <div class="inline-flex items-center gap-2">
-                    @if ($user->role === \App\Models\User::ROLES['super_admin'])
-                        @can('data_entry_operators.assign-groups')
+                    <?php if($user->role === \App\Models\User::ROLES['super_admin']): ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('data_entry_operators.assign-groups')): ?>
                             <button type="button" title="Assign Groups"
                                 class="rounded-full bg-amber-100 p-2 text-amber-700 ring-1 ring-inset ring-amber-200 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:ring-amber-800"
-                                data-open-assign-groups data-id="{{ $deo->id }}"
-                                data-group-ids='@json($groupIds)'>
+                                data-open-assign-groups data-id="<?php echo e($deo->id); ?>"
+                                data-group-ids='<?php echo json_encode($groupIds, 15, 512) ?>'>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                                     <path fill="currentColor"
                                         d="M12 5a3.5 3.5 0 0 0-3.5 3.5A3.5 3.5 0 0 0 12 12a3.5 3.5 0 0 0 3.5-3.5A3.5 3.5 0 0 0 12 5m0 2a1.5 1.5 0 0 1 1.5 1.5A1.5 1.5 0 0 1 12 10a1.5 1.5 0 0 1-1.5-1.5A1.5 1.5 0 0 1 12 7M5.5 8A2.5 2.5 0 0 0 3 10.5c0 .94.53 1.75 1.29 2.18c.36.2.77.32 1.21.32s.85-.12 1.21-.32c.37-.21.68-.51.91-.87A5.42 5.42 0 0 1 6.5 8.5v-.28c-.3-.14-.64-.22-1-.22m13 0c-.36 0-.7.08-1 .22v.28c0 1.2-.39 2.36-1.12 3.31c.12.19.25.34.4.49a2.48 2.48 0 0 0 1.72.7c.44 0 .85-.12 1.21-.32c.76-.43 1.29-1.24 1.29-2.18A2.5 2.5 0 0 0 18.5 8M12 14c-2.34 0-7 1.17-7 3.5V19h14v-1.5c0-2.33-4.66-3.5-7-3.5m-7.29.55C2.78 14.78 0 15.76 0 17.5V19h3v-1.93c0-1.01.69-1.85 1.71-2.52m14.58 0c1.02.67 1.71 1.51 1.71 2.52V19h3v-1.5c0-1.74-2.78-2.72-4.71-2.95M12 16c1.53 0 3.24.5 4.23 1H7.77c.99-.5 2.7-1 4.23-1">
@@ -42,24 +42,24 @@
                                 </svg>
 
                             </button>
-                        @endcan
-                        @can('data_entry_operators.assign-permissions')
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('data_entry_operators.assign-permissions')): ?>
                             <button type="button" title="Assign Permissions"
                                 class="rounded-full bg-violet-100 p-2 text-violet-700 ring-1 ring-inset ring-violet-200 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:ring-violet-800"
-                                data-open-assign-permissions data-id="{{ $deo->id }}">
+                                data-open-assign-permissions data-id="<?php echo e($deo->id); ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                                     <path fill="currentColor"
                                         d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12c5.16-1.26 9-6.45 9-12V5zm0 2.18l7 3.12v4.92c0 1.7-.5 3.43-1.35 4.95C16 14.94 13.26 14.5 12 14.5s-4 .44-5.65 1.67C5.5 14.65 5 12.92 5 11.22V6.3zM12 6a3.5 3.5 0 0 0-3.5 3.5A3.5 3.5 0 0 0 12 13a3.5 3.5 0 0 0 3.5-3.5A3.5 3.5 0 0 0 12 6m0 2a1.5 1.5 0 0 1 1.5 1.5A1.5 1.5 0 0 1 12 11a1.5 1.5 0 0 1-1.5-1.5A1.5 1.5 0 0 1 12 8m0 8.5c1.57 0 3.64.61 4.53 1.34C15.29 19.38 13.7 20.55 12 21c-1.7-.45-3.29-1.62-4.53-3.16c.9-.73 2.96-1.34 4.53-1.34">
                                     </path>
                                 </svg>
                             </button>
-                        @endcan
-                    @endif
-                    @can('data_entry_operators.manager-supervisors')
+                        <?php endif; ?>
+                    <?php endif; ?>
+                    <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('data_entry_operators.manager-supervisors')): ?>
                         <button type="button" title="Assign Manager & Supervisor"
                             class="rounded-full bg-indigo-100 p-2 text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:ring-indigo-800"
-                            data-open-assign-owners data-id="{{ $deo->id }}" data-manager-id="{{ $managerId ?? '' }}"
-                            data-supervisor-id="{{ $supervisorId ?? '' }}">
+                            data-open-assign-owners data-id="<?php echo e($deo->id); ?>" data-manager-id="<?php echo e($managerId ?? ''); ?>"
+                            data-supervisor-id="<?php echo e($supervisorId ?? ''); ?>">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                                 <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                     stroke-width="2"
@@ -67,13 +67,13 @@
                                 </path>
                             </svg>
                         </button>
-                    @endcan
-                    @if ($user->role === \App\Models\User::ROLES['super_admin'])
-                        @can('data_entry_operators.update')
+                    <?php endif; ?>
+                    <?php if($user->role === \App\Models\User::ROLES['super_admin']): ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('data_entry_operators.update')): ?>
                             <button type="button" title="Edit"
                                 class="rounded-full bg-emerald-100 p-2 text-emerald-700 ring-1 ring-inset ring-emerald-200 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-800"
-                                data-open-edit data-id="{{ $deo->id }}" data-name="{{ $deo->name }}"
-                                data-email="{{ $deo->email }}">
+                                data-open-edit data-id="<?php echo e($deo->id); ?>" data-name="<?php echo e($deo->name); ?>"
+                                data-email="<?php echo e($deo->email); ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                                     <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                         stroke-width="2">
@@ -84,11 +84,11 @@
                                     </g>
                                 </svg>
                             </button>
-                        @endcan
-                        @can('data_entry_operators.delete')
+                        <?php endif; ?>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('data_entry_operators.delete')): ?>
                             <button type="button" title="Delete"
                                 class="rounded-full bg-rose-100 p-2 text-rose-700 ring-1 ring-inset ring-rose-200 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:ring-rose-800"
-                                data-open-delete data-id="{{ $deo->id }}">
+                                data-open-delete data-id="<?php echo e($deo->id); ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
                                     <g fill="none">
                                         <path
@@ -100,15 +100,16 @@
                                     </g>
                                 </svg>
                             </button>
-                        @endcan
-                    @endif
+                        <?php endif; ?>
+                    <?php endif; ?>
                 </div>
             </td>
-        @endif
+        <?php endif; ?>
     </tr>
-@empty
+<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
     <tr>
         <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-300">No data entry operators
             found.</td>
     </tr>
-@endforelse
+<?php endif; ?>
+<?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/data_entry_operators/data_entry_operator_row.blade.php ENDPATH**/ ?>

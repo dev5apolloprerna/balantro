@@ -29,13 +29,20 @@ class AdminUserValidationTest extends TestCase
         $forms = [
             'resources/views/admin/managers/create_modal.blade.php',
             'resources/views/admin/supervisors/create_modal.blade.php',
+            'resources/views/admin/data_entry_operators/_modals.blade.php',
         ];
 
         foreach ($forms as $form) {
             $contents = file_get_contents(dirname(__DIR__, 2).'/'.$form);
 
-            $this->assertStringContainsString('pattern="[^\s@]+@[^\s@]+\.[A-Za-z]{2,}"', $contents);
-            $this->assertStringContainsString('maxlength="255"', $contents);
+            $this->assertStringContainsString("@include('admin.shared.user_form_modal'", $contents);
         }
+
+        $sharedForm = file_get_contents(
+            dirname(__DIR__, 2).'/resources/views/admin/shared/user_form_modal.blade.php',
+        );
+
+        $this->assertStringContainsString('pattern="[^\s@]+@[^\s@]+\.[A-Za-z]{2,}"', $sharedForm);
+        $this->assertStringContainsString('maxlength="255"', $sharedForm);
     }
 }

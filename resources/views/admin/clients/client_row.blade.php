@@ -4,18 +4,20 @@
     data-client-pan="{{ $client->profile?->pan_no }}" data-client-gst="{{ $client->profile?->gst_no }}"
     data-client-address="{{ $client->profile?->address }}"
     data-client-business-type="{{ $client->profile?->business_type }}">
-    <td class="truncate px-2 py-1 font-medium" title="{{ $client->name }}">
-        {{ $client->name }}
+    <td class="px-2 py-1 font-medium">
+        @include('shared._expandable_table_text', ['text' => $client->name])
+        <!-- {{ $client->name }} -->
     </td>
 
-    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300" title="{{ $client->email }}">
-        {{ $client->email }}
+    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
+        @include('shared._expandable_table_text', ['text' => $client->email])
+        <!-- {{ $client->email }} -->
     </td>
 
-    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
-        title="{{ $client->managers->pluck('name')->join(', ') }}">
+    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
         @if ($managers->count())
-            {{ $client->managers->pluck('name')->join(', ') ?: '-' }}
+            <!-- {{ $client->managers->pluck('name')->join(', ') ?: '-' }} -->
+            @include('shared._expandable_table_text', ['text' => $client->managers->pluck('name')->join(', ')])
         @else
             <span
                 class="inline-flex rounded-full bg-info-100 px-3 py-1 text-xs font-semibold text-info-800 dark:bg-info-900/40 dark:text-info-300">
@@ -24,10 +26,10 @@
         @endif
     </td>
 
-    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
-        title="{{ $client->supervisors->pluck('name')->join(', ') }}">
+    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
         @if ($supervisors->count())
-            {{ $client->supervisors->pluck('name')->join(', ') ?: '-' }}
+            <!-- {{ $client->supervisors->pluck('name')->join(', ') ?: '-' }} -->
+            @include('shared._expandable_table_text', ['text' => $client->supervisors->pluck('name')->join(', ')])
         @else
             <span
                 class="inline-flex rounded-full bg-info-100 px-3 py-1 text-xs font-semibold text-info-800 dark:bg-info-900/40 dark:text-info-300">
@@ -36,10 +38,12 @@
         @endif
     </td>
 
-    <td class="truncate px-2 py-1 text-neutral-700 dark:text-neutral-300"
-        title="{{ $client->dataEntryOperators->pluck('name')->join(', ') }}">
+    <td class="px-2 py-1 text-neutral-700 dark:text-neutral-300">
         @if ($dataEntryOperators->count())
-            {{ $client->dataEntryOperators->pluck('name')->join(', ') ?: '-' }}
+            <!-- {{ $client->dataEntryOperators->pluck('name')->join(', ') ?: '-' }} -->
+            @include('shared._expandable_table_text', [
+                'text' => $client->dataEntryOperators->pluck('name')->join(', '),
+            ])
         @else
             <span
                 class="inline-flex rounded-full bg-info-100 px-3 py-1 text-xs font-semibold text-info-800 dark:bg-info-900/40 dark:text-info-300">

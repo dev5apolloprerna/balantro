@@ -1,10 +1,10 @@
-{{-- OWNERS: Manager + Supervisor, with cascading supervisor list --}}
+
 <div id="deoAssignOwners" class="fixed inset-0 z-[100] hidden">
     <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoAssignOwners')"></div>
     <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
         <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
             <form id="deoAssignOwnersForm" method="POST">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Assign Manager & Supervisor</h3>
 
                 <div class="mt-4 space-y-4">
@@ -13,9 +13,9 @@
                         <select id="deo_owner_manager_id" name="manager_id"
                             class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                             <option value="">— None —</option>
-                            @foreach ($managers as $m)
-                                <option value="{{ $m->id }}">{{ $m->name }}</option>
-                            @endforeach
+                            <?php $__currentLoopData = $managers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($m->id); ?>"><?php echo e($m->name); ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
 
@@ -24,7 +24,7 @@
                         <select id="deo_owner_supervisor_id" name="supervisor_id"
                             class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                             <option value="">— None —</option>
-                            {{-- options filled dynamically from MGR_SUPS --}}
+                            
                         </select>
                         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Supervisors list updates when you
                             change the manager.</p>
@@ -43,26 +43,26 @@
     </div>
 </div>
 
-{{-- GROUPS --}}
+
 <div id="deoAssignGroups" class="fixed inset-0 z-[100] hidden">
     <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoAssignGroups')"></div>
     <div class="relative mx-auto mt-20 w-full max-w-xl px-4">
         <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
             <form id="deoAssignGroupsForm" method="POST">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Assign Groups</h3>
                 <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    @foreach ($groups as $g)
+                    <?php $__currentLoopData = $groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $g): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <label
                             class="inline-flex items-center gap-2 rounded-lg border border-slate-200 p-2 dark:border-slate-700">
-                            <input type="checkbox" name="group_ids[]" value="{{ $g->id }}"
+                            <input type="checkbox" name="group_ids[]" value="<?php echo e($g->id); ?>"
                                 class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                            <span class="text-sm text-slate-800 dark:text-slate-200">{{ $g->name }}</span>
+                            <span class="text-sm text-slate-800 dark:text-slate-200"><?php echo e($g->name); ?></span>
                         </label>
-                    @endforeach
-                    @if (($groups ?? collect())->isEmpty())
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    <?php if(($groups ?? collect())->isEmpty()): ?>
                         <p class="text-sm text-slate-500 dark:text-slate-400">No groups found.</p>
-                    @endif
+                    <?php endif; ?>
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button"
@@ -76,7 +76,7 @@
     </div>
 </div>
 
-{{-- PERMISSIONS --}}
+
 <div id="deoAssignPermissions" class="hidden fixed inset-0 z-50">
     <div class="absolute inset-0 bg-black/60"></div>
     <div class="relative mx-auto mt-20 w-[920px] max-w-[95%] rounded-2xl bg-neutral-900 text-white shadow-xl">
@@ -88,19 +88,20 @@
 
         </div>
         <form id="deoAssignPermissionsForm" method="POST">
-            @csrf
+            <?php echo csrf_field(); ?>
             <div class="max-h-[60vh] overflow-y-auto space-y-2 p-5 py-1">
-                @foreach ($permissions as $p)
+                <?php $__currentLoopData = $permissions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $p): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <label
                         class="flex items-center gap-2 rounded-lg border border-slate-200 p-2 text-sm dark:border-slate-700">
-                        <input type="checkbox" name="permission_ids[]" value="{{ $p->id }}"
+                        <input type="checkbox" name="permission_ids[]" value="<?php echo e($p->id); ?>"
                             class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                         <span class="text-slate-800 dark:text-slate-200">
-                            {{ $p->name }} <span class="text-slate-400">({{ $p->action }}
-                                {{ $p->subject }})</span>
+                            <?php echo e($p->name); ?> <span class="text-slate-400">(<?php echo e($p->action); ?>
+
+                                <?php echo e($p->subject); ?>)</span>
                         </span>
                     </label>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
             <div class="mt-6 flex justify-end gap-3">
                 <button type="button"
@@ -115,12 +116,12 @@
 </div>
 
 
-{{-- EDIT --}}
+
 <!-- <div id="deoEdit" class="fixed inset-0 z-[100] hidden">
     <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoEdit')"></div>
     <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
         <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
-            <form id="deoEditForm" method="POST">@csrf @method('PATCH')
+            <form id="deoEditForm" method="POST"><?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?>
                 <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Edit Data Entry Operator</h3>
                 <input type="hidden" name="fcm_token" id="e_fcm_token">
                 <input type="hidden" name="device_type" id="e_device_type">
@@ -150,7 +151,7 @@
     </div>
 </div> -->
 
-@include('admin.shared.user_form_modal', [
+<?php echo $__env->make('admin.shared.user_form_modal', [
     'modalId' => 'deoEdit',
     'formId' => 'deoEditForm',
     'title' => 'Edit Data Entry Operator',
@@ -159,14 +160,14 @@
     'emailId' => 'deo_edit_email',
     'mode' => 'edit',
     'method' => 'PATCH',
-])
+], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
-{{-- DELETE --}}
+
 <div id="deoDelete" class="fixed inset-0 z-[100] hidden">
     <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoDelete')"></div>
     <div class="relative mx-auto mt-32 w-full max-w-md px-4">
         <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
-            <form id="deoDeleteForm" method="POST">@csrf @method('DELETE')
+            <form id="deoDeleteForm" method="POST"><?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
                 <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Delete operator?</h3>
                 <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">This action cannot be undone.</p>
                 <div class="mt-6 flex justify-end gap-3">
@@ -181,13 +182,13 @@
     </div>
 </div>
 
-{{-- ADD (Create) --}}
+
 <!-- <div id="deoAdd" class="fixed inset-0 z-[100] hidden">
     <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoAdd')"></div>
     <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
         <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
             <form id="deoAddForm" method="POST">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Add Data Entry Operator</h3>
                 <input type="hidden" name="fcm_token" id="c_fcm_token">
                 <input type="hidden" name="device_type" id="c_device_type">
@@ -204,11 +205,7 @@
                         <input name="email" type="email"
                             class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                     </div>
-                    {{-- <div>
-                        <label class="mb-1 block text-sm text-slate-700 dark:text-slate-300">Password</label>
-                        <input name="password" type="password"
-                            class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
-                    </div> --}}
+                    
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
@@ -223,25 +220,25 @@
     </div>
 </div> -->
 
-@include('admin.shared.user_form_modal', [
+<?php echo $__env->make('admin.shared.user_form_modal', [
     'modalId' => 'deoAdd',
     'formId' => 'deoAddForm',
     'title' => 'Add Data Entry Operator',
     'closeAction' => "closeModal('deoAdd')",
     'nameId' => 'deo_create_name',
     'emailId' => 'deo_create_email',
-])
+], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
 <script>
     const routes = {
-        assignOwners: "{{ url('admin/data_entry_operators') }}/__ID__/assign_users",
-        assignGroups: "{{ url('admin/data_entry_operators') }}/__ID__/assign_groups",
-        assignPermissions: "{{ url('admin/data_entry_operators') }}/__ID__/assign_permissions",
-        getPermissions: "{{ url('admin/data_entry_operators') }}/__ID__/get_permissions", // used below
-        //getPermissions: "{{ url('admin/data_entry_operators') }}/__ID__/permissions",
-        update: "{{ url('admin/data_entry_operators') }}/__ID__",
-        destroy: "{{ url('admin/data_entry_operators') }}/__ID__",
-        store: "{{ url('admin/data_entry_operators') }}", // NEW
+        assignOwners: "<?php echo e(url('admin/data_entry_operators')); ?>/__ID__/assign_users",
+        assignGroups: "<?php echo e(url('admin/data_entry_operators')); ?>/__ID__/assign_groups",
+        assignPermissions: "<?php echo e(url('admin/data_entry_operators')); ?>/__ID__/assign_permissions",
+        getPermissions: "<?php echo e(url('admin/data_entry_operators')); ?>/__ID__/get_permissions", // used below
+        //getPermissions: "<?php echo e(url('admin/data_entry_operators')); ?>/__ID__/permissions",
+        update: "<?php echo e(url('admin/data_entry_operators')); ?>/__ID__",
+        destroy: "<?php echo e(url('admin/data_entry_operators')); ?>/__ID__",
+        store: "<?php echo e(url('admin/data_entry_operators')); ?>", // NEW
     };
 
     function openModal(id) {
@@ -447,7 +444,7 @@
     });
 </script>
 <script>
-    window.MGR_SUPS = @json($mgrSupMap ?? []);
+    window.MGR_SUPS = <?php echo json_encode($mgrSupMap ?? [], 15, 512) ?>;
     // Example check: console.log(window.MGR_SUPS);
 </script>
 <script>
@@ -464,7 +461,7 @@
 </script>
 <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js"></script>
-<script src="{{ asset('assets/firebase/firebase.js') }}"></script>
+<script src="<?php echo e(asset('assets/firebase/firebase.js')); ?>"></script>
 <script>
     
 
@@ -551,4 +548,4 @@
 
         this.submit();
     });
-</script>
+</script><?php /**PATH D:\xampp\htdocs\balantro\resources\views/admin/data_entry_operators/_modals.blade.php ENDPATH**/ ?>
