@@ -112,7 +112,7 @@
                         <th class="px-2 py-1 leading-tight">{{ __('Data Entry Operators') }}</th>
                         <th class="px-2 py-1">{{ __('Groups') }}</th>
                         <th class="px-2 py-1">{{ __('Status') }}</th>
-                        <th class="px-2 py-1 text-center">{{ __('Actions') }}</th>
+                        <th class="w-[15rem] min-w-[15rem] px-2 py-1 text-center">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">

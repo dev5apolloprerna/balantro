@@ -20,8 +20,8 @@
                         <?php $__currentLoopData = $groups; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr class="hover:bg-neutral-900/40 transition">
                                 <td class="px-2 py-1 text-neutral-100 font-medium">
-                                    <?php echo e($group->name); ?>
-
+                                    <!-- <?php echo e($group->name); ?> -->
+                                    <?php echo $__env->make('shared._expandable_table_text', ['text' => $group->name], \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
                                 </td>
 
                                 <td class="px-2 py-1 text-center">

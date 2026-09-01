@@ -1,6 +1,6 @@
 <section class="bg-white dark:bg-[rgb(39,49,66)] flex flex-wrap min-h-[100vh]">
   <div class="lg:w-1/2 lg:block hidden">
-    <div class="flex items-center flex-col h-full justify-center">
+    <div class="flex items-center flex-col min-h-screen justify-center">
       <img src="{{ asset('theme/auth-img.png') }}" alt="Auth Image" class="max-w-full h-auto">
     </div>
   </div>
@@ -8,8 +8,8 @@
     <div class="w-full max-w-md mx-auto lg:max-w-[464px] px-4 sm:px-6">
       <div class="text-center lg:text-left">
         <a href="" class="mb-6 block max-w-[200px] sm:max-w-[290px] mx-auto lg:mx-0">
-          <img src="{{ asset('light-logo.svg') }}" alt="light-logo" class="w-full light-logo block dark:hidden">
-          <img src="{{ asset('dark-logo.svg') }}" alt="dark-logo" class="w-full dark-logo hidden dark:block">
+          <img src="{{ asset('assets/images/light-logo_login.svg') }}" alt="light-logo" class="w-full light-logo block dark:hidden">
+          <img src="{{ asset('assets/images/dark-logo_login.svg') }}" alt="dark-logo" class="w-full dark-logo hidden dark:block">
         </a>
         <h6 class="mb-3">{{ __('Forgot Your Password?') }}</h6>
         <p class="mb-6 text-secondary-light text-base sm:text-lg">{{ __('Enter your email to receive reset instructions') }}</p>

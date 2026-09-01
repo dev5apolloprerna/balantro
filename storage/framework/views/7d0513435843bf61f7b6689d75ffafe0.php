@@ -117,7 +117,7 @@
                         <th class="px-2 py-1 leading-tight"><?php echo e(__('Data Entry Operators')); ?></th>
                         <th class="px-2 py-1"><?php echo e(__('Groups')); ?></th>
                         <th class="px-2 py-1"><?php echo e(__('Status')); ?></th>
-                        <th class="px-2 py-1 text-center"><?php echo e(__('Actions')); ?></th>
+                        <th class="w-[15rem] min-w-[15rem] px-2 py-1 text-center"><?php echo e(__('Actions')); ?></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">

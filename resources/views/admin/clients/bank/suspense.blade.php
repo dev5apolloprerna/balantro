@@ -2,6 +2,58 @@
 @extends('layouts.super_admin')
 
 @section('content')
+<style>
+    .suspense-table-scroll {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Mobile + Tablet */
+    @media (max-width: 1023px) {
+        .suspense-table-scroll {
+            overflow-x: auto !important;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .suspense-table {
+            width: 1000px !important;
+            min-width: 1000px !important;
+            table-layout: auto !important;
+        }
+
+        .suspense-table th,
+        .suspense-table td {
+            white-space: nowrap !important;
+            word-break: normal !important;
+            overflow-wrap: normal !important;
+        }
+
+        /* Narration thodi wide */
+        .suspense-table th:nth-child(3),
+        .suspense-table td:nth-child(3) {
+            min-width: 240px;
+        }
+
+        /* Reason thodi wide */
+        .suspense-table th:nth-child(6),
+        .suspense-table td:nth-child(6) {
+            min-width: 220px;
+        }
+    }
+
+    /* LG + Desktop */
+    @media (min-width: 1024px) {
+        .suspense-table-scroll {
+            overflow-x: visible !important;
+        }
+
+        .suspense-table {
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+    }
+</style>
 <div class="container py-3">
     <div class="flex items-center justify-between">
         <div>
@@ -70,8 +122,8 @@
     
 
     <!-- Table Card -->
-    <div class="mt-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden group-block">
-        <table class="min-w-full text-sm text-left">
+    <div class="suspense-table-scroll mt-5 rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+        <table class="suspense-table text-sm text-left">
             <!-- Header -->
             <thead class="sticky top-0 z-10 bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md border-b border-cyan-500/20">
                 <tr class="text-black-600 dark:text-gray-300">

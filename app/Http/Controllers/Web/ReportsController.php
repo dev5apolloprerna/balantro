@@ -35,6 +35,7 @@ class ReportsController extends Controller
             return DB::table('YearMaster')
                 ->where('iPartyId', $userId)
                 ->orderBy('iYearId', 'asc')
+                ->orderBy('strYear', 'asc')
                 ->limit(3)
                 ->get();
         });

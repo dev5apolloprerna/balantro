@@ -372,6 +372,40 @@
     .modal-content,[data-permissions-modal-target="modal"]>div>div,[data-groups-modal-target="modal"]>div>div{border:1px solid rgb(226 232 240 / .95);box-shadow:0 24px 80px rgb(15 23 42 / .28)}
     .dark .modal-content,.dark [data-permissions-modal-target="modal"]>div>div,.dark [data-groups-modal-target="modal"]>div>div{border-color:rgb(51 65 85 / .95);box-shadow:0 24px 80px rgb(0 0 0 / .55)}
     .table-responsive,.table-wrapper,.overflow-x-auto:has(.dropdown-menu),.overflow-x-auto:has([data-dropdown-toggle]){overflow-x:auto;overflow-y:visible}table td .dropdown-menu,table td [role="menu"],.table-wrapper .dropdown-menu{z-index:60}
+
+
+    /* Keep the action column predictable on every list screen.  Content columns may
+       grow naturally, while the controls remain together at the far edge of the table. */
+    table.balantro-list-table > thead > tr > .balantro-actions-column,
+    table.balantro-list-table > tbody > tr > .balantro-actions-column {
+        box-sizing: border-box;
+        width: 1%;
+        min-width: max-content;
+        padding-inline: .75rem;
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    table.balantro-list-table > thead > tr > .balantro-actions-column {
+        letter-spacing: .01em;
+    }
+
+    table.balantro-list-table > tbody > tr > .balantro-actions-column > :is(div, form) {
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    table.balantro-list-table > tbody > tr > .balantro-actions-column :is(a, button) {
+        flex: 0 0 auto;
+    }
+
+    @media (max-width: 767px) {
+        table.balantro-list-table > thead > tr > .balantro-actions-column,
+        table.balantro-list-table > tbody > tr > .balantro-actions-column {
+            padding-inline: .5rem;
+        }
+    }
 </style>
 <script>
     window.BALANTRO_MAX_UPLOAD_MB = 30;
@@ -392,6 +426,34 @@
         input.value = '';
         return false;
     };
+
+    /* List partials are replaced by Turbo on filter/pagination requests, so apply the
+       shared action-column contract both at first paint and after each Turbo render. */
+    window.normalizeListActionColumns = function(root = document) {
+        root.querySelectorAll('table').forEach((table) => {
+            const headers = Array.from(table.querySelectorAll(':scope > thead > tr:first-child > th'));
+            const actionIndex = headers.findIndex((header) =>
+                /^(action|actions)$/i.test(header.textContent.trim())
+            );
+
+            if (actionIndex === -1) {
+                return;
+            }
+
+            table.classList.add('balantro-list-table');
+            headers[actionIndex].classList.add('balantro-actions-column');
+            table.querySelectorAll(':scope > tbody > tr').forEach((row) => {
+                const cell = row.children[actionIndex];
+                if (cell && cell.tagName === 'TD') {
+                    cell.classList.add('balantro-actions-column');
+                }
+            });
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => window.normalizeListActionColumns());
+    document.addEventListener('turbo:load', () => window.normalizeListActionColumns());
+    document.addEventListener('turbo:frame-load', (event) => window.normalizeListActionColumns(event.target));
 </script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">

@@ -1,9 +1,7 @@
-@extends('auth.layouts.app')
+<?php $__env->startSection('title', 'Sign Up'); ?>
+<?php $__env->startSection('field_validation_only', true); ?>
 
-@section('title', 'Sign Up')
-@section('field_validation_only', true)
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .form-control:-webkit-autofill,
     .form-control:-webkit-autofill:hover,
@@ -45,54 +43,39 @@
         display: block;
         overflow: visible;
     }
-    @media (max-width: 1023px) {
-    html,
-    body {
-        width: 100%;
-        height: 100%;
-        overflow: hidden !important;
-        overscroll-behavior: none;
-    }
-
-    .signup-mobile-screen {
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        height: 100dvh;
-        min-height: 0 !important;
-        overflow: hidden !important;
-    }
-}
 </style>
 
-<section class="signup-mobile-screen bg-white dark:bg-black flex flex-col lg:flex-row lg:relative lg:min-h-screen lg:h-auto">
+<section class="bg-white dark:bg-black flex flex-wrap min-h-[calc(100vh-64px)]">
     <canvas id="starfield-canvas"></canvas>
 
-       <div class="w-full lg:w-3/5 h-[27svh] lg:h-screen shrink-0">
-            <div class="flex items-center justify-center min-h-20 my-14 lg:my-0 lg:min-h-screen bg-white dark:bg-black ">
-            <img src="{{ asset('assets/images/light-logo_login.svg') }}"
+    <div class="w-full lg:w-3/5 block">
+        <div class="flex items-center justify-center min-h-20 mt-14 lg:mt-0 lg:min-h-screen bg-white dark:bg-black">
+            <img src="<?php echo e(asset('assets/images/light-logo_login.svg')); ?>"
                 alt="Balantro"
                 class=" w-64      
         lg:w-96
         max-w-full h-auto block dark:hidden">
 
-            <img src="{{ asset('assets/images/dark-logo_login.svg') }}"
+            <img src="<?php echo e(asset('assets/images/dark-logo_login.svg')); ?>"
                 alt="Balantro"
                 class=" w-64      
         lg:w-96
-        max-w-full h-auto hidden dark:block">
+        max-w-full
+        h-auto
+        hidden
+        dark:block">
         </div>
     </div>
 
-    <div class="font-sans w-full lg:w-2/5 flex-1 min-h-0 px-4 sm:px-6 py-0 lg:py-8 flex flex-col justify-center dark:bg-black">
-        <div class="w-full max-w-md mx-auto px-2 sm:px-6 flex flex-col items-center">
+    <div class="font-sans w-full lg:w-2/5 py-8 px-4 sm:px-6 flex flex-col justify-center dark:bg-black">
+        <div class="w-full max-w-md mx-auto px-4 sm:px-6 flex flex-col items-center">
             <div class="text-center">
                 <p class="mb-6 text-secondary-light dark:text-white text-base sm:text-lg">Create your account</p>
 
             </div>
 
-            <form method="POST" action="{{ route('register') }}">
-                @csrf
+            <form method="POST" action="<?php echo e(route('register')); ?>">
+                <?php echo csrf_field(); ?>
 
                 <div class="relative mb-4 sm:mb-6 mx-auto">
                     <div class="icon-field relative">
@@ -100,13 +83,20 @@
                             class="absolute start-4 top-1/2 -translate-y-1/2 flex text-xl text-neutral-500 dark:text-white h-[26px] items-center pointer-events-none">
                             <iconify-icon icon="f7:person" class="flex items-center"></iconify-icon>
                         </span>
-                        <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus
+                        <input id="name" type="text" name="name" value="<?php echo e(old('name')); ?>" required autofocus
                             autocomplete="name" placeholder="Full Name"
                             class="form-control h-[48px] sm:h-[50px] ps-11 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-sm sm:text-base text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
                     </div>
-                    @error('name')
-                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['name'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
                 <div class="relative mb-4 sm:mb-6 mx-auto">
                     <div class="icon-field relative">
@@ -114,13 +104,20 @@
                             class="absolute start-4 top-1/2 -translate-y-1/2 flex text-xl text-neutral-500 dark:text-white h-[26px] items-center pointer-events-none">
                             <iconify-icon icon="mage:email" class="flex items-center"></iconify-icon>
                         </span>
-                        <input id="email" type="email" name="email" value="{{ old('email') }}" required
+                        <input id="email" type="email" name="email" value="<?php echo e(old('email')); ?>" required
                             autocomplete="email" placeholder="Email"
                             class="form-control h-[48px] sm:h-[50px] ps-11 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-sm sm:text-base text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
                     </div>
-                    @error('email')
-                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
                 <div class="mb-4 sm:mb-6 relative">
                     <div class="icon-field relative mt-2">
@@ -139,9 +136,16 @@
                             </svg>
                         </button>
                     </div>
-                    @error('password')
-                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['password'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
                 <div class="mb-4 sm:mb-6 relative">
                     <div class="icon-field relative mt-2">
@@ -155,9 +159,16 @@
                             placeholder="Confirm Password"
                             class="form-control h-[48px] sm:h-[50px] ps-11 pe-11 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-gray-900 dark:text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
                     </div>
-                    @error('password_confirmation')
-                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['password_confirmation'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
                 <button type="submit"
                     class="mt-6 w-[350px] h-[50px] flex items-center justify-center text-white font-medium text-sm sm:text-base rounded-lg relative overflow-hidden bg-gradient-to-r from-[#22d3ee]/70 via-[#22d3ee]/40 to-transparent border border-[#22d3ee]/50 transition-all duration-300">
@@ -169,7 +180,7 @@
             <div class="mt-6 sm:mt-3 text-center text-sm">
                 <p class="mb-0 text-gray-600 dark:text-white">
                     Already have an account?
-                    <a href="{{ route('login') }}"
+                    <a href="<?php echo e(route('login')); ?>"
                         class="text-[#22d3ee] dark:text-[#22d3ee] font-semibold hover:underline ml-1">Sign in</a>
                 </p>
             </div>
@@ -351,4 +362,5 @@
     })();
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('auth.layouts.app', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\xampp\htdocs\balantro\resources\views/auth/register.blade.php ENDPATH**/ ?>

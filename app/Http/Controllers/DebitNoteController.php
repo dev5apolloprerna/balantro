@@ -38,6 +38,7 @@ class DebitNoteController extends Controller
         $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
+            ->orderBy('strYear', 'desc')
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();

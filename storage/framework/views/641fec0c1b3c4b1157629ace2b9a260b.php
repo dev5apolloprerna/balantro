@@ -72,18 +72,26 @@ section {
 
     <section class="bg-white dark:bg-black flex flex-wrap min-h-[calc(100vh-64px)]">
         <canvas id="starfield-canvas"></canvas>
-       <div class="lg:w-3/5 lg:block hidden">
-            <div class="flex items-center justify-center h-full bg-white dark:bg-black">
+       <div class="w-full lg:w-3/5 block">
+            <div class="flex items-center justify-center min-h-20 mt-14 lg:mt-0 lg:min-h-screen bg-white dark:bg-black">
 
                 <!-- Light Logo (shown in light mode) -->
                 <img src="<?php echo e(asset('assets/images/light-logo_login.svg')); ?>"
                     alt="Balantro"
-                    class="w-96 h-auto block dark:hidden">
+                    class=" w-64      
+        lg:w-96
+        max-w-full
+        h-auto block dark:hidden">
 
                 <!-- Dark Logo (shown in dark mode) -->
                 <img src="<?php echo e(asset('assets/images/dark-logo_login.svg')); ?>"
                     alt="Balantro"
-                    class="w-96 h-auto hidden dark:block">
+                    class=" w-64      
+        lg:w-96
+        max-w-full
+        h-auto
+        hidden
+        dark:block">
 
             </div>
         </div>

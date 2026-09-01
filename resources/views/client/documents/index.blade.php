@@ -5,6 +5,74 @@
 
 @section('content')
 {{-- Tailwind via CDN (remove if already included globally) --}}
+<style>
+ /* =========================
+   LARGE SCREEN - NO SCROLL
+   ========================= */
+
+.documents-table-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.documents-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
+}
+
+.documents-table th,
+.documents-table td {
+    white-space: normal;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+}
+
+/* Desktop par fixed min-width remove */
+.documents-table th:first-child,
+.documents-table td:first-child {
+    min-width: 0;
+    width: auto;
+}
+
+
+/* ==================================
+   MOBILE + MD ONLY HORIZONTAL SCROLL
+   0px - 1023px
+   ================================== */
+
+@media (max-width: 1023px) {
+
+    .documents-table-scroll {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto !important;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .documents-table {
+        width: 900px !important;
+        min-width: 900px !important;
+        table-layout: auto !important;
+    }
+
+    .documents-table th,
+    .documents-table td {
+        white-space: nowrap !important;
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+    }
+
+    .documents-table th:first-child,
+    .documents-table td:first-child {
+        min-width: 230px;
+        width: 230px;
+    }
+}
+</style>
 <div class="px-2 py-3 sm:px-3">
     <div class="group flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100 sm:text-2xl"></h1>
@@ -333,7 +401,7 @@
             class="w-full bg-white/40 dark:bg-[rgba(10,20,35,0.6)] backdrop-blur-md border border-gray-300/40 dark:border-cyan-400/20 text-gray-900 dark:text-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee]">
         </div> --}}
 
-        <div class="flex flex-col items-stretch gap-2 sm:col-span-2 sm:flex-row sm:items-end sm:justify-end lg:col-span-1 xl:col-span-1">
+        <div class="flex  items-stretch gap-2 sm:col-span-2 sm:flex-row sm:items-end sm:justify-end lg:col-span-1 xl:col-span-1">
             <button type="submit"
                 class="w-full rounded-md border border-gray-700 text-black dark:text-white h-9.5 px-4 py-2 text-sm transition duration-1000 ease-in-out sm:w-auto
                                     transition-property: all;
@@ -360,9 +428,9 @@
 
 {{-- Table --}}
 <!-- <div class="mt-1 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"> -->
-<div class="group-block mt-5 max-w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 [-webkit-overflow-scrolling:touch]"
+<div class="documents-table-scroll group-block mt-5 rounded-lg border border-gray-200 dark:border-gray-700"
     role="region" aria-label="Documents table" tabindex="0">
-    <table class="w-full min-w-[56rem] text-left text-sm">
+    <table class="documents-table text-left text-sm">
         <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] dark:bg-gray-900/40 sticky top-0 z-10">
             <tr class="text-black-900 dark:text-gray-300">
                 <th class="px-4 py-2 font-bold">

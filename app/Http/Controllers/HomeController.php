@@ -174,8 +174,10 @@ class HomeController extends Controller
                 return DB::table('YearMaster')
                     ->where('iPartyId', $userId)
                     //->orderBy('iYearId', 'asc')
+                    // ->orderBy('strYear', 'desc')
+                    // ->orderBy('iYearId', 'desc')
                     ->orderBy('strYear', 'desc')
-                    ->orderBy('iYearId', 'desc')
+                    ->orderBy('iYearId', 'asc')
                     ->limit(3)
                     ->get();
             });

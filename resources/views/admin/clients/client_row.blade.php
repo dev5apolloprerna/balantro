@@ -125,8 +125,8 @@
             @endif
         @endif
     </td>
-    <td class="px-2 py-1 align-middle">
-        <div class="flex flex-wrap items-center justify-center gap-1">
+    <td class="w-[15rem] min-w-[15rem] px-2 py-1 align-middle">
+        <div class="flex flex-nowrap items-center justify-center gap-1">
             @if ($user->role === \App\Models\User::ROLES['super_admin'])
                 @can('clients.assign-groups')
                     <button type="button"

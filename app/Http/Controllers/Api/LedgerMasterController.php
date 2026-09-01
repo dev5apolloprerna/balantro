@@ -854,6 +854,7 @@ class LedgerMasterController extends Controller
     {
         $financialYears = DB::table('YearMaster')
             ->where('iPartyId', $partyId)
+            // ->orderBy('strYear', 'asc')
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();

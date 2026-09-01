@@ -70,27 +70,46 @@ section {
 .dark section {
     background-color: transparent !important;
 }
+@media (max-width: 1023px) {
+    html,
+    body {
+        height: 100%;
+        overflow: hidden !important;
+        overscroll-behavior: none;
+    }
+
+    .login-mobile-screen {
+        height: calc(100dvh - 64px);
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+}
 </style>
 
-    <section class="bg-white dark:bg-black flex flex-wrap min-h-[calc(100vh-64px)]">
+    <section class="login-mobile-screen bg-white dark:bg-black flex flex-col lg:flex-row lg:min-h-[calc(100vh-64px)]">
         <canvas id="starfield-canvas"></canvas>
-       <div class="lg:w-3/5 lg:block hidden">
-            <div class="flex items-center justify-center h-full bg-white dark:bg-black">
+       <div class="w-full lg:w-3/5 h-[27svh] lg:h-screen shrink-0">
+            <div class="flex items-center justify-center min-h-20 my-14 lg:my-0 lg:min-h-screen bg-white dark:bg-black ">
 
                 <!-- Light Logo (shown in light mode) -->
                 <img src="{{ asset('assets/images/light-logo_login.svg') }}"
                     alt="Balantro"
-                    class="w-96 h-auto block dark:hidden">
+                    class=" w-64      
+        lg:w-96
+        max-w-full h-auto block dark:hidden">
 
                 <!-- Dark Logo (shown in dark mode) -->
                 <img src="{{ asset('assets/images/dark-logo_login.svg') }}"
                     alt="Balantro"
-                    class="w-96 h-auto hidden dark:block">
+                    class="w-64      
+        lg:w-96
+        max-w-full
+         h-auto hidden dark:block">
 
             </div>
         </div>
-        <div class="font-sans w-full lg:w-2/5 py-8 px-4 sm:px-6 flex flex-col justify-center dark:bg-black">
-            <div class="w-full max-w-md mx-auto px-4 sm:px-6 flex flex-col items-center">
+       <div class="font-sans w-full lg:w-2/5 flex-1 min-h-0 px-4 sm:px-6 py-0 lg:py-8 flex flex-col justify-center dark:bg-black">
+            <div class="w-full max-w-md mx-auto px-2 sm:px-6 flex flex-col items-center">
                 <div class="text-center">
                     {{-- <a href="/" class="mb-6 block max-w-[200px] sm:max-w-[290px] mx-auto lg:mx-0"
                         style="display: inline-block;">

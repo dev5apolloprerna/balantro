@@ -182,6 +182,7 @@ class TransactionProcessingController extends Controller
         $stockItems = Ledger::getStockItemsForPreview($iPartyId);
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
+            ->orderBy('strYear', 'desc')
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
@@ -274,6 +275,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
+            ->orderBy('strYear', 'desc')
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
@@ -390,6 +392,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
+            ->orderBy('strYear', 'desc')
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
@@ -664,6 +667,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
+            ->orderBy('strYear', 'desc')
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
@@ -803,6 +807,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
+            ->orderBy('strYear', 'desc')
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();
@@ -967,6 +972,7 @@ class TransactionProcessingController extends Controller
         $clients = Client::whereNotNull('guid')->orderBy('name')->get();
         $years = DB::table('YearMaster')
             ->where('iPartyId', $iPartyId)
+            ->orderBy('strYear', 'desc')
             ->orderBy('iYearId', 'asc')
             ->limit(3)
             ->get();

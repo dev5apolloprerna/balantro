@@ -1042,6 +1042,7 @@ class ClientsController extends Controller
         $financialYears = Cache::remember(ReportCache::key('clients', (int) $client->id, 'financial_years'), ReportCache::ttl(), function () use ($client) {
             return DB::table('YearMaster')
                 ->where('iPartyId', $client->id)
+                ->orderBy('strYear', 'asc')
                 ->orderBy('iYearId', 'asc')
                 ->limit(3)
                 ->get();
@@ -1174,6 +1175,7 @@ class ClientsController extends Controller
             $financialYears = Cache::remember(ReportCache::key('clients', (int) $user->id, 'financial_years'), ReportCache::ttl(), function () use ($user) {
                 return DB::table('YearMaster')
                     ->where('iPartyId', $user->id)
+                    ->orderBy('strYear', 'asc')
                     ->orderBy('iYearId', 'asc')
                     ->limit(3)
                     ->get();
