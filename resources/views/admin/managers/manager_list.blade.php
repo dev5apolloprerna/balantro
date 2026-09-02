@@ -47,23 +47,64 @@
 </div>
 
 {{-- DELETE --}}
+{{-- DELETE MODAL --}}
 <div id="deoDelete" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoDelete')"></div>
-    <div class="relative mx-auto mt-32 w-full max-w-md px-4">
-        <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
-            <form id="deoDeleteForm" method="POST">@csrf @method('DELETE')
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Delete operator?</h3>
-                <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">This action cannot be undone.</p>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button"
-                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm dark:border-slate-700"
-                        onclick="closeModal('deoDelete')">Cancel</button>
-                    <button
-                        class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Delete</button>
-                </div>
-            </form>
-        </div>
+
+    {{-- Background Overlay --}}
+    <div
+        class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        onclick="closeModal('deoDelete')">
     </div>
+
+    {{-- CENTER WRAPPER --}}
+    <div class="absolute inset-0 z-10 flex items-center justify-center p-4 pointer-events-none">
+
+        {{-- MODAL --}}
+        <div class="w-full max-w-md pointer-events-auto">
+
+            <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+
+                <form id="deoDeleteForm" method="POST">
+                    @csrf
+                    @method('DELETE')
+
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+                        Delete operator?
+                    </h3>
+
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        This action cannot be undone.
+                    </p>
+
+                    <div class="mt-6 flex justify-end gap-3">
+
+                        <button
+                            type="button"
+                            onclick="closeModal('deoDelete')"
+                            class="rounded-lg border border-slate-300 px-4 py-2 text-sm
+                                   text-slate-700 hover:bg-slate-100
+                                   dark:border-slate-700 dark:text-slate-200
+                                   dark:hover:bg-slate-700">
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="rounded-lg bg-rose-600 px-4 py-2 text-sm
+                                   font-semibold text-white hover:bg-rose-700">
+                            Delete
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
 
@@ -153,11 +194,17 @@
                     (window.showToast || console.error)('Failed to load groups.', 'error');
                 });
 
-            show('assignGroupsModal');
+             const modal = document.getElementById('assignGroupsModal');
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
         }
 
         function closeGroupsModal() {
-            hide('assignGroupsModal');
+              const modal = document.getElementById('assignGroupsModal');
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
         }
 
         // PERMISSIONS
@@ -223,7 +270,10 @@
                     (window.showToast || console.error)('Failed to load permissions.', 'error');
                 });
 
-            show('permissionsModal');
+            // show('permissionsModal');
+                        const modal = document.getElementById('permissionsModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
         }
         //     <hr class="my-4 border-neutral-700"/>
         //   <div class="space-y-2">
@@ -231,7 +281,11 @@
         //     ${denies || '<div class="text-sm text-neutral-400">No group permissions to override.</div>'}
         //   </div>
         function closePermissionsModal() {
-            hide('permissionsModal');
+            // hide('permissionsModal');
+             const modal = document.getElementById('permissionsModal');
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
         }
 
         const routes = {

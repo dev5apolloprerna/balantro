@@ -163,11 +163,18 @@
                 })
                 .catch(() => list.innerHTML = '<div class="text-sm text-rose-400">Failed to load permissions.</div>');
 
-            show('permissionsModal');
+            // show('permissionsModal');
+            const modal = document.getElementById('permissionsModal');
+modal.classList.remove('hidden');
+modal.classList.add('flex');
         }
 
         function closePermissionsModal() {
-            hide('permissionsModal');
+            // hide('permissionsModal');
+             const modal = document.getElementById('permissionsModal');
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
         }
 
         function openManagerModal() {

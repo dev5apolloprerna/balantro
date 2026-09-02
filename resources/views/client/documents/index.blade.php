@@ -27,6 +27,7 @@
     white-space: normal;
     word-break: normal !important;
     overflow-wrap: normal !important;
+    vertical-align: middle !important;
 }
 
 /* Desktop par fixed min-width remove */
@@ -70,6 +71,19 @@
     .documents-table td:first-child {
         min-width: 230px;
         width: 230px;
+    }
+}
+/* Only Safari / iPhone */
+@supports (-webkit-touch-callout: none) {
+    .safari-date-input {
+        height: 38px !important;
+        min-height: 38px !important;
+        box-sizing: border-box !important;
+
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+
+        line-height: 24px !important;
     }
 }
 </style>
@@ -324,26 +338,35 @@
                 <!-- Hidden input -->
                 <input type="hidden" name="status" :value="selected">
 
-                <!-- Button -->
-                <button type="button" @click="open = !open"
-                    class="w-full text-left
-                        bg-gradient-to-br from-white/60 to-white/30
-                        dark:from-white/10 dark:to-transparent
-                        backdrop-blur-xl
-                        border border-gray-300/80 dark:border-cyan-400/20
-                        text-gray-900 dark:text-white
-                        rounded-xl px-3 py-2 pr-10 text-sm
-                        focus:outline-none
-                        focus:ring-2 focus:ring-[#22d3ee]
-                        transition-all duration-300">
+             <div class="relative w-full">
 
-                    <span class="balantro-select-value" x-text="options[selected] ?? 'Select'"></span>
-                </button>
+    <button type="button"
+        @click="open = !open"
+        class="w-full text-left
+            bg-gradient-to-br from-white/60 to-white/30
+            dark:from-white/10 dark:to-transparent
+            backdrop-blur-xl
+            border border-gray-300/80 dark:border-cyan-400/20
+            text-gray-900 dark:text-white
+            rounded-xl px-3 py-2 pr-10 text-sm
+            focus:outline-none
+            focus:ring-2 focus:ring-[#22d3ee]
+            transition-all duration-300">
 
-                <!-- Arrow -->
-                <div class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300">
-                    <i class="fa-solid fa-chevron-down text-xs"></i>
-                </div>
+        <span
+            class="balantro-select-value"
+            x-text="options[selected] ?? 'Select'">
+        </span>
+
+    </button>
+
+    <!-- Arrow exact center -->
+    <div
+        class="pointer-events-none absolute inset-y-0 right-3 flex items-center justify-center text-gray-500 dark:text-gray-300">
+        <i class="fa-solid fa-chevron-down text-xs"></i>
+    </div>
+
+</div>
 
                 <!-- 🔥 EXACT PROFILE STYLE DROPDOWN -->
                 <ul x-cloak x-show="open" @click.outside="open = false"
@@ -379,7 +402,18 @@
                 <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">Start Date</label>
                 <input type="date" name="start_date" value="{{ request('start_date') }}" x-model="startDate"
                     min="1900-01-01" max="2099-12-31"
-                    class="w-full appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
+                    class="safari-date-input w-full appearance-none bg-gradient-to-br
+    from-white/50 to-white/20
+    dark:from-white/10 dark:to-transparent
+    backdrop-blur-xl
+    border border-gray-300/80 dark:border-cyan-400/20
+    shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)]
+    dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]
+    text-gray-900 dark:text-white
+    rounded-xl px-3 py-2 text-sm pr-10
+    focus:outline-none focus:ring-2 focus:ring-[#22d3ee]
+    focus:border-[#22d3ee]
+    transition-all duration-300">
                 @error('start_date')
                 <p class="mt-1 text-xs text-red-500" role="alert">{{ $message }}</p>
                 @enderror
@@ -389,7 +423,18 @@
                 <label class="block text-xs text-black-600 dark:text-gray-300 mb-1">End Date</label>
                 <input type="date" name="end_date" value="{{ request('end_date') }}"
                     :min="startDate || '1900-01-01'" max="2099-12-31"
-                    class="w-full appearance-none bg-gradient-to-br from-white/50 to-white/20 dark:from-white/10 dark:to-transparent backdrop-blur-xl border border-gray-300/80 dark:border-cyan-400/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] text-gray-900 dark:text-white rounded-xl px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-[#22d3ee] focus:border-[#22d3ee] focus:shadow-[0_0_12px_rgba(34,211,238,0.6)] transition-all duration-300">
+                    class="safari-date-input w-full appearance-none bg-gradient-to-br
+    from-white/50 to-white/20
+    dark:from-white/10 dark:to-transparent
+    backdrop-blur-xl
+    border border-gray-300/80 dark:border-cyan-400/20
+    shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)]
+    dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]
+    text-gray-900 dark:text-white
+    rounded-xl px-3 py-2 text-sm pr-10
+    focus:outline-none focus:ring-2 focus:ring-[#22d3ee]
+    focus:border-[#22d3ee]
+    transition-all duration-300">
                 @error('end_date')
                 <p class="mt-1 text-xs text-red-500" role="alert">{{ $message }}</p>
                 @enderror
@@ -462,8 +507,8 @@
             $displayFileName = $displayFileName ? basename($displayFileName) : 'Document #' . $doc->id;
             @endphp
             <tr class="group transition-all duration-300 hover:bg-[#22d3ee]/80 dark:hover:bg-[#22d3ee]/80 hover:shadow-[0_0_20px_rgba(34,211,238,0.8)] [&>*]:group-hover:text-black [&_*]:group-hover:text-black">
-                <td class="px-2 py-1.5 group-hover:text-black">
-                    <div class="flex items-center gap-3">
+              <td class="px-2 py-1.5 group-hover:text-black max-w-[550px]">
+                    <div class="flex items-center gap-3 ">
                         <div
                             class="h-5 w-5 sm:h-8 sm:w-8 flex items-center justify-center rounded-md bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex-shrink-0">
                             @php
@@ -510,7 +555,7 @@
                             @endphp
                             <i class="fa-solid {{ $icon }} {{ $color }} text-sm"></i>
                         </div>
-                        <div class="min-w-0 flex-1">
+                        <!-- <div class="min-w-0 flex-1">
                             <div class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                                 @php $fileName = $displayFileName; @endphp
                                 {{ $fileName }}
@@ -521,7 +566,49 @@
                             <div class="sm:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 {{ optional($doc->created_at)->timezone(config('app.timezone'))->format('M d, Y') }}
                             </div>
-                        </div>
+                        </div> -->
+                        <div class="min-w-0 flex-1"
+    x-data="{ expanded: false }">
+
+    @php $fileName = $displayFileName; @endphp
+
+    <!-- Short filename -->
+    <button
+        type="button"
+        @click.stop="expanded = !expanded"
+        class="block w-full max-w-[260px] text-left text-sm font-medium
+               text-gray-900 dark:text-gray-100
+               hover:text-[#22d3ee]
+               focus:outline-none"
+        :title="expanded ? 'Hide full filename' : 'Show full filename'"
+    >
+        <span
+            x-show="!expanded"
+            class="block truncate whitespace-nowrap overflow-hidden text-ellipsis"
+        >
+            {{ $fileName }}
+        </span>
+
+        <!-- Full filename -->
+        <span
+            x-cloak
+            x-show="expanded"
+            x-transition
+            class="block whitespace-normal break-all leading-5"
+        >
+            {{ $fileName }}
+        </span>
+    </button>
+
+    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+        {{ number_format(($doc->file_size ?? 0) / 1024 / 1024, 2) }} MB
+    </div>
+
+    <div class="sm:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
+        {{ optional($doc->created_at)->timezone(config('app.timezone'))->format('M d, Y') }}
+    </div>
+
+</div>
                     </div>
                 </td>
                 @if ($user->role != \App\Models\User::ROLES['client'])

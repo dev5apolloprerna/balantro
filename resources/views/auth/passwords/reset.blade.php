@@ -2,8 +2,34 @@
 @section('field_validation_only', true)
 
 @section('content')
-<section class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-10 sm:py-14">
-    <div class="w-full max-w-md sm:max-w-lg">
+<section class="bg-white dark:bg-black min-h-screen flex flex-col lg:flex-row">
+
+    <!-- LEFT LOGO -->
+    <div class="w-full lg:w-3/5 h-[22vh] lg:h-screen shrink-0">
+        <div class="flex items-center justify-center h-full bg-white dark:bg-black">
+
+            <!-- Light Logo -->
+            <img
+                src="{{ asset('assets/images/light-logo_login.svg') }}"
+                alt="Balantro"
+                class="w-44 sm:w-56 md:w-64 lg:w-96 max-w-full h-auto block dark:hidden"
+            >
+
+            <!-- Dark Logo -->
+            <img
+                src="{{ asset('assets/images/dark-logo_login.svg') }}"
+                alt="Balantro"
+                class="w-44 sm:w-56 md:w-64 lg:w-96 max-w-full h-auto hidden dark:block"
+            >
+
+        </div>
+    </div>
+
+
+    <!-- RIGHT FORM -->
+    <div class="w-full lg:w-2/5 flex-1 flex items-center justify-center lg:justify-start px-4 sm:px-6 py-6 lg:py-10">
+
+        <div class="w-full max-w-md">
         <div class="mb-6 text-center">
             <h1 class="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
                 Reset your password

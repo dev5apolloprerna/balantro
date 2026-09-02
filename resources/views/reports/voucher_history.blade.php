@@ -186,6 +186,51 @@
         .card-hover:hover .text-\[12px\] {
             color: var(--card) !important;
         }
+        .voucher-table-scroll {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Mobile + Tablet */
+    @media (max-width: 1023px) {
+        .voucher-table-scroll {
+            overflow-x: auto !important;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .voucher-table {
+            width: 1100px !important;
+            min-width: 1100px !important;
+            table-layout: auto !important;
+        }
+
+        .voucher-table th,
+        .voucher-table td {
+            white-space: nowrap !important;
+            word-break: normal !important;
+            overflow-wrap: normal !important;
+        }
+
+        /* Account column thodi wide */
+        .voucher-table th:nth-child(4),
+        .voucher-table td:nth-child(4) {
+            min-width: 240px;
+        }
+    }
+
+    /* LG + Desktop */
+    @media (min-width: 1024px) {
+        .voucher-table-scroll {
+            overflow-x: visible !important;
+        }
+
+        .voucher-table {
+            width: 100% !important;
+            min-width: 100% !important;
+            table-layout: auto !important;
+        }
+    }
     </style>
     <div class="container py-3">
         <div class="flex items-center justify-between gap-3">
@@ -474,8 +519,8 @@
         </div>
 
         {{-- Table --}}
-        <div class="mt-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden group-block">
-            <table class="min-w-full text-sm text-left ">
+        <div class="voucher-table-scroll mt-5 rounded-lg border border-gray-200 dark:border-gray-700 group-block">
+           <table class="voucher-table text-sm text-left">
                 <thead class="bg-[rgba(10,20,35,0.20)] dark:bg-[rgba(10,20,35,0.6)] dark:bg-gray-900/40 sticky top-0 z-10">
                     <tr class="text-black-900 dark:text-gray-300">
                         <th class="px-4 py-2 font-bold">Date</th>
