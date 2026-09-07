@@ -1,117 +1,458 @@
 {{-- OWNERS: Manager + Supervisor, with cascading supervisor list --}}
 <div id="deoAssignOwners" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoAssignOwners')"></div>
-    <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
-        <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
-            <form id="deoAssignOwnersForm" method="POST">
-                @csrf
-                <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Assign Manager & Supervisor</h3>
 
-                <div class="mt-4 space-y-4">
-                    <div>
-                        <label class="mb-2 block text-sm text-slate-700 dark:text-slate-300">Manager</label>
-                        <select id="deo_owner_manager_id" name="manager_id"
-                            class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
-                            <option value="">— None —</option>
-                            @foreach ($managers as $m)
-                                <option value="{{ $m->id }}">{{ $m->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block text-sm text-slate-700 dark:text-slate-300">Supervisor</label>
-                        <select id="deo_owner_supervisor_id" name="supervisor_id"
-                            class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
-                            <option value="">— None —</option>
-                            {{-- options filled dynamically from MGR_SUPS --}}
-                        </select>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Supervisors list updates when you
-                            change the manager.</p>
-                    </div>
-                </div>
-
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button"
-                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm dark:border-slate-700"
-                        onclick="closeModal('deoAssignOwners')">Cancel</button>
-                    <button
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Save</button>
-                </div>
-            </form>
-        </div>
+    <!-- Overlay -->
+    <div
+        class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onclick="closeModal('deoAssignOwners')">
     </div>
+
+    <!-- Center Wrapper -->
+    <div class="absolute inset-0 z-10 flex items-center justify-center p-4">
+
+        <div class="relative w-full max-w-lg">
+
+            <div class="rounded-2xl border border-slate-200 bg-white shadow-xl
+                        dark:border-neutral-700 dark:bg-neutral-900">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4
+                            border-b border-slate-200 dark:border-neutral-700">
+
+                    <h3 class="text-xl font-semibold text-slate-900 dark:text-white">
+                        Assign Manager & Supervisor
+                    </h3>
+
+                    <button
+                        type="button"
+                        onclick="closeModal('deoAssignOwners')"
+                        class="flex h-8 w-8 items-center justify-center rounded-full
+                               text-slate-400
+                               hover:bg-slate-100 hover:text-slate-700
+                               dark:text-neutral-400
+                               dark:hover:bg-neutral-800 dark:hover:text-white">
+                        ✕
+                    </button>
+
+                </div>
+
+                <form id="deoAssignOwnersForm" method="POST" class="px-6 py-5">
+                    @csrf
+
+                    <div class="space-y-4">
+
+                        <!-- Manager -->
+                        <div>
+                            <label class="mb-2 block text-sm text-slate-700 dark:text-slate-300">
+                                Manager
+                            </label>
+
+                            <div class="relative w-full">
+
+                                <select
+                                    id="deo_owner_manager_id"
+                                    name="manager_id"
+                                    class="block h-11 w-full appearance-none rounded-lg
+                                           border border-slate-300
+                                           bg-white
+                                           px-3 pr-10
+                                           text-sm text-slate-900
+                                           focus:border-blue-500
+                                           focus:ring-2 focus:ring-blue-500
+                                           dark:border-neutral-700
+                                           dark:bg-black
+                                           dark:text-white">
+
+                                    <option value="">— None —</option>
+
+                                    @foreach ($managers as $m)
+                                        <option value="{{ $m->id }}">
+                                            {{ $m->name }}
+                                        </option>
+                                    @endforeach
+
+                                </select>
+
+                                <!-- Custom centered arrow -->
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-3
+                                           flex items-center justify-center
+                                           text-slate-500 dark:text-neutral-300">
+
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                        <!-- Supervisor -->
+                        <div>
+                            <label class="mb-2 block text-sm text-slate-700 dark:text-slate-300">
+                                Supervisor
+                            </label>
+
+                            <div class="relative w-full">
+
+                                <select
+                                    id="deo_owner_supervisor_id"
+                                    name="supervisor_id"
+                                    class="block h-11 w-full appearance-none rounded-lg
+                                           border border-slate-300
+                                           bg-white
+                                           px-3 pr-10
+                                           text-sm text-slate-900
+                                           focus:border-blue-500
+                                           focus:ring-2 focus:ring-blue-500
+                                           dark:border-neutral-700
+                                           dark:bg-black
+                                           dark:text-white">
+
+                                    <option value="">— None —</option>
+
+                                </select>
+
+                                <!-- Custom centered arrow -->
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-3
+                                           flex items-center justify-center
+                                           text-slate-500 dark:text-neutral-300">
+
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+
+                                </div>
+
+                            </div>
+
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Supervisors list updates when you change the manager.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-6 flex justify-end gap-3">
+
+                        <button
+                            type="button"
+                            onclick="closeModal('deoAssignOwners')"
+                            class="rounded-lg border border-slate-300
+                                   px-4 py-2 text-sm
+                                   text-slate-700
+                                   hover:bg-slate-100
+                                   dark:border-neutral-700
+                                   dark:text-slate-200
+                                   dark:hover:bg-neutral-800">
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="rounded-lg bg-blue-600
+                                   px-4 py-2
+                                   text-sm font-semibold text-white
+                                   hover:bg-blue-700">
+                            Save
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
-{{-- GROUPS --}}
 <div id="deoAssignGroups" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoAssignGroups')"></div>
-    <div class="relative mx-auto mt-20 w-full max-w-xl px-4">
-        <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+
+    <!-- Overlay -->
+    <div
+        class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onclick="closeModal('deoAssignGroups')">
+    </div>
+
+    <!-- Center Wrapper -->
+    <div class="absolute inset-0 z-10 flex items-center justify-center p-4">
+
+        <div class="w-full max-w-2xl overflow-hidden rounded-2xl
+                    border border-slate-200 bg-white shadow-xl
+                    dark:border-neutral-700 dark:bg-neutral-900">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between
+                        border-b border-slate-200
+                        px-6 py-4
+                        dark:border-neutral-700">
+
+                <h3 class="text-xl font-semibold text-slate-900 dark:text-white">
+                    Assign Groups
+                </h3>
+
+                <button
+                    type="button"
+                    onclick="closeModal('deoAssignGroups')"
+                    class="flex h-8 w-8 items-center justify-center rounded-full
+                           text-slate-400
+                           hover:bg-slate-100 hover:text-slate-700
+                           dark:bg-neutral-800
+                           dark:text-neutral-300
+                           dark:hover:bg-neutral-700
+                           dark:hover:text-white">
+                    ✕
+                </button>
+
+            </div>
+
             <form id="deoAssignGroupsForm" method="POST">
                 @csrf
-                <h3 class="text-xl font-semibold text-slate-900 dark:text-white">Assign Groups</h3>
-                <div class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    @foreach ($groups as $g)
-                        <label
-                            class="inline-flex items-center gap-2 rounded-lg border border-slate-200 p-2 dark:border-slate-700">
-                            <input type="checkbox" name="group_ids[]" value="{{ $g->id }}"
-                                class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                            <span class="text-sm text-slate-800 dark:text-slate-200">{{ $g->name }}</span>
-                        </label>
-                    @endforeach
-                    @if (($groups ?? collect())->isEmpty())
-                        <p class="text-sm text-slate-500 dark:text-slate-400">No groups found.</p>
-                    @endif
+
+                <!-- Groups -->
+                <div class="px-6 py-5">
+
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+                        @foreach ($groups as $g)
+
+                            <label
+                                class="flex min-h-[66px] cursor-pointer items-center gap-3
+                                       rounded-lg border border-slate-200
+                                       bg-white px-3 py-3
+                                       transition
+                                       hover:bg-slate-50
+                                       dark:border-neutral-700
+                                       dark:bg-black
+                                       dark:hover:border-neutral-600
+                                       dark:hover:bg-neutral-950">
+
+                                <input
+                                    type="checkbox"
+                                    name="group_ids[]"
+                                    value="{{ $g->id }}"
+                                    class="h-4 w-4 rounded
+                                           border-slate-300
+                                           bg-white
+                                           text-blue-600
+                                           focus:ring-blue-500
+                                           dark:border-neutral-600
+                                           dark:bg-neutral-800
+                                           dark:text-blue-600">
+
+                                <div class="min-w-0">
+
+                                    <div class="font-semibold leading-5
+                                                text-slate-900 dark:text-white">
+                                        {{ $g->name }}
+                                    </div>
+
+                                    <div class="mt-0.5 text-xs
+                                                text-slate-500
+                                                dark:text-neutral-400">
+                                        {{ $g->permissions_count ?? 0 }} permissions
+                                    </div>
+
+                                </div>
+
+                            </label>
+
+                        @endforeach
+
+                        @if (($groups ?? collect())->isEmpty())
+                            <p class="col-span-full text-sm
+                                      text-slate-500 dark:text-neutral-400">
+                                No groups found.
+                            </p>
+                        @endif
+
+                    </div>
+
                 </div>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button"
-                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm dark:border-slate-700"
-                        onclick="closeModal('deoAssignGroups')">Cancel</button>
+
+                <!-- Footer -->
+                <div class="flex justify-end gap-3
+                            border-t border-slate-200
+                            px-6 py-4
+                            dark:border-neutral-700">
+
                     <button
-                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Save</button>
+                        type="button"
+                        onclick="closeModal('deoAssignGroups')"
+                        class="rounded-lg
+                               border border-slate-300
+                               bg-white
+                               px-4 py-2
+                               text-sm font-medium text-slate-700
+                               hover:bg-slate-100
+                               dark:border-neutral-600
+                               dark:bg-neutral-900
+                               dark:text-white
+                               dark:hover:bg-neutral-800">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="rounded-lg
+                               bg-primary-600
+                               px-4 py-2
+                               text-sm font-semibold text-white
+                               hover:bg-primary-700">
+                        Save
+                    </button>
+
                 </div>
+
             </form>
+
         </div>
+
     </div>
+
 </div>
 
 {{-- PERMISSIONS --}}
 <div id="deoAssignPermissions" class="hidden fixed inset-0 z-50">
-    <div class="absolute inset-0 bg-black/60"></div>
-    <div class="relative mx-auto mt-20 w-[920px] max-w-[95%] rounded-2xl bg-neutral-900 text-white shadow-xl">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-700">
-            <h2 class="text-xl font-semibold">Assign Permissions</h2>
-            <button type="button" onclick="closeModal('deoAssignPermissions')"
-                class="text-neutral-400 hover:text-white">✕</button>
 
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+    <!-- Center Wrapper -->
+    <div class="absolute inset-0 z-10 flex items-center justify-center p-4">
+
+        <!-- Modal -->
+        <div class="relative w-full max-w-2xl overflow-hidden rounded-2xl
+                    border border-slate-200
+                    bg-white text-slate-900 shadow-xl
+                    dark:border-neutral-700
+                    dark:bg-neutral-900 dark:text-white">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between
+                        border-b border-slate-200
+                        px-6 py-4
+                        dark:border-neutral-700">
+
+                <h2 class="text-xl font-semibold text-slate-900 dark:text-white">
+                    Assign Permissions
+                </h2>
+
+                <button
+                    type="button"
+                    onclick="closeModal('deoAssignPermissions')"
+                    class="flex h-8 w-8 items-center justify-center rounded-full
+                           text-slate-400
+                           hover:bg-slate-100 hover:text-slate-700
+                           dark:text-neutral-400
+                           dark:hover:bg-neutral-800 dark:hover:text-white">
+                    ✕
+                </button>
+
+            </div>
+
+            <form id="deoAssignPermissionsForm" method="POST">
+                @csrf
+
+                <!-- Permissions -->
+                <div class="max-h-[60vh] overflow-y-auto p-5 space-y-2">
+
+                    @foreach ($permissions as $p)
+
+                        <label
+                            class="flex items-center gap-3 rounded-xl
+                                   border border-slate-200
+                                   bg-white
+                                   p-3
+                                   transition
+                                   hover:border-slate-300
+                                   hover:bg-slate-100
+                                   dark:border-neutral-700
+                                   dark:bg-black
+                                   dark:hover:border-neutral-600
+                                   dark:hover:bg-neutral-900">
+
+                            <input
+                                type="checkbox"
+                                name="permission_ids[]"
+                                value="{{ $p->id }}"
+                                class="h-4 w-4 rounded
+                                       border-slate-300
+                                       bg-white
+                                       text-blue-600
+                                       focus:ring-blue-500
+                                       dark:border-neutral-600
+                                       dark:bg-black
+                                       dark:text-white
+                                       dark:focus:ring-neutral-500">
+
+                            <span class="text-sm text-slate-800 dark:text-white">
+                                {{ $p->name }}
+
+                                <span class="text-slate-400 dark:text-neutral-400">
+                                    ({{ $p->action }} {{ $p->subject }})
+                                </span>
+                            </span>
+
+                        </label>
+
+                    @endforeach
+
+                </div>
+
+                <!-- Footer -->
+                <div class="flex justify-end gap-3
+                            border-t border-slate-200
+                            bg-white
+                            px-6 py-4
+                            dark:border-neutral-700
+                            dark:bg-neutral-900">
+
+                    <button
+                        type="button"
+                        onclick="closeModal('deoAssignPermissions')"
+                        class="rounded-md
+                               border border-slate-300
+                               bg-white
+                               px-4 py-2
+                               text-sm text-slate-700
+                               hover:bg-slate-50
+                               dark:border-neutral-600
+                               dark:bg-neutral-900
+                               dark:text-neutral-200
+                               dark:hover:bg-neutral-800">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="rounded-md
+                               bg-primary-600
+                               px-4 py-2
+                               text-sm font-medium text-white
+                               hover:bg-primary-700">
+                        Save
+                    </button>
+
+                </div>
+
+            </form>
 
         </div>
-        <form id="deoAssignPermissionsForm" method="POST">
-            @csrf
-            <div class="max-h-[60vh] overflow-y-auto space-y-2 p-5 py-1">
-                @foreach ($permissions as $p)
-                    <label
-                        class="flex items-center gap-2 rounded-lg border border-slate-200 p-2 text-sm dark:border-slate-700">
-                        <input type="checkbox" name="permission_ids[]" value="{{ $p->id }}"
-                            class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
-                        <span class="text-slate-800 dark:text-slate-200">
-                            {{ $p->name }} <span class="text-slate-400">({{ $p->action }}
-                                {{ $p->subject }})</span>
-                        </span>
-                    </label>
-                @endforeach
-            </div>
-            <div class="mt-6 flex justify-end gap-3">
-                <button type="button"
-                    class="rounded-lg border border-slate-300 px-4 py-2 text-sm dark:border-slate-700"
-                    onclick="closeModal('deoAssignPermissions')">Cancel</button>
-                <button class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-                    Save
-                </button>
-            </div>
-        </form>
+
     </div>
+
+</div>
+
+            </form>
+
+        </div>
+
+    </div>
+
 </div>
 
 
@@ -163,20 +504,80 @@
 
 {{-- DELETE --}}
 <div id="deoDelete" class="fixed inset-0 z-[100] hidden">
-    <div class="absolute inset-0 bg-slate-900/60" onclick="closeModal('deoDelete')"></div>
-    <div class="relative mx-auto mt-32 w-full max-w-md px-4">
-        <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
-            <form id="deoDeleteForm" method="POST">@csrf @method('DELETE')
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Delete operator?</h3>
-                <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">This action cannot be undone.</p>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button"
-                        class="rounded-lg border border-slate-300 px-4 py-2 text-sm dark:border-slate-700"
-                        onclick="closeModal('deoDelete')">Cancel</button>
+    <!-- Overlay -->
+    <div
+        class="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onclick="closeModal('deoDelete')">
+    </div>
+    <!-- Center -->
+    <div class="absolute inset-0 z-10 flex items-center justify-center p-4">
+
+        <div class="w-full max-w-md">
+
+            <div class="overflow-hidden rounded-2xl
+                        border border-slate-200
+                        bg-white shadow-xl
+                        dark:border-neutral-700
+                        dark:bg-neutral-900">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between
+                            border-b border-slate-200
+                            px-6 py-4
+                            dark:border-neutral-700">
+
+                    <h3 class="text-lg font-semibold
+                               text-slate-900 dark:text-white">
+                        Delete operator?
+                    </h3>
+
+                    <!-- Close Icon -->
                     <button
-                        class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700">Delete</button>
+                        type="button"
+                        onclick="closeModal('deoDelete')"
+                        class="flex h-8 w-8 items-center justify-center rounded-full
+                               text-slate-400 
+                               hover:bg-gray-200 hover:text-slate-700
+                               dark:text-neutral-400
+                               dark:hover:bg-neutral-800 dark:hover:text-white">
+                        ✕
+                    </button>
+
                 </div>
-            </form>
+
+                <!-- Body -->
+                <form id="deoDeleteForm" method="POST" class="px-6 py-5">
+                    @csrf
+                    @method('DELETE')
+
+                    <p class="text-sm
+                              text-slate-600
+                              dark:text-neutral-400">
+                        This action cannot be undone.
+                    </p>
+
+                    <!-- Footer -->
+                    <div class="mt-6 flex justify-end gap-3">
+
+                        <button
+                            type="button"
+                            onclick="closeModal('deoDelete')"
+                            class="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-neutral-800">
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="rounded-lg
+                                   bg-rose-600
+                                   px-4 py-2
+                                   text-sm font-semibold text-white
+                                   hover:bg-rose-700">
+                            Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

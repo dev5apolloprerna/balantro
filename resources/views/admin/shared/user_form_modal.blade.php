@@ -4,17 +4,21 @@ $fieldPrefix = $isEdit ? 'e' : 'c';
 @endphp
 
 <div id="{{ $modalId }}"
-    class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+    class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60  p-4 backdrop-blur-sm"
     role="dialog" aria-modal="true" aria-labelledby="{{ $modalId }}-title">
     <button type="button" class="absolute inset-0 cursor-default" aria-label="Close modal"
         onclick="{{ $closeAction }}"></button>
 
-    <div class="balantro-modal-panel relative w-full max-w-md rounded-2xl bg-white text-slate-900 shadow-xl dark:bg-slate-900 dark:text-white">
+    <div class="balantro-modal-panel relative w-full max-w-md rounded-2xl bg-white text-slate-900 shadow-xl dark:bg-neutral-900 dark:text-white">
         <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
             <h2 id="{{ $modalId }}-title" class="text-lg font-semibold">{{ $title }}</h2>
             <button type="button" onclick="{{ $closeAction }}"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                aria-label="Close modal">&times;</button>
+                class="flex h-8 w-8 items-center justify-center rounded-full
+                               text-slate-400 
+                               hover:bg-gray-200 hover:text-slate-700
+                               dark:text-neutral-400
+                               dark:hover:bg-neutral-800 dark:hover:text-white"
+                aria-label="Close modal">✕</button>
         </div>
 
         <form id="{{ $formId }}" method="POST" @if (!empty($action)) action="{{ $action }}" @endif

@@ -88,55 +88,104 @@
         </form>
     </div>
 
-    <!-- 🧾 Table Section -->
-    <div
-        class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm">
-        <div class="overflow-x-auto">
-            <table class="w-full table-fixed divide-y text-xs xl:text-sm">
-                <colgroup>
-                    <col class="w-[11%]">
-                    <col class="w-[14%]">
-                    <col class="w-[11%]">
-                    <col class="w-[11%]">
-                    <col class="w-[14%]">
-                    <col class="w-[10%]">
-                    <col class="w-[7%]">
-                    <col class="w-[22%]">
-                </colgroup>
-                <thead class="bg-neutral-50/80 dark:bg-neutral-800/60">
-                    <tr class="text-left font-semibold text-neutral-700 dark:text-neutral-200">
-                        <th class="px-2 py-1">{{ __('Name') }}</th>
-                        <th class="px-2 py-1">{{ __('Email') }}</th>
-                        <th class="px-2 py-1">{{ __('Managers') }}</th>
-                        <th class="px-2 py-1">{{ __('Supervisors') }}</th>
-                        <th class="px-2 py-1 leading-tight">{{ __('Data Entry Operators') }}</th>
-                        <th class="px-2 py-1">{{ __('Groups') }}</th>
-                        <th class="px-2 py-1">{{ __('Status') }}</th>
-                        <th class="w-[15rem] min-w-[15rem] px-2 py-1 text-center">{{ __('Actions') }}</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y">
-                    @if ($clients->count())
-                        @foreach ($clients as $client)
-                            @include('admin.clients.client_row', ['client' => $client])
-                        @endforeach
-                    @else
-                        <tr>
-                            <td colspan="8" class="px-4 py-12 text-center text-neutral-500 dark:text-neutral-400">
-                                <div class="flex flex-col items-center justify-center">
-                                    <x-icon name="heroicons-outline-document-magnifying-glass"
-                                        class="mb-3 h-10 w-10 text-neutral-400" />
-                                    <!-- <p class="mb-1 text-lg font-medium">
-                                        {{ __('admin.clients.table.no_clients_title') }}</p>
-                                    <p class="text-sm">{{ __('admin.clients.table.no_clients_description') }}</p> -->
-                                    <p class="text-base font-medium">No Client found</p>
-                                    <p class="text-sm">Click “New Client” to create one.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    @endif
-                </tbody>
-            </table>
-        </div>
+ <!-- 🧾 Table Section -->
+<div class="w-full overflow-hidden rounded-xl border border-neutral-200
+            shadow-sm dark:border-neutral-700">
+
+    <!-- Mobile + Tablet Horizontal Scroll -->
+    <div class="w-full overflow-x-auto lg:overflow-x-visible
+                [-webkit-overflow-scrolling:touch]">
+
+        <table class="w-full min-w-[1150px] table-fixed divide-y divide-neutral-200
+                      text-xs lg:min-w-full xl:text-sm
+                      dark:divide-neutral-700">
+
+            <colgroup>
+                <col class="w-[12%]">
+                <col class="w-[16%]">
+                <col class="w-[11%]">
+                <col class="w-[11%]">
+                <col class="w-[14%]">
+                <col class="w-[10%]">
+                <col class="w-[8%]">
+                <col class="w-[18%]">
+            </colgroup>
+
+            <thead class="bg-neutral-50 dark:bg-neutral-800/60">
+                <tr class="text-left font-semibold
+                           text-neutral-700 dark:text-neutral-200">
+
+                    <th class="whitespace-nowrap px-2 py-2">
+                        {{ __('Name') }}
+                    </th>
+
+                    <th class="whitespace-nowrap px-2 py-2">
+                        {{ __('Email') }}
+                    </th>
+
+                    <th class="whitespace-nowrap px-2 py-2">
+                        {{ __('Managers') }}
+                    </th>
+
+                    <th class="whitespace-nowrap px-2 py-2">
+                        {{ __('Supervisors') }}
+                    </th>
+
+                    <th class="whitespace-nowrap px-2 py-2">
+                        {{ __('Data Entry Operators') }}
+                    </th>
+
+                    <th class="whitespace-nowrap px-2 py-2">
+                        {{ __('Groups') }}
+                    </th>
+
+                    <th class="whitespace-nowrap px-2 py-2 text-center">
+                        {{ __('Status') }}
+                    </th>
+
+                    <th class="whitespace-nowrap px-2 py-2 text-center">
+                        {{ __('Actions') }}
+                    </th>
+
+                </tr>
+            </thead>
+
+            <tbody class="divide-y divide-neutral-200
+                          dark:divide-neutral-700">
+
+                @if ($clients->count())
+
+                    @foreach ($clients as $client)
+                        @include('admin.clients.client_row', [
+                            'client' => $client
+                        ])
+                    @endforeach
+
+                @else
+
+                    <tr>
+                        <td colspan="8"
+                            class="px-4 py-12 text-center
+                                   text-neutral-500 dark:text-neutral-400">
+
+                            <div class="flex flex-col items-center justify-center">
+
+                                <x-icon
+                                    name="heroicons-outline-document-magnifying-glass"
+                                    class="mb-3 h-10 w-10 text-neutral-400" />
+
+                                <p class="text-base font-medium">
+                                    No Client found
+                                </p>
+
+                                <p class="text-sm">
+                                    Click “New Client” to create one.
+                                </p>
+                            </div>
+                        </td>                    </tr>
+                @endif
+            </tbody>
+        </table>
     </div>
+</div>
 </div>

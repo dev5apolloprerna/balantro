@@ -49,30 +49,43 @@
 {{-- DELETE --}}
 {{-- DELETE MODAL --}}
 <div id="deoDelete" class="fixed inset-0 z-[100] hidden">
-
     {{-- Background Overlay --}}
     <div
-        class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        class="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onclick="closeModal('deoDelete')">
     </div>
-
     {{-- CENTER WRAPPER --}}
     <div class="absolute inset-0 z-10 flex items-center justify-center p-4 pointer-events-none">
-
         {{-- MODAL --}}
         <div class="w-full max-w-md pointer-events-auto">
 
-            <div class="rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+            <div class="rounded-2xl bg-white shadow-xl dark:bg-neutral-900">
 
-                <form id="deoDeleteForm" method="POST">
-                    @csrf
-                    @method('DELETE')
+                {{-- Header --}}
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-neutral-700">
 
                     <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
                         Delete operator?
                     </h3>
 
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                    <button
+                        type="button"
+                        onclick="closeModal('deoDelete')"
+                        class="flex h-8 w-8 items-center justify-center rounded-full
+                               text-slate-400 
+                               hover:bg-gray-200 hover:text-slate-700
+                               dark:text-neutral-400
+                               dark:hover:bg-neutral-800 dark:hover:text-white">
+                        ✕
+                    </button>
+
+                </div>
+
+                <form id="deoDeleteForm" method="POST" class="px-6 py-5">
+                    @csrf
+                    @method('DELETE')
+
+                    <p class="text-sm text-slate-600 dark:text-slate-300">
                         This action cannot be undone.
                     </p>
 
@@ -83,8 +96,8 @@
                             onclick="closeModal('deoDelete')"
                             class="rounded-lg border border-slate-300 px-4 py-2 text-sm
                                    text-slate-700 hover:bg-slate-100
-                                   dark:border-slate-700 dark:text-slate-200
-                                   dark:hover:bg-slate-700">
+                                   dark:border-neutral-700 dark:text-slate-200
+                                   dark:hover:bg-neutral-800">
                             Cancel
                         </button>
 
@@ -178,14 +191,40 @@
                         const gid = Number(g.id);
                         const checked = assigned.has(gid) ? 'checked' : '';
                         return `
-        <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800">
-          <input type="checkbox" name="group_ids[]" value="${gid}" ${checked}
-                 class="h-4 w-4 rounded border-slate-400 text-blue-600 focus:ring-blue-500">
-          <div>
-            <div class="font-medium">${g.name}</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">${g.permissions_count} permissions</div>
-          </div>
-        </label>
+       <label class="flex items-center gap-3 rounded-xl
+              border border-slate-200
+              bg-white
+              p-3
+              transition
+              hover:bg-slate-100
+              dark:border-neutral-700
+              dark:bg-black
+              dark:hover:bg-neutral-900">
+
+    <input type="checkbox"
+        name="group_ids[]"
+        value="${gid}"
+        ${checked}
+        class="h-4 w-4 rounded
+               border-slate-300
+               bg-white
+               text-blue-600
+               focus:ring-blue-500
+               dark:border-neutral-600
+               dark:bg-black
+               dark:text-white
+               dark:focus:ring-neutral-500">
+
+    <div>
+        <div class="font-medium text-slate-900 dark:text-white">
+            ${g.name}
+        </div>
+
+        <div class="text-xs text-slate-500 dark:text-neutral-400">
+            ${g.permissions_count} permissions
+        </div>
+    </div>
+</label>
       `;
                     }).join('');
                 })
@@ -233,13 +272,41 @@
                         const denyChecked = (groupSet.has(pid) && denySet.has(pid)) ? 'checked' : '';
 
                         return `
-        <div class="space-y-2">
-          <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:bg-slate-800">
-            <input type="checkbox" name="permission_ids[]" value="${pid}" ${allowChecked}
-                   class="h-4 w-4 rounded border-slate-400 text-purple-600 focus:ring-purple-500">
-            <span class="text-sm">${p.name} <span class="text-slate-500 dark:text-slate-400">(${p.action} ${p.subject})</span></span>
-          </label>
-        </div>
+<div class="space-y-2">
+    <label class="flex items-center gap-3 rounded-xl
+                  border border-slate-200
+                  bg-white
+                  p-3
+                  transition
+                  hover:bg-slate-100
+                  dark:border-neutral-700
+                  dark:bg-black
+                  dark:hover:bg-neutral-900">
+
+        <input type="checkbox"
+               name="permission_ids[]"
+               value="${pid}"
+               ${allowChecked}
+               class="h-4 w-4 rounded
+                      border-slate-300
+                      bg-white
+                      text-blue-600
+                      focus:ring-blue-500
+                      dark:border-neutral-600
+                      dark:bg-black
+                      dark:text-white
+                      dark:focus:ring-neutral-500">
+
+        <span class="text-sm text-slate-900 dark:text-white">
+            ${p.name}
+
+            <span class="text-slate-500 dark:text-neutral-400">
+                (${p.action} ${p.subject})
+            </span>
+        </span>
+
+    </label>
+</div>
       `;
                     }).join('');
 
@@ -316,6 +383,41 @@ modal.classList.add('flex');
             el.classList.add('hidden');
             document.documentElement.classList.remove('overflow-hidden');
         }
+        // ESC key - close any open modal
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+
+    const addManagerModal = document.getElementById('addManagerModal');
+    const editModal = document.getElementById('editModal');
+    const assignGroupsModal = document.getElementById('assignGroupsModal');
+    const permissionsModal = document.getElementById('permissionsModal');
+    const deleteModal = document.getElementById('deoDelete');
+
+    if (permissionsModal && !permissionsModal.classList.contains('hidden')) {
+        closePermissionsModal();
+        return;
+    }
+
+    if (assignGroupsModal && !assignGroupsModal.classList.contains('hidden')) {
+        closeGroupsModal();
+        return;
+    }
+
+    if (editModal && !editModal.classList.contains('hidden')) {
+        closeEditModal();
+        return;
+    }
+
+    if (addManagerModal && !addManagerModal.classList.contains('hidden')) {
+        closeManagerModal();
+        return;
+    }
+
+    if (deleteModal && !deleteModal.classList.contains('hidden')) {
+        closeModal('deoDelete');
+        return;
+    }
+});
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-messaging-compat.js"></script>

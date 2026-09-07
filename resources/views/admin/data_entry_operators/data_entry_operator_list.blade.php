@@ -1,23 +1,42 @@
 <div class="container mx-auto px-4">
     <!-- Header Section -->
-    <div class="flex justify-between items-center mb-6">
-        <h6 class="text-lg font-semibold text-gray-800 dark:text-white">
-            {{ __('Data Entry Operator') }}
-        </h6>
+  <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
+    <h6 class="text-lg font-semibold text-gray-800 dark:text-white">
+        {{ __('Data Entry Operator') }}
+    </h6>
 
-        @if(auth()->user()->can('data_entry_operators.create') || $user->role === \App\Models\User::ROLES['super_admin'])
-                <button type="button"
-                    class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    data-open-add-user>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor">
-                        <path d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    {{ __('Add Data Entry Operator') }}
-                </button>
-            @endif
-    </div>
+    @if(auth()->user()->can('data_entry_operators.create') || $user->role === \App\Models\User::ROLES['super_admin'])
+        <button
+            type="button"
+            data-open-add-user
+            class="inline-flex w-full items-center justify-center gap-2
+                   rounded-lg bg-primary-600 px-4 py-2
+                   text-white hover:bg-primary-700
+                   focus:outline-none focus:ring-2 focus:ring-primary-500
+                   sm:w-auto">
+
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor">
+
+                <path
+                    d="M12 5v14M5 12h14"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+
+            <span class="whitespace-nowrap">
+                {{ __('Add Data Entry Operator') }}
+            </span>
+
+        </button>
+    @endif
+
+</div>
 
     <!-- Filter + Table Section -->
     <div class="space-y-3">

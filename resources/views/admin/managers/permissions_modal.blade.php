@@ -1,9 +1,13 @@
-<div id="permissionsModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+<div id="permissionsModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
     <div class="absolute inset-0" onclick="closePermissionsModal()"></div>
-    <div class="balantro-modal-panel relative w-full max-w-4xl rounded-2xl bg-white text-slate-900 shadow-xl dark:bg-slate-900 dark:text-white">
+    <div class="balantro-modal-panel relative w-full max-w-4xl rounded-2xl bg-white text-slate-900 shadow-xl dark:bg-neutral-900 dark:text-white">
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-            <h2 class="text-xl font-semibold">Assign Permission   s</h2>
-            <button type="button" onclick="closePermissionsModal()" class="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white">✕</button>
+            <h2 class="text-xl font-semibold">Assign Permission</h2>
+            <button type="button" onclick="closePermissionsModal()" class="flex h-8 w-8 items-center justify-center rounded-full
+                               text-slate-400 
+                               hover:bg-gray-200 hover:text-slate-700
+                               dark:text-neutral-400
+                               dark:hover:bg-neutral-800 dark:hover:text-white">✕</button>
         </div>
         <form id="permissionsForm" method="POST" class="px-6 py-5">
             @csrf
