@@ -104,6 +104,7 @@
 </head>
 
 <body>
+    @include('reports.pdf._sample_notice')
     <!-- <div class="header">
         <h1>Ballantro - Ledger Report</h1>
 		<div class="period"><strong> Name : {{ $partyName ?? '-' }} </strong></div>

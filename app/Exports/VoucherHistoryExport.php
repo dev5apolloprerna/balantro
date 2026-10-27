@@ -103,7 +103,7 @@ class VoucherHistoryExport implements FromCollection, WithHeadings, WithTitle, W
 
     public function title(): string
     {
-        return 'Ledger History';
+        return (\App\Support\Demo\ReportContext::current()?->isDemo ? 'SAMPLE - ' : '') . 'Ledger History';
     }
 
     public function styles(Worksheet $sheet)

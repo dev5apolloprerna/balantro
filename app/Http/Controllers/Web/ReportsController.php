@@ -21,6 +21,7 @@ use App\Exports\VoucherExport;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use App\Support\ReportCache;
+use App\Support\Demo\ReportContext;
 
 class ReportsController extends Controller
 {
@@ -107,28 +108,31 @@ class ReportsController extends Controller
         DateRangeValidation::validate($r, 'from', 'to');
         DateRangeValidation::validate($r, 'from_custom', 'to_custom');
         
+        // Sample data keeps its own year/date selection so switching never
+        // changes the client's real report filters.
+        $sk = fn (string $key): string => ReportContext::sessionKey($key);
         $financialYears = $this->getFinancialYears($userId);
         $requestedRange = $r->input('range');
-        $sessionYear = session('year');
+        $sessionYear = session($sk('year'));
         $sessionYearId = $sessionYear
             ? optional($financialYears->firstWhere('strYear', $sessionYear))->iYearId
             : null;
         $rangeSel = $requestedRange
-            ?: session('selectedReportRange', $sessionYearId ?: $this->defaultFinancialYearRange($financialYears));
+            ?: session($sk('selectedReportRange'), $sessionYearId ?: $this->defaultFinancialYearRange($financialYears));
 
         if ($rangeSel !== 'custom' && $financialYears->isNotEmpty() && !$financialYears->firstWhere('iYearId', (int) $rangeSel)) {
             $rangeSel = $sessionYearId ?: $this->defaultFinancialYearRange($financialYears);
         }
 
         if ($rangeSel === 'custom') {
-            $from = $r->input('from_custom') ?: $r->input('from') ?: ($requestedRange ? null : session('selectedFrom'));
-            $to = $r->input('to_custom') ?: $r->input('to') ?: ($requestedRange ? null : session('selectedTo'));
+            $from = $r->input('from_custom') ?: $r->input('from') ?: ($requestedRange ? null : session($sk('selectedFrom')));
+            $to = $r->input('to_custom') ?: $r->input('to') ?: ($requestedRange ? null : session($sk('selectedTo')));
         } else {
             $range = $this->financialYearDateRange((string) $rangeSel, $financialYears)
                 ?: $this->legacyFinancialYearDateRange((string) $rangeSel);
 
-            $from = $range['from'] ?? $r->input('from', session('selectedFrom'));
-            $to = $range['to'] ?? $r->input('to', session('selectedTo'));
+            $from = $range['from'] ?? $r->input('from', session($sk('selectedFrom')));
+            $to = $range['to'] ?? $r->input('to', session($sk('selectedTo')));
         }
 
         $selectedYearLabel = null;
@@ -138,12 +142,12 @@ class ReportsController extends Controller
 
         session([
             // 'selectedRange' => $rangeSel,
-            'selectedReportRange' => $rangeSel,
-            'selectedFrom' => $from,
-            'selectedTo' => $to,
-            'year' => $selectedYearLabel ?: session('year'),
-            'year_from' => $selectedYearLabel ? $from : session('year_from'),
-            'year_to' => $selectedYearLabel ? $to : session('year_to'),
+            $sk('selectedReportRange') => $rangeSel,
+            $sk('selectedFrom') => $from,
+            $sk('selectedTo') => $to,
+            $sk('year') => $selectedYearLabel ?: session($sk('year')),
+            $sk('year_from') => $selectedYearLabel ? $from : session($sk('year_from')),
+            $sk('year_to') => $selectedYearLabel ? $to : session($sk('year_to')),
         ]);
 
         return [$financialYears, $rangeSel, $from, $to];
@@ -155,9 +159,9 @@ class ReportsController extends Controller
     public function pl(Request $r, \App\Services\ReportsService $svc)
     {
         $toDMY = fn($d) => $d ? \Carbon\Carbon::parse($d)->format('d-m-Y') : '';
-        [$financialYears, $rangeSel, $from, $to] = $this->prepareFinancialYearFilter($r, $r->user()->id);
+        [$financialYears, $rangeSel, $from, $to] = $this->prepareFinancialYearFilter($r, ReportContext::party($r->input('guid'))->id);
         // $resp = $svc->pandl($r->user()->id, $toDMY($from), $toDMY($to));
-        $resp = $this->cachedPandl($svc, $r->user()->id, $toDMY($from), $toDMY($to));
+        $resp = $this->cachedPandl($svc, ReportContext::party($r->input('guid'))->id, $toDMY($from), $toDMY($to));
         $pl = data_get($resp, 'data', []);
         
         return view('reports.pl', compact('resp', 'from', 'to', 'pl', 'rangeSel', 'financialYears'));
@@ -166,16 +170,13 @@ class ReportsController extends Controller
     public function exportPdf(Request $r, ReportsService $svc)
     {
         $userId = 0;
-        if ($r->guid) {
-            $user = Client::where('guid', $r->guid)->first();
-            $partyId = $user->id;
-            $user = Client::where('guid', $r->guid)->first();
-            $userId = $user->id;
-        } else {
-            $partyId = $r->user()->id;
-            $userId = $r->user()->id;
-        }
-        $partyName = $r->user()->name;
+        // Company comes from the server: own books, an assigned client (staff,
+        // via ?guid=) or the read-only sample company. Never from raw input.
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $partyguid = $party->guid;
+        $userId = $party->id;
+        $partyName = ReportContext::party($r->input('guid'))->displayName();
         $from = $r->input('from');
         $to = $r->input('to');
         $toDMY = fn($d) => $d ? \Carbon\Carbon::parse($d)->format('d-m-Y') : '';
@@ -187,11 +188,11 @@ class ReportsController extends Controller
         $to = $r->input('to');
         $user = User::with('profile')->find($userId);
         
-        $companyAddress = $user->profile->address;
-        $companyEmail = $r->user()->email;;
+        $companyAddress = optional(optional($user)->profile)->address;
+        $companyEmail = ReportContext::party($r->input('guid'))->email ?? '';
         $pdf = Pdf::loadView('reports.pdf.pl-pdf', compact('pl', 'from', 'to', 'partyName','companyAddress','companyEmail'));
 
-        $filename = 'profit-loss-report-' . ($from ?: 'start') . '-to-' . ($to ?: 'end') . '.pdf';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'profit-loss-report-' . ($from ?: 'start') . '-to-' . ($to ?: 'end') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -200,24 +201,21 @@ class ReportsController extends Controller
     {
         // $partyId = $r->user()->id;
         $userId = 0;
-        if ($r->guid) {
-            $user = Client::where('guid', $r->guid)->first();
-            $partyId = $user->id;
-            $user = Client::where('guid', $r->guid)->first();
-            $userId = $user->id;
-        } else {
-            $partyId = $r->user()->id;
-            $userId = $r->user()->id;
-        }
+        // Company comes from the server: own books, an assigned client (staff,
+        // via ?guid=) or the read-only sample company. Never from raw input.
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $partyguid = $party->guid;
+        $userId = $party->id;
         $from = $r->input('from');
         $to = $r->input('to');
-        //$partyName = $r->user()->name;
-        $filename = 'profit-loss-report-' . ($from ?: 'start') . '-to-' . ($to ?: 'end') . '.xlsx';
+        //$partyName = ReportContext::party($r->input('guid'))->displayName();
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'profit-loss-report-' . ($from ?: 'start') . '-to-' . ($to ?: 'end') . '.xlsx';
         $user = User::with('profile')->find($userId);
         
-        $partyName = $r->user()->name;
-        $companyAddress = $user->profile->address;
-        $companyEmail = $r->user()->email;;
+        $partyName = ReportContext::party($r->input('guid'))->displayName();
+        $companyAddress = optional(optional($user)->profile)->address;
+        $companyEmail = ReportContext::party($r->input('guid'))->email ?? '';
         //return Excel::download(new PandLExport($svc, $partyId, $from, $to,$partyName), $filename);
         return Excel::download(new PandLExport($svc, $partyId, $from, $to,$partyName,$companyAddress,$companyEmail), $filename);
     }
@@ -225,9 +223,10 @@ class ReportsController extends Controller
     public function balanceSheet(Request $r, ReportsService $svc)
     {
         
-        $guid = Auth::user()->guid ?? '';
-        $partyguid = $guid;
-        $partyId   = $r->user()->id;
+        $party = ReportContext::party($r->input('guid'));
+        // NULL, not '': the stored procedure's GUID parameter is a uniqueidentifier.
+        $guid = $partyguid = $party->guid;
+        $partyId   = $party->id;
         
         [$financialYears, $rangeSel, $from, $to] = $this->prepareFinancialYearFilter($r, $partyId);
         
@@ -243,30 +242,23 @@ class ReportsController extends Controller
         $from = $r->input('from');
         $to   = $r->input('to');
         $userId = 0;
-        if ($r->guid) {
-            $user = Client::where('guid', $r->guid)->first();
-            $guid = $r->guid;
-            $partyguid = $guid;
-            $partyId = $user->id;
-            $user = Client::where('guid', $guid)->first();
-            $userId = $user->id;
-        } else {
-            $guid = Auth::user()->guid ?? '';
-            $partyguid = $guid;
-            $partyId   = $r->user()->id;
-            $userId = $r->user()->id;
-        }
+        // Company comes from the server: own books, an assigned client (staff,
+        // via ?guid=) or the read-only sample company. Never from raw input.
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $partyguid = $party->guid;
+        $userId = $party->id;
         
         // $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
         $resp = $this->cachedBalanceSheet($svc, $partyguid, $partyId, $from, $to);
         $data = data_get($resp, 'data', []);
 
-        $filename = 'balance_sheet_' . date('Y_m_d') . '.xlsx';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'balance_sheet_' . date('Y_m_d') . '.xlsx';
         $user = User::with('profile')->find($userId);
         
-        $partyName = $r->user()->name;
-        $companyAddress = $user->profile->address;
-        $companyEmail = $r->user()->email;;
+        $partyName = ReportContext::party($r->input('guid'))->displayName();
+        $companyAddress = optional(optional($user)->profile)->address;
+        $companyEmail = ReportContext::party($r->input('guid'))->email ?? '';
         return Excel::download(new BalanceSheetExport($data, $from, $to,$partyName,$companyAddress,$companyEmail), $filename);
     }
 
@@ -275,27 +267,20 @@ class ReportsController extends Controller
         $from = $r->input('from');
         $to   = $r->input('to');
         $userId = 0;
-        if ($r->guid) {
-            $user = Client::where('guid', $r->guid)->first();
-            $guid = $r->guid;
-            $partyguid = $guid;
-            $partyId = $user->id;
-            $user = Client::where('guid', $guid)->first();
-            $userId = $user->id;
-        } else {
-            $guid = Auth::user()->guid ?? '';
-            $partyguid = $guid;
-            $partyId   = $r->user()->id;
-            $userId = $r->user()->id;
-        }
+        // Company comes from the server: own books, an assigned client (staff,
+        // via ?guid=) or the read-only sample company. Never from raw input.
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $partyguid = $party->guid;
+        $userId = $party->id;
         // $guid = Auth::user()->guid ?? '';
         // $partyguid = $guid;
         // $partyId   = $r->user()->id;
         $user = User::with('profile')->find($userId);
         
-        $partyName = $r->user()->name;
-        $companyAddress = $user->profile->address;
-        $companyEmail = $r->user()->email;;
+        $partyName = ReportContext::party($r->input('guid'))->displayName();
+        $companyAddress = optional(optional($user)->profile)->address;
+        $companyEmail = ReportContext::party($r->input('guid'))->email ?? '';
         // $resp = $svc->balanceSheet($partyguid, $partyId, $from, $to);
         $resp = $this->cachedBalanceSheet($svc, $partyguid, $partyId, $from, $to);
         $data = data_get($resp, 'data', []);
@@ -309,7 +294,7 @@ class ReportsController extends Controller
             'companyEmail' => $companyEmail
         ]);
 
-        $filename = 'balance_sheet_' . date('Y_m_d') . '.pdf';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'balance_sheet_' . date('Y_m_d') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -318,8 +303,9 @@ class ReportsController extends Controller
     {
         $groupId = (int) $r->input('group_id'); // iGroupId
         $strCustomerName = $r->input('strCustomerName');
-        $partyId = $r->user()->id;
-        $guid = Auth::user()->guid;
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $party->guid;
         $partyguid = $guid; // provide via UI/session
         [$financialYears, $rangeSel, $from, $to] = $this->prepareFinancialYearFilter($r, $partyId);
 
@@ -336,9 +322,9 @@ class ReportsController extends Controller
     public function voucherHistory(Request $r, ReportsService $svc)
     {
         $ledgerId  = (int) $r->input('ledger_id');
-        $guid = Auth::user()->guid;
+        $guid = ReportContext::party($r->input('guid'))->guid;
         $partyguid = $guid;
-        [$financialYears, $rangeSel, $from, $to] = $this->prepareFinancialYearFilter($r, $r->user()->id);
+        [$financialYears, $rangeSel, $from, $to] = $this->prepareFinancialYearFilter($r, ReportContext::party($r->input('guid'))->id);
         
         $resp = $svc->voucherHistory($partyguid, $ledgerId, $from, $to);
         $data = data_get($resp, 'data', []);
@@ -386,7 +372,7 @@ class ReportsController extends Controller
         ];
 
         // $res = $svc->monthlyGraph($user->id, $from, $to, $type, $opts);
-        $res = $this->cachedMonthlyGraph($svc, $user->id, $from, $to, $type, $opts);
+        $res = $this->cachedMonthlyGraph($svc, ReportContext::party($r->input('guid'))->id, $from, $to, $type, $opts);
 
         // Unpack for Blade
         $months   = $res['months'];
@@ -416,19 +402,12 @@ class ReportsController extends Controller
         $groupId = (int) $r->input('group_id');
         $strCustomerName = $r->input('strCustomerName');
         $userId = 0;
-        if ($r->guid) {
-            $user = Client::where('guid', $r->guid)->first();
-            $partyId = $user->id;
-            $guid = $r->guid;
-            $partyguid = $guid;
-            $user = Client::where('guid', $r->guid)->first();
-            $userId = $user->id;
-        } else {
-            $partyId = $r->user()->id;
-            $guid = Auth::user()->guid;
-            $partyguid = $guid;
-            $userId = $r->user()->id;
-        }
+        // Company comes from the server: own books, an assigned client (staff,
+        // via ?guid=) or the read-only sample company. Never from raw input.
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $partyguid = $party->guid;
+        $userId = $party->id;
         $resp = $svc->ledger($partyId, $groupId, $from, $to, $strCustomerName);
         $data = data_get($resp, 'data', []);
 
@@ -442,12 +421,12 @@ class ReportsController extends Controller
             $groupName = $group->strGroupName ?? '';
         }
 
-        $filename = 'ledger_report_' . date('Y_m_d') . '.xlsx';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'ledger_report_' . date('Y_m_d') . '.xlsx';
         $user = User::with('profile')->find($userId);
         
-        $partyName = $r->user()->name;
-        $companyAddress = $user->profile->address;
-        $companyEmail = $r->user()->email;
+        $partyName = ReportContext::party($r->input('guid'))->displayName();
+        $companyAddress = optional(optional($user)->profile)->address;
+        $companyEmail = ReportContext::party($r->input('guid'))->email ?? '';
         return Excel::download(new LedgerExport($data, $from, $to, $groupName, $strCustomerName,$partyName,$companyAddress,$companyEmail), $filename);
     }
 
@@ -457,14 +436,15 @@ class ReportsController extends Controller
         $to = $r->input('to');
         $groupId = (int) $r->input('group_id');
         $strCustomerName = $r->input('strCustomerName');
-        $partyId = $r->user()->id;
-        $guid = Auth::user()->guid;
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $party->guid;
         $partyguid = $guid;
 
         $resp = $svc->ledger($partyId, $groupId, $from, $to, $strCustomerName);
         $data = data_get($resp, 'data', []);
 
-        $filename = 'ledger_summary_' . date('Y_m_d') . '.xlsx';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'ledger_summary_' . date('Y_m_d') . '.xlsx';
 
         return Excel::download(new LedgerSummaryExport($data, $from, $to), $filename);
     }
@@ -477,19 +457,12 @@ class ReportsController extends Controller
         $groupId = (int) $r->input('group_id');
         $strCustomerName = $r->input('strCustomerName');
         $userId = 0;
-        if ($r->guid) {
-            $user = Client::where('guid', $r->guid)->first();
-            $partyId = $user->id;
-            $guid = $r->guid;
-            $partyguid = $guid;
-            $user = Client::where('guid', $r->guid)->first();
-            $userId = $user->id;
-        } else {
-            $partyId = $r->user()->id;
-            $guid = Auth::user()->guid;
-            $partyguid = $guid;
-            $userId = $r->user()->id;
-        }
+        // Company comes from the server: own books, an assigned client (staff,
+        // via ?guid=) or the read-only sample company. Never from raw input.
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $partyguid = $party->guid;
+        $userId = $party->id;
         
         $resp = $svc->ledger($partyId, $groupId, $from, $to, $strCustomerName);
         $data = data_get($resp, 'data', []);
@@ -506,9 +479,9 @@ class ReportsController extends Controller
         
         $user = User::with('profile')->find($userId);
         
-        $partyName = $r->user()->name;
-        $companyAddress = $user->profile->address;
-        $companyEmail = $r->user()->email;;
+        $partyName = ReportContext::party($r->input('guid'))->displayName();
+        $companyAddress = optional(optional($user)->profile)->address;
+        $companyEmail = ReportContext::party($r->input('guid'))->email ?? '';
         $pdf = PDF::loadView('reports.pdf.ledger_pdf', [
             'data' => $data,
             'from' => $from,
@@ -520,7 +493,7 @@ class ReportsController extends Controller
             'companyEmail' => $companyEmail
         ]);
 
-        $filename = 'ledger_report_' . date('Y_m_d') . '.pdf';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'ledger_report_' . date('Y_m_d') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -531,17 +504,12 @@ class ReportsController extends Controller
         $to = $r->input('to');
         $ledgerId = (int) $r->input('ledger_id');
         $userId = 0;
-        if ($r->guid) {
-            //$user = Client::where('guid', $r->guid)->first();
-            $guid = $r->guid;
-            $partyguid = $guid;
-            $user = Client::where('guid', $guid)->first();
-            $userId = $user->id;
-        } else {
-            $guid = Auth::user()->guid;
-            $partyguid = $guid;
-            $userId = $r->user()->id;
-        }
+        // Company comes from the server: own books, an assigned client (staff,
+        // via ?guid=) or the read-only sample company. Never from raw input.
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $partyguid = $party->guid;
+        $userId = $party->id;
 
         $resp = $svc->voucherHistory($partyguid, $ledgerId, $from, $to);
         $data = data_get($resp, 'data', []);
@@ -563,7 +531,7 @@ class ReportsController extends Controller
             $ledger = DB::table('LedgerMaster')->where('iLedgerId', $ledgerId)->first();
             $ledgerName = $ledger->strCustomerName ?? '';
         }
-        $filename = 'Ledger_history_' . date('Y_m_d') . '.xlsx';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'Ledger_history_' . date('Y_m_d') . '.xlsx';
         $toFloat = function ($v) {
             if ($v === null || $v === '') {
                 return 0.0;
@@ -572,9 +540,9 @@ class ReportsController extends Controller
         };
         $user = User::with('profile')->find($userId);
         
-        $partyName = $r->user()->name;
-        $companyAddress = $user->profile->address;
-        $companyEmail = $r->user()->email;
+        $partyName = ReportContext::party($r->input('guid'))->displayName();
+        $companyAddress = optional(optional($user)->profile)->address;
+        $companyEmail = ReportContext::party($r->input('guid'))->email ?? '';
         return Excel::download(new VoucherHistoryExport(
             $processedData,
             $from,
@@ -599,16 +567,12 @@ class ReportsController extends Controller
         $to = $r->input('to');
         $ledgerId = (int) $r->input('ledger_id');
         $userId = 0;
-        if ($r->guid) {
-            $guid = $r->guid;
-            $partyguid = $guid;
-            $user = Client::where('guid', $guid)->first();
-            $userId = $user->id;
-        } else {
-            $guid = Auth::user()->guid;
-            $partyguid = $guid;
-            $userId = $r->user()->id;
-        }
+        // Company comes from the server: own books, an assigned client (staff,
+        // via ?guid=) or the read-only sample company. Never from raw input.
+        $party = ReportContext::party($r->input('guid'));
+        $partyId = $party->id;
+        $guid = $partyguid = $party->guid;
+        $userId = $party->id;
 
         $resp = $svc->voucherHistory($partyguid, $ledgerId, $from, $to);
         $data = data_get($resp, 'data', []);
@@ -622,7 +586,7 @@ class ReportsController extends Controller
         } else {
             $openingBalanceData = ['balance' => 0.0, 'side' => 'Dr'];
         }
-        $partyName = $r->user()->name;
+        $partyName = ReportContext::party($r->input('guid'))->displayName();
         // Process data for PDF (same logic as blade file)
         $processedData = $this->processVoucherHistoryData($data, $openingBalanceData, $from, $to);
         
@@ -639,9 +603,9 @@ class ReportsController extends Controller
         };
         $user = User::with('profile')->find($userId);
         
-        //$partyName = $r->user()->name;
-        $companyAddress = $user->profile->address;
-        $companyEmail = $r->user()->email;
+        //$partyName = ReportContext::party($r->input('guid'))->displayName();
+        $companyAddress = optional(optional($user)->profile)->address;
+        $companyEmail = ReportContext::party($r->input('guid'))->email ?? '';
         $pdf = PDF::loadView('reports.pdf.voucher_history_pdf', [
             'processedRows' => $processedData['processedRows'] ?? [],
             'from' => $from,
@@ -661,7 +625,7 @@ class ReportsController extends Controller
             'companyEmail' => $companyEmail
         ]);
 
-        $filename = 'Ledger_history_' . date('Y_m_d') . '.pdf';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'Ledger_history_' . date('Y_m_d') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -760,7 +724,7 @@ class ReportsController extends Controller
 
     public function viewVoucher($strGUID, $vchType)
     {
-        $guid = Auth::user()->guid;
+        $guid = ReportContext::party()->guid;
         $svc = new ReportsService();
         $resp = $svc->voucherDetails($guid, $strGUID, $vchType);
         
@@ -811,11 +775,8 @@ class ReportsController extends Controller
 
     public function exportVoucherPDF($vchNo, $vchType,$guid = null)
     {
-        if(isset($guid)){
-            $guid = $guid;
-        }else{  
-            $guid = Auth::user()->guid;
-        } 
+        // Route {guid} is checked against the caller's own / assigned companies.
+        $guid = ReportContext::party($guid)->guid;
         $svc = new ReportsService();
         $resp = $svc->voucherDetails($guid, $vchNo, $vchType);
         //$voucher = $resp['data']['rows'] ?? collect();
@@ -857,11 +818,8 @@ class ReportsController extends Controller
 
     public function exportVoucherExcel($vchNo, $vchType,$guid = null)
     {
-        if(isset($guid)){
-            $guid = $guid;
-        }else{  
-            $guid = Auth::user()->guid;
-        } 
+        // Route {guid} is checked against the caller's own / assigned companies.
+        $guid = ReportContext::party($guid)->guid;
         $svc = new ReportsService();
         $resp = $svc->voucherDetails($guid, $vchNo, $vchType);
         //$voucher = $resp['data']['rows'] ?? collect();

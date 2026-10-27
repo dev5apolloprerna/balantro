@@ -43,13 +43,31 @@
         display: block;
         overflow: visible;
     }
+    @media (max-width: 1023px) {
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden !important;
+        overscroll-behavior: none;
+    }
+
+    .signup-mobile-screen {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100dvh;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+}
 </style>
 
-<section class="bg-white dark:bg-black flex flex-wrap min-h-[calc(100vh-64px)]">
+<section class="signup-mobile-screen bg-white dark:bg-black flex flex-col lg:flex-row lg:relative lg:min-h-screen lg:h-auto">
     <canvas id="starfield-canvas"></canvas>
 
-    <div class="w-full lg:w-3/5 block">
-        <div class="flex items-center justify-center min-h-20 mt-14 lg:mt-0 lg:min-h-screen bg-white dark:bg-black">
+       <div class="w-full lg:w-3/5 h-[27svh] lg:h-screen shrink-0">
+            <div class="flex items-center justify-center min-h-20 my-14 lg:my-0 lg:min-h-screen bg-white dark:bg-black ">
             <img src="<?php echo e(asset('assets/images/light-logo_login.svg')); ?>"
                 alt="Balantro"
                 class=" w-64      
@@ -60,21 +78,18 @@
                 alt="Balantro"
                 class=" w-64      
         lg:w-96
-        max-w-full
-        h-auto
-        hidden
-        dark:block">
+        max-w-full h-auto hidden dark:block">
         </div>
     </div>
 
-    <div class="font-sans w-full lg:w-2/5 py-8 px-4 sm:px-6 flex flex-col justify-center dark:bg-black">
-        <div class="w-full max-w-md mx-auto px-4 sm:px-6 flex flex-col items-center">
+    <div class="font-sans w-full lg:w-2/5 flex-1 min-h-0 px-4 sm:px-6 py-0 lg:py-8 flex flex-col justify-center dark:bg-black">
+        <div class="w-full max-w-md mx-auto px-2 sm:px-6 flex flex-col items-center">
             <div class="text-center">
                 <p class="mb-6 text-secondary-light dark:text-white text-base sm:text-lg">Create your account</p>
 
             </div>
 
-            <form method="POST" action="<?php echo e(route('register')); ?>">
+            <form method="POST" action="<?php echo e(route('register')); ?>" id="register-form" novalidate>
                 <?php echo csrf_field(); ?>
 
                 <div class="relative mb-4 sm:mb-6 mx-auto">
@@ -119,24 +134,21 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
                 </div>
-                <div class="mb-4 sm:mb-6 relative">
-                    <div class="icon-field relative mt-2">
-                        <span class="absolute start-4 top-1/2 -translate-y-1/2 pointer-events-none text-xl text-neutral-500 dark:text-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
+                <div class="relative mb-4 sm:mb-6 mx-auto">
+                    <div class="icon-field relative">
+                        <span
+                            class="absolute start-4 top-1/2 -translate-y-1/2 flex gap-1 text-xl text-neutral-500 dark:text-white h-[26px] items-center pointer-events-none">
+                            <iconify-icon icon="solar:phone-outline" class="flex items-center"></iconify-icon>
+                            <span class="text-sm text-gray-500 dark:text-gray-300">+91</span>
                         </span>
-                        <input id="password" type="password" name="password" required autocomplete="new-password"
-                            placeholder="Password"
-                            class="form-control h-[48px] sm:h-[50px] ps-11 pe-11 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-gray-900 dark:text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
-                        <button type="button" class="toggle-password absolute end-3 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center text-secondary-light dark:text-white" data-toggle="password" aria-label="Show password" aria-pressed="false">
-                            <svg class="eye-icon password-toggle-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                        </button>
+                        <input id="mobile" type="tel" name="mobile" value="<?php echo e(old('mobile')); ?>" required
+                            inputmode="numeric" autocomplete="tel-national" maxlength="14"
+                            pattern="[0-9 +]{10,14}" placeholder="Mobile Number"
+                            aria-describedby="mobile-help"
+                            class="form-control h-[48px] sm:h-[50px] ps-[4.75rem] border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-sm sm:text-base text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
                     </div>
-                    <?php $__errorArgs = ['password'];
+                    <p id="mobile-help" class="text-xs text-gray-500 dark:text-gray-400 mt-1">We'll send a verification code by SMS. After verification, your password is emailed to you.</p>
+                    <?php $__errorArgs = ['mobile'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -147,32 +159,9 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
                 </div>
-                <div class="mb-4 sm:mb-6 relative">
-                    <div class="icon-field relative mt-2">
-                        <button type="button" class="toggle-password absolute end-3 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center text-secondary-light dark:text-white" data-toggle="password_confirmation" aria-label="Show confirm password" aria-pressed="false">
-                            <svg class="eye-icon password-toggle-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                        </button>
-                        <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password"
-                            placeholder="Confirm Password"
-                            class="form-control h-[48px] sm:h-[50px] ps-11 pe-11 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] text-gray-900 dark:text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
-                    </div>
-                    <?php $__errorArgs = ['password_confirmation'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                    <p class="form-error text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1"><?php echo e($message); ?></p>
-                    <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
-                </div>
-                <button type="submit"
-                    class="mt-6 w-[350px] h-[50px] flex items-center justify-center text-white font-medium text-sm sm:text-base rounded-lg relative overflow-hidden bg-gradient-to-r from-[#22d3ee]/70 via-[#22d3ee]/40 to-transparent border border-[#22d3ee]/50 transition-all duration-300">
-                    <span class="relative z-10">Sign Up</span>
+                <button type="submit" id="register-submit"
+                    class="mt-6 w-[350px] h-[50px] flex items-center justify-center text-white font-medium text-sm sm:text-base rounded-lg relative overflow-hidden bg-gradient-to-r from-[#22d3ee]/70 via-[#22d3ee]/40 to-transparent border border-[#22d3ee]/50 transition-all duration-300 disabled:opacity-60 disabled:cursor-wait">
+                    <span class="relative z-10" data-label>Next</span>
                     <span class="absolute inset-0 bg-cyan-400/10 blur-xl opacity-50"></span>
                 </button>
             </form>
@@ -213,7 +202,7 @@ unset($__errorArgs, $__bag); ?>
         });
 
         function handleAutofill() {
-            const inputs = document.querySelectorAll('#name, #email, #password, #password_confirmation');
+            const inputs = document.querySelectorAll('#name, #email, #mobile');
             inputs.forEach(input => {
                 setTimeout(() => {
                     const isAutofilled = input.matches(':-webkit-autofill') ||
@@ -231,6 +220,47 @@ unset($__errorArgs, $__bag); ?>
 
         handleAutofill();
         setInterval(handleAutofill, 1000);
+
+        // One submission at a time: sending the email and SMS takes a few seconds.
+        const form = document.getElementById('register-form');
+        const submit = document.getElementById('register-submit');
+        if (form && submit) {
+            form.addEventListener('submit', function(event) {
+                if (form.dataset.submitting === '1') {
+                    event.preventDefault();
+                    return;
+                }
+                const mobile = document.getElementById('mobile');
+                const digits = (mobile.value || '').replace(/\D/g, '').replace(/^(91|0)(?=\d{10}$)/, '');
+                if (!/^[6-9]\d{9}$/.test(digits)) {
+                    event.preventDefault();
+                    mobile.setCustomValidity('Please enter a valid 10-digit mobile number.');
+                    mobile.reportValidity();
+                    return;
+                }
+                mobile.setCustomValidity('');
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    form.reportValidity();
+                    return;
+                }
+                form.dataset.submitting = '1';
+                submit.disabled = true;
+                submit.querySelector('[data-label]').textContent = 'Sending SMS...';
+            });
+            document.getElementById('mobile').addEventListener('input', function() {
+                this.setCustomValidity('');
+            });
+        }
+
+        // Returning with the browser Back button: re-enable the button.
+        window.addEventListener('pageshow', function() {
+            if (form && submit) {
+                form.dataset.submitting = '';
+                submit.disabled = false;
+                submit.querySelector('[data-label]').textContent = 'Next';
+            }
+        });
     });
 </script>
 

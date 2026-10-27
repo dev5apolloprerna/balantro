@@ -30,7 +30,9 @@ class ForgotPasswordOtpController extends Controller
             ], 422);
         }
         $data = $request->all();
-        $user = User::where('email', $data['email'])->first();
+        $user = \App\Support\Demo\DemoParty::isDemoEmail($data['email'] ?? null)
+            ? null
+            : User::where('email', $data['email'])->first();
         if (!$user) {
             // For security, you can still say "OTP sent" but here we return 422 as you do.
             return $this->error(__("response_message.password.email_not_found"), self::HTTP_STATUS_CODE_422);
@@ -120,7 +122,9 @@ class ForgotPasswordOtpController extends Controller
         }
 
         // OTP ok → reset password
-        $user = User::where('email', $data['email'])->first();
+        $user = \App\Support\Demo\DemoParty::isDemoEmail($data['email'] ?? null)
+            ? null
+            : User::where('email', $data['email'])->first();
         if (!$user) {
             // (Shouldn't happen if we had a record)
             DB::table('user_password_otps')->where('id', $row->id)->delete();
@@ -154,7 +158,9 @@ class ForgotPasswordOtpController extends Controller
             ], 422);
         }
         $data = $request->all();
-        $user = User::where('email', $data['email'])->first();
+        $user = \App\Support\Demo\DemoParty::isDemoEmail($data['email'] ?? null)
+            ? null
+            : User::where('email', $data['email'])->first();
         if (!$user) {
             return $this->error(__("response_message.password.email_not_found"), 422);
         }
@@ -203,7 +209,9 @@ class ForgotPasswordOtpController extends Controller
         }
         $data = $request->all();
         // OTP ok → reset password
-        $user = User::where('email', $data['email'])->first();
+        $user = \App\Support\Demo\DemoParty::isDemoEmail($data['email'] ?? null)
+            ? null
+            : User::where('email', $data['email'])->first();
         if (!$user) {
             return $this->error(__("response_message.password.email_not_found"), self::HTTP_STATUS_CODE_422);
         }

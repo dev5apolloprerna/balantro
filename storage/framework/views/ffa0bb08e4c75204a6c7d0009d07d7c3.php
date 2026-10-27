@@ -569,8 +569,8 @@
                         </div>
                     </div>
                 </div> -->
-                <div class="flex items-center gap-10">
-                    <div class="w-[300px] h-[300px]">
+                 <div class="flex items-center gap-5 lg:gap-10">
+                            <div class="w-[200px] h-[200px] lg:w-[300px] lg:h-[300px]">
                         <canvas id="plPie"></canvas>
                     </div>
 
@@ -674,9 +674,8 @@
                     </div>
 
                     <!-- CHART + LEGEND -->
-                    <div class="flex items-center gap-10">
-
-                        <div class="w-[300px] h-[300px]">
+                     <div class="flex items-center gap-5 lg:gap-10">
+                            <div class="w-[200px] h-[200px] lg:w-[300px] lg:h-[300px]">
                             <canvas id="breakdownChart"></canvas>
                         </div>
 

@@ -1,6 +1,6 @@
 @extends('auth.layouts.app')
 
-@section('title', 'Verify Email')
+@section('title', 'Verify Mobile Number')
 @section('field_validation_only', true)
 
 @section('content')
@@ -40,23 +40,23 @@
         <div class="w-full max-w-md mx-auto px-4 sm:px-6 flex flex-col items-center">
             <div class="w-[350px] max-w-full text-center">
                 <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[#22d3ee]/50 bg-cyan-50 text-[#22d3ee] dark:bg-gray-900">
-                    <iconify-icon icon="mage:email" class="text-2xl"></iconify-icon>
+                    <iconify-icon icon="solar:smartphone-outline" class="text-2xl"></iconify-icon>
                 </div>
-                <p class="mb-2 text-secondary-light dark:text-white text-base sm:text-lg">Verify your email</p>
+                <p class="mb-2 text-secondary-light dark:text-white text-base sm:text-lg">Verify your mobile number</p>
                 <p class="mb-6 text-sm text-gray-600 dark:text-gray-300">
-                    Enter the 6-digit code sent to<br>
-                    <strong class="font-medium text-gray-900 dark:text-white">{{ $email }}</strong>
+                    Enter the {{ $otpLength }}-digit code sent by SMS to<br>
+                    <strong class="font-medium text-gray-900 dark:text-white">{{ $maskedMobile }}</strong>
                 </p>
 
                 @if (session('status'))
-                <div class="mb-4 flex items-start gap-3 rounded-lg px-4 py-3 text-left text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-gray-900">
+                <div class="mb-4 flex items-start gap-3 rounded-lg px-4 py-3 text-left text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-gray-900" role="status">
                     <iconify-icon icon="heroicons:check-circle" class="mt-0.5 shrink-0 text-xl"></iconify-icon>
                     <div class="flex-1 leading-relaxed">{{ session('status') }}</div>
                 </div>
                 @endif
 
                 @if ($errors->any())
-                <div class="mb-4 flex items-start gap-3 rounded-lg px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-gray-900">
+                <div class="mb-4 flex items-start gap-3 rounded-lg px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-gray-900" role="alert">
                     <iconify-icon icon="heroicons:exclamation-circle" class="mt-0.5 shrink-0 text-xl"></iconify-icon>
                     <div class="flex-1 leading-relaxed">
                         @foreach ($errors->all() as $error)
@@ -67,40 +67,82 @@
                 @endif
             </div>
 
-            <form method="POST" action="{{ route('registration.otp.verify') }}">
+            <form method="POST" action="{{ route('registration.otp.verify') }}" id="otp-form">
                 @csrf
                 <div class="relative mx-auto">
                     <span class="absolute start-4 top-1/2 -translate-y-1/2 flex items-center text-xl text-neutral-500 dark:text-white pointer-events-none">
                         <iconify-icon icon="mage:key" class="flex items-center"></iconify-icon>
                     </span>
                     <input id="otp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code"
-                        maxlength="6" pattern="[0-9]{6}" required autofocus aria-label="6-digit verification code"
+                        maxlength="{{ $otpLength }}" pattern="[0-9]{{ '{' . $otpLength . '}' }}" required autofocus
+                        aria-label="{{ $otpLength }}-digit verification code"
                         placeholder="Verification code"
                         class="h-[48px] sm:h-[50px] ps-11 pe-4 border border-neutral-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-lg w-[350px] max-w-full text-center text-base tracking-[0.3em] text-gray-900 dark:text-white placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-[#22d3ee]/40 focus:border-[#22d3ee]/50">
                 </div>
 
-                <button type="submit"
-                    class="mt-6 w-[350px] max-w-full h-[50px] flex items-center justify-center text-white font-medium text-sm sm:text-base rounded-lg relative overflow-hidden bg-gradient-to-r from-[#22d3ee]/70 via-[#22d3ee]/40 to-transparent border border-[#22d3ee]/50 transition-all duration-300">
-                    <span class="relative z-10">Verify and create account</span>
+                <button type="submit" id="otp-submit"
+                    class="mt-6 w-[350px] max-w-full h-[50px] flex items-center justify-center text-white font-medium text-sm sm:text-base rounded-lg relative overflow-hidden bg-gradient-to-r from-[#22d3ee]/70 via-[#22d3ee]/40 to-transparent border border-[#22d3ee]/50 transition-all duration-300 disabled:opacity-60 disabled:cursor-wait">
+                    <span class="relative z-10" data-label>Verify and continue</span>
                     <span class="absolute inset-0 bg-cyan-400/10 blur-xl opacity-50"></span>
                 </button>
             </form>
 
-            <form method="POST" action="{{ route('registration.otp.resend') }}" class="mt-6 sm:mt-3 text-center text-sm">
+            <form method="POST" action="{{ route('registration.otp.resend') }}" id="resend-form" class="mt-6 sm:mt-3 text-center text-sm">
                 @csrf
                 <p class="mb-0 text-gray-600 dark:text-white">
                     Didn't receive the code?
-                    <button type="submit" class="text-[#22d3ee] font-semibold hover:underline ml-1">Resend code</button>
+                    <button type="submit" id="resend-button" data-wait="{{ (int) $resendIn }}"
+                        class="text-[#22d3ee] font-semibold hover:underline ml-1 disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed">Resend code</button>
                 </p>
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">After verification, your password will be emailed to {{ $email }}.</p>
             </form>
 
             <a href="{{ route('register') }}" class="mt-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#22d3ee] dark:text-gray-400">
                 <iconify-icon icon="heroicons:arrow-left"></iconify-icon>
-                Back to sign up
+                Change details
             </a>
         </div>
     </div>
 </section>
+
+<script>
+    (function() {
+        // Resend countdown (the server enforces the same cooldown).
+        const resend = document.getElementById('resend-button');
+        let wait = parseInt(resend ? resend.dataset.wait : '0', 10) || 0;
+        function tick() {
+            if (!resend) return;
+            if (wait > 0) {
+                resend.disabled = true;
+                resend.textContent = 'Resend code in ' + wait + 's';
+                wait--;
+                setTimeout(tick, 1000);
+            } else {
+                resend.disabled = false;
+                resend.textContent = 'Resend code';
+            }
+        }
+        tick();
+
+        // One submission at a time, with progress text.
+        [['otp-form', 'otp-submit', 'Verifying...'], ['resend-form', 'resend-button', 'Sending...']].forEach(function(cfg) {
+            const form = document.getElementById(cfg[0]);
+            const button = document.getElementById(cfg[1]);
+            if (!form || !button) return;
+            form.addEventListener('submit', function(event) {
+                if (form.dataset.submitting === '1') { event.preventDefault(); return; }
+                form.dataset.submitting = '1';
+                button.disabled = true;
+                const label = button.querySelector('[data-label]') || button;
+                label.textContent = cfg[2];
+            });
+        });
+
+        // Digits only.
+        const otp = document.getElementById('otp');
+        if (otp) otp.addEventListener('input', function() { this.value = this.value.replace(/\D/g, ''); });
+    })();
+</script>
 
 <script>
     (function() {

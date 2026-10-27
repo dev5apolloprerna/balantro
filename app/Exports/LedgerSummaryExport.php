@@ -50,7 +50,7 @@ class LedgerSummaryExport implements FromCollection, WithHeadings, WithTitle, Wi
 
     public function title(): string
     {
-        return 'Ledger Summary';
+        return (\App\Support\Demo\ReportContext::current()?->isDemo ? 'SAMPLE - ' : '') . 'Ledger Summary';
     }
 
     public function styles(Worksheet $sheet)

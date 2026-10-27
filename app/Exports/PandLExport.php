@@ -301,7 +301,7 @@ class PandLExport implements FromArray, WithHeadings, WithTitle, WithStyles, Wit
 
     public function title(): string
     {
-        return 'P&L Report';
+        return (\App\Support\Demo\ReportContext::current()?->isDemo ? 'SAMPLE - ' : '') . 'P&L Report';
     }
 
     public function styles(Worksheet $sheet)

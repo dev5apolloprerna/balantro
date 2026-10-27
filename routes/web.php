@@ -365,13 +365,17 @@ Route::post('/password/reset', [ResetPasswordController::class, 'reset'])
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 Route::get('/register/verify', [RegisterController::class, 'showOtpForm'])->name('registration.otp.show');
-Route::post('/register/verify', [RegisterController::class, 'verifyOtp'])->name('registration.otp.verify');
-Route::post('/register/otp/resend', [RegisterController::class, 'resendOtp'])->name('registration.otp.resend');
+Route::post('/register/verify', [RegisterController::class, 'verifyOtp'])->middleware('throttle:20,10')->name('registration.otp.verify');
+Route::post('/register/otp/resend', [RegisterController::class, 'resendOtp'])->middleware('throttle:10,10')->name('registration.otp.resend');
 
 Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 Route::post('/theme/update', [App\Http\Controllers\ThemeController::class, 'update'])->name('theme.update');
+// Sample company / My business switch for clients (read-only reports only).
+Route::post('/report-mode', [App\Http\Controllers\ReportModeController::class, 'update'])
+    ->middleware('auth')
+    ->name('report-mode.update');
 Route::middleware(['auth']) // add role middleware if needed: ->middleware(['auth','role:client,admin'])
     ->prefix('reports')
     ->name('reports.')

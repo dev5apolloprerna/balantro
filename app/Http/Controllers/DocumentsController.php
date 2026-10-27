@@ -237,7 +237,7 @@ class DocumentsController extends Controller
     {
         $ids = match ((int) $user->role) {
             User::ROLES['data_entry_operator'] => $user->clientsAsDataEntryOperator()->pluck('users.id')->all(),
-            User::ROLES['super_admin']         => User::query()->where('role', User::ROLES['client'])->pluck('id')->all(),
+            User::ROLES['super_admin']         => User::query()->where('role', User::ROLES['client'])->excludingDemoParty()->pluck('id')->all(),
             User::ROLES['manager']             => method_exists($user, 'managedClientIds') ? $user->managedClientIds() : [],
             User::ROLES['supervisor']          => method_exists($user, 'supervisedClientIds') ? $user->supervisedClientIds() : [],
             User::ROLES['client']              => [$user->id],

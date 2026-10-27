@@ -279,6 +279,8 @@
                         @endif
                     </div>
 
+                    @include('shared._report_mode_banner')
+
                     @yield('content')
                     <style>
                         /* Keep native and Select2 dropdowns dark immediately when the page is in dark mode. */

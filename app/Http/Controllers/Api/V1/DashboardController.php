@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use Illuminate\Http\Request;
+use App\Support\Demo\ReportContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Models\User;
@@ -31,6 +32,7 @@ class DashboardController extends BaseApiController
             }
 
             $userId = (int) $user->id;
+            $partyId = (int) ReportContext::resolved()->id; // own books or the sample company
             $from = $request->input('from');
             $to = $request->input('to');
 
@@ -43,8 +45,8 @@ class DashboardController extends BaseApiController
 
             // Get groups with balances
             // $allGroupsWithBalances = $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
-            $allGroupsWithBalances = Cache::remember("api_dashboard:{$userId}:groups:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($userId, $from, $to) {
-                return $this->reportsService->getAllGroupsWithBalances($userId, $from, $to);
+            $allGroupsWithBalances = Cache::remember("api_dashboard:{$partyId}:groups:" . md5(($from ?? '') . '|' . ($to ?? '')), now()->addMinutes(10), function () use ($partyId, $from, $to) {
+                return $this->reportsService->getAllGroupsWithBalances($partyId, $from, $to);
             });
             $allGroups = collect($allGroupsWithBalances);
 
@@ -62,7 +64,7 @@ class DashboardController extends BaseApiController
 
             // Get user card preferences - FIXED THE JSON DECODE ISSUE
             $preferences = UserCardPreference::where('user_id', $userId)
-                ->where('party_id', $userId)
+                ->where('party_id', $partyId)
                 ->first();
 
             if ($preferences && $preferences->selected_groups) {
@@ -157,7 +159,7 @@ class DashboardController extends BaseApiController
                 return $this->error(__("response_message.dashboard.unauthorized_role"), 403);
             }
 
-            return $this->success(__("response_message.dashboard.year_listing"), $this->buildYearListingPayload((int) $user->id));
+            return $this->success(__("response_message.dashboard.year_listing"), $this->buildYearListingPayload((int) ReportContext::resolved()->id));
         } catch (\Exception $e) {
             return $this->error(__("response_message.dashboard.year_listing_error"), 500, $e->getMessage());
         }
@@ -224,7 +226,7 @@ class DashboardController extends BaseApiController
             }
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
-            $partyId = (int) $user->id;
+            $partyId = (int) ReportContext::resolved()->id;
             $profitLossBalanceSheet = $this->buildProfitLossBalanceSheetPayload($user, $partyId, $from, $to);
 
             return $this->success(__("response_message.dashboard.dashboard_data"), [
@@ -260,7 +262,7 @@ class DashboardController extends BaseApiController
             }
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
-            $partyId = (int) $user->id;
+            $partyId = (int) ReportContext::resolved()->id;
             $payload = $this->buildProfitLossBalanceSheetPayload($user, $partyId, $from, $to);
 
             return $this->success(__("response_message.dashboard.financial_summary"), $payload);
@@ -304,7 +306,7 @@ class DashboardController extends BaseApiController
             ];
             $profitLossItems = $this->withPercentages($profitLossItems);
 
-            $bsResponse = $this->reportsService->balanceSheet($user->guid ?? null, $partyId, $from, $to);
+            $bsResponse = $this->reportsService->balanceSheet(ReportContext::resolved()->guid, $partyId, $from, $to);
             $bsRows = collect($bsResponse['data']['rows'] ?? []);
             $drRows = $bsRows->where('Side', 'DR');
             $crRows = $bsRows->where('Side', 'CR');
@@ -384,7 +386,7 @@ class DashboardController extends BaseApiController
             }
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
-            $partyId = (int) $user->id;
+            $partyId = (int) ReportContext::resolved()->id;
             $payload = $this->buildMonthlyFinancialColumnsPayload($partyId, $from, $to);
 
             return $this->success(__("response_message.dashboard.monthly_financial_columns"), $payload);
@@ -475,7 +477,7 @@ class DashboardController extends BaseApiController
             $preference = UserCardPreference::updateOrCreate(
                 [
                     'user_id' => $user->id,
-                    'party_id' => $user->id
+                    'party_id' => ReportContext::resolved()->id
                 ],
                 [
                     'selected_groups' => $selectedGroups
@@ -517,7 +519,7 @@ class DashboardController extends BaseApiController
             }
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
-            $payload = $this->buildCustomGroupPayload((int) $user->id, $from, $to);
+            $payload = $this->buildCustomGroupPayload((int) ReportContext::resolved()->id, $from, $to);
 
             return $this->success(__("response_message.dashboard.custom_groups_loaded"), $payload);
         } catch (\Exception $e) {
@@ -555,7 +557,7 @@ class DashboardController extends BaseApiController
             }
 
             [$from, $to] = $this->resolveDashboardDateRange($request);
-            $allGroups = collect($this->getDashboardGroupsWithBalances((int) $user->id, $from, $to));
+            $allGroups = collect($this->getDashboardGroupsWithBalances((int) ReportContext::resolved()->id, $from, $to));
             $availableGroupIds = $allGroups
                 ->pluck('iGroupId')
                 ->map(fn($groupId) => (int) $groupId)
@@ -576,7 +578,7 @@ class DashboardController extends BaseApiController
             UserCardPreference::updateOrCreate(
                 [
                     'user_id' => $user->id,
-                    'party_id' => $user->id,
+                    'party_id' => ReportContext::resolved()->id,
                 ],
                 [
                     'selected_groups' => $selectedGroups,
@@ -585,7 +587,7 @@ class DashboardController extends BaseApiController
 
             session()->forget("user_{$user->id}_selected_groups");
 
-            $payload = $this->buildCustomGroupPayload((int) $user->id, $from, $to);
+            $payload = $this->buildCustomGroupPayload((int) ReportContext::resolved()->id, $from, $to);
             $payload['groups_count'] = count($selectedGroups);
 
             return $this->success(__("response_message.dashboard.preferences_saved"), $payload);
@@ -707,7 +709,8 @@ class DashboardController extends BaseApiController
 				return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
 			}
 
-			$userId = (int) $user->id;
+			// Party for the graph: own books or the sample company (report.party middleware).
+			$userId = (int) ReportContext::resolved()->id;
 			$type = (int) $request->input('type', 1);
 			$fySel = $request->input('fySel');
 			$metric = $request->input('metric');
@@ -856,7 +859,7 @@ class DashboardController extends BaseApiController
                 return $this->error(__("response_message.validation_failed"), 422, $validator->errors());
             }
 
-            $userId = (int) $user->id;
+            $userId = (int) ReportContext::resolved()->id;
             [$from, $to] = $this->resolveDashboardDateRange($request);
             $profitLossBalanceSheet = $this->buildProfitLossBalanceSheetPayload($user, $userId, $from, $to);
 
@@ -1031,10 +1034,10 @@ class DashboardController extends BaseApiController
         return $defaultGroupIds;
     }
 
-    private function selectedDashboardGroupIds(int $userId, $allGroups, array $defaultGroupIds): array
+    private function selectedDashboardGroupIds(int $partyId, $allGroups, array $defaultGroupIds): array
     {
-        $preferences = UserCardPreference::where('user_id', $userId)
-            ->where('party_id', $userId)
+        $preferences = UserCardPreference::where('user_id', (int) auth()->id())
+            ->where('party_id', $partyId)
             ->first();
 
         $selectedGroups = $defaultGroupIds;

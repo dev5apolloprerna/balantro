@@ -38,6 +38,10 @@ class SessionsController extends Controller
             ], 401);
         }
         $user = auth('api')->user();
+        if (\App\Support\Demo\DemoParty::isDemoId($user->id)) {
+            auth('api')->logout();
+            return response()->json(['status' => 401, 'error' => 'Invalid email or password'], 401);
+        }
         if ($user->type != "Client") {
             Cache::flush();
             auth('api')->logout();
@@ -183,6 +187,10 @@ class SessionsController extends Controller
             ], 401);
         }
         $user = auth('api')->user();
+        if (\App\Support\Demo\DemoParty::isDemoId($user->id)) {
+            auth('api')->logout();
+            return response()->json(['status' => 401, 'error' => 'Invalid email or password'], 401);
+        }
         
         // Apply IP restriction only for internal users
         $ipAddress = $request->ip();

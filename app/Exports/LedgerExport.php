@@ -169,7 +169,7 @@ class LedgerExport implements FromCollection, WithHeadings, WithTitle, WithStyle
 
     public function title(): string
     {
-        return 'Ledger Report';
+        return (\App\Support\Demo\ReportContext::current()?->isDemo ? 'SAMPLE - ' : '') . 'Ledger Report';
     }
 
     public function styles(Worksheet $sheet)

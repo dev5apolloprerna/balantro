@@ -104,6 +104,7 @@
 </head>
 
 <body>
+    @include('reports.pdf._sample_notice')
     
     <!-- <div class="header">
         <h1>Balantro - Voucher History Report</h1>

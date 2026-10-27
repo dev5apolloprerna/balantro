@@ -13,7 +13,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // SMS gateway chosen by SMS_DRIVER (see config/sms.php).
+        $this->app->bind(\App\Services\Sms\SmsSender::class, fn () => \App\Services\Sms\SmsSenderFactory::make());
     }
 
     /**

@@ -281,6 +281,8 @@
                         <?php endif; ?>
                     </div>
 
+                    <?php echo $__env->make('shared._report_mode_banner', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
+
                     <?php echo $__env->yieldContent('content'); ?>
                     <style>
                         /* Keep native and Select2 dropdowns dark immediately when the page is in dark mode. */

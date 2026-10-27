@@ -77,6 +77,15 @@ class Client extends User
             $builder->where('role', User::ROLES['client']);
         });
 
+        // The sample company is a read-only report party, never a real client:
+        // keep it out of client lists, assignment screens and route binding.
+        static::addGlobalScope('exclude_demo_party', function (Builder $builder) {
+            $demoId = \App\Support\Demo\DemoParty::id();
+            if ($demoId > 0) {
+                $builder->where($builder->getModel()->getTable() . '.id', '<>', $demoId);
+            }
+        });
+
         static::creating(function (self $client) {
             $client->role = User::ROLES['client'];
         });

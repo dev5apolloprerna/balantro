@@ -20,6 +20,9 @@ use App\Http\Controllers\{
 use App\Http\Controllers\GstSettingController;
 use App\Http\Controllers\FrontendController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
@@ -37,6 +40,13 @@ use Illuminate\Support\Facades\Session;
 
 Auth::routes(['register' => true]);
 
+// Uploaded profile images are streamed through Laravel because some IIS hosts
+// deny requests to the physical /profiles directory before Laravel can run.
+Route::get('/media/profile-image', \App\Http\Controllers\ProfileImageController::class)
+    ->middleware('signed')
+    ->name('media.profile-image');
+
+    
 Route::get('/clear-cache', function () {
     Artisan::call('cache:clear');
     Artisan::call('view:clear');
@@ -57,10 +67,7 @@ Route::get('/up', function () {
 });
 
 Route::get('/document-files/{document}/{filename}', [\App\Http\Controllers\Api\V1\DocumentsController::class, 'file'])
-    // Validate only the path and query string. The application is hosted behind
-    // a reverse proxy, so including its internally detected host/scheme in the
-    // signature can invalidate an otherwise legitimate public URL.
-    ->middleware('signed:relative')
+    ->middleware('signed')
     ->name('document-files.show');
 
 // Route::get('/test-firebase', function () {
@@ -80,7 +87,7 @@ Route::get('/document-files/{document}/{filename}', [\App\Http\Controllers\Api\V
 
 // Auth::routes();
 //, 'role:super_admin'
-Route::middleware(['auth:web', 'nocache'])->group(function () {
+Route::middleware(['auth:web'])->group(function () {
 
     // Admin namespace
     Route::prefix('admin')->group(function () {
@@ -316,7 +323,6 @@ Route::prefix('settings')->middleware(['auth'])->group(function () {
 });
 
 // Profiles routes
-Route::resource('profile', ProfilesController::class)->except(['index']);
 Route::post('profile/pincode-details', [ProfilesController::class, 'fetchPincodeDetails'])->name('profile.pincode-details');
 Route::get('user/profile', [ProfilesController::class, 'userProfileEdit'])->name('profile.userProfileEdit');
 
@@ -330,6 +336,7 @@ Route::get('/profile/documents/download/{type}', [ProfilesController::class, 'do
 Route::get('/change-password', [ProfilesController::class, 'changePassword'])->name('profile.change_password');
 Route::post('/change-password', [ProfilesController::class, 'updatePassword'])->name('profile.update_password');
 
+Route::resource('profile', ProfilesController::class)->except(['index']);
 
 // User devices
 Route::resource('user_devices', UserDevicesController::class)->only(['create']);
@@ -350,14 +357,16 @@ Route::middleware(['auth:web', 'role:super_admin'])->group(function () {
 //     });
 
 // Password reset routes
-Route::post('/password/email', 'Auth\ForgotPasswordController@sendResetLinkEmail')
+Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])
     ->name('password.email');
-Route::post('/password/reset', 'Auth\ResetPasswordController@reset')
+Route::post('/password/reset', [ResetPasswordController::class, 'reset'])
     ->name('password.update');
 
-Route::get('/register', 'Auth\RegisterController@showRegistrationForm')->name('register');
-Route::post('/register', 'Auth\RegisterController@register');
-
+Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+Route::post('/register', [RegisterController::class, 'register']);
+Route::get('/register/verify', [RegisterController::class, 'showOtpForm'])->name('registration.otp.show');
+Route::post('/register/verify', [RegisterController::class, 'verifyOtp'])->name('registration.otp.verify');
+Route::post('/register/otp/resend', [RegisterController::class, 'resendOtp'])->name('registration.otp.resend');
 
 Auth::routes();
 

@@ -55,7 +55,7 @@ class BalanceSheetExport implements FromCollection, WithHeadings, WithTitle, Wit
 
     public function title(): string
     {
-        return 'Balance Sheet';
+        return (\App\Support\Demo\ReportContext::current()?->isDemo ? 'SAMPLE - ' : '') . 'Balance Sheet';
     }
 
     public function styles(Worksheet $sheet)

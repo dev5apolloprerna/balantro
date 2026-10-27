@@ -40,6 +40,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\LogActivity::class, // put near end
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\NoCache::class,
+            \App\Http\Middleware\BlockDemoPartyWrites::class,
         ],
 
         // 'api' => [
@@ -50,6 +51,7 @@ class Kernel extends HttpKernel
         'api' => [
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\BlockDemoPartyWrites::class,
         ],
     ];
 
@@ -80,5 +82,6 @@ class Kernel extends HttpKernel
         'jwt.refresh' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\RefreshToken::class,
         'jwt.from.cookie' => \App\Http\Middleware\JwtFromCookie::class,
         'nocache' => \App\Http\Middleware\NoCache::class,
+        'report.party' => \App\Http\Middleware\ResolveReportParty::class,
     ];
 }

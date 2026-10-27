@@ -161,6 +161,7 @@
 </head>
 
 <body>
+    @include('reports.pdf._sample_notice')
     @php
         // Replicate the same calculation logic from blade view
         $cr = $pl['cr'] ?? [];

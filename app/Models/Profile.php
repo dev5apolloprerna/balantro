@@ -27,6 +27,7 @@ class Profile extends Model
     protected $fillable = [
         'user_id',
         'mobile_no',
+        'mobile_verified_at',
         'whatsapp_no',
         'gender',
         'business_type',

@@ -193,7 +193,7 @@ class LedgerMasterController extends Controller
             if (!$user) {
                 return response()->json(['User not authenticated'], 401);
             }
-            $partyId = auth('api')->id();
+            $partyId = \App\Support\Demo\ReportContext::resolved()->id;
             $partyguid = $request->partyguid;
             $validator = Validator::make([
                 'partyguid' => $request->partyguid
@@ -291,7 +291,7 @@ class LedgerMasterController extends Controller
             }
 
             $partyguid = $request->partyguid;
-            $partyId = auth('api')->id();
+            $partyId = \App\Support\Demo\ReportContext::resolved()->id;
             $results = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
             if (!$results) {
                 return response()->json([
@@ -441,7 +441,7 @@ class LedgerMasterController extends Controller
 
 			$partyguid = $request->partyguid;
             $iledgerid = (int) $request->iledgerid;
-            $partyId = auth('api')->id();
+            $partyId = \App\Support\Demo\ReportContext::resolved()->id;
 
 			$results = DB::select('EXEC CheckPartyGUIDCount ?', [$partyguid]);
             if (!$results) {
@@ -847,7 +847,7 @@ class LedgerMasterController extends Controller
 	{
 		$safe = preg_replace('/[^A-Za-z0-9._-]+/', '-', $strGUID) ?: 'voucher';
 
-		return 'voucher-' . trim($safe, '-') . '.' . $extension;
+		return \App\Support\Demo\ReportContext::filePrefix() . 'voucher-' . trim($safe, '-') . '.' . $extension;
 	}
 
 	private function resolveApiFinancialYearFilter(Request $request, int $partyId): array
@@ -1315,7 +1315,7 @@ class LedgerMasterController extends Controller
 	// 		if (!$party) {
 	// 			return response()->json(['success' => false, 'message' => 'Party not found'], 422);
 	// 		}*/
-	// 		$partyId = $user->id;
+	// 		$partyId = \App\Support\Demo\ReportContext::resolved()->id;
 	// 		$groupId = $request->iGroupId ?? 0;
 	// 		$svc = app(ReportsService::class); 
 	// 		$ledgerData = $svc->ledger($partyId, $groupId, $startDate, $endDate, $request->strCustomerName);
@@ -1424,7 +1424,7 @@ class LedgerMasterController extends Controller
             return ['response' => response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422)];
         }
 
-		$partyId = $user->id;
+		$partyId = \App\Support\Demo\ReportContext::resolved()->id;
         $groupId = (int) ($request->input('iGroupId', $request->input('group_id', 0)) ?: 0);
         $customerName = $request->input('strCustomerName');
         [, , $startDate, $endDate] = $this->resolveApiFinancialYearFilter($request, $partyId);
@@ -1460,9 +1460,9 @@ class LedgerMasterController extends Controller
             'toDisplay' => $endDate ? date('d-m-Y', strtotime($endDate)) : '',
             'groupName' => $groupName,
             'customerName' => $customerName,
-            'partyName' => $user->name ?? '',
+            'partyName' => \App\Support\Demo\ReportContext::resolved()->displayName(),
             'companyAddress' => $profile->address ?? '',
-            'companyEmail' => $user->email ?? '',
+            'companyEmail' => \App\Support\Demo\ReportContext::resolved()->email ?? '',
         ];
     }
 
@@ -1470,7 +1470,7 @@ class LedgerMasterController extends Controller
     {
         $from = $request->input('start_date') ?: $request->input('from') ?: $request->input('from_custom') ?: 'start';
         $to = $request->input('end_date') ?: $request->input('to') ?: $request->input('to_custom') ?: 'end';
-		return $prefix . '-' . str_replace('/', '-', $from) . '-to-' . str_replace('/', '-', $to) . '.' . $extension;
+		return \App\Support\Demo\ReportContext::filePrefix() . $prefix . '-' . str_replace('/', '-', $from) . '-to-' . str_replace('/', '-', $to) . '.' . $extension;
     }
 
 	private function buildLedgerPdf(array $prepared)
@@ -1576,7 +1576,7 @@ class LedgerMasterController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
             }
 
-            $partyId = $user->id;
+            $partyId = \App\Support\Demo\ReportContext::resolved()->id;
             $ledgerData = $this->getLedgerData(
                 $partyId, 
                 $request->iGroupId, 
@@ -1589,7 +1589,7 @@ class LedgerMasterController extends Controller
                 return response()->json(['success' => false, 'message' => 'No Ledger data found'], 404);
             }
 
-            $filename = 'ledger-summary-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+            $filename = \App\Support\Demo\ReportContext::filePrefix() . 'ledger-summary-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
             $disk = Storage::disk('public');
             $directory = 'exports';
@@ -1714,7 +1714,7 @@ class LedgerMasterController extends Controller
                 return response()->json(['success' => false, 'message' => 'No Voucher History data found'], 404);
             }
 
-            $filename = 'voucher-history-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+            $filename = \App\Support\Demo\ReportContext::filePrefix() . 'voucher-history-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
             return Excel::download(
                 new VoucherHistoryExport(
@@ -1789,7 +1789,7 @@ class LedgerMasterController extends Controller
     // EXPORTED FILE DOWNLOAD ROUTE
 	public function downloadExportedFile(string $filename)
 	{
-		$allowedExportPattern = '/\A(?:(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+|voucher-[A-Za-z0-9._-]+)\.(xlsx|pdf)\z/';
+		$allowedExportPattern = '/\A(?:sample-)?(?:(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+|voucher-[A-Za-z0-9._-]+)\.(xlsx|pdf)\z/';
 
 		if (!preg_match($allowedExportPattern, $filename)) {
 			abort(404);
@@ -1935,9 +1935,9 @@ class LedgerMasterController extends Controller
 				$ledgerName = $ledger->strCustomerName ?? '';
 			}
             $profile = $user->profile ?? null;
-			$partyName = $user->name ?? '';
+			$partyName = \App\Support\Demo\ReportContext::resolved()->displayName();
 			$companyAddress = $profile->address ?? '';
-			$companyEmail = $user->email ?? '';
+			$companyEmail = \App\Support\Demo\ReportContext::resolved()->email ?? '';
 
 			// Get opening balance - SAME logic as web
 			$openingBalanceData = [];
@@ -1951,7 +1951,7 @@ class LedgerMasterController extends Controller
 			// Process data for export - SAME logic as web
 			$processedData = $this->processVoucherHistoryData($data, $openingBalanceData, $request->start_date, $request->end_date);
 
-			$filename = 'voucher-history-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+			$filename = \App\Support\Demo\ReportContext::filePrefix() . 'voucher-history-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
 			$disk = Storage::disk('public');
 			$directory = 'exports';
@@ -2043,9 +2043,9 @@ class LedgerMasterController extends Controller
 				return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
 			}
 			$profile = $user->profile ?? null;
-			$partyName = $user->name ?? '';
+			$partyName = \App\Support\Demo\ReportContext::resolved()->displayName();
 			$companyAddress = $profile->address ?? '';
-			$companyEmail = $user->email ?? '';
+			$companyEmail = \App\Support\Demo\ReportContext::resolved()->email ?? '';
 			// Use the SAME service as web
 			$resp = $svc->voucherHistory($partyguid, $ledgerId, $request->start_date, $request->end_date);
 			$data = data_get($resp, 'data', []);
@@ -2068,7 +2068,7 @@ class LedgerMasterController extends Controller
 			// Process data for PDF - SAME logic as web
 			$processedData = $this->processVoucherHistoryData($data, $openingBalanceData, $request->start_date, $request->end_date);
 
-			$filename = 'voucher-history-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
+			$filename = \App\Support\Demo\ReportContext::filePrefix() . 'voucher-history-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
 
 			// Generate PDF - use SAME parameters as web
 			$pdf = Pdf::setOptions([

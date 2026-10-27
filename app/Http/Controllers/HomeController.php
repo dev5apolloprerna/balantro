@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use App\Support\ReportCache;
+use App\Support\Demo\ReportContext;
 use App\Models\UserCardPreference;
 use App\Models\Group;
 
@@ -46,6 +47,7 @@ class HomeController extends Controller
         
         if (auth()->user()->role == User::ROLES['super_admin']) {
             $clientIds = \App\Models\User::where('role', \App\Models\User::ROLES['client'])
+                ->excludingDemoParty()
                 ->pluck('id');
 
             $counts = \App\Models\Document::whereIn('user_id', $clientIds)
@@ -68,7 +70,7 @@ class HomeController extends Controller
                 'query_raised_count' => $counts['query_raised'] ?? 0,
                 'query_resolved_count' => $counts['query_resolved'] ?? 0,
                 'completed_count' => $counts['approved'] ?? 0,
-                'clients' => User::where('role', User::ROLES['client'])->get(),
+                'clients' => User::where('role', User::ROLES['client'])->excludingDemoParty()->get(),
                 'managers' => User::where('role', User::ROLES['manager'])->get(),
                 'supervisors' => User::where('role', User::ROLES['supervisor'])->get(),
                 'data_entry_operators' => User::where('role', User::ROLES['data_entry_operator'])->get(),
@@ -153,7 +155,11 @@ class HomeController extends Controller
         } else if (auth()->user()->role == User::ROLES['client']) {
             $user   = auth()->user();
             $userId = (int) $user->id;
-            $partyId = $userId;
+            // Party whose books are shown: the client's own, or the read-only
+            // sample company while they have no data of their own (demo mode).
+            $party = ReportContext::party();
+            $partyId = $party->id;
+            $sk = fn (string $key): string => ReportContext::sessionKey($key);
             // $from = $r->input('from');
             // $to   = $r->input('to');
             // Financial year selection
@@ -161,18 +167,18 @@ class HomeController extends Controller
             // Store selection in session
             if ($range) {
                 session([
-                    'selectedRange' => $range,
-                    'selectedFrom'  => $r->input('from'),
-                    'selectedTo'    => $r->input('to'),
+                    $sk('selectedRange') => $range,
+                    $sk('selectedFrom')  => $r->input('from'),
+                    $sk('selectedTo')    => $r->input('to'),
                 ]);
             }
             // $financialYears = DB::table('YearMaster')
             //     ->where('iPartyId', $userId)
             //     ->orderBy('iYearId', 'asc')
             //     ->get();
-            $financialYears = Cache::remember(ReportCache::key('client_dashboard', $userId, 'financial_years'), ReportCache::ttl(), function () use ($userId) {
+            $financialYears = Cache::remember(ReportCache::key('client_dashboard', $partyId, 'financial_years'), ReportCache::ttl(), function () use ($partyId) {
                 return DB::table('YearMaster')
-                    ->where('iPartyId', $userId)
+                    ->where('iPartyId', $partyId)
                     //->orderBy('iYearId', 'asc')
                     // ->orderBy('strYear', 'desc')
                     // ->orderBy('iYearId', 'desc')
@@ -184,9 +190,9 @@ class HomeController extends Controller
             // Restore from session if empty
             
             // $defaultRange = $financialYears->first()->strYear ?? null;
-            // $selectedRange = $range ?: session('selectedRange', $defaultRange);
-            // $from = $r->input('from', session('selectedFrom'));
-            // $to   = $r->input('to', session('selectedTo'));
+            // $selectedRange = $range ?: session($sk('selectedRange'), $defaultRange);
+            // $from = $r->input('from', session($sk('selectedFrom')));
+            // $to   = $r->input('to', session($sk('selectedTo')));
             // if ((! $from || ! $to) && preg_match('/^(\d{4})-(\d{4})$/', (string) $selectedRange, $matches)) {
             //     $from = $matches[1] . '-04-01';
             //     $to = $matches[2] . '-03-31';
@@ -199,7 +205,7 @@ class HomeController extends Controller
                 : ($availableFinancialYears->first() ?? null);
 
             // Keep the dashboard selection and the global financial-year session in sync.
-            $selectedRange = $range ?: session('year', session('selectedRange', $defaultRange));
+            $selectedRange = $range ?: session($sk('year'), session($sk('selectedRange'), $defaultRange));
             if ($selectedRange && $availableFinancialYears->isNotEmpty() && ! $availableFinancialYears->contains($selectedRange)) {
                 $selectedRange = $defaultRange;
             }
@@ -207,8 +213,8 @@ class HomeController extends Controller
             $to   = $r->input('to');
 
             if (! $range && ! $from && ! $to) {
-                $from = session('selectedFrom', session('year_from'));
-                $to   = session('selectedTo', session('year_to'));
+                $from = session($sk('selectedFrom'), session($sk('year_from')));
+                $to   = session($sk('selectedTo'), session($sk('year_to')));
             }
 
             if (preg_match('/^(\d{4})-(\d{4})$/', (string) $selectedRange, $matches)) {
@@ -226,12 +232,12 @@ class HomeController extends Controller
 
             if ($selectedRange || $from || $to) {
                 session([
-                    'selectedRange' => $selectedRange,
-                    'selectedFrom'  => $from,
-                    'selectedTo'    => $to,
-                    'year'          => $selectedRange,
-                    'year_from'     => $yearFrom,
-                    'year_to'       => $yearTo,
+                    $sk('selectedRange') => $selectedRange,
+                    $sk('selectedFrom')  => $from,
+                    $sk('selectedTo')    => $to,
+                    $sk('year')          => $selectedRange,
+                    $sk('year_from')     => $yearFrom,
+                    $sk('year_to')       => $yearTo,
                 ]);
             }
             
@@ -288,8 +294,8 @@ class HomeController extends Controller
             // Fetch ALL groups for this party (not just the 8 financial groups)
             try {
                 // $allGroupsWithBalances = $svc->getAllGroupsWithBalances($userId, $from, $to);
-                $allGroupsWithBalances = Cache::remember(ReportCache::key('client_dashboard', $userId, 'groups:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $userId, $from, $to) {
-                    return $svc->getAllGroupsWithBalances($userId, $from, $to);
+                $allGroupsWithBalances = Cache::remember(ReportCache::key('client_dashboard', $partyId, 'groups:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyId, $from, $to) {
+                    return $svc->getAllGroupsWithBalances($partyId, $from, $to);
                 });
                 $allGroups = collect($allGroupsWithBalances);
                 
@@ -342,8 +348,8 @@ class HomeController extends Controller
             // $to   = $r->input('to');
 
             // Use the resolved range dates so dashboard charts and P&L load on first visit.
-            $from = $from ?: session('selectedFrom');
-            $to   = $to ?: session('selectedTo');
+            $from = $from ?: session($sk('selectedFrom'));
+            $to   = $to ?: session($sk('selectedTo'));
 
             $titles = [
                 1 => 'Sales vs Purchase',
@@ -469,8 +475,8 @@ class HomeController extends Controller
             //     ];
             // }
 
-            $chartsCacheKey = ReportCache::key('client_dashboard', $userId, 'charts:' . md5(($from ?? '') . '|' . ($to ?? '') . '|' . $type . '|' . $r->input('metric', 'cash')));
-            [$charts, $selectedRes] = Cache::remember($chartsCacheKey, ReportCache::ttl(), function () use ($svc, $userId, $from, $to, $type, $titles, $r) {
+            $chartsCacheKey = ReportCache::key('client_dashboard', $partyId, 'charts:' . md5(($from ?? '') . '|' . ($to ?? '') . '|' . $type . '|' . $r->input('metric', 'cash')));
+            [$charts, $selectedRes] = Cache::remember($chartsCacheKey, ReportCache::ttl(), function () use ($svc, $partyId, $from, $to, $type, $titles, $r) {
                 $charts = [];
                 $selectedRes = null;
                 $sum = fn($arr) => array_sum(array_map('floatval', $arr ?? []));
@@ -496,7 +502,7 @@ class HomeController extends Controller
 
                         foreach ($metrics as $metric) {
                             $tmp = $svc->monthlyGraph(
-                                $userId,
+                                $partyId,
                                 $from,
                                 $to,
                                 5,
@@ -519,7 +525,7 @@ class HomeController extends Controller
                         }
                     }
                     if ($t != 5) {
-                        $res = $svc->monthlyGraph($userId, $from, $to, $t, [
+                        $res = $svc->monthlyGraph($partyId, $from, $to, $t, [
                             'outflow_negative' => false,
                             'groups'           => $groups,
                             'exclude_types'    => null,
@@ -573,9 +579,10 @@ class HomeController extends Controller
             $fySel     = $r->input('fySel');
 
             // Get selected groups from database
+            // Card choices are per user AND per company (sample company group ids differ).
             $preferences = DB::table('user_card_preferences')
                 ->where('user_id', $userId)
-                ->where('party_id', $userId)
+                ->where('party_id', $partyId)
                 ->first();
 
             if ($preferences && $preferences->selected_groups) {
@@ -586,7 +593,7 @@ class HomeController extends Controller
             }
 
             // Update session for consistency
-            $sessionKey = "user_{$userId}_selected_groups";
+            $sessionKey = "user_{$userId}_party_{$partyId}_selected_groups";
             session([$sessionKey => $selectedGroups]);
 
             // Ensure selected groups are valid (exist in user's groups)
@@ -632,15 +639,14 @@ class HomeController extends Controller
             if ($activeTab === 'financial') {
                 $svc = new ReportsService();
                 // $resp = $svc->pandl($r->user()->id, $from, $to);
-                $resp = Cache::remember(ReportCache::key('client_dashboard', $userId, 'pandl:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $r, $from, $to) {
-                    return $svc->pandl($r->user()->id, $from, $to);
+                $resp = Cache::remember(ReportCache::key('client_dashboard', $partyId, 'pandl:' . md5(($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyId, $from, $to) {
+                    return $svc->pandl($partyId, $from, $to);
                 });
-                $guid = Auth::user()->guid ?? '';
-                $partyguid = $guid;                
-                $partyId   = Auth::user()->id;
+                // NULL, not '': the stored procedure's GUID parameter is a uniqueidentifier.
+                $partyguid = $party->guid;
                 
                 // $respbalance = $svc->balanceSheet($partyguid, $partyId, $from, $to);
-                $respbalance = Cache::remember(ReportCache::key('client_dashboard', $userId, 'balance_sheet:' . md5($partyguid . '|' . $partyId . '|' . ($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyguid, $partyId, $from, $to) {
+                $respbalance = Cache::remember(ReportCache::key('client_dashboard', $partyId, 'balance_sheet:' . md5($partyguid . '|' . $partyId . '|' . ($from ?? '') . '|' . ($to ?? ''))), ReportCache::ttl(), function () use ($svc, $partyguid, $partyId, $from, $to) {
                     return $svc->balanceSheet($partyguid, $partyId, $from, $to);
                 });
                 
@@ -982,7 +988,8 @@ class HomeController extends Controller
         $preference = UserCardPreference::updateOrCreate(
             [
                 'user_id' => auth()->id(),
-                'party_id' => auth()->user()->id
+                // Preferences are stored per company: the sample company has its own group ids.
+                'party_id' => ReportContext::party()->id
             ],
             [
                 'selected_groups' => $selectedGroups
@@ -990,7 +997,7 @@ class HomeController extends Controller
         );
 
         // Clear session to force reload from database
-        $sessionKey = "user_" . auth()->id() . "_selected_groups";
+        $sessionKey = "user_" . auth()->id() . "_party_" . ReportContext::party()->id . "_selected_groups";
         session()->forget($sessionKey);
 
         \Log::info('Preferences saved successfully:', [

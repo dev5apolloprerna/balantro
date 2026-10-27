@@ -175,7 +175,7 @@ class BalanceSheetController extends Controller
 			$partyguid = $request->partyguid;
 			$startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
 			$endDate   = $request->end_date   ? date('Y-m-d', strtotime($request->end_date))   : null;
-            $partyId   = auth('api')->id();
+            $partyId   = \App\Support\Demo\ReportContext::resolved()->id;
 
 			$pdo  = DB::connection()->getPdo();
 			$stmt = $pdo->prepare('EXEC dbo.GetBalanceSheetDataByParty :guid, :pid, :sd, :ed');
@@ -567,11 +567,11 @@ class BalanceSheetController extends Controller
             if (empty($data['rows'])) {
                 return response()->json(['success' => false, 'message' => 'No Balance Sheet data found'], 404);
             }
-            $partyName = $user->name ?? '';
+            $partyName = \App\Support\Demo\ReportContext::resolved()->displayName();
             $companyAddress = $user->profile->address ?? '';
-            $companyEmail = $user->email ?? '';
+            $companyEmail = \App\Support\Demo\ReportContext::resolved()->email ?? '';
 
-            $filename = 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+            $filename = \App\Support\Demo\ReportContext::filePrefix() . 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
             // Use public disk
             $disk = Storage::disk('public');
@@ -659,11 +659,11 @@ class BalanceSheetController extends Controller
             if (empty($data['rows'])) {
                 return response()->json(['success' => false, 'message' => 'No Balance Sheet data found'], 404);
             }
-            $partyName = $user->name ?? '';
+            $partyName = \App\Support\Demo\ReportContext::resolved()->displayName();
             $companyAddress = $user->profile->address ?? '';
-            $companyEmail = $user->email ?? '';
+            $companyEmail = \App\Support\Demo\ReportContext::resolved()->email ?? '';
 
-            $filename = 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
+            $filename = \App\Support\Demo\ReportContext::filePrefix() . 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
 
             // Generate PDF - use same parameters as web
             $pdf = Pdf::setOptions([
@@ -717,7 +717,7 @@ class BalanceSheetController extends Controller
 
     public function downloadExportedFile(string $filename)
     {
-        if (!preg_match('/\Abalance-sheet-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
+        if (!preg_match('/\A(?:sample-)?balance-sheet-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
             abort(404);
         }
 
@@ -760,14 +760,14 @@ class BalanceSheetController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
             }
 
-            $partyId = $user->id;
+            $partyId = \App\Support\Demo\ReportContext::resolved()->id;
             $balanceSheetData = $this->getBalanceSheetData($partyId, $startDate, $endDate);
 
             if (!$balanceSheetData) {
                 return response()->json(['success' => false, 'message' => 'No Balance Sheet data found'], 404);
             }
 
-            $filename = 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+            $filename = \App\Support\Demo\ReportContext::filePrefix() . 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
             return Excel::download(
                 new BalanceSheetExport($balanceSheetData, $request->start_date, $request->end_date), 
@@ -813,14 +813,14 @@ class BalanceSheetController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
             }
 
-            $partyId = $user->id;
+            $partyId = \App\Support\Demo\ReportContext::resolved()->id;
             $balanceSheetData = $this->getBalanceSheetData($partyId, $startDate, $endDate);
 
             if (!$balanceSheetData) {
                 return response()->json(['success' => false, 'message' => 'No Balance Sheet data found'], 404);
             }
 
-            $filename = 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
+            $filename = \App\Support\Demo\ReportContext::filePrefix() . 'balance-sheet-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
 
             $pdf = Pdf::setOptions(['isRemoteEnabled' => true])
                     ->loadView('reports.pdf.balance_sheet_pdf', [

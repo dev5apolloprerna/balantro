@@ -25,6 +25,7 @@
 </head>
 
 <body>
+    @include('reports.pdf._sample_notice')
 
 @php
     $rows = collect($data['rows'] ?? []);

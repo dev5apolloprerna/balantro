@@ -65,6 +65,7 @@
 
 </head>
 <body>
+    @include('reports.pdf._sample_notice')
 
     {{-- HEADER --}}
     <div class="border-bottom">

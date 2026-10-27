@@ -57,6 +57,12 @@ class LoginController extends Controller
             return back()->withErrors(['email' => 'Invalid credentials']);
         }
 
+        // The sample company is a read-only report party, not a login.
+        if (\App\Support\Demo\DemoParty::isDemoId(Auth::id())) {
+            Auth::logout();
+            return back()->withErrors(['email' => 'Invalid credentials']);
+        }
+
         // Issue JWT for API usage and store in httpOnly cookie
         $token   = JWTAuth::fromUser(Auth::user());
         $minutes = config('jwt.ttl', 120); // minutes

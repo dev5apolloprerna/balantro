@@ -65,6 +65,10 @@ Route::prefix('v1')->group(function () {
         ->name('api.profile.documents.file');
     Route::post('sign_in', [\App\Http\Controllers\Api\V1\SessionsController::class, 'login']);
     Route::post('sign_up', [\App\Http\Controllers\Api\V1\RegistrationsController::class, 'register']);
+    // Sign-up with SMS OTP: start -> verify (resend if needed).
+    Route::post('sign_up/start', [\App\Http\Controllers\Api\V1\RegistrationsController::class, 'start'])->middleware('throttle:10,10');
+    Route::post('sign_up/verify', [\App\Http\Controllers\Api\V1\RegistrationsController::class, 'verify'])->middleware('throttle:20,10');
+    Route::post('sign_up/resend', [\App\Http\Controllers\Api\V1\RegistrationsController::class, 'resend'])->middleware('throttle:10,10');
     Route::post('logout', [\App\Http\Controllers\Api\V1\SessionsController::class, 'destroy']);
     Route::post('/auth/forgot_password', [ForgotPasswordOtpController::class, 'forgot_password']);
     Route::post('/auth/password/verify-otp', [ForgotPasswordOtpController::class, 'verifyOtp']);
@@ -77,11 +81,11 @@ Route::prefix('v1')->group(function () {
         ->name('api.pl.export.download');
 
     Route::get('/balance-sheet/export/download/{filename}', [BalanceSheetController::class, 'downloadExportedFile'])
-        ->where('filename', 'balance-sheet-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)')
+        ->where('filename', '(?:sample-)?balance-sheet-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)')
         ->name('api.balance-sheet.export.download');
 
     Route::get('/ledger/export/download/{filename}', [LedgerMasterController::class, 'downloadExportedFile'])
-        ->where('filename', '(?:(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+|voucher-[A-Za-z0-9._-]+)\.(xlsx|pdf)')
+        ->where('filename', '(?:sample-)?(?:(?:ledger-report|voucher-history)-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+|voucher-[A-Za-z0-9._-]+)\.(xlsx|pdf)')
         ->name('api.ledger.export.download');
     // Resource routes
     Route::middleware('auth:api')->group(function () {
@@ -107,60 +111,65 @@ Route::prefix('v1')->group(function () {
         Route::post('documents/delete', [\App\Http\Controllers\Api\V1\DocumentsController::class, 'destroy']);
         // Route::apiResource('dashboard', \App\Http\Controllers\Api\V1\DashboardController::class)->only(['index']);
         
-        Route::prefix('dashboard')->group(function () {
-            Route::post('/', [\App\Http\Controllers\Api\V1\DashboardController::class, 'index']);
-            Route::post('preferences', [\App\Http\Controllers\Api\V1\DashboardController::class, 'saveCardPreferences']);
-            Route::post('financial-graphs', [\App\Http\Controllers\Api\V1\DashboardController::class, 'financialGraphs']);
-            Route::post('profit-loss-balance-sheet', [\App\Http\Controllers\Api\V1\DashboardController::class, 'profitLossBalanceSheet']);
-            Route::post('monthly-financial-columns', [\App\Http\Controllers\Api\V1\DashboardController::class, 'monthlyFinancialColumns']);
-            Route::post('year-listing', [\App\Http\Controllers\Api\V1\DashboardController::class, 'yearListing']);
-            Route::post('group-balances', [\App\Http\Controllers\Api\V1\DashboardController::class, 'getGroupBalances']);
-            Route::post('summary', [\App\Http\Controllers\Api\V1\DashboardController::class, 'summary']);
-            Route::post('customize-groups/list', [\App\Http\Controllers\Api\V1\DashboardController::class, 'customizeGroupList']);
-            Route::post('customize-groups/submit', [\App\Http\Controllers\Api\V1\DashboardController::class, 'submitCustomizeGroups']);
+        // Read-only financial reports. `report.party` resolves the company on the
+        // server (own books, an assigned client, or the sample company when the
+        // app sends report_mode=demo) and overwrites any `partyguid` input.
+        Route::middleware('report.party')->group(function () {
+            Route::prefix('dashboard')->group(function () {
+                Route::post('/', [\App\Http\Controllers\Api\V1\DashboardController::class, 'index']);
+                Route::post('preferences', [\App\Http\Controllers\Api\V1\DashboardController::class, 'saveCardPreferences']);
+                Route::post('financial-graphs', [\App\Http\Controllers\Api\V1\DashboardController::class, 'financialGraphs']);
+                Route::post('profit-loss-balance-sheet', [\App\Http\Controllers\Api\V1\DashboardController::class, 'profitLossBalanceSheet']);
+                Route::post('monthly-financial-columns', [\App\Http\Controllers\Api\V1\DashboardController::class, 'monthlyFinancialColumns']);
+                Route::post('year-listing', [\App\Http\Controllers\Api\V1\DashboardController::class, 'yearListing']);
+                Route::post('group-balances', [\App\Http\Controllers\Api\V1\DashboardController::class, 'getGroupBalances']);
+                Route::post('summary', [\App\Http\Controllers\Api\V1\DashboardController::class, 'summary']);
+                Route::post('customize-groups/list', [\App\Http\Controllers\Api\V1\DashboardController::class, 'customizeGroupList']);
+                Route::post('customize-groups/submit', [\App\Http\Controllers\Api\V1\DashboardController::class, 'submitCustomizeGroups']);
+            });
+
+            Route::post('dropdown_type_list', [\App\Http\Controllers\Api\V1\DashboardController::class, 'dropdown_type_list']);
+            Route::post('dashboard/graph', [\App\Http\Controllers\Api\V1\DashboardController::class, 'dropdown_graph']);
+
+            //Route::apiResource('messages', \App\Http\Controllers\Api\V1\MessagesController::class)->only(['index']);
+            Route::post('/PandL-account', [PandLAccountController::class, 'index_new']);
+    		Route::post('/pl/export/excel', [PandLAccountController::class, 'exportExcel']);
+            Route::post('/pl/export/pdf', [PandLAccountController::class, 'exportPdf']);
+        
+            // Direct download routes (optional)
+            Route::get('/pl/download/excel', [PandLAccountController::class, 'downloadExcel']);
+            Route::get('/pl/download/pdf', [PandLAccountController::class, 'downloadPdf']);
+		
+            Route::post('/balance-sheet', [BalanceSheetController::class, 'index_new']);
+    		Route::post('/balance-sheet/export/excel', [BalanceSheetController::class, 'exportExcel']);
+    		Route::post('/balance-sheet/export/pdf', [BalanceSheetController::class, 'exportPdf']);
+    		Route::post('/balance-sheet/download/excel', [BalanceSheetController::class, 'downloadExcel']);
+    		Route::post('/balance-sheet/download/pdf', [BalanceSheetController::class, 'downloadPdf']);
+		
+            Route::post('/ledger', [LedgerMasterController::class, 'index_new']);
+            Route::post('/ledger_voucher_history', [LedgerMasterController::class, 'vch_history_new']);
+		
+    		// Ledger Export Routes
+    		Route::post('/ledger/export/excel', [LedgerMasterController::class, 'exportLedgerExcel']);
+    		Route::post('/ledger/export/summary-excel', [LedgerMasterController::class, 'exportLedgerSummaryExcel']);
+    		Route::post('/ledger/export/pdf', [LedgerMasterController::class, 'exportLedgerPdf']);
+
+    		// Voucher History Export Routes
+    		Route::post('/voucher-history/export/excel', [LedgerMasterController::class, 'exportVoucherHistoryExcel']);
+    		Route::post('/voucher-history/export/pdf', [LedgerMasterController::class, 'exportVoucherHistoryPdf']);
+
+            // Voucher Details Routes
+    		Route::post('/voucher/details', [LedgerMasterController::class, 'voucherDetails']);
+    		Route::post('/voucher/export/excel', [LedgerMasterController::class, 'exportVoucherDetailsExcel']);
+    		Route::post('/voucher/export/pdf', [LedgerMasterController::class, 'exportVoucherDetailsPdf']);
+        
+    		// Direct Download Routes
+    		Route::post('/ledger/download/excel', [LedgerMasterController::class, 'downloadLedgerExcel']);
+            Route::post('/ledger/download/pdf', [LedgerMasterController::class, 'downloadLedgerPdf']);
+    		Route::post('/voucher-history/download/excel', [LedgerMasterController::class, 'downloadVoucherHistoryExcel']);
+		
+            Route::post('/group_master', [LedgerMasterController::class, 'group_master']);
         });
-
-        Route::post('dropdown_type_list', [\App\Http\Controllers\Api\V1\DashboardController::class, 'dropdown_type_list']);
-        Route::post('dashboard/graph', [\App\Http\Controllers\Api\V1\DashboardController::class, 'dropdown_graph']);
-
-        //Route::apiResource('messages', \App\Http\Controllers\Api\V1\MessagesController::class)->only(['index']);
-        Route::post('/PandL-account', [PandLAccountController::class, 'index_new']);
-		Route::post('/pl/export/excel', [PandLAccountController::class, 'exportExcel']);
-        Route::post('/pl/export/pdf', [PandLAccountController::class, 'exportPdf']);
-        
-        // Direct download routes (optional)
-        Route::get('/pl/download/excel', [PandLAccountController::class, 'downloadExcel']);
-        Route::get('/pl/download/pdf', [PandLAccountController::class, 'downloadPdf']);
-		
-        Route::post('/balance-sheet', [BalanceSheetController::class, 'index_new']);
-		Route::post('/balance-sheet/export/excel', [BalanceSheetController::class, 'exportExcel']);
-		Route::post('/balance-sheet/export/pdf', [BalanceSheetController::class, 'exportPdf']);
-		Route::post('/balance-sheet/download/excel', [BalanceSheetController::class, 'downloadExcel']);
-		Route::post('/balance-sheet/download/pdf', [BalanceSheetController::class, 'downloadPdf']);
-		
-        Route::post('/ledger', [LedgerMasterController::class, 'index_new']);
-        Route::post('/ledger_voucher_history', [LedgerMasterController::class, 'vch_history_new']);
-		
-		// Ledger Export Routes
-		Route::post('/ledger/export/excel', [LedgerMasterController::class, 'exportLedgerExcel']);
-		Route::post('/ledger/export/summary-excel', [LedgerMasterController::class, 'exportLedgerSummaryExcel']);
-		Route::post('/ledger/export/pdf', [LedgerMasterController::class, 'exportLedgerPdf']);
-
-		// Voucher History Export Routes
-		Route::post('/voucher-history/export/excel', [LedgerMasterController::class, 'exportVoucherHistoryExcel']);
-		Route::post('/voucher-history/export/pdf', [LedgerMasterController::class, 'exportVoucherHistoryPdf']);
-
-        // Voucher Details Routes
-		Route::post('/voucher/details', [LedgerMasterController::class, 'voucherDetails']);
-		Route::post('/voucher/export/excel', [LedgerMasterController::class, 'exportVoucherDetailsExcel']);
-		Route::post('/voucher/export/pdf', [LedgerMasterController::class, 'exportVoucherDetailsPdf']);
-        
-		// Direct Download Routes
-		Route::post('/ledger/download/excel', [LedgerMasterController::class, 'downloadLedgerExcel']);
-        Route::post('/ledger/download/pdf', [LedgerMasterController::class, 'downloadLedgerPdf']);
-		Route::post('/voucher-history/download/excel', [LedgerMasterController::class, 'downloadVoucherHistoryExcel']);
-		
-        Route::post('/group_master', [LedgerMasterController::class, 'group_master']);
         // Route::post('/dropdown_type_list', [\App\Http\Controllers\Api\V1\DashboardController::class, 'dropdown_type_list']);
         // Route::post('/dashboard/graph', [\App\Http\Controllers\Api\V1\DashboardController::class, 'dropdown_graph']);
         

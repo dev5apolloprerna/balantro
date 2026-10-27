@@ -253,7 +253,7 @@ class PandLAccountController extends Controller
                 ], 422);
             }
 
-            $partyId = $user->id;
+            $partyId = \App\Support\Demo\ReportContext::resolved()->id;
             /*
             |--------------------------------------------------------------------------
             | DATE RANGE
@@ -875,7 +875,7 @@ class PandLAccountController extends Controller
 				return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
 			}
 
-			$partyId = $user->id;
+			$partyId = \App\Support\Demo\ReportContext::resolved()->id;
 			$svc = app(ReportsService::class); 
 			// $pandlData = $this->getPandLData($partyId, $startDate, $endDate);
 			$pandlData = $svc->pandl($partyId, $startDate, $endDate);
@@ -887,7 +887,7 @@ class PandLAccountController extends Controller
 			// Create a custom service instance for the export
 			//$svc = new ReportsService();
 
-			$filename = 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+			$filename = \App\Support\Demo\ReportContext::filePrefix() . 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
 			// Use public disk with explicit configuration
 			$disk = Storage::disk('public');
@@ -984,7 +984,7 @@ class PandLAccountController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
             }
 
-            $partyId = $user->id;
+            $partyId = \App\Support\Demo\ReportContext::resolved()->id;
             
             // Use the SAME service and date format as web
             $svc = app(ReportsService::class);
@@ -993,7 +993,7 @@ class PandLAccountController extends Controller
             if (!$pandlData) {
                 return response()->json(['success' => false, 'message' => 'No P&L data found'], 404);
             }
-            $filename = 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+            $filename = \App\Support\Demo\ReportContext::filePrefix() . 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
             // Use public disk with explicit configuration
             $disk = Storage::disk('public');
@@ -1009,7 +1009,7 @@ class PandLAccountController extends Controller
             // Store file using public disk - WITHOUT custom data
             $exportResult = Excel::store(
                 //new PandLExport($svc, $partyId, $request->start_date, $request->end_date), 
-                new PandLExport($svc, $partyId, $request->start_date, $request->end_date, $user->name, null, $user->email, [
+                new PandLExport($svc, $partyId, $request->start_date, $request->end_date, \App\Support\Demo\ReportContext::resolved()->displayName(), null, \App\Support\Demo\ReportContext::resolved()->email, [
                     'data' => $pandlData,
                 ]),
                 $filePath, 
@@ -1073,17 +1073,17 @@ class PandLAccountController extends Controller
 				return response()->json(['success' => false, 'message' => 'Invalid PartyGUID'], 422);
 			}
 
-			$partyId = $user->id;
+			$partyId = \App\Support\Demo\ReportContext::resolved()->id;
 			// $svc = app(ReportsService::class); 
 			//$pandlData = $this->getPandLData($partyId, $startDate, $endDate);
 			// $pandlData = $svc->pandl($partyId, $startDate, $endDate);
 			$pandlData = $this->pandlDataFromIndexNew($request);
-			$partyName = $user->name;
+			$partyName = \App\Support\Demo\ReportContext::resolved()->displayName();
 			if (!$pandlData) {
 				return response()->json(['success' => false, 'message' => 'No P&L data found'], 404);
 			}
 
-			$filename = 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
+			$filename = \App\Support\Demo\ReportContext::filePrefix() . 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
 
 			// Generate PDF
 			$pdf = Pdf::setOptions([
@@ -1146,7 +1146,7 @@ class PandLAccountController extends Controller
 
     public function downloadExportedFile(string $filename)
     {
-        if (!preg_match('/\Aprofit-loss-report-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
+        if (!preg_match('/\A(?:sample-)?profit-loss-report-[A-Za-z0-9._-]+-to-[A-Za-z0-9._-]+\.(xlsx|pdf)\z/', $filename)) {
             abort(404);
         }
 
@@ -1179,9 +1179,9 @@ class PandLAccountController extends Controller
             abort(422, 'Validation failed');
         }
 
-        $partyId = $user->id;
+        $partyId = \App\Support\Demo\ReportContext::resolved()->id;
         $svc = new ReportsService();
-        $filename = 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.xlsx';
 
         return Excel::download(new PandLExport($svc, $partyId, $request->start_date, $request->end_date), $filename);
     }
@@ -1204,8 +1204,8 @@ class PandLAccountController extends Controller
             abort(422, 'Validation failed');
         }
 
-        $partyId = $user->id;
-		$partyName = $user->name;
+        $partyId = \App\Support\Demo\ReportContext::resolved()->id;
+		$partyName = \App\Support\Demo\ReportContext::resolved()->displayName();
         $pandlData = $this->getPandLData($partyId, 
             $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null,
             $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null
@@ -1215,7 +1215,7 @@ class PandLAccountController extends Controller
             abort(404, 'No P&L data found');
         }
 
-        $filename = 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
+        $filename = \App\Support\Demo\ReportContext::filePrefix() . 'profit-loss-report-' . ($request->start_date ?: 'start') . '-to-' . ($request->end_date ?: 'end') . '.pdf';
 
         $pdf = Pdf::setOptions(['isRemoteEnabled' => true])
                 ->loadView('reports.pdf.pl-pdf', [

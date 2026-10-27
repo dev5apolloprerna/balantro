@@ -30,7 +30,11 @@ class LogActivity
             'id'   => $request->route()?->getName() ?? $request->path(),
         ], [
             'query' => $request->query(),
-            'input' => collect($request->except(['password', '_token']))->take(25), // avoid sensitive data
+            // Never store secrets in the activity log.
+            'input' => collect($request->except([
+                '_token', 'password', 'password_confirmation', 'current_password',
+                'new_password', 'new_password_confirmation', 'otp', 'token', 'registration_token',
+            ]))->take(25),
             'status' => method_exists($response, 'getStatusCode') ? $response->getStatusCode() : null,
         ]);
         // }

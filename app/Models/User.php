@@ -81,6 +81,18 @@ class User extends Authenticatable implements JWTSubject
         });
     }
 
+    /**
+     * Exclude the read-only sample company from user lists.
+     */
+    public function scopeExcludingDemoParty($query)
+    {
+        $demoId = \App\Support\Demo\DemoParty::id();
+
+        return $demoId > 0
+            ? $query->where($this->getTable() . '.id', '<>', $demoId)
+            : $query;
+    }
+
     // Relationships
     public function profile()
     {
